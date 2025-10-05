@@ -1,7 +1,9 @@
+name: ${COMPOSE_PROJECT_NAME:-commandcenter}
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: commandcenter_db
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_db
     environment:
       POSTGRES_DB: commandcenter
       POSTGRES_USER: commandcenter
@@ -20,7 +22,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: commandcenter_redis
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -37,7 +39,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: commandcenter_backend
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_backend
     environment:
       DATABASE_URL: postgresql://commandcenter:${DB_PASSWORD:-changeme}@postgres:5432/commandcenter
       SECRET_KEY: ${SECRET_KEY}
@@ -72,7 +74,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
-    container_name: commandcenter_frontend
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_frontend
     environment:
       VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}
     ports:

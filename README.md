@@ -49,6 +49,18 @@ Command Center helps R&D teams:
 
 ## 🚀 Quick Start
 
+### ⚠️ CRITICAL: Data Isolation
+
+**Each project MUST have its own CommandCenter instance.**
+
+CommandCenter stores sensitive data and must be isolated per project to prevent:
+- Data leakage between projects
+- Unauthorized repository access
+- Cross-contamination of knowledge bases
+- Security token exposure
+
+See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
+
 ### Prerequisites
 
 - Docker & Docker Compose
@@ -57,16 +69,21 @@ Command Center helps R&D teams:
 
 ### Installation
 
-1. **Clone the repository:**
+1. **Clone to project-specific directory:**
    ```bash
-   git clone https://github.com/PerformanceSuite/CommandCenter.git
-   cd CommandCenter
+   # Clone into your project's directory for isolation
+   cd ~/projects/your-project/
+   git clone https://github.com/PerformanceSuite/CommandCenter.git commandcenter
+   cd commandcenter
    ```
 
 2. **Set up environment:**
    ```bash
    cp .env.template .env
    # Edit .env with your configuration
+
+   # CRITICAL: Set unique project name for data isolation
+   COMPOSE_PROJECT_NAME=yourproject-commandcenter
    ```
 
 3. **Start services:**
