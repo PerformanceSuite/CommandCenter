@@ -112,12 +112,12 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 ## 📖 Documentation
 
 - [Quick Start Guide](./QUICK_START_PORTS.md) - Get running in 5 minutes
+- [Security Notice](./SECURITY_NOTICE.md) - Data isolation requirements
 - [Configuration Guide](./docs/CONFIGURATION.md) - Environment setup
+- [Data Isolation](./docs/DATA_ISOLATION.md) - Multi-project security
+- [Docling Setup](./docs/DOCLING_SETUP.md) - RAG document processing
 - [Port Management](./docs/PORT_MANAGEMENT.md) - Handling port conflicts
 - [Traefik Setup](./docs/TRAEFIK_SETUP.md) - Zero-conflict deployment
-- [API Documentation](./docs/API.md) - Backend API reference
-- [Architecture](./docs/ARCHITECTURE.md) - System design
-- [Contributing](./docs/CONTRIBUTING.md) - Development guide
 - [PRD](./docs/PRD.md) - Original product specification
 
 ---
