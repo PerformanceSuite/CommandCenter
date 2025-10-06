@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import repositories, technologies, dashboard
+from app.routers import repositories, technologies, dashboard, knowledge
 
 
 @asynccontextmanager
@@ -85,6 +85,7 @@ async def root() -> JSONResponse:
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
+app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 
 
 # Global exception handler

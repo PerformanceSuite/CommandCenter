@@ -35,3 +35,6 @@ docling==1.0.0
 
 # GitHub integration
 PyGithub==2.1.1
+
+# Cache
+redis==5.0.1
