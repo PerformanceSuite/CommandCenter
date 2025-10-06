@@ -128,6 +128,19 @@ class ApiClient {
     const response = await this.client.post('/api/v1/knowledge/query', { query });
     return response.data;
   }
+
+  // Dashboard
+  async getDashboardStats(): Promise<any> {
+    const response = await this.client.get('/api/v1/dashboard/stats');
+    return response.data;
+  }
+
+  async getDashboardActivity(limit: number = 10): Promise<any> {
+    const response = await this.client.get('/api/v1/dashboard/recent-activity', {
+      params: { limit },
+    });
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

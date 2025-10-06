@@ -1,122 +1,138 @@
-import React, { useMemo } from 'react';
-import { useRepositories } from '../../hooks/useRepositories';
-import { useTechnologies } from '../../hooks/useTechnologies';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDashboard } from '../../hooks/useDashboard';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-import { RepoSelector } from './RepoSelector';
-import { GitBranch, TrendingUp, Database, Activity } from 'lucide-react';
+import { MetricCard } from './MetricCard';
+import { ActivityFeed } from './ActivityFeed';
+import { StatusChart } from './StatusChart';
+import { GitBranch, Database, ClipboardList, FileText, Plus } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
-  const { repositories, loading: reposLoading } = useRepositories();
-  const { technologies, loading: techLoading } = useTechnologies();
+  const navigate = useNavigate();
+  const { stats, activity, loading, error } = useDashboard(10);
 
-  // Memoize computed values to avoid recalculations
-  const activeRepos = useMemo(
-    () => repositories.filter((r) => r.is_active).length,
-    [repositories]
-  );
-
-  const techByStatus = useMemo(
-    () => technologies.reduce((acc, tech) => {
-      acc[tech.status] = (acc[tech.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
-    [technologies]
-  );
-
-  const stats = useMemo(
-    () => [
-      {
-        label: 'Total Repositories',
-        value: repositories.length,
-        icon: <GitBranch size={24} aria-hidden="true" />,
-        color: 'bg-blue-500',
-      },
-      {
-        label: 'Active Repos',
-        value: activeRepos,
-        icon: <Activity size={24} aria-hidden="true" />,
-        color: 'bg-green-500',
-      },
-      {
-        label: 'Technologies',
-        value: technologies.length,
-        icon: <Database size={24} aria-hidden="true" />,
-        color: 'bg-purple-500',
-      },
-      {
-        label: 'Production Ready',
-        value: techByStatus['production-ready'] || 0,
-        icon: <TrendingUp size={24} aria-hidden="true" />,
-        color: 'bg-orange-500',
-      },
-    ],
-    [repositories.length, activeRepos, technologies.length, techByStatus]
-  );
-
-  const recentRepos = useMemo(
-    () => repositories.slice(0, 5),
-    [repositories]
-  );
-
-  if (reposLoading || techLoading) {
+  if (loading) {
     return <LoadingSpinner size="lg" className="mt-20" />;
   }
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-red-600 text-lg">Failed to load dashboard data</p>
+        <p className="text-gray-600 mt-2">{error.message}</p>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
+
+  // Calculate metrics
+  const totalTechnologies = stats.technologies.total || 0;
+  const totalTasks = stats.research_tasks.total || 0;
+  const totalRepos = stats.repositories.total || 0;
+  const totalDocuments = stats.knowledge_base.total_documents || 0;
+
+  // Get status breakdowns
+  const techByStatus = stats.technologies.by_status || {};
+  const tasksByStatus = stats.research_tasks.by_status || {};
 
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <section aria-label="Dashboard statistics">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-white rounded-lg shadow p-6"
-              role="region"
-              aria-label={`${stat.label}: ${stat.value}`}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-2" aria-live="polite">{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-3 rounded-lg text-white`}>{stat.icon}</div>
-              </div>
-            </div>
-          ))}
+          <MetricCard
+            label="Total Repositories"
+            value={totalRepos}
+            icon={GitBranch}
+            color="bg-blue-500"
+            onClick={() => navigate('/repositories')}
+          />
+          <MetricCard
+            label="Technologies"
+            value={totalTechnologies}
+            icon={Database}
+            color="bg-purple-500"
+            subtitle={`${Object.keys(techByStatus).length} statuses`}
+            onClick={() => navigate('/technologies')}
+          />
+          <MetricCard
+            label="Research Tasks"
+            value={totalTasks}
+            icon={ClipboardList}
+            color="bg-orange-500"
+            subtitle={`${stats.research_tasks.overdue_count || 0} overdue`}
+            onClick={() => navigate('/research')}
+          />
+          <MetricCard
+            label="Knowledge Base"
+            value={totalDocuments}
+            icon={FileText}
+            color="bg-green-500"
+            subtitle="documents"
+            onClick={() => navigate('/knowledge')}
+          />
         </div>
       </section>
 
-      {/* Repository Selector */}
-      <section className="bg-white rounded-lg shadow p-6" aria-labelledby="active-repos-heading">
-        <h2 id="active-repos-heading" className="text-xl font-bold mb-4">Active Repositories</h2>
-        <RepoSelector repositories={repositories} />
-      </section>
-
-      {/* Recent Activity */}
-      <section className="bg-white rounded-lg shadow p-6" aria-labelledby="recent-activity-heading">
-        <h2 id="recent-activity-heading" className="text-xl font-bold mb-4">Recent Activity</h2>
-        <div className="space-y-4" role="list">
-          {recentRepos.map((repo) => (
-            <div
-              key={repo.id}
-              className="flex items-center justify-between border-b pb-4 last:border-b-0"
-              role="listitem"
+      {/* Quick Actions */}
+      <section aria-label="Quick actions">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate('/technologies/new')}
+              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              <div>
-                <p className="font-medium">{repo.full_name}</p>
-                <p className="text-sm text-gray-500">{repo.last_commit_message || 'No recent commits'}</p>
-              </div>
-              <div className="text-sm text-gray-400">
-                <time dateTime={repo.last_synced_at || undefined}>
-                  {repo.last_synced_at
-                    ? new Date(repo.last_synced_at).toLocaleDateString()
-                    : 'Never synced'}
-                </time>
-              </div>
-            </div>
-          ))}
+              <Plus size={20} />
+              <span>Add Technology</span>
+            </button>
+            <button
+              onClick={() => navigate('/research/new')}
+              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              <Plus size={20} />
+              <span>Create Task</span>
+            </button>
+            <button
+              onClick={() => navigate('/knowledge/upload')}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Plus size={20} />
+              <span>Upload Document</span>
+            </button>
+          </div>
         </div>
       </section>
+
+      {/* Charts and Activity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Technology Status Chart */}
+        <StatusChart
+          statusData={techByStatus}
+          title="Technology Status Distribution"
+          onStatusClick={(status) => navigate(`/technologies?status=${status}`)}
+        />
+
+        {/* Recent Activity */}
+        <section className="bg-white rounded-lg shadow p-6" aria-labelledby="recent-activity-heading">
+          <h2 id="recent-activity-heading" className="text-xl font-bold mb-4">
+            Recent Activity
+          </h2>
+          <ActivityFeed activities={activity || []} isLoading={loading} />
+        </section>
+      </div>
+
+      {/* Task Status Overview */}
+      {Object.keys(tasksByStatus).length > 0 && (
+        <StatusChart
+          statusData={tasksByStatus}
+          title="Research Task Status Distribution"
+          onStatusClick={(status) => navigate(`/research?status=${status}`)}
+        />
+      )}
     </div>
   );
 };
