@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import type { Repository } from '../types/repository';
-import type { Technology } from '../types/technology';
+import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/technology';
 import type { ResearchEntry } from '../types/research';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -79,22 +79,22 @@ class ApiClient {
     return response.data;
   }
 
-  async getTechnology(id: string): Promise<Technology> {
+  async getTechnology(id: number): Promise<Technology> {
     const response: AxiosResponse<Technology> = await this.client.get(`/api/v1/technologies/${id}`);
     return response.data;
   }
 
-  async createTechnology(data: Partial<Technology>): Promise<Technology> {
+  async createTechnology(data: TechnologyCreate): Promise<Technology> {
     const response: AxiosResponse<Technology> = await this.client.post('/api/v1/technologies', data);
     return response.data;
   }
 
-  async updateTechnology(id: string, data: Partial<Technology>): Promise<Technology> {
+  async updateTechnology(id: number, data: TechnologyUpdate): Promise<Technology> {
     const response: AxiosResponse<Technology> = await this.client.put(`/api/v1/technologies/${id}`, data);
     return response.data;
   }
 
-  async deleteTechnology(id: string): Promise<void> {
+  async deleteTechnology(id: number): Promise<void> {
     await this.client.delete(`/api/v1/technologies/${id}`);
   }
 
