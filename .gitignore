@@ -43,3 +43,6 @@ processed_docs/
 # Logs
 *.log
 logs/
+# Agent coordination (temporary)
+.agent-coordination/
+worktrees/
