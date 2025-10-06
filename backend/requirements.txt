@@ -22,8 +22,9 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 cryptography==42.0.0
 
-# CORS
+# CORS and Rate Limiting
 python-cors==1.0.0
+slowapi==0.1.9
 
 # RAG and embeddings
 langchain==0.1.0
@@ -35,3 +36,10 @@ docling==1.0.0
 
 # GitHub integration
 PyGithub==2.1.1
+
+# Cache
+redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1

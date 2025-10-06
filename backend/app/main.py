@@ -7,17 +7,19 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import repositories, technologies, dashboard
+from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
-from app.middleware import LoggingMiddleware
+from app.middleware import limiter, add_security_headers, LoggingMiddleware
 
 
 @asynccontextmanager
@@ -60,16 +62,28 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+<<<<<<< HEAD
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
 # Configure CORS
+=======
+# Add rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Add security headers middleware
+add_security_headers(app)
+
+# Configure CORS with security best practices
+>>>>>>> origin/main
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,  # Explicit allowlist from environment
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],  # Explicit methods
+    allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
+    max_age=settings.cors_max_age,
 )
 
 # Setup Prometheus metrics
@@ -115,9 +129,11 @@ async def root() -> JSONResponse:
 
 
 # Include routers
+app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
+app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 
 # Expose Prometheus metrics endpoint
 @app.on_event("startup")
