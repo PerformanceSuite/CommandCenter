@@ -6,8 +6,10 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import String, DateTime, JSON, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.database import Base
+from app.utils.crypto import encrypt_token, decrypt_token
 
 
 class Repository(Base):
@@ -30,9 +32,32 @@ class Repository(Base):
     clone_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     default_branch: Mapped[str] = mapped_column(String(255), default="main")
 
-    # Access control
-    access_token: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    # Access control (encrypted)
+    _encrypted_access_token: Mapped[Optional[str]] = mapped_column(
+        "access_token",
+        String(1024),
+        nullable=True
+    )
     is_private: Mapped[bool] = mapped_column(default=False)
+
+    @hybrid_property
+    def access_token(self) -> Optional[str]:
+        """Get decrypted access token"""
+        if self._encrypted_access_token:
+            try:
+                return decrypt_token(self._encrypted_access_token)
+            except Exception:
+                # If decryption fails, return None
+                return None
+        return None
+
+    @access_token.setter
+    def access_token(self, value: Optional[str]) -> None:
+        """Set access token (will be encrypted)"""
+        if value:
+            self._encrypted_access_token = encrypt_token(value)
+        else:
+            self._encrypted_access_token = None
 
     # Last sync information
     last_commit_sha: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)

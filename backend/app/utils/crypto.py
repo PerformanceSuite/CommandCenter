@@ -2,22 +2,34 @@
 Encryption utilities for sensitive data (GitHub tokens, API keys)
 """
 
+import base64
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.backends import default_backend
 from app.config import settings
 
 
 class TokenEncryption:
     """Encrypt and decrypt sensitive tokens using Fernet symmetric encryption"""
-    
+
     def __init__(self):
-        # Get key from settings - must be 32 url-safe base64-encoded bytes
-        # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-        key_bytes = settings.SECRET_KEY.encode()[:32].ljust(32, b'=')
-        
+        # Use PBKDF2 to derive a proper encryption key from SECRET_KEY
+        # This is cryptographically secure regardless of SECRET_KEY length
+        kdf = PBKDF2(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=settings.ENCRYPTION_SALT.encode(),
+            iterations=100000,
+            backend=default_backend()
+        )
+
+        # Derive key from SECRET_KEY
+        key = kdf.derive(settings.SECRET_KEY.encode())
+
         # Create base64-encoded key for Fernet (44 chars)
-        import base64
-        fernet_key = base64.urlsafe_b64encode(key_bytes)
-        
+        fernet_key = base64.urlsafe_b64encode(key)
+
         self.cipher = Fernet(fernet_key)
     
     def encrypt(self, plaintext: str) -> str:

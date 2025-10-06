@@ -51,8 +51,13 @@ class Settings(BaseSettings):
         default="dev-secret-key-change-in-production",
         description="Secret key for JWT tokens and encryption"
     )
+    ENCRYPTION_SALT: str = Field(
+        default="dev-encryption-salt-change-in-production",
+        description="Salt for PBKDF2 key derivation (must be consistent for decryption)"
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ENCRYPT_TOKENS: bool = Field(
         default=True,
         description="Whether to encrypt GitHub tokens in database"
@@ -61,7 +66,15 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"],
-        description="Allowed CORS origins"
+        description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)"
+    )
+    cors_allow_credentials: bool = Field(
+        default=True,
+        description="Allow credentials in CORS requests"
+    )
+    cors_max_age: int = Field(
+        default=600,
+        description="Maximum age (seconds) for CORS preflight cache"
     )
 
     # API Settings
