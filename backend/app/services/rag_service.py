@@ -26,12 +26,13 @@ except ImportError:
 class RAGService:
     """Service for knowledge base RAG operations"""
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None, collection_name: str = "default"):
         """
         Initialize RAG service
 
         Args:
             db_path: Path to ChromaDB database (uses config default if not provided)
+            collection_name: Name of the collection for multi-collection support
 
         Raises:
             ImportError: If RAG dependencies are not installed
@@ -44,15 +45,16 @@ class RAGService:
 
         self.db_path = db_path or settings.knowledge_base_path
         self.embedding_model_name = settings.embedding_model
+        self.collection_name = collection_name
 
         # Initialize embeddings (local model - no API costs)
         self.embeddings = HuggingFaceEmbeddings(
             model_name=self.embedding_model_name
         )
 
-        # Initialize vector store
+        # Initialize vector store with specified collection
         self.vectorstore = Chroma(
-            collection_name="performia_docs",
+            collection_name=collection_name,
             embedding_function=self.embeddings,
             persist_directory=self.db_path
         )
@@ -210,6 +212,7 @@ class RAGService:
                 "categories": categories,
                 "embedding_model": self.embedding_model_name,
                 "db_path": self.db_path,
+                "collection_name": self.collection_name,
             }
 
         except Exception as e:

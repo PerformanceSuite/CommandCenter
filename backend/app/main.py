@@ -14,7 +14,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
 from app.database import init_db, close_db
-from app.routers import auth, repositories, technologies, dashboard
+from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.middleware import limiter, add_security_headers
 
 
@@ -97,6 +97,7 @@ app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
+app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 
 
 # Global exception handler
