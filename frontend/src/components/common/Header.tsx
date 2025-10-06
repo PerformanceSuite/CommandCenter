@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const location = useLocation();
 
-  const getPageTitle = () => {
+  const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path === '/radar') return 'Technology Radar';
@@ -13,35 +13,44 @@ export const Header: React.FC = () => {
     if (path === '/knowledge') return 'Knowledge Base';
     if (path === '/settings') return 'Settings';
     return 'Command Center';
-  };
+  }, [location.pathname]);
+
+  const currentDate = useMemo(
+    () => new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }),
+    []
+  );
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-6 py-4" role="banner">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+          <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+          <p className="text-sm text-gray-500 mt-1" aria-label={`Current date: ${currentDate}`}>
+            <time dateTime={new Date().toISOString()}>
+              {currentDate}
+            </time>
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
           <button
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Notifications"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            aria-label="Notifications"
+            type="button"
           >
-            <Bell size={20} />
+            <Bell size={20} aria-hidden="true" />
           </button>
           <button
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Settings"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            aria-label="Settings"
+            type="button"
           >
-            <Settings size={20} />
+            <Settings size={20} aria-hidden="true" />
           </button>
         </div>
       </div>
