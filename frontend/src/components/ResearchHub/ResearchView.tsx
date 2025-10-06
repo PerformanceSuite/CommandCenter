@@ -11,8 +11,8 @@ import {
 import type {
   ResearchTask,
   ResearchTaskCreate,
-  TaskStatus,
 } from '../../types/researchTask';
+import { TaskStatus } from '../../types/researchTask';
 
 type ViewMode = 'grid' | 'list';
 
@@ -67,10 +67,10 @@ export const ResearchView: React.FC = () => {
 
   const statusFilters: { value: TaskStatus | 'all'; label: string }[] = [
     { value: 'all', label: 'All' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'blocked', label: 'Blocked' },
-    { value: 'completed', label: 'Completed' },
+    { value: TaskStatus.PENDING, label: 'Pending' },
+    { value: TaskStatus.IN_PROGRESS, label: 'In Progress' },
+    { value: TaskStatus.BLOCKED, label: 'Blocked' },
+    { value: TaskStatus.COMPLETED, label: 'Completed' },
   ];
 
   return (

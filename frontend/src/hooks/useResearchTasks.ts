@@ -62,7 +62,8 @@ export function useUpdateResearchTask() {
   return useMutation<
     ResearchTask,
     Error,
-    { taskId: number; data: ResearchTaskUpdate }
+    { taskId: number; data: ResearchTaskUpdate },
+    { previousTask?: ResearchTask }
   >({
     mutationFn: ({ taskId, data }) => researchApi.updateTask(taskId, data),
     onMutate: async ({ taskId, data }) => {
@@ -85,7 +86,7 @@ export function useUpdateResearchTask() {
       // Return context with the previous task
       return { previousTask };
     },
-    onError: (err, { taskId }, context) => {
+    onError: (_err, { taskId }, context) => {
       // Rollback on error
       if (context?.previousTask) {
         queryClient.setQueryData(QUERY_KEYS.task(taskId), context.previousTask);

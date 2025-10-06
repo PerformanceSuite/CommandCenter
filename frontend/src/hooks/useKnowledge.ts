@@ -4,7 +4,6 @@ import type {
   KnowledgeSearchRequest,
   KnowledgeSearchResult,
   DocumentUploadRequest,
-  DocumentUploadResponse,
   KnowledgeStatistics,
 } from '../types/knowledge';
 

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import type {
-  ResearchTaskCreate,
-  TaskStatus,
-} from '../../types/researchTask';
+import type { ResearchTaskCreate } from '../../types/researchTask';
+import { TaskStatus } from '../../types/researchTask';
 
 interface ResearchTaskFormProps {
   onSubmit: (data: ResearchTaskCreate) => void;
@@ -20,7 +18,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
   const [formData, setFormData] = useState<ResearchTaskCreate>({
     title: initialData?.title || '',
     description: initialData?.description || '',
-    status: initialData?.status || 'pending',
+    status: initialData?.status || TaskStatus.PENDING,
     technology_id: initialData?.technology_id,
     repository_id: initialData?.repository_id,
     assigned_to: initialData?.assigned_to || '',
