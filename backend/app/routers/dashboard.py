@@ -5,49 +5,45 @@ Dashboard and analytics endpoints
 from typing import Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.database import get_db
-from app.models import Repository, Technology, ResearchTask, TechnologyStatus, TaskStatus
-from app.services import RAGService
+from app.services import (
+    RAGService,
+    RepositoryService,
+    TechnologyService,
+    ResearchService
+)
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
+def get_repository_service(db: AsyncSession = Depends(get_db)) -> RepositoryService:
+    """Dependency to get repository service instance"""
+    return RepositoryService(db)
+
+
+def get_technology_service(db: AsyncSession = Depends(get_db)) -> TechnologyService:
+    """Dependency to get technology service instance"""
+    return TechnologyService(db)
+
+
+def get_research_service(db: AsyncSession = Depends(get_db)) -> ResearchService:
+    """Dependency to get research service instance"""
+    return ResearchService(db)
+
+
 @router.get("/stats")
 async def get_dashboard_stats(
-    db: AsyncSession = Depends(get_db)
+    repo_service: RepositoryService = Depends(get_repository_service),
+    tech_service: TechnologyService = Depends(get_technology_service),
+    research_service: ResearchService = Depends(get_research_service)
 ) -> Dict[str, Any]:
     """Get dashboard statistics"""
 
-    # Repository stats
-    repo_count = await db.scalar(select(func.count()).select_from(Repository))
-
-    # Technology stats
-    tech_count = await db.scalar(select(func.count()).select_from(Technology))
-
-    # Technology by status
-    tech_by_status = {}
-    for status in TechnologyStatus:
-        count = await db.scalar(
-            select(func.count())
-            .select_from(Technology)
-            .where(Technology.status == status)
-        )
-        tech_by_status[status.value] = count
-
-    # Research task stats
-    task_count = await db.scalar(select(func.count()).select_from(ResearchTask))
-
-    # Tasks by status
-    tasks_by_status = {}
-    for status in TaskStatus:
-        count = await db.scalar(
-            select(func.count())
-            .select_from(ResearchTask)
-            .where(ResearchTask.status == status)
-        )
-        tasks_by_status[status.value] = count
+    # Get stats from services
+    repo_stats = await repo_service.get_statistics()
+    tech_stats = await tech_service.get_statistics()
+    research_stats = await research_service.get_statistics()
 
     # Knowledge base stats
     try:
@@ -57,17 +53,9 @@ async def get_dashboard_stats(
         kb_stats = {"error": str(e)}
 
     return {
-        "repositories": {
-            "total": repo_count,
-        },
-        "technologies": {
-            "total": tech_count,
-            "by_status": tech_by_status,
-        },
-        "research_tasks": {
-            "total": task_count,
-            "by_status": tasks_by_status,
-        },
+        "repositories": repo_stats,
+        "technologies": tech_stats,
+        "research_tasks": research_stats,
         "knowledge_base": kb_stats,
     }
 
@@ -75,33 +63,16 @@ async def get_dashboard_stats(
 @router.get("/recent-activity")
 async def get_recent_activity(
     limit: int = 10,
-    db: AsyncSession = Depends(get_db)
+    repo_service: RepositoryService = Depends(get_repository_service),
+    tech_service: TechnologyService = Depends(get_technology_service),
+    research_service: ResearchService = Depends(get_research_service)
 ) -> Dict[str, Any]:
     """Get recent activity across the platform"""
 
-    # Recent repositories
-    recent_repos_result = await db.execute(
-        select(Repository)
-        .order_by(Repository.updated_at.desc())
-        .limit(limit)
-    )
-    recent_repos = recent_repos_result.scalars().all()
-
-    # Recent technologies
-    recent_tech_result = await db.execute(
-        select(Technology)
-        .order_by(Technology.updated_at.desc())
-        .limit(limit)
-    )
-    recent_tech = recent_tech_result.scalars().all()
-
-    # Recent research tasks
-    recent_tasks_result = await db.execute(
-        select(ResearchTask)
-        .order_by(ResearchTask.updated_at.desc())
-        .limit(limit)
-    )
-    recent_tasks = recent_tasks_result.scalars().all()
+    # Get recent items from services (using their get_all methods with ordering)
+    recent_repos = await repo_service.list_repositories(skip=0, limit=limit)
+    recent_tech, _ = await tech_service.list_technologies(skip=0, limit=limit)
+    recent_tasks = await research_service.list_research_tasks(skip=0, limit=limit)
 
     return {
         "recent_repositories": [
