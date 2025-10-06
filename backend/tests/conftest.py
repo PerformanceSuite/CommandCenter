@@ -1,20 +1,25 @@
 """
-Pytest configuration and fixtures for testing
+Pytest configuration and shared fixtures
 """
 
-import pytest
+import os
 import asyncio
 from typing import AsyncGenerator, Generator
-from httpx import AsyncClient
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import StaticPool
+from httpx import AsyncClient
 
-from app.main import app
 from app.database import Base, get_db
+from app.main import app
 from app.config import settings
 
-# Test database URL (use in-memory SQLite for tests)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+# Set test environment variables
+os.environ["ENVIRONMENT"] = "test"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test.db"
+os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only-min-32-chars"
+os.environ["GITHUB_TOKEN"] = "test_github_token"
 
 
 @pytest.fixture(scope="session")
@@ -25,22 +30,22 @@ def event_loop() -> Generator:
     loop.close()
 
 
+# Database fixtures
 @pytest.fixture(scope="function")
-async def db_engine():
-    """Create a test database engine"""
+async def async_engine():
+    """Create async engine for testing"""
     engine = create_async_engine(
-        TEST_DATABASE_URL,
-        poolclass=NullPool,
+        "sqlite+aiosqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
         echo=False,
     )
 
-    # Create all tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
-    # Drop all tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
@@ -48,10 +53,10 @@ async def db_engine():
 
 
 @pytest.fixture(scope="function")
-async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a test database session"""
+async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create async session for testing"""
     async_session_maker = async_sessionmaker(
-        db_engine,
+        async_engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
@@ -61,16 +66,114 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """
-    Create a test client with database session override
-    """
+async def db_session(async_session: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
+    """Database session fixture"""
+    yield async_session
+    await async_session.rollback()
+
+
+# FastAPI test client fixture
+@pytest.fixture(scope="function")
+async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Async client for testing FastAPI endpoints"""
+
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://test") as test_client:
-        yield test_client
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
 
     app.dependency_overrides.clear()
+
+
+# Alias for compatibility
+@pytest.fixture(scope="function")
+async def client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Alias for async_client for compatibility"""
+    yield async_client
+
+
+# Authentication fixtures
+@pytest.fixture
+def mock_github_token() -> str:
+    """Mock GitHub token for testing"""
+    return "ghp_test_token_1234567890abcdef"
+
+
+@pytest.fixture
+def test_user_data() -> dict:
+    """Test user data"""
+    return {
+        "username": "testuser",
+        "email": "test@example.com",
+        "github_token": "ghp_test_token",
+    }
+
+
+# Repository fixtures
+@pytest.fixture
+def test_repository_data() -> dict:
+    """Test repository data"""
+    return {
+        "owner": "testowner",
+        "name": "testrepo",
+        "full_name": "testowner/testrepo",
+        "description": "A test repository",
+        "url": "https://github.com/testowner/testrepo",
+        "clone_url": "https://github.com/testowner/testrepo.git",
+        "default_branch": "main",
+        "is_private": False,
+        "github_id": 12345,
+    }
+
+
+@pytest.fixture
+def test_technology_data() -> dict:
+    """Test technology data"""
+    return {
+        "name": "Python",
+        "category": "language",
+        "ring": "adopt",
+        "description": "A high-level programming language",
+        "moved": 0,
+    }
+
+
+@pytest.fixture
+def test_research_task_data() -> dict:
+    """Test research task data"""
+    return {
+        "title": "Research FastAPI best practices",
+        "description": "Investigate best practices for FastAPI development",
+        "status": "pending",
+        "priority": "high",
+        "repository_id": 1,
+    }
+
+
+# Mock service fixtures
+@pytest.fixture
+def mock_github_service(mocker):
+    """Mock GitHub service"""
+    mock = mocker.MagicMock()
+    mock.authenticate_repo.return_value = True
+    mock.list_user_repos.return_value = []
+    mock.sync_repository.return_value = {
+        "synced": True,
+        "changes_detected": False,
+    }
+    return mock
+
+
+@pytest.fixture
+def mock_rag_service(mocker):
+    """Mock RAG service"""
+    mock = mocker.MagicMock()
+    mock.index_repository.return_value = {"indexed": True, "documents": 10}
+    mock.query.return_value = {
+        "answer": "Test answer",
+        "sources": [],
+    }
+    return mock

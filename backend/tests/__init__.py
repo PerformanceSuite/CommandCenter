@@ -1,3 +1,3 @@
 """
-Tests for Command Center backend
+Test suite for CommandCenter backend
 """
