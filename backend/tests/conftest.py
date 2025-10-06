@@ -88,6 +88,13 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
     app.dependency_overrides.clear()
 
 
+# Alias for compatibility
+@pytest.fixture(scope="function")
+async def client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Alias for async_client for compatibility"""
+    yield async_client
+
+
 # Authentication fixtures
 @pytest.fixture
 def mock_github_token() -> str:
