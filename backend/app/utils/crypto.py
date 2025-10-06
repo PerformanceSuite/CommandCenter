@@ -5,7 +5,7 @@ Encryption utilities for sensitive data (GitHub tokens, API keys)
 import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from app.config import settings
 
@@ -16,7 +16,7 @@ class TokenEncryption:
     def __init__(self):
         # Use PBKDF2 to derive a proper encryption key from SECRET_KEY
         # This is cryptographically secure regardless of SECRET_KEY length
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=settings.ENCRYPTION_SALT.encode(),
