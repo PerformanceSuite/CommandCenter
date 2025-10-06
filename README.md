@@ -111,13 +111,24 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 
 ## 📖 Documentation
 
+### Getting Started
 - [Quick Start Guide](./QUICK_START_PORTS.md) - Get running in 5 minutes
 - [Security Notice](./SECURITY_NOTICE.md) - Data isolation requirements
 - [Configuration Guide](./docs/CONFIGURATION.md) - Environment setup
+
+### Deployment & Operations
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Complete deployment guide
 - [Data Isolation](./docs/DATA_ISOLATION.md) - Multi-project security
-- [Docling Setup](./docs/DOCLING_SETUP.md) - RAG document processing
 - [Port Management](./docs/PORT_MANAGEMENT.md) - Handling port conflicts
 - [Traefik Setup](./docs/TRAEFIK_SETUP.md) - Zero-conflict deployment
+
+### Development
+- [API Documentation](./docs/API.md) - Complete API reference
+- [Architecture](./docs/ARCHITECTURE.md) - System design and patterns
+- [Contributing Guide](./docs/CONTRIBUTING.md) - Development guidelines
+- [Docling Setup](./docs/DOCLING_SETUP.md) - RAG document processing
+
+### Reference
 - [PRD](./docs/PRD.md) - Original product specification
 
 ---
@@ -284,10 +295,35 @@ Monitor dependencies, track feature requests, organize roadmap research.
 
 We welcome contributions! Please see [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for:
 
-- Development setup
-- Coding standards
-- PR process
-- Issue templates
+- Development setup and prerequisites
+- Coding standards and style guide
+- Testing guidelines
+- Pull request process
+- Commit message conventions
+- Issue templates and guidelines
+
+### Quick Start for Contributors
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/YOUR_USERNAME/CommandCenter.git
+cd CommandCenter
+
+# Set up backend
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Set up frontend
+cd ../frontend
+npm install
+
+# Start development environment
+docker compose up -d postgres redis
+```
+
+See the full [Contributing Guide](./docs/CONTRIBUTING.md) for detailed instructions.
 
 ---
 
