@@ -124,3 +124,11 @@ class KnowledgeSearchResult(BaseModel):
     source_file: Optional[str] = None
     score: float
     metadata: dict
+
+
+class ResearchTaskListResponse(BaseModel):
+    """Schema for research task list response"""
+    total: int
+    items: list[ResearchTaskResponse]
+    page: int = 1
+    page_size: int = 50
