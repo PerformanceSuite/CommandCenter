@@ -1,0 +1,358 @@
+name: ${COMPOSE_PROJECT_NAME:-commandcenter}
+
+services:
+  # Traefik Reverse Proxy with Let's Encrypt
+  traefik:
+    image: traefik:v2.10
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_traefik
+    restart: unless-stopped
+    command:
+      # API and Dashboard
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+
+      # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+
+      # Entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+
+      # Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      # Use staging for testing: --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+
+      # Logging
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+      - traefik_logs:/var/log/traefik
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    labels:
+      # Dashboard
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_USER}"
+    networks:
+      - commandcenter
+      - monitoring
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: commandcenter
+      POSTGRES_USER: commandcenter
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commandcenter"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - commandcenter
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - commandcenter
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://commandcenter:${DB_PASSWORD}@postgres:5432/commandcenter
+      SECRET_KEY: ${SECRET_KEY}
+      RAG_STORAGE_PATH: /app/rag_storage
+      CHROMADB_PATH: /app/rag_storage/chromadb
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      SLACK_TOKEN: ${SLACK_TOKEN:-}
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+    volumes:
+      - rag_storage:/app/rag_storage
+      - ./backend/output:/app/output
+      - backend_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      # Security headers
+      - "traefik.http.middlewares.backend-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.backend-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.backend-headers.headers.stsPreload=true"
+      - "traefik.http.routers.backend.middlewares=backend-headers"
+    networks:
+      - commandcenter
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        VITE_API_URL: https://api.${DOMAIN}
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      # Security headers
+      - "traefik.http.middlewares.frontend-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.frontend-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.frontend-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.frontend-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.frontend-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.frontend-headers.headers.frameDeny=true"
+      - "traefik.http.routers.frontend.middlewares=frontend-headers"
+    networks:
+      - commandcenter
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Prometheus - Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.prometheus.middlewares=prometheus-auth"
+      - "traefik.http.middlewares.prometheus-auth.basicauth.users=${PROMETHEUS_USER}"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # Grafana - Metrics Visualization
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: https://grafana.${DOMAIN}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Loki - Log Aggregation
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.loki.rule=Host(`loki.${DOMAIN}`)"
+      - "traefik.http.routers.loki.entrypoints=websecure"
+      - "traefik.http.routers.loki.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.loki.middlewares=loki-auth"
+      - "traefik.http.middlewares.loki-auth.basicauth.users=${LOKI_USER}"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Promtail - Log Shipper
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/log:/var/log:ro
+      - backend_logs:/app/logs:ro
+      - traefik_logs:/var/log/traefik:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # Node Exporter - System Metrics
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_node_exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  # cAdvisor - Container Metrics
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  postgres_data:
+    driver: local
+  rag_storage:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
+    driver: local
+  traefik_letsencrypt:
+    driver: local
+  traefik_logs:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  commandcenter:
+    driver: bridge
+  monitoring:
+    driver: bridge

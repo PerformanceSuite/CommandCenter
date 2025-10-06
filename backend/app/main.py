@@ -5,14 +5,19 @@ Main entry point for the backend API
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.database import init_db, close_db
 from app.routers import repositories, technologies, dashboard
+from app.utils.metrics import setup_custom_metrics
+from app.utils.logging import setup_logging
+from app.middleware import LoggingMiddleware
 
 
 @asynccontextmanager
@@ -20,6 +25,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     """
     Lifespan context manager for startup and shutdown events
     """
+    # Setup logging
+    log_level = os.getenv('LOG_LEVEL', 'INFO')
+    log_file = os.getenv('LOG_FILE', '/app/logs/commandcenter.log')
+    json_logs = os.getenv('JSON_LOGS', 'true').lower() == 'true'
+
+    setup_logging(
+        log_level=log_level,
+        log_file=log_file if os.getenv('ENVIRONMENT') == 'production' else None,
+        json_format=json_logs
+    )
+
     # Startup
     print("Starting Command Center API...")
     await init_db()
@@ -44,6 +60,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -52,6 +71,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Setup Prometheus metrics
+instrumentator = Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=["/metrics", "/health"],
+    env_var_name="ENABLE_METRICS",
+    inprogress_name="http_requests_inprogress",
+    inprogress_labels=True,
+)
+instrumentator.instrument(app)
+setup_custom_metrics(app)
 
 
 # Health check endpoint
@@ -85,6 +118,12 @@ async def root() -> JSONResponse:
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
+
+# Expose Prometheus metrics endpoint
+@app.on_event("startup")
+async def startup_metrics():
+    """Expose metrics endpoint on startup"""
+    instrumentator.expose(app, endpoint="/metrics", tags=["monitoring"])
 
 
 # Global exception handler
