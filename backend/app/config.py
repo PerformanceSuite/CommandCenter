@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     github_token: Optional[str] = None
     github_default_org: Optional[str] = None
 
+    # Redis Configuration
+    redis_url: Optional[str] = Field(
+        default=None,
+        description="Redis connection URL (e.g., redis://localhost:6379/0)"
+    )
+
     # RAG/Knowledge Base
     knowledge_base_path: str = Field(
         default="./docs/knowledge-base/chromadb",

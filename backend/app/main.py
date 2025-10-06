@@ -9,10 +9,13 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_client import make_asgi_app
 
 from app.config import settings
 from app.database import init_db, close_db
 from app.routers import repositories, technologies, dashboard
+from app.routers import webhooks, github_features, rate_limits
+from app.services import redis_service
 
 
 @asynccontextmanager
@@ -25,10 +28,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     await init_db()
     print("Database initialized")
 
+    # Initialize Redis
+    await redis_service.connect()
+    print("Redis service initialized")
+
     yield
 
     # Shutdown
     print("Shutting down Command Center API...")
+    await redis_service.disconnect()
+    print("Redis service disconnected")
     await close_db()
     print("Database connections closed")
 
@@ -85,6 +94,13 @@ async def root() -> JSONResponse:
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
+app.include_router(webhooks.router, prefix=settings.api_v1_prefix)
+app.include_router(github_features.router, prefix=settings.api_v1_prefix)
+app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
+
+# Mount Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 # Global exception handler
