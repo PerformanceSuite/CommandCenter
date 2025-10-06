@@ -3,8 +3,9 @@ Application configuration using Pydantic Settings
 Loads configuration from environment variables and .env file
 """
 
+import json
 from typing import Optional
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -86,6 +87,23 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore"
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from JSON string if provided as string"""
+        if isinstance(v, str):
+            try:
+                # Try to parse as JSON array
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+                # If it's a single string, wrap in list
+                return [parsed]
+            except json.JSONDecodeError:
+                # Fallback: treat as comma-separated list
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     def get_postgres_url(self) -> str:
         """Construct PostgreSQL URL from components"""
