@@ -11,6 +11,7 @@ from app.services.metrics_service import MetricsService, metrics_service, track_
 from app.services.repository_service import RepositoryService
 from app.services.technology_service import TechnologyService
 from app.services.research_service import ResearchService
+from app.services.research_task_service import ResearchTaskService
 
 __all__ = [
     "GitHubService",
@@ -28,4 +29,5 @@ __all__ = [
     "RepositoryService",
     "TechnologyService",
     "ResearchService",
+    "ResearchTaskService",
 ]
