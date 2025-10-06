@@ -10,6 +10,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_client import make_asgi_app
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -17,6 +18,8 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import init_db, close_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
+from app.routers import webhooks, github_features, rate_limits
+from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
 from app.middleware import limiter, add_security_headers, LoggingMiddleware
@@ -43,10 +46,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     await init_db()
     print("Database initialized")
 
+    # Initialize Redis
+    await redis_service.connect()
+    print("Redis service initialized")
+
     yield
 
     # Shutdown
     print("Shutting down Command Center API...")
+    await redis_service.disconnect()
+    print("Redis service disconnected")
     await close_db()
     print("Database connections closed")
 
@@ -62,12 +71,9 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-<<<<<<< HEAD
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
-# Configure CORS
-=======
 # Add rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -76,7 +82,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 add_security_headers(app)
 
 # Configure CORS with security best practices
->>>>>>> origin/main
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,  # Explicit allowlist from environment
@@ -134,12 +139,13 @@ app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
 app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
+app.include_router(webhooks.router, prefix=settings.api_v1_prefix)
+app.include_router(github_features.router, prefix=settings.api_v1_prefix)
+app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
 
-# Expose Prometheus metrics endpoint
-@app.on_event("startup")
-async def startup_metrics():
-    """Expose metrics endpoint on startup"""
-    instrumentator.expose(app, endpoint="/metrics", tags=["monitoring"])
+# Mount Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 # Global exception handler

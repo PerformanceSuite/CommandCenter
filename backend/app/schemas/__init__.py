@@ -25,6 +25,15 @@ from app.schemas.research import (
     KnowledgeSearchRequest,
     KnowledgeSearchResult,
 )
+from app.schemas.webhook import (
+    WebhookConfigCreate,
+    WebhookConfigUpdate,
+    WebhookConfigResponse,
+    WebhookEventResponse,
+    WebhookPayload,
+    GitHubRateLimitResponse,
+    RateLimitStatusResponse,
+)
 
 __all__ = [
     "RepositoryCreate",
@@ -44,4 +53,11 @@ __all__ = [
     "KnowledgeEntryResponse",
     "KnowledgeSearchRequest",
     "KnowledgeSearchResult",
+    "WebhookConfigCreate",
+    "WebhookConfigUpdate",
+    "WebhookConfigResponse",
+    "WebhookEventResponse",
+    "WebhookPayload",
+    "GitHubRateLimitResponse",
+    "RateLimitStatusResponse",
 ]

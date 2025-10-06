@@ -89,6 +89,11 @@ class Repository(Base):
         back_populates="repository",
         cascade="all, delete-orphan"
     )
+    webhook_configs: Mapped[list["WebhookConfig"]] = relationship(
+        "WebhookConfig",
+        back_populates="repository",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Repository(id={self.id}, full_name='{self.full_name}')>"
