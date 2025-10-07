@@ -1,0 +1,97 @@
+{
+  "project": {
+    "id": "commandcenter",
+    "name": "CommandCenter",
+    "type": "fullstack",
+    "isolation_id": "cc-main",
+    "version": "1.0.0"
+  },
+  "mcp_servers": {
+    "project_manager": {
+      "enabled": true,
+      "port": null,
+      "transport": "stdio",
+      "max_parallel_agents": 8,
+      "worktree_base": "worktrees",
+      "coordination_dir": ".agent-coordination"
+    },
+    "knowledgebeast": {
+      "enabled": true,
+      "collection_name": "project_commandcenter",
+      "embedding_model": "local",
+      "port": null,
+      "transport": "stdio"
+    },
+    "agentflow": {
+      "enabled": true,
+      "max_parallel_agents": 8,
+      "review_threshold": 10,
+      "port": null,
+      "transport": "stdio"
+    },
+    "viztrtr": {
+      "enabled": false,
+      "headless": true,
+      "port": null,
+      "transport": "stdio"
+    },
+    "api_keys": {
+      "enabled": true,
+      "port": null,
+      "transport": "stdio"
+    }
+  },
+  "ai_providers": {
+    "primary": "anthropic",
+    "fallback": ["openai", "google"],
+    "routing": {
+      "code_generation": "anthropic",
+      "embeddings": "local",
+      "analysis": "anthropic",
+      "ui_analysis": "anthropic"
+    },
+    "models": {
+      "anthropic": {
+        "default": "claude-sonnet-4-5-20250929",
+        "code": "claude-sonnet-4-5-20250929",
+        "analysis": "claude-sonnet-4-5-20250929"
+      },
+      "openai": {
+        "default": "gpt-4-turbo",
+        "code": "gpt-4-turbo",
+        "embeddings": "text-embedding-3-small"
+      },
+      "local": {
+        "embeddings": "sentence-transformers/all-MiniLM-L6-v2"
+      }
+    }
+  },
+  "workflows": {
+    "templates_dir": ".commandcenter/.agent-coordination/workflows",
+    "default_review_threshold": 10,
+    "auto_merge": false,
+    "require_tests_passing": true
+  },
+  "git": {
+    "default_branch": "main",
+    "worktree_prefix": "worktrees",
+    "branch_prefix": "feature"
+  },
+  "security": {
+    "encrypt_tokens": true,
+    "require_gpg_signing": false,
+    "allowed_commands": [
+      "git",
+      "gh",
+      "make",
+      "docker",
+      "npm",
+      "pytest"
+    ]
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "output": "stderr"
+  }
+}

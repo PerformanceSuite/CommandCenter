@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CommandCenter Configuration",
+  "description": "Configuration schema for CommandCenter MCP infrastructure",
+  "type": "object",
+  "required": ["project", "mcp_servers"],
+  "properties": {
+    "project": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique project identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable project name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["fullstack", "backend", "frontend", "library", "tool"],
+          "description": "Project type"
+        },
+        "isolation_id": {
+          "type": "string",
+          "description": "Unique ID for data isolation (used in Docker, DB, etc.)"
+        },
+        "version": {
+          "type": "string",
+          "description": "Project version"
+        }
+      }
+    },
+    "mcp_servers": {
+      "type": "object",
+      "description": "MCP server configurations",
+      "properties": {
+        "project_manager": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "port": {"type": ["number", "null"]},
+            "transport": {
+              "type": "string",
+              "enum": ["stdio", "http", "websocket"]
+            },
+            "max_parallel_agents": {"type": "number", "minimum": 1},
+            "worktree_base": {"type": "string"},
+            "coordination_dir": {"type": "string"}
+          }
+        },
+        "knowledgebeast": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "collection_name": {"type": "string"},
+            "embedding_model": {"type": "string"},
+            "port": {"type": ["number", "null"]},
+            "transport": {
+              "type": "string",
+              "enum": ["stdio", "http", "websocket"]
+            }
+          }
+        },
+        "agentflow": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "max_parallel_agents": {"type": "number"},
+            "review_threshold": {"type": "number"},
+            "port": {"type": ["number", "null"]},
+            "transport": {"type": "string"}
+          }
+        },
+        "viztrtr": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "headless": {"type": "boolean"},
+            "port": {"type": ["number", "null"]},
+            "transport": {"type": "string"}
+          }
+        },
+        "api_keys": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "port": {"type": ["number", "null"]},
+            "transport": {"type": "string"}
+          }
+        }
+      }
+    },
+    "ai_providers": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "string",
+          "enum": ["anthropic", "openai", "google", "local"]
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "google", "local"]
+          }
+        },
+        "routing": {
+          "type": "object",
+          "description": "Task-specific provider routing"
+        },
+        "models": {
+          "type": "object",
+          "description": "Model configurations per provider"
+        }
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "properties": {
+        "templates_dir": {"type": "string"},
+        "default_review_threshold": {"type": "number"},
+        "auto_merge": {"type": "boolean"},
+        "require_tests_passing": {"type": "boolean"}
+      }
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "default_branch": {"type": "string"},
+        "worktree_prefix": {"type": "string"},
+        "branch_prefix": {"type": "string"}
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "encrypt_tokens": {"type": "boolean"},
+        "require_gpg_signing": {"type": "boolean"},
+        "allowed_commands": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "text"]
+        },
+        "output": {
+          "type": "string",
+          "enum": ["stdout", "stderr", "file"]
+        }
+      }
+    }
+  }
+}
