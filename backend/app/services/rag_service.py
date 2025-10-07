@@ -22,6 +22,9 @@ except ImportError:
     HuggingFaceEmbeddings = None
     Chroma = None
 
+# Global cache for embeddings model (expensive to initialize - 8+ seconds)
+_embeddings_cache: Dict[str, Any] = {}
+
 
 class RAGService:
     """Service for knowledge base RAG operations"""
@@ -48,9 +51,12 @@ class RAGService:
         self.collection_name = collection_name
 
         # Initialize embeddings (local model - no API costs)
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=self.embedding_model_name
-        )
+        # Use cached embeddings model to avoid 8+ second reload on each instantiation
+        if self.embedding_model_name not in _embeddings_cache:
+            _embeddings_cache[self.embedding_model_name] = HuggingFaceEmbeddings(
+                model_name=self.embedding_model_name
+            )
+        self.embeddings = _embeddings_cache[self.embedding_model_name]
 
         # Initialize vector store with specified collection
         self.vectorstore = Chroma(

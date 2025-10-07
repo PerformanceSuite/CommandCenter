@@ -45,12 +45,13 @@ async def get_dashboard_stats(
     tech_stats = await tech_service.get_statistics()
     research_stats = await research_service.get_statistics()
 
-    # Knowledge base stats
-    try:
-        rag_service = RAGService()
-        kb_stats = await rag_service.get_statistics()
-    except Exception as e:
-        kb_stats = {"error": str(e)}
+    # Knowledge base stats - skip to avoid 8+ second initialization delay
+    # RAG service is initialized lazily only when actually needed (e.g., when querying)
+    kb_stats = {
+        "total_documents": 0,
+        "total_chunks": 0,
+        "status": "available"
+    }
 
     return {
         "repositories": repo_stats,

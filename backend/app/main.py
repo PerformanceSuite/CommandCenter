@@ -143,7 +143,6 @@ app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 app.include_router(webhooks.router, prefix=settings.api_v1_prefix)
 app.include_router(github_features.router, prefix=settings.api_v1_prefix)
 app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
-app.include_router(research_tasks.router, prefix=settings.api_v1_prefix)
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()

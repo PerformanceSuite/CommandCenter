@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production || npm install
+# Install all dependencies (including devDependencies for build)
+RUN npm ci || npm install
 
 # Copy source files
 COPY . .
@@ -21,8 +21,8 @@ FROM nginx:alpine AS production
 # Copy built files to nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration (optional - create if needed)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration for React Router support
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 80

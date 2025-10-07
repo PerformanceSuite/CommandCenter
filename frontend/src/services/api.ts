@@ -75,8 +75,8 @@ class ApiClient {
 
   // Technologies
   async getTechnologies(): Promise<Technology[]> {
-    const response: AxiosResponse<Technology[]> = await this.client.get('/api/v1/technologies');
-    return response.data;
+    const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/');
+    return response.data.items; // Extract items array from paginated response
   }
 
   async getTechnology(id: number): Promise<Technology> {
@@ -85,7 +85,7 @@ class ApiClient {
   }
 
   async createTechnology(data: TechnologyCreate): Promise<Technology> {
-    const response: AxiosResponse<Technology> = await this.client.post('/api/v1/technologies', data);
+    const response: AxiosResponse<Technology> = await this.client.post('/api/v1/technologies/', data);
     return response.data;
   }
 

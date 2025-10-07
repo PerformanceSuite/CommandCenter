@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentFlow Setup Wizard</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="18" stroke="white" stroke-width="2"/>
+                    <path d="M20 10 L25 15 L20 20 L15 15 Z" fill="white"/>
+                    <path d="M20 20 L25 25 L20 30 L15 25 Z" fill="white" opacity="0.7"/>
+                </svg>
+                <h1>AgentFlow</h1>
+            </div>
+            <p class="tagline">Autonomous Multi-Agent Claude Code Orchestration</p>
+        </header>
+
+        <nav class="wizard-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <span>Project Analysis</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <span>Agent Selection</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <span>Workflow Config</span>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <span>Review & Deploy</span>
+            </div>
+        </nav>
+
+        <main class="content">
+            <!-- Step 1: Project Analysis -->
+            <section class="wizard-section active" id="step1">
+                <h2>📊 Project Analysis</h2>
+                <p class="description">Let's analyze your project to determine the optimal agent configuration.</p>
+                
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label for="projectName">Project Name</label>
+                        <input type="text" id="projectName" name="projectName" required placeholder="my-awesome-project">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="projectType">Project Type</label>
+                        <select id="projectType" name="projectType" required>
+                            <option value="fullstack">Full Stack Application</option>
+                            <option value="backend">Backend API</option>
+                            <option value="frontend">Frontend Application</option>
+                            <option value="library">Library/Package</option>
+                            <option value="microservices">Microservices</option>
+                            <option value="mobile">Mobile Application</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Technologies Used</label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="react">
+                                <span>React/Next.js</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="vue">
+                                <span>Vue/Nuxt</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="angular">
+                                <span>Angular</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="node">
+                                <span>Node.js</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="python">
+                                <span>Python</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="go">
+                                <span>Go</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="rust">
+                                <span>Rust</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="tech" value="docker">
+                                <span>Docker/K8s</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="projectPath">Project Path</label>
+                        <input type="text" id="projectPath" name="projectPath" placeholder="/path/to/project">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Project Description</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Briefly describe your project goals and current state..."></textarea>
+                    </div>
+                </form>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">
+                        Analyze & Continue
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M6 12l4-4-4-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 2: Agent Selection -->
+            <section class="wizard-section" id="step2">
+                <h2>🤖 Agent Selection</h2>
+                <p class="description">Choose the agents that will work on your project.</p>
+
+                <div class="agent-selection">
+                    <div class="agent-category">
+                        <h3>Core Development Agents</h3>
+                        <div class="agent-grid" id="coreAgents"></div>
+                    </div>
+
+                    <div class="agent-category">
+                        <h3>Quality Assurance Agents</h3>
+                        <div class="agent-grid" id="qualityAgents"></div>
+                    </div>
+
+                    <div class="agent-category">
+                        <h3>Specialized Agents</h3>
+                        <div class="agent-grid" id="specializedAgents"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxParallel">Maximum Parallel Agents</label>
+                    <input type="range" id="maxParallel" min="1" max="20" value="5">
+                    <span id="parallelValue">5</span>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M10 12L6 8l4-4"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">
+                        Continue
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M6 12l4-4-4-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 3: Workflow Configuration -->
+            <section class="wizard-section" id="step3">
+                <h2>⚙️ Workflow Configuration</h2>
+                <p class="description">Configure how agents will work together.</p>
+
+                <form id="workflowForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchStrategy">Branch Strategy</label>
+                            <select id="branchStrategy" name="branchStrategy">
+                                <option value="gitflow">Git Flow</option>
+                                <option value="github">GitHub Flow</option>
+                                <option value="trunk">Trunk Based</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mergeStrategy">Merge Strategy</label>
+                            <select id="mergeStrategy" name="mergeStrategy">
+                                <option value="squash">Squash and Merge</option>
+                                <option value="merge">Create Merge Commit</option>
+                                <option value="rebase">Rebase and Merge</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reviewThreshold">Review Score Threshold</label>
+                            <input type="range" id="reviewThreshold" min="7" max="10" value="10">
+                            <span id="thresholdValue">10/10</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="minCoverage">Minimum Test Coverage</label>
+                            <input type="range" id="minCoverage" min="0" max="100" value="80">
+                            <span id="coverageValue">80%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Testing Requirements</label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="testing" value="unit" checked>
+                                <span>Unit Tests Required</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="testing" value="integration" checked>
+                                <span>Integration Tests Required</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="testing" value="e2e">
+                                <span>E2E Tests Required</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="testing" value="performance">
+                                <span>Performance Tests</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Claude Model Settings</label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="claude" value="opus41" checked>
+                                <span>Use Opus 4.1 for Complex Tasks</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="claude" value="vision" checked>
+                                <span>Enable Vision for UI Reviews</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="claude" value="parallel">
+                                <span>Allow Parallel Claude Calls</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M10 12L6 8l4-4"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">
+                        Review Configuration
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M6 12l4-4-4-4"/>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 4: Review & Deploy -->
+            <section class="wizard-section" id="step4">
+                <h2>🚀 Review & Deploy</h2>
+                <p class="description">Review your configuration and generate the workflow.</p>
+
+                <div class="config-review">
+                    <div class="review-card">
+                        <h3>Project Configuration</h3>
+                        <div id="projectReview"></div>
+                    </div>
+
+                    <div class="review-card">
+                        <h3>Selected Agents</h3>
+                        <div id="agentsReview"></div>
+                    </div>
+
+                    <div class="review-card">
+                        <h3>Workflow Settings</h3>
+                        <div id="workflowReview"></div>
+                    </div>
+                </div>
+
+                <div class="deployment-options">
+                    <h3>Deployment Options</h3>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="deploy" value="generate" checked>
+                            <span>Generate Configuration Files</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="deploy" value="init">
+                            <span>Initialize in Current Directory</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="deploy" value="run">
+                            <span>Generate & Run Immediately</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M10 12L6 8l4-4"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="deployWorkflow()">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 2v10M4 6l4 4 4-4"/>
+                        </svg>
+                        Deploy AgentFlow
+                    </button>
+                </div>
+
+                <div id="deploymentStatus" class="deployment-status"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/wizard.js"></script>
+</body>
+</html>

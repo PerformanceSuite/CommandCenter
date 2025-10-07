@@ -68,7 +68,7 @@ class ResearchTaskApiClient {
     }
 
     const response = await this.client.get<ResearchTask[]>(
-      `/api/v1/research-tasks?${params.toString()}`
+      `/api/v1/research-tasks/?${params.toString()}`
     );
     return response.data;
   }
@@ -88,7 +88,7 @@ class ResearchTaskApiClient {
    */
   async createTask(data: ResearchTaskCreate): Promise<ResearchTask> {
     const response = await this.client.post<ResearchTask>(
-      '/api/v1/research-tasks',
+      '/api/v1/research-tasks/',
       data
     );
     return response.data;

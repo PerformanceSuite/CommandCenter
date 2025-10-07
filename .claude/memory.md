@@ -39,6 +39,94 @@ Successfully implemented and executed a comprehensive multi-agent parallel devel
 
 ## Recent Work
 
+### Session: AgentFlow Integration Architecture Planning (2025-10-06)
+
+**What Was Accomplished**:
+
+1. **AgentFlow Analysis and Review**
+   - Reviewed complete AgentFlow multi-agent orchestration system
+   - Analyzed 15+ specialized agents (core, quality, specialized types)
+   - Studied git worktree strategy, review system (10/10 scoring), and coordination mechanisms
+   - Examined AgentFlow configuration (agents.json, default.json)
+   - Reviewed prompt templates (base.md, review.md, coordinate.md)
+
+2. **MCP-First Architecture Design**
+   - Designed comprehensive Model Context Protocol (MCP) architecture for CommandCenter
+   - Created .commandcenter/ folder structure to live within each project
+   - Designed 5 MCP servers: Project Manager, KnowledgeBeast, AgentFlow Coordinator, VIZTRTR, API Keys
+   - Planned IDE-first approach with slash commands (/init-commandcenter, /start-workflow, /research, /analyze-ui)
+   - Enabled cross-IDE support (Claude Code, Gemini CLI, Cursor, etc.)
+   - Multi-provider AI routing (Anthropic, OpenAI, Google, local models)
+
+3. **Per-Project Isolation Strategy**
+   - Confirmed KnowledgeBeast RAG isolation via collection_name parameter
+   - Each project gets unique knowledge base (project_{id})
+   - Verified existing KnowledgeBeast architecture supports this without modification
+   - Planned Context7-like documentation integration (starting with Anthropic docs)
+
+4. **8-Agent Development Plan Created**
+   - Designed 4-phase plan using existing agent parallel execution system
+   - 8 agents to build MCP infrastructure (7-10 days vs 8 weeks traditional)
+   - Phase 1: mcp-infrastructure, knowledgebeast-mcp, api-manager (Week 1)
+   - Phase 2: agentflow-coordinator, viztrtr-mcp (Week 2)
+   - Phase 3: slash-commands, integration (Week 3)
+   - Phase 4: agentflow-scripts (Week 4)
+
+5. **Integration Analysis**
+   - Confirmed AgentFlow scripts help setup (setup.sh → init-project.sh, agentflow.sh → orchestrator)
+   - AgentFlow prompts/agents.json directly reusable in CommandCenter
+   - VIZTRTR can run headless as MCP server (8-dimension UI scoring)
+   - Existing .agent-coordination/ system leveraged for building new architecture
+
+**Key Files Reviewed**:
+- `AgentFlow/README.md` - System overview
+- `AgentFlow/CLAUDE.md` - Development guide
+- `AgentFlow/config/agents.json` - 15 agent definitions
+- `AgentFlow/config/default.json` - Workflow configuration
+- `AgentFlow/prompts/base.md` - Foundation prompt template
+- `AgentFlow/prompts/review.md` - Review scoring rubric
+- `AGENT_EXECUTION_README.md` - Existing parallel execution system
+- `AGENT_PARALLEL_EXECUTION_PLAN.md` - Execution strategy
+- `AGENT_REVIEW_PLAN.md` - Review process
+- `AGENT_SYSTEM_SUMMARY.md` - System overview
+
+**Decisions Made**:
+- Use MCP (Model Context Protocol) as primary architecture (not web UI first)
+- .commandcenter/ folder lives IN each project for portability
+- KnowledgeBeast with per-project isolation (collection_name per project)
+- IDE-first UX with slash commands
+- Leverage existing 8-agent parallel system to BUILD new MCP servers
+- AgentFlow scripts integrated into CommandCenter
+- VIZTRTR runs headless for UI/UX analysis
+- Multi-IDE and multi-provider support via MCP abstraction
+
+**Architecture Design**:
+```
+.commandcenter/
+├── config.json
+├── mcp-servers/
+│   ├── project-manager/     # Main orchestration MCP
+│   ├── knowledgebeast/      # RAG with per-project isolation
+│   ├── agentflow/           # Agent coordination MCP
+│   ├── viztrtr/             # UI/UX analysis MCP
+│   └── api-keys/            # Multi-provider routing
+├── knowledge/               # Per-project knowledge base
+├── prompts/                 # From AgentFlow
+├── agents/agents.json       # Agent definitions
+├── workflows/templates/     # Reusable workflows
+└── .agent-coordination/     # Status tracking
+```
+
+**What's Left to Do**:
+- Create 8 agent task definition files in .agent-coordination/tasks/
+- Update setup-worktrees.sh for new agents
+- Build 5 MCP servers (Phase 1-4 execution)
+- Create slash commands in .claude/commands/
+- Port AgentFlow scripts to CommandCenter
+- Test E2E workflow with example project
+- Document /init onboarding flow
+- Implement GitHub app installation guidance
+
 ### Session: Multi-Agent System Implementation (2025-10-05)
 
 **What Was Accomplished**:
@@ -270,29 +358,51 @@ bash scripts/coordination-agent.sh
 
 ## Next Session Recommendations
 
-1. **Deploy to Production**
-   - Set up production environment variables
-   - Configure monitoring dashboards
-   - Set up GitHub webhook endpoints
-   - Enable CI/CD pipeline
+### Priority 1: MCP Server Development (Start with Phase 1)
 
-2. **Team Training**
-   - Review new architecture patterns
-   - Document RAG/Docling workflows
-   - Explain service layer patterns
-   - Share testing best practices
+1. **Create Agent Task Definitions**
+   - Write 8 task files in `.agent-coordination/tasks/` directory
+   - Define concrete tasks for each MCP server agent
+   - Set up dependencies between agents
 
-3. **Feature Development**
-   - Leverage new infrastructure for future features
-   - Use established patterns (service layer, error handling)
-   - Maintain 80%+ test coverage
-   - Follow contribution guidelines
+2. **Launch Phase 1 Agents (3 agents in parallel)**
+   - mcp-infrastructure-agent: Create base MCP template + Project Manager MCP (35h)
+   - knowledgebeast-mcp-agent: Wrap KnowledgeBeast with per-project isolation (25h)
+   - api-manager-agent: Build API Key Manager with multi-provider routing (15h)
 
-4. **Monitoring Setup**
-   - Configure Grafana dashboards
-   - Set up alerting rules
-   - Configure log aggregation
-   - Monitor API rate limits
+3. **Monitor Agent Progress**
+   - Use `cat .agent-coordination/status.json` to track status
+   - Review agent outputs as they complete
+   - Ensure 10/10 review scores before merging
+
+### Priority 2: Existing Project Onboarding
+
+4. **Design Existing Project Onboarding Flow**
+   - CommandCenter should analyze existing projects (like this one)
+   - Create agent workflows from current codebase state
+   - Guide setup of .commandcenter/ folder
+   - Integrate with current git repository
+
+5. **Implement /init Command**
+   - Create `/init-commandcenter` slash command
+   - Analyze project structure
+   - Generate agent definitions
+   - Set up GitHub app integration guidance
+   - Initialize KnowledgeBeast with project docs
+
+### Priority 3: Integration Testing
+
+6. **Test with CommandCenter Project Itself**
+   - Use CommandCenter as first test case
+   - Apply MCP architecture to this project
+   - Validate per-project isolation
+   - Verify cross-IDE compatibility
+
+7. **Documentation**
+   - Document MCP architecture decisions
+   - Create onboarding guide for developers
+   - Write slash command reference
+   - Update CLAUDE.md with MCP integration
 
 ## Git Workflow
 
@@ -310,7 +420,7 @@ bash scripts/coordination-agent.sh
 
 ---
 
-**Last Updated**: 2025-10-05
-**Session Count**: 1
+**Last Updated**: 2025-10-06
+**Session Count**: 2
 **Total PRs Merged**: 8
-**Project Status**: Production-Ready ✅
+**Project Status**: Planning MCP Integration 🚀
