@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from app.config import settings
+from app.utils.path_security import PathValidator
 
 # Lazy imports - only import when RAGService is instantiated
 try:
@@ -246,7 +247,15 @@ class RAGService:
 
         Returns:
             Total number of chunks added
+
+        Raises:
+            ValueError: If directory path is invalid or traverses outside allowed boundaries
         """
+        # Security: Validate directory path to prevent path traversal
+        # Define allowed base directory for document processing
+        allowed_base = Path(self.db_path).parent
+        safe_directory = PathValidator.validate_path(directory, allowed_base, must_exist=True)
+
         # Import the existing processor
         sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base"))
 
@@ -254,7 +263,8 @@ class RAGService:
             from process_docs import PerformiaKnowledgeProcessor
 
             processor = PerformiaKnowledgeProcessor(db_path=self.db_path)
-            return processor.process_directory(directory, category)
+            # Use the validated safe directory path
+            return processor.process_directory(str(safe_directory), category)
 
         except ImportError as e:
             print(f"Error importing process_docs: {e}")
