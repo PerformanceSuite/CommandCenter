@@ -20,8 +20,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'add_project_isolation'
-down_revision: Union[str, None] = 'add_webhook_and_rate_limit_models'
+revision: str = '003_add_project_isolation'
+down_revision: Union[str, None] = 'a7ecf93fa46a'  # merge_migration_heads
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
