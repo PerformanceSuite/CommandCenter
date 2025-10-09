@@ -129,22 +129,22 @@ class PathValidator:
             return False
 
         # Check for parent directory references
-        if filename in ('.', '..'):
+        if filename in (".", ".."):
             return False
 
         # Check for null bytes
-        if '\0' in filename:
+        if "\0" in filename:
             return False
 
         # Check for dangerous patterns
-        dangerous_patterns = ['..', '/', '\\', '\x00']
+        dangerous_patterns = ["..", "/", "\\", "\x00"]
         if any(pattern in filename for pattern in dangerous_patterns):
             return False
 
         return True
 
     @staticmethod
-    def sanitize_filename(filename: str, replacement: str = '_') -> str:
+    def sanitize_filename(filename: str, replacement: str = "_") -> str:
         """
         Sanitize filename by removing/replacing dangerous characters
 
@@ -167,13 +167,13 @@ class PathValidator:
             sanitized = sanitized.replace(os.altsep, replacement)
 
         # Remove null bytes
-        sanitized = sanitized.replace('\0', '')
+        sanitized = sanitized.replace("\0", "")
 
         # Remove parent directory references
-        sanitized = sanitized.replace('..', replacement)
+        sanitized = sanitized.replace("..", replacement)
 
         # Remove leading/trailing whitespace and dots
-        sanitized = sanitized.strip('. ')
+        sanitized = sanitized.strip(". ")
 
         if not sanitized:
             raise ValueError("Filename is empty after sanitization")
@@ -198,7 +198,7 @@ class PathValidator:
         components = []
 
         for part in path_obj.parts:
-            if part in ('/', '\\'):
+            if part in ("/", "\\"):
                 continue  # Skip root separators
 
             if not PathValidator.is_safe_filename(part):

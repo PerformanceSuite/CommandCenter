@@ -52,9 +52,7 @@ async def create_mcp_token(
             client_id=client_id, ttl_hours=request.ttl_hours
         )
 
-        return MCPTokenResponse(
-            token=token, expires_at=expires_at, client_id=client_id
-        )
+        return MCPTokenResponse(token=token, expires_at=expires_at, client_id=client_id)
 
     except ValueError as e:
         raise HTTPException(

@@ -22,16 +22,16 @@ class GitCommandSanitizer:
 
     # Allowed characters in branch names (git standard)
     # Letters, numbers, hyphens, underscores, forward slashes, dots
-    BRANCH_NAME_PATTERN = re.compile(r'^[a-zA-Z0-9_\-/\.]+$')
+    BRANCH_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9_\-/\.]+$")
 
     # Disallowed patterns in any git input
     DANGEROUS_PATTERNS = [
-        r'[;&|`$]',     # Shell metacharacters
-        r'\$\(',        # Command substitution $(...)
-        r'`',           # Backtick command substitution
-        r'>\s*/',       # Output redirection to root
-        r'<\s*/',       # Input redirection from root
-        r'\|\s*\w',     # Pipe to command
+        r"[;&|`$]",  # Shell metacharacters
+        r"\$\(",  # Command substitution $(...)
+        r"`",  # Backtick command substitution
+        r">\s*/",  # Output redirection to root
+        r"<\s*/",  # Input redirection from root
+        r"\|\s*\w",  # Pipe to command
     ]
 
     @staticmethod
@@ -74,24 +74,24 @@ class GitCommandSanitizer:
                 raise ValueError(f"Dangerous pattern detected in branch name: {branch}")
 
         # Additional git-specific validations
-        if branch.startswith('-'):
+        if branch.startswith("-"):
             raise ValueError("Branch name cannot start with hyphen")
 
-        if branch.startswith('.'):
+        if branch.startswith("."):
             raise ValueError("Branch name cannot start with dot")
 
-        if '..' in branch:
+        if ".." in branch:
             raise ValueError("Branch name cannot contain '..'")
 
-        if branch.endswith('.lock'):
+        if branch.endswith(".lock"):
             raise ValueError("Branch name cannot end with '.lock'")
 
-        if '//' in branch:
+        if "//" in branch:
             raise ValueError("Branch name cannot contain consecutive slashes")
 
         # Reserved names
-        reserved = ['HEAD', 'master', 'main']
-        if branch in reserved and '/' not in branch:
+        reserved = ["HEAD", "master", "main"]
+        if branch in reserved and "/" not in branch:
             # Allow feature/main, etc., but not bare 'main'
             raise ValueError(f"Branch name '{branch}' is reserved")
 
@@ -202,16 +202,16 @@ class GitCommandSanitizer:
         # Tags have similar rules to branches
         tag = tag.strip()
 
-        if not re.match(r'^[a-zA-Z0-9_\-\.]+$', tag):
+        if not re.match(r"^[a-zA-Z0-9_\-\.]+$", tag):
             raise ValueError(
                 f"Invalid tag name: {tag}. "
                 "Only letters, numbers, hyphens, underscores, and dots allowed"
             )
 
-        if tag.startswith('-') or tag.startswith('.'):
+        if tag.startswith("-") or tag.startswith("."):
             raise ValueError("Tag name cannot start with hyphen or dot")
 
-        if '..' in tag:
+        if ".." in tag:
             raise ValueError("Tag name cannot contain '..'")
 
         return tag
@@ -242,7 +242,7 @@ class GitCommandSanitizer:
             raise ValueError("All git command arguments must be strings")
 
         # Prepend 'git' command
-        return ['git'] + args
+        return ["git"] + args
 
     @staticmethod
     def validate_remote_url(url: str) -> str:
@@ -264,7 +264,7 @@ class GitCommandSanitizer:
         url = url.strip()
 
         # Allowed protocols
-        allowed_protocols = ['https://', 'http://', 'git://', 'ssh://', 'git@']
+        allowed_protocols = ["https://", "http://", "git://", "ssh://", "git@"]
 
         if not any(url.startswith(proto) for proto in allowed_protocols):
             raise ValueError(

@@ -34,9 +34,7 @@ class Repository(Base):
 
     # Access control (encrypted)
     _encrypted_access_token: Mapped[Optional[str]] = mapped_column(
-        "access_token",
-        String(1024),
-        nullable=True
+        "access_token", String(1024), nullable=True
     )
     is_private: Mapped[bool] = mapped_column(default=False)
 
@@ -62,8 +60,12 @@ class Repository(Base):
     # Last sync information
     last_commit_sha: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     last_commit_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_commit_author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    last_commit_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_commit_author: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    last_commit_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Repository stats
@@ -78,21 +80,15 @@ class Repository(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     research_tasks: Mapped[list["ResearchTask"]] = relationship(
-        "ResearchTask",
-        back_populates="repository",
-        cascade="all, delete-orphan"
+        "ResearchTask", back_populates="repository", cascade="all, delete-orphan"
     )
     webhook_configs: Mapped[list["WebhookConfig"]] = relationship(
-        "WebhookConfig",
-        back_populates="repository",
-        cascade="all, delete-orphan"
+        "WebhookConfig", back_populates="repository", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

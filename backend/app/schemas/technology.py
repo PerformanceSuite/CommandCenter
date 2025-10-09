@@ -11,6 +11,7 @@ from app.models.technology import TechnologyDomain, TechnologyStatus
 
 class TechnologyBase(BaseModel):
     """Base schema for technology"""
+
     title: str = Field(..., min_length=1, max_length=255)
     vendor: Optional[str] = Field(None, max_length=255)
     domain: TechnologyDomain = TechnologyDomain.OTHER
@@ -28,11 +29,13 @@ class TechnologyBase(BaseModel):
 
 class TechnologyCreate(TechnologyBase):
     """Schema for creating a technology"""
+
     pass
 
 
 class TechnologyUpdate(BaseModel):
     """Schema for updating a technology"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     vendor: Optional[str] = Field(None, max_length=255)
     domain: Optional[TechnologyDomain] = None
@@ -50,6 +53,7 @@ class TechnologyUpdate(BaseModel):
 
 class TechnologyInDB(TechnologyBase):
     """Schema for technology in database"""
+
     id: int
     created_at: datetime
     updated_at: datetime
@@ -59,11 +63,13 @@ class TechnologyInDB(TechnologyBase):
 
 class TechnologyResponse(TechnologyInDB):
     """Schema for technology API response"""
+
     pass
 
 
 class TechnologyListResponse(BaseModel):
     """Schema for technology list response"""
+
     total: int
     items: list[TechnologyResponse]
     page: int = 1

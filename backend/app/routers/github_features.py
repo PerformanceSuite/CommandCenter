@@ -18,6 +18,7 @@ router = APIRouter(prefix="/github", tags=["github-features"])
 # Pydantic models for requests
 class PRTemplateCreate(BaseModel):
     """Schema for creating PR template"""
+
     owner: str
     name: str
     template_content: str
@@ -26,6 +27,7 @@ class PRTemplateCreate(BaseModel):
 
 class LabelCreate(BaseModel):
     """Schema for creating a label"""
+
     owner: str
     name: str
     label_name: str
@@ -35,6 +37,7 @@ class LabelCreate(BaseModel):
 
 class LabelUpdate(BaseModel):
     """Schema for updating a label"""
+
     owner: str
     name: str
     label_name: str
@@ -45,6 +48,7 @@ class LabelUpdate(BaseModel):
 
 class RepositorySettingsUpdate(BaseModel):
     """Schema for updating repository settings"""
+
     description: Optional[str] = None
     homepage: Optional[str] = None
     has_issues: Optional[bool] = None
@@ -53,7 +57,9 @@ class RepositorySettingsUpdate(BaseModel):
     default_branch: Optional[str] = None
 
 
-def get_github_service(redis: RedisService = Depends(get_redis)) -> EnhancedGitHubService:
+def get_github_service(
+    redis: RedisService = Depends(get_redis),
+) -> EnhancedGitHubService:
     """Dependency to get enhanced GitHub service"""
     return EnhancedGitHubService(redis_service=redis)
 
@@ -63,7 +69,7 @@ async def get_repository_info(
     owner: str,
     repo: str,
     use_cache: bool = True,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> Dict[str, Any]:
     """
     Get detailed repository information with caching
@@ -78,12 +84,13 @@ async def get_repository_info(
         Repository information
     """
     try:
-        return await github_service.get_repository_info(owner, repo, use_cache=use_cache)
+        return await github_service.get_repository_info(
+            owner, repo, use_cache=use_cache
+        )
     except Exception as e:
         logger.error(f"Failed to get repository info: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -93,7 +100,7 @@ async def list_pull_requests(
     repo: str,
     state: str = "open",
     use_cache: bool = True,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> List[Dict[str, Any]]:
     """
     List pull requests with caching
@@ -109,12 +116,13 @@ async def list_pull_requests(
         List of pull requests
     """
     try:
-        return await github_service.list_pull_requests(owner, repo, state=state, use_cache=use_cache)
+        return await github_service.list_pull_requests(
+            owner, repo, state=state, use_cache=use_cache
+        )
     except Exception as e:
         logger.error(f"Failed to list pull requests: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -124,7 +132,7 @@ async def list_issues(
     repo: str,
     state: str = "open",
     labels: Optional[str] = None,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> List[Dict[str, Any]]:
     """
     List repository issues
@@ -141,12 +149,13 @@ async def list_issues(
     """
     try:
         label_list = labels.split(",") if labels else None
-        return await github_service.list_issues(owner, repo, state=state, labels=label_list)
+        return await github_service.list_issues(
+            owner, repo, state=state, labels=label_list
+        )
     except Exception as e:
         logger.error(f"Failed to list issues: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -155,7 +164,7 @@ async def create_label(
     owner: str,
     repo: str,
     label_data: LabelCreate,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> Dict[str, Any]:
     """
     Create a new label
@@ -176,13 +185,12 @@ async def create_label(
             action="create",
             label_name=label_data.label_name,
             color=label_data.color,
-            description=label_data.description
+            description=label_data.description,
         )
     except Exception as e:
         logger.error(f"Failed to create label: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -192,7 +200,7 @@ async def update_label(
     repo: str,
     label_name: str,
     label_data: LabelUpdate,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> Dict[str, Any]:
     """
     Update an existing label
@@ -214,22 +222,23 @@ async def update_label(
             action="update",
             label_name=label_name,
             color=label_data.color,
-            description=label_data.description
+            description=label_data.description,
         )
     except Exception as e:
         logger.error(f"Failed to update label: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
-@router.delete("/{owner}/{repo}/labels/{label_name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{owner}/{repo}/labels/{label_name}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_label(
     owner: str,
     repo: str,
     label_name: str,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> None:
     """
     Delete a label
@@ -242,16 +251,12 @@ async def delete_label(
     """
     try:
         await github_service.manage_labels(
-            owner=owner,
-            name=repo,
-            action="delete",
-            label_name=label_name
+            owner=owner, name=repo, action="delete", label_name=label_name
         )
     except Exception as e:
         logger.error(f"Failed to delete label: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -259,7 +264,7 @@ async def delete_label(
 async def list_workflows(
     owner: str,
     repo: str,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> List[Dict[str, Any]]:
     """
     List GitHub Actions workflows
@@ -277,8 +282,7 @@ async def list_workflows(
     except Exception as e:
         logger.error(f"Failed to list workflows: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -287,7 +291,7 @@ async def update_repository_settings(
     owner: str,
     repo: str,
     settings: RepositorySettingsUpdate,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> Dict[str, Any]:
     """
     Update repository settings
@@ -303,12 +307,13 @@ async def update_repository_settings(
     """
     try:
         settings_dict = settings.model_dump(exclude_unset=True)
-        return await github_service.update_repository_settings(owner, repo, settings_dict)
+        return await github_service.update_repository_settings(
+            owner, repo, settings_dict
+        )
     except Exception as e:
         logger.error(f"Failed to update repository settings: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
 
@@ -316,7 +321,7 @@ async def update_repository_settings(
 async def invalidate_cache(
     owner: str,
     repo: str,
-    github_service: EnhancedGitHubService = Depends(get_github_service)
+    github_service: EnhancedGitHubService = Depends(get_github_service),
 ) -> Dict[str, str]:
     """
     Invalidate all cache entries for a repository
@@ -335,6 +340,5 @@ async def invalidate_cache(
     except Exception as e:
         logger.error(f"Failed to invalidate cache: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
