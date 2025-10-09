@@ -3,7 +3,7 @@ Enhanced GitHub service with rate limiting, caching, and advanced features
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+
 import logging
 from github import Github, GithubException, Repository as GithubRepo
 

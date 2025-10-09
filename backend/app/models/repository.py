@@ -84,10 +84,10 @@ class Repository(Base):
     )
 
     # Relationships
-    research_tasks: Mapped[list["ResearchTask"]] = relationship(
+    research_tasks: Mapped[list["ResearchTask"]] = relationship(  # noqa: F821
         "ResearchTask", back_populates="repository", cascade="all, delete-orphan"
     )
-    webhook_configs: Mapped[list["WebhookConfig"]] = relationship(
+    webhook_configs: Mapped[list["WebhookConfig"]] = relationship(  # noqa: F821
         "WebhookConfig", back_populates="repository", cascade="all, delete-orphan"
     )
 

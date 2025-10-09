@@ -62,7 +62,10 @@ async def query_knowledge_base(
         List of relevant knowledge entries with scores
     """
     # Create cache key from query parameters
-    cache_key = f"rag_query:{collection}:{request.query}:{request.category}:{request.technology_id}:{request.limit}"
+    cache_key = (
+        f"rag_query:{collection}:{request.query}:"
+        f"{request.category}:{request.technology_id}:{request.limit}"
+    )
 
     # Try to get from cache first
     cached_result = await cache_service.get(cache_key)

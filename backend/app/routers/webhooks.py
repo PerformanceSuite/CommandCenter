@@ -72,7 +72,7 @@ async def receive_github_webhook(
                 result = await db.execute(
                     select(WebhookConfig)
                     .where(WebhookConfig.repository_id == repo.id)
-                    .where(WebhookConfig.active == True)
+                    .where(WebhookConfig.active.is_(True))
                 )
                 webhook_config = result.scalar_one_or_none()
 
@@ -257,7 +257,10 @@ async def create_webhook_config(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Webhook configuration already exists for repository {config_data.repository_id}",
+            detail=(
+                f"Webhook configuration already exists for "
+                f"repository {config_data.repository_id}"
+            ),
         )
 
     # Create webhook config

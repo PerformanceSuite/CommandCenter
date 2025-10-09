@@ -7,13 +7,11 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
-import os
 from pathlib import Path
 
 from app.models import ResearchTask, TaskStatus
 from app.repositories import ResearchTaskRepository
-from app.schemas import ResearchTaskCreate, ResearchTaskUpdate, ResearchTaskResponse
+from app.schemas import ResearchTaskCreate, ResearchTaskUpdate
 
 
 class ResearchTaskService:

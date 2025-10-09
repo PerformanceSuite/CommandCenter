@@ -2,7 +2,7 @@
 Prometheus metrics service for monitoring GitHub operations
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Info
+from prometheus_client import Counter, Histogram, Gauge
 import time
 from functools import wraps
 from typing import Callable

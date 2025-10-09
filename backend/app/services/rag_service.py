@@ -3,7 +3,8 @@ RAG (Retrieval-Augmented Generation) service for knowledge base
 Wrapper around the existing process_docs.py knowledge base processor
 
 Note: RAG dependencies are optional and imported lazily.
-Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers
+Install with: pip install langchain langchain-community langchain-chroma
+chromadb sentence-transformers
 """
 
 import sys
@@ -45,7 +46,8 @@ class RAGService:
         if not RAG_AVAILABLE:
             raise ImportError(
                 "RAG dependencies not installed. "
-                "Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers"
+                "Install with: pip install langchain langchain-community "
+                "langchain-chroma chromadb sentence-transformers"
             )
 
         self.db_path = db_path or settings.knowledge_base_path
