@@ -115,6 +115,19 @@ class Settings(BaseSettings):
             )
         return self.database_url
 
+    def get_async_database_url(self) -> str:
+        """
+        Get database URL with async driver
+        Converts postgresql:// to postgresql+asyncpg:// for async SQLAlchemy
+        """
+        url = self.get_postgres_url()
+
+        # If using PostgreSQL without explicit driver, add asyncpg
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+        return url
+
 
 # Global settings instance
 settings = Settings()

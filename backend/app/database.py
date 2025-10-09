@@ -20,11 +20,14 @@ class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
 
 
+# Get async-compatible database URL
+_database_url = settings.get_async_database_url()
+
 # Create async engine
 engine: AsyncEngine = create_async_engine(
-    settings.database_url,
+    _database_url,
     echo=settings.debug,
-    poolclass=NullPool if "sqlite" in settings.database_url else None,
+    poolclass=NullPool if "sqlite" in _database_url else None,
     future=True,
 )
 
