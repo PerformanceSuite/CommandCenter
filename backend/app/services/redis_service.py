@@ -25,15 +25,13 @@ class RedisService:
         """Connect to Redis"""
         try:
             # Check if Redis URL is configured
-            redis_url = getattr(settings, 'redis_url', None)
+            redis_url = getattr(settings, "redis_url", None)
             if not redis_url:
                 logger.warning("Redis URL not configured, caching disabled")
                 return
 
             self.redis_client = redis.from_url(
-                redis_url,
-                encoding="utf-8",
-                decode_responses=True
+                redis_url, encoding="utf-8", decode_responses=True
             )
             # Test connection
             await self.redis_client.ping()
@@ -71,12 +69,7 @@ class RedisService:
             logger.error(f"Redis GET error for key {key}: {e}")
             return None
 
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: Optional[int] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """
         Set value in cache
 

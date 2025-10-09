@@ -34,7 +34,9 @@ class ProjectContextMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Skip public endpoints
-        if request.url.path in PUBLIC_ENDPOINTS or request.url.path.startswith("/static"):
+        if request.url.path in PUBLIC_ENDPOINTS or request.url.path.startswith(
+            "/static"
+        ):
             return await call_next(request)
 
         # Extract project_id from various sources
@@ -48,7 +50,7 @@ class ProjectContextMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 raise HTTPException(
                     status_code=400,
-                    detail="Invalid X-Project-ID header: must be integer"
+                    detail="Invalid X-Project-ID header: must be integer",
                 )
 
         # Priority 2: JWT token claim (if authenticated)
@@ -67,21 +69,23 @@ class ProjectContextMiddleware(BaseHTTPMiddleware):
             except ValueError:
                 raise HTTPException(
                     status_code=400,
-                    detail="Invalid project_id query parameter: must be integer"
+                    detail="Invalid project_id query parameter: must be integer",
                 )
 
         # If still no project_id, reject request
         if not project_id:
             raise HTTPException(
                 status_code=400,
-                detail="project_id required (provide via X-Project-ID header, JWT token, or ?project_id= query param)"
+                detail="project_id required (provide via X-Project-ID header, JWT token, or ?project_id= query param)",
             )
 
         # TODO: Validate that project exists and user has access
         # For now, just attach to request state
 
         request.state.project_id = project_id
-        logger.info(f"Request for project {project_id}: {request.method} {request.url.path}")
+        logger.info(
+            f"Request for project {project_id}: {request.method} {request.url.path}"
+        )
 
         response = await call_next(request)
 

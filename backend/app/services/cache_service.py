@@ -10,6 +10,7 @@ import os
 # Lazy imports - only import when CacheService is instantiated
 try:
     import redis.asyncio as redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -30,13 +31,10 @@ class CacheService:
             ImportError: If redis is not installed
         """
         if not REDIS_AVAILABLE:
-            raise ImportError(
-                "Redis not installed. "
-                "Install with: pip install redis"
-            )
+            raise ImportError("Redis not installed. " "Install with: pip install redis")
 
         # Get Redis URL from parameter or environment
-        self.redis_url = redis_url or os.getenv('REDIS_URL', 'redis://localhost:6379')
+        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
 
         # Initialize Redis client (connection is lazy)
         self.redis_client: Optional[redis.Redis] = None
@@ -53,7 +51,7 @@ class CacheService:
                 self.redis_url,
                 encoding="utf-8",
                 decode_responses=True,
-                max_connections=10
+                max_connections=10,
             )
 
         return self.redis_client
@@ -230,11 +228,9 @@ class CacheService:
 
 # Convenience functions for common caching patterns
 
+
 async def cache_rag_query(
-    query: str,
-    collection: str,
-    results: list,
-    ttl: int = 300
+    query: str, collection: str, results: list, ttl: int = 300
 ) -> bool:
     """
     Cache RAG query results

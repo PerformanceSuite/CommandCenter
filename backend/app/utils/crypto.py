@@ -21,7 +21,7 @@ class TokenEncryption:
             length=32,
             salt=settings.ENCRYPTION_SALT.encode(),
             iterations=100000,
-            backend=default_backend()
+            backend=default_backend(),
         )
 
         # Derive key from SECRET_KEY
@@ -31,20 +31,20 @@ class TokenEncryption:
         fernet_key = base64.urlsafe_b64encode(key)
 
         self.cipher = Fernet(fernet_key)
-    
+
     def encrypt(self, plaintext: str) -> str:
         """Encrypt a plaintext string"""
         if not plaintext:
             return ""
-        
+
         encrypted_bytes = self.cipher.encrypt(plaintext.encode())
         return encrypted_bytes.decode()
-    
+
     def decrypt(self, ciphertext: str) -> str:
         """Decrypt a ciphertext string"""
         if not ciphertext:
             return ""
-        
+
         try:
             decrypted_bytes = self.cipher.decrypt(ciphertext.encode())
             return decrypted_bytes.decode()
@@ -55,6 +55,7 @@ class TokenEncryption:
 # Singleton
 _token_encryption = None
 
+
 def get_token_encryption() -> TokenEncryption:
     """Get singleton TokenEncryption instance"""
     global _token_encryption
@@ -62,11 +63,13 @@ def get_token_encryption() -> TokenEncryption:
         _token_encryption = TokenEncryption()
     return _token_encryption
 
+
 def encrypt_token(token: str) -> str:
     """Encrypt a token"""
     if not settings.ENCRYPT_TOKENS:
         return token
     return get_token_encryption().encrypt(token)
+
 
 def decrypt_token(encrypted_token: str) -> str:
     """Decrypt a token"""

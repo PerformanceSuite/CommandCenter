@@ -49,7 +49,7 @@ async def query_knowledge_base(
     collection: str = "default",
     rag_service: RAGService = Depends(get_rag_service),
     cache_service: CacheService = Depends(get_cache_service),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> List[KnowledgeSearchResult]:
     """
     Query the knowledge base using semantic search
@@ -75,9 +75,7 @@ async def query_knowledge_base(
 
         # Query the vector database
         results = await rag_service.query(
-            question=request.query,
-            category=request.category,
-            k=request.limit
+            question=request.query, category=request.category, k=request.limit
         )
 
         # Format results
@@ -91,7 +89,7 @@ async def query_knowledge_base(
                     technology_id=result["metadata"].get("technology_id"),
                     source_file=result["source"],
                     score=result["score"],
-                    metadata=result["metadata"]
+                    metadata=result["metadata"],
                 )
             )
 
@@ -99,7 +97,7 @@ async def query_knowledge_base(
         await cache_service.set(
             cache_key,
             json.dumps([r.model_dump() for r in search_results]),
-            ttl=300  # 5 minutes
+            ttl=300,  # 5 minutes
         )
 
         return search_results
@@ -107,11 +105,13 @@ async def query_knowledge_base(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error querying knowledge base: {str(e)}"
+            detail=f"Error querying knowledge base: {str(e)}",
         )
 
 
-@router.post("/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED
+)
 async def add_document(
     file: UploadFile = File(...),
     category: str = Form(...),
@@ -119,7 +119,7 @@ async def add_document(
     collection: str = Form("default"),
     rag_service: RAGService = Depends(get_rag_service),
     docling_service: DoclingService = Depends(get_docling_service),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     Add a document to the knowledge base
@@ -141,19 +141,23 @@ async def add_document(
         filename = file.filename
 
         # Determine file type
-        file_extension = filename.split('.')[-1].lower() if '.' in filename else ''
+        file_extension = filename.split(".")[-1].lower() if "." in filename else ""
 
         # Process document with Docling
-        if file_extension == 'pdf':
+        if file_extension == "pdf":
             processed_content = await docling_service.process_pdf(content)
-        elif file_extension in ['md', 'markdown']:
-            processed_content = await docling_service.process_markdown(content.decode('utf-8'))
-        elif file_extension in ['txt', 'text']:
-            processed_content = await docling_service.process_text(content.decode('utf-8'))
+        elif file_extension in ["md", "markdown"]:
+            processed_content = await docling_service.process_markdown(
+                content.decode("utf-8")
+            )
+        elif file_extension in ["txt", "text"]:
+            processed_content = await docling_service.process_text(
+                content.decode("utf-8")
+            )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unsupported file type: {file_extension}"
+                detail=f"Unsupported file type: {file_extension}",
             )
 
         # Prepare metadata
@@ -170,8 +174,7 @@ async def add_document(
 
         # Add to vector database
         chunks_added = await rag_service.add_document(
-            content=processed_content,
-            metadata=metadata
+            content=processed_content, metadata=metadata
         )
 
         # Create knowledge entry in database
@@ -196,7 +199,7 @@ async def add_document(
             "collection": collection,
             "chunks_added": chunks_added,
             "file_size": len(content),
-            "status": "success"
+            "status": "success",
         }
 
     except HTTPException:
@@ -204,7 +207,7 @@ async def add_document(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing document: {str(e)}"
+            detail=f"Error processing document: {str(e)}",
         )
 
 
@@ -213,7 +216,7 @@ async def delete_document(
     document_id: int,
     collection: str = "default",
     rag_service: RAGService = Depends(get_rag_service),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a document from the knowledge base
@@ -231,7 +234,7 @@ async def delete_document(
     if not knowledge_entry:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Document {document_id} not found"
+            detail=f"Document {document_id} not found",
         )
 
     try:
@@ -249,7 +252,7 @@ async def delete_document(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting document: {str(e)}"
+            detail=f"Error deleting document: {str(e)}",
         )
 
 
@@ -257,7 +260,7 @@ async def delete_document(
 async def get_knowledge_statistics(
     collection: str = "default",
     rag_service: RAGService = Depends(get_rag_service),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     Get knowledge base statistics
@@ -282,8 +285,7 @@ async def get_knowledge_statistics(
 
         # Get category breakdown from database
         category_query = select(
-            KnowledgeEntry.category,
-            func.count(KnowledgeEntry.id).label('count')
+            KnowledgeEntry.category, func.count(KnowledgeEntry.id).label("count")
         ).group_by(KnowledgeEntry.category)
 
         category_result = await db.execute(category_query)
@@ -292,17 +294,14 @@ async def get_knowledge_statistics(
         return {
             "collection": collection,
             "vector_db": rag_stats,
-            "database": {
-                "total_entries": db_total,
-                "categories": db_categories
-            },
+            "database": {"total_entries": db_total, "categories": db_categories},
             "embedding_model": settings.embedding_model,
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting statistics: {str(e)}"
+            detail=f"Error getting statistics: {str(e)}",
         )
 
 
@@ -321,8 +320,7 @@ async def list_collections() -> List[str]:
 
 @router.get("/categories", response_model=List[str])
 async def list_categories(
-    collection: str = "default",
-    rag_service: RAGService = Depends(get_rag_service)
+    collection: str = "default", rag_service: RAGService = Depends(get_rag_service)
 ) -> List[str]:
     """
     List all categories in the knowledge base
@@ -343,5 +341,5 @@ async def list_categories(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting categories: {str(e)}"
+            detail=f"Error getting categories: {str(e)}",
         )

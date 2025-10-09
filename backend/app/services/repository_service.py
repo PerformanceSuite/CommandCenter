@@ -31,7 +31,7 @@ class RepositoryService:
         skip: int = 0,
         limit: int = 100,
         owner: Optional[str] = None,
-        language: Optional[str] = None
+        language: Optional[str] = None,
     ) -> List[Repository]:
         """
         List repositories with optional filters
@@ -70,7 +70,7 @@ class RepositoryService:
         if not repository:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Repository {repository_id} not found"
+                detail=f"Repository {repository_id} not found",
             )
 
         return repository
@@ -107,13 +107,12 @@ class RepositoryService:
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Repository {full_name} already exists"
+                detail=f"Repository {full_name} already exists",
             )
 
         # Create repository
         repository = await self.repo.create(
-            **repository_data.model_dump(),
-            full_name=full_name
+            **repository_data.model_dump(), full_name=full_name
         )
 
         await self.db.commit()
@@ -122,9 +121,7 @@ class RepositoryService:
         return repository
 
     async def update_repository(
-        self,
-        repository_id: int,
-        repository_data: RepositoryUpdate
+        self, repository_id: int, repository_data: RepositoryUpdate
     ) -> Repository:
         """
         Update repository
@@ -165,9 +162,7 @@ class RepositoryService:
         await self.db.commit()
 
     async def sync_repository(
-        self,
-        repository_id: int,
-        force: bool = False
+        self, repository_id: int, force: bool = False
     ) -> Dict[str, Any]:
         """
         Sync repository with GitHub
@@ -185,13 +180,15 @@ class RepositoryService:
         repository = await self.get_repository(repository_id)
 
         # Initialize async GitHub service
-        async with GitHubAsyncService(access_token=repository.access_token) as github_service:
+        async with GitHubAsyncService(
+            access_token=repository.access_token
+        ) as github_service:
             try:
                 # Sync with GitHub
                 sync_info = await github_service.sync_repository(
                     owner=repository.owner,
                     name=repository.name,
-                    last_known_sha=repository.last_commit_sha
+                    last_known_sha=repository.last_commit_sha,
                 )
 
                 # Update repository with sync info
@@ -217,21 +214,18 @@ class RepositoryService:
                     "last_commit_sha": sync_info.get("last_commit_sha"),
                     "last_commit_message": sync_info.get("last_commit_message"),
                     "last_synced_at": sync_info["last_synced_at"],
-                    "changes_detected": sync_info["changes_detected"]
+                    "changes_detected": sync_info["changes_detected"],
                 }
 
             except Exception as e:
                 await self.db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to sync repository: {str(e)}"
+                    detail=f"Failed to sync repository: {str(e)}",
                 )
 
     async def import_from_github(
-        self,
-        owner: str,
-        name: str,
-        access_token: Optional[str] = None
+        self, owner: str, name: str, access_token: Optional[str] = None
     ) -> Repository:
         """
         Import repository from GitHub
@@ -254,7 +248,7 @@ class RepositoryService:
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Repository {full_name} already exists"
+                detail=f"Repository {full_name} already exists",
             )
 
         # Fetch from GitHub
@@ -276,7 +270,7 @@ class RepositoryService:
                     forks=repo_info.get("forks", 0),
                     language=repo_info.get("language"),
                     github_id=repo_info.get("github_id"),
-                    access_token=access_token
+                    access_token=access_token,
                 )
 
                 await self.db.commit()
@@ -288,7 +282,7 @@ class RepositoryService:
                 await self.db.rollback()
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Failed to import repository: {str(e)}"
+                    detail=f"Failed to import repository: {str(e)}",
                 )
 
     async def get_statistics(self) -> Dict[str, Any]:
@@ -307,8 +301,8 @@ class RepositoryService:
                 {
                     "id": r.id,
                     "full_name": r.full_name,
-                    "last_synced_at": r.last_synced_at
+                    "last_synced_at": r.last_synced_at,
                 }
                 for r in recently_synced
-            ]
+            ],
         }
