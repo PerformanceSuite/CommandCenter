@@ -29,7 +29,9 @@ class RedisService:
                 logger.warning("Redis URL not configured, caching disabled")
                 return
 
-            self.redis_client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+            self.redis_client = redis.from_url(
+                redis_url, encoding="utf-8", decode_responses=True
+            )
             # Test connection
             await self.redis_client.ping()
             self.enabled = True

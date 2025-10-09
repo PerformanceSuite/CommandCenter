@@ -11,7 +11,11 @@ from app.services.rate_limit_service import (
     with_rate_limit_retry,
     get_rate_limit_service,
 )
-from app.services.metrics_service import MetricsService, metrics_service, track_github_api_call
+from app.services.metrics_service import (
+    MetricsService,
+    metrics_service,
+    track_github_api_call,
+)
 from app.services.repository_service import RepositoryService
 from app.services.technology_service import TechnologyService
 from app.services.research_service import ResearchService

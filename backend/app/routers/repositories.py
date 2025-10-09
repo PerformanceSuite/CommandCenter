@@ -45,9 +45,12 @@ async def get_repository(
     return await service.get_repository(repository_id)
 
 
-@router.post("/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_repository(
-    repository_data: RepositoryCreate, service: RepositoryService = Depends(get_repository_service)
+    repository_data: RepositoryCreate,
+    service: RepositoryService = Depends(get_repository_service),
 ) -> Repository:
     """Create a new repository"""
     return await service.create_repository(repository_data)
@@ -79,6 +82,7 @@ async def sync_repository(
 ) -> RepositorySyncResponse:
     """Sync repository with GitHub"""
     sync_result = await service.sync_repository(
-        repository_id, force=sync_request.force if hasattr(sync_request, "force") else False
+        repository_id,
+        force=sync_request.force if hasattr(sync_request, "force") else False,
     )
     return RepositorySyncResponse(**sync_result)

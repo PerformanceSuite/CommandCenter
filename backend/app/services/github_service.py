@@ -43,7 +43,9 @@ class GitHubService:
                 return False
             raise
 
-    async def list_user_repos(self, username: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def list_user_repos(
+        self, username: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         List repositories for a user
 
@@ -176,7 +178,9 @@ class GitHubService:
         except GithubException as e:
             raise Exception(f"Failed to get repository info: {e}")
 
-    async def search_repositories(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
+    async def search_repositories(
+        self, query: str, max_results: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Search for repositories on GitHub
 

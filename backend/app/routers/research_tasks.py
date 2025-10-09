@@ -55,9 +55,12 @@ async def get_research_task(
     return ResearchTaskResponse.model_validate(task)
 
 
-@router.post("/", response_model=ResearchTaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ResearchTaskResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_research_task(
-    task_data: ResearchTaskCreate, service: ResearchService = Depends(get_research_service)
+    task_data: ResearchTaskCreate,
+    service: ResearchService = Depends(get_research_service),
 ) -> ResearchTaskResponse:
     """Create a new research task"""
     task = await service.create_research_task(task_data)
@@ -85,7 +88,9 @@ async def delete_research_task(
 
 @router.patch("/{task_id}/status", response_model=ResearchTaskResponse)
 async def update_task_status(
-    task_id: int, new_status: TaskStatus, service: ResearchService = Depends(get_research_service)
+    task_id: int,
+    new_status: TaskStatus,
+    service: ResearchService = Depends(get_research_service),
 ) -> ResearchTaskResponse:
     """Update task status"""
     task = await service.update_status(task_id, new_status)
@@ -157,7 +162,9 @@ async def upload_document(
 
 
 @router.get("/{task_id}/documents")
-async def list_documents(task_id: int, service: ResearchService = Depends(get_research_service)):
+async def list_documents(
+    task_id: int, service: ResearchService = Depends(get_research_service)
+):
     """List documents for a research task"""
     task = await service.get_research_task(task_id)
     return {"documents": task.uploaded_documents or []}
@@ -186,7 +193,8 @@ async def get_upcoming_tasks(
 
 @router.get("/overdue/list", response_model=List[ResearchTaskResponse])
 async def get_overdue_tasks(
-    limit: int = Query(100, ge=1, le=500), service: ResearchService = Depends(get_research_service)
+    limit: int = Query(100, ge=1, le=500),
+    service: ResearchService = Depends(get_research_service),
 ) -> List[ResearchTaskResponse]:
     """Get overdue tasks"""
     tasks = await service.get_overdue_tasks(limit)

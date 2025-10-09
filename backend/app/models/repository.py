@@ -64,8 +64,12 @@ class Repository(Base):
     # Last sync information
     last_commit_sha: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     last_commit_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_commit_author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    last_commit_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_commit_author: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    last_commit_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Repository stats

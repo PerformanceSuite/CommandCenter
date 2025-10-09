@@ -27,7 +27,9 @@ research_task_duration = Histogram(
 )
 
 rag_operations = Counter(
-    "commandcenter_rag_operations_total", "RAG system operations", ["operation", "status"]
+    "commandcenter_rag_operations_total",
+    "RAG system operations",
+    ["operation", "status"],
 )
 
 rag_query_duration = Histogram(
@@ -49,7 +51,9 @@ cache_operations = Counter(
 )
 
 api_key_usage = Counter(
-    "commandcenter_api_key_usage_total", "API key usage by service", ["service", "endpoint"]
+    "commandcenter_api_key_usage_total",
+    "API key usage by service",
+    ["service", "endpoint"],
 )
 
 # Application info
@@ -64,7 +68,9 @@ def setup_custom_metrics(app: FastAPI):
         app: FastAPI application instance
     """
     # Set application info
-    app_info.info({"version": app.version, "title": app.title, "environment": "production"})
+    app_info.info(
+        {"version": app.version, "title": app.title, "environment": "production"}
+    )
 
     # Initialize gauges
     active_research_tasks.set(0)

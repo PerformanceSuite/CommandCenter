@@ -4,7 +4,15 @@ ResearchTask model for tracking research activities
 
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
-from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer, JSON
+from sqlalchemy import (
+    String,
+    Text,
+    Enum as SQLEnum,
+    DateTime,
+    ForeignKey,
+    Integer,
+    JSON,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 

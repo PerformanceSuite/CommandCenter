@@ -70,7 +70,9 @@ class GitHubAsyncService:
 
         return await self._run_in_executor(_auth)
 
-    async def list_user_repos(self, username: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def list_user_repos(
+        self, username: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         List repositories for a user
 
@@ -214,7 +216,9 @@ class GitHubAsyncService:
 
         return await self._run_in_executor(_get_info)
 
-    async def search_repositories(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
+    async def search_repositories(
+        self, query: str, max_results: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Search for repositories on GitHub
 

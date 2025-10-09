@@ -48,7 +48,11 @@ class TechnologyService:
         """
         if search:
             return await self.repo.search(
-                search_term=search, domain=domain, status=status_filter, skip=skip, limit=limit
+                search_term=search,
+                domain=domain,
+                status=status_filter,
+                skip=skip,
+                limit=limit,
             )
         elif domain:
             technologies = await self.repo.list_by_domain(domain, skip, limit)
@@ -178,7 +182,9 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
+    async def update_status(
+        self, technology_id: int, new_status: TechnologyStatus
+    ) -> Technology:
         """
         Update technology status
 
@@ -200,7 +206,9 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
+    async def update_priority(
+        self, technology_id: int, new_priority: int
+    ) -> Technology:
         """
         Update technology priority
 
@@ -216,7 +224,8 @@ class TechnologyService:
         """
         if not 1 <= new_priority <= 5:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Priority must be between 1 and 5"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Priority must be between 1 and 5",
             )
 
         technology = await self.get_technology(technology_id)
@@ -227,7 +236,9 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
+    async def update_relevance_score(
+        self, technology_id: int, new_score: int
+    ) -> Technology:
         """
         Update technology relevance score
 
@@ -287,7 +298,12 @@ class TechnologyService:
             "by_status": by_status,
             "by_domain": by_domain,
             "high_priority": [
-                {"id": t.id, "title": t.title, "priority": t.priority, "status": t.status.value}
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "priority": t.priority,
+                    "status": t.status.value,
+                }
                 for t in high_priority
             ],
         }

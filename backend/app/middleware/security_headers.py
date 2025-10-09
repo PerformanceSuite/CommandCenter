@@ -36,7 +36,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Force HTTPS (31536000 seconds = 1 year)
         # includeSubDomains applies to all subdomains
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
 
         # Content Security Policy
         # Restrictive policy - adjust based on your needs

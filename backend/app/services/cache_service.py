@@ -48,7 +48,10 @@ class CacheService:
         """
         if self.redis_client is None:
             self.redis_client = await redis.from_url(
-                self.redis_url, encoding="utf-8", decode_responses=True, max_connections=10
+                self.redis_url,
+                encoding="utf-8",
+                decode_responses=True,
+                max_connections=10,
             )
 
         return self.redis_client
@@ -226,7 +229,9 @@ class CacheService:
 # Convenience functions for common caching patterns
 
 
-async def cache_rag_query(query: str, collection: str, results: list, ttl: int = 300) -> bool:
+async def cache_rag_query(
+    query: str, collection: str, results: list, ttl: int = 300
+) -> bool:
     """
     Cache RAG query results
 

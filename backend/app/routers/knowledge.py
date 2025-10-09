@@ -96,7 +96,9 @@ async def query_knowledge_base(
 
         # Cache the results (5 minute TTL)
         await cache_service.set(
-            cache_key, json.dumps([r.model_dump() for r in search_results]), ttl=300  # 5 minutes
+            cache_key,
+            json.dumps([r.model_dump() for r in search_results]),
+            ttl=300,  # 5 minutes
         )
 
         return search_results
@@ -108,7 +110,9 @@ async def query_knowledge_base(
         )
 
 
-@router.post("/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED
+)
 async def add_document(
     file: UploadFile = File(...),
     category: str = Form(...),
@@ -144,9 +148,13 @@ async def add_document(
         if file_extension == "pdf":
             processed_content = await docling_service.process_pdf(content)
         elif file_extension in ["md", "markdown"]:
-            processed_content = await docling_service.process_markdown(content.decode("utf-8"))
+            processed_content = await docling_service.process_markdown(
+                content.decode("utf-8")
+            )
         elif file_extension in ["txt", "text"]:
-            processed_content = await docling_service.process_text(content.decode("utf-8"))
+            processed_content = await docling_service.process_text(
+                content.decode("utf-8")
+            )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -166,7 +174,9 @@ async def add_document(
         rag_service = RAGService(collection_name=collection)
 
         # Add to vector database
-        chunks_added = await rag_service.add_document(content=processed_content, metadata=metadata)
+        chunks_added = await rag_service.add_document(
+            content=processed_content, metadata=metadata
+        )
 
         # Create knowledge entry in database
         knowledge_entry = KnowledgeEntry(
@@ -217,12 +227,15 @@ async def delete_document(
         collection: Collection name
     """
     # Get knowledge entry
-    result = await db.execute(select(KnowledgeEntry).where(KnowledgeEntry.id == document_id))
+    result = await db.execute(
+        select(KnowledgeEntry).where(KnowledgeEntry.id == document_id)
+    )
     knowledge_entry = result.scalar_one_or_none()
 
     if not knowledge_entry:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Document {document_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document {document_id} not found",
         )
 
     try:

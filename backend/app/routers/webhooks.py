@@ -81,7 +81,9 @@ async def receive_github_webhook(
             verify_github_signature(body, webhook_config.secret, x_hub_signature_256)
 
         # Record webhook event receipt
-        metrics_service.record_webhook_event(x_github_event, repository_full_name or "unknown")
+        metrics_service.record_webhook_event(
+            x_github_event, repository_full_name or "unknown"
+        )
 
         # Check if event already processed (idempotency)
         result = await db.execute(
@@ -117,9 +119,15 @@ async def receive_github_webhook(
         duration = time.time() - start_time
         metrics_service.record_webhook_processed(x_github_event, duration)
 
-        logger.info(f"Successfully processed webhook event {x_github_delivery} ({x_github_event})")
+        logger.info(
+            f"Successfully processed webhook event {x_github_delivery} ({x_github_event})"
+        )
 
-        return {"status": "success", "event_type": x_github_event, "delivery_id": x_github_delivery}
+        return {
+            "status": "success",
+            "event_type": x_github_event,
+            "delivery_id": x_github_delivery,
+        }
 
     except Exception as e:
         duration = time.time() - start_time
@@ -179,7 +187,9 @@ async def process_push_event(event: WebhookEvent, db: AsyncSession):
                 repo.last_commit_message = commit.get("message")
                 repo.last_commit_author = commit.get("author", {}).get("name")
                 repo.last_commit_date = (
-                    datetime.fromisoformat(commit.get("timestamp").replace("Z", "+00:00"))
+                    datetime.fromisoformat(
+                        commit.get("timestamp").replace("Z", "+00:00")
+                    )
                     if commit.get("timestamp")
                     else None
                 )
@@ -206,7 +216,11 @@ async def process_issue_event(event: WebhookEvent, db: AsyncSession):
     # You can add custom logic here, e.g., auto-label issues, notifications, etc.
 
 
-@router.post("/configs", response_model=WebhookConfigResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/configs",
+    response_model=WebhookConfigResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_webhook_config(
     config_data: WebhookConfigCreate, db: AsyncSession = Depends(get_db)
 ) -> WebhookConfig:
@@ -221,7 +235,9 @@ async def create_webhook_config(
         Created webhook configuration
     """
     # Verify repository exists
-    result = await db.execute(select(Repository).where(Repository.id == config_data.repository_id))
+    result = await db.execute(
+        select(Repository).where(Repository.id == config_data.repository_id)
+    )
     repository = result.scalar_one_or_none()
 
     if not repository:
@@ -232,7 +248,9 @@ async def create_webhook_config(
 
     # Check if webhook config already exists
     result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.repository_id == config_data.repository_id)
+        select(WebhookConfig).where(
+            WebhookConfig.repository_id == config_data.repository_id
+        )
     )
     existing = result.scalar_one_or_none()
 
@@ -285,7 +303,9 @@ async def list_webhook_configs(
 
 
 @router.get("/configs/{config_id}", response_model=WebhookConfigResponse)
-async def get_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> WebhookConfig:
+async def get_webhook_config(
+    config_id: int, db: AsyncSession = Depends(get_db)
+) -> WebhookConfig:
     """
     Get webhook configuration by ID
 
@@ -296,7 +316,9 @@ async def get_webhook_config(config_id: int, db: AsyncSession = Depends(get_db))
     Returns:
         Webhook configuration
     """
-    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
+    result = await db.execute(
+        select(WebhookConfig).where(WebhookConfig.id == config_id)
+    )
     config = result.scalar_one_or_none()
 
     if not config:
@@ -323,7 +345,9 @@ async def update_webhook_config(
     Returns:
         Updated webhook configuration
     """
-    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
+    result = await db.execute(
+        select(WebhookConfig).where(WebhookConfig.id == config_id)
+    )
     config = result.scalar_one_or_none()
 
     if not config:
@@ -344,7 +368,9 @@ async def update_webhook_config(
 
 
 @router.delete("/configs/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> None:
+async def delete_webhook_config(
+    config_id: int, db: AsyncSession = Depends(get_db)
+) -> None:
     """
     Delete webhook configuration
 
@@ -352,7 +378,9 @@ async def delete_webhook_config(config_id: int, db: AsyncSession = Depends(get_d
         config_id: Webhook configuration ID
         db: Database session
     """
-    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
+    result = await db.execute(
+        select(WebhookConfig).where(WebhookConfig.id == config_id)
+    )
     config = result.scalar_one_or_none()
 
     if not config:
@@ -397,5 +425,7 @@ async def list_webhook_events(
     if processed is not None:
         query = query.where(WebhookEvent.processed == processed)
 
-    result = await db.execute(query.order_by(desc(WebhookEvent.received_at)).limit(limit))
+    result = await db.execute(
+        query.order_by(desc(WebhookEvent.received_at)).limit(limit)
+    )
     return result.scalars().all()

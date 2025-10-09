@@ -27,7 +27,8 @@ def verify_github_signature(
     """
     if not signature_header:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-Hub-Signature-256 header is missing"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Hub-Signature-256 header is missing",
         )
 
     # GitHub sends signature in format: sha256=<hash>

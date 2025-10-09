@@ -138,7 +138,9 @@ class TechnologyRepository(BaseRepository[Technology]):
 
         return technologies, total
 
-    async def get_high_priority(self, min_priority: int = 4, limit: int = 10) -> List[Technology]:
+    async def get_high_priority(
+        self, min_priority: int = 4, limit: int = 10
+    ) -> List[Technology]:
         """
         Get high priority technologies
 

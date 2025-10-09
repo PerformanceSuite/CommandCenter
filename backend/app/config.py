@@ -19,7 +19,8 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = Field(
-        default="sqlite+aiosqlite:///./commandcenter.db", description="Database connection URL"
+        default="sqlite+aiosqlite:///./commandcenter.db",
+        description="Database connection URL",
     )
 
     # PostgreSQL settings (for production)
@@ -35,12 +36,14 @@ class Settings(BaseSettings):
 
     # Redis Configuration
     redis_url: Optional[str] = Field(
-        default=None, description="Redis connection URL (e.g., redis://localhost:6379/0)"
+        default=None,
+        description="Redis connection URL (e.g., redis://localhost:6379/0)",
     )
 
     # RAG/Knowledge Base
     knowledge_base_path: str = Field(
-        default="./docs/knowledge-base/chromadb", description="Path to ChromaDB vector store"
+        default="./docs/knowledge-base/chromadb",
+        description="Path to ChromaDB vector store",
     )
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -98,7 +101,14 @@ class Settings(BaseSettings):
 
     def get_postgres_url(self) -> str:
         """Construct PostgreSQL URL from components"""
-        if all([self.postgres_user, self.postgres_password, self.postgres_host, self.postgres_db]):
+        if all(
+            [
+                self.postgres_user,
+                self.postgres_password,
+                self.postgres_host,
+                self.postgres_db,
+            ]
+        ):
             return (
                 f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
                 f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"

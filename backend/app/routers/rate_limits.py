@@ -23,7 +23,9 @@ def get_github_client() -> Github:
 
 
 @router.get("/status", response_model=Dict[str, Any])
-async def get_rate_limit_status(github: Github = Depends(get_github_client)) -> Dict[str, Any]:
+async def get_rate_limit_status(
+    github: Github = Depends(get_github_client),
+) -> Dict[str, Any]:
     """
     Get current GitHub API rate limit status
 
@@ -60,9 +62,14 @@ async def track_rate_limit(
     """
     try:
         rate_limit_service = RateLimitService(github)
-        await rate_limit_service.store_rate_limit_status(db, token=settings.github_token)
+        await rate_limit_service.store_rate_limit_status(
+            db, token=settings.github_token
+        )
 
-        return {"status": "success", "message": "Rate limit status tracked successfully"}
+        return {
+            "status": "success",
+            "message": "Rate limit status tracked successfully",
+        }
 
     except Exception as e:
         logger.error(f"Failed to track rate limit: {e}")
@@ -73,7 +80,9 @@ async def track_rate_limit(
 
 
 @router.get("/health")
-async def check_rate_limit_health(github: Github = Depends(get_github_client)) -> Dict[str, Any]:
+async def check_rate_limit_health(
+    github: Github = Depends(get_github_client),
+) -> Dict[str, Any]:
     """
     Check if GitHub API rate limit is healthy (enough remaining calls)
 

@@ -9,7 +9,11 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ResearchTask, TaskStatus
-from app.repositories import ResearchTaskRepository, TechnologyRepository, RepositoryRepository
+from app.repositories import (
+    ResearchTaskRepository,
+    TechnologyRepository,
+    RepositoryRepository,
+)
 from app.schemas import ResearchTaskCreate, ResearchTaskUpdate
 
 
@@ -79,7 +83,8 @@ class ResearchService:
 
         if not task:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=f"Research task {task_id} not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Research task {task_id} not found",
             )
 
         return task
@@ -211,7 +216,9 @@ class ResearchService:
 
         return task
 
-    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
+    async def update_progress(
+        self, task_id: int, progress_percentage: int
+    ) -> ResearchTask:
         """
         Update task progress
 
@@ -302,7 +309,9 @@ class ResearchService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
+    async def get_upcoming_tasks(
+        self, days: int = 7, limit: int = 100
+    ) -> List[ResearchTask]:
         """
         Get upcoming tasks
 
@@ -337,9 +346,11 @@ class ResearchService:
             "overdue_count": len(overdue),
             "upcoming_count": len(upcoming),
             "overdue_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in overdue[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date}
+                for t in overdue[:5]
             ],
             "upcoming_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in upcoming[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date}
+                for t in upcoming[:5]
             ],
         }

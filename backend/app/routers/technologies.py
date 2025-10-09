@@ -35,7 +35,11 @@ async def list_technologies(
 ) -> TechnologyListResponse:
     """List technologies with filtering"""
     technologies, total = await service.list_technologies(
-        skip=skip, limit=limit, domain=domain, status_filter=status_filter, search=search
+        skip=skip,
+        limit=limit,
+        domain=domain,
+        status_filter=status_filter,
+        search=search,
     )
 
     return TechnologyListResponse(
@@ -54,9 +58,12 @@ async def get_technology(
     return await service.get_technology(technology_id)
 
 
-@router.post("/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_technology(
-    technology_data: TechnologyCreate, service: TechnologyService = Depends(get_technology_service)
+    technology_data: TechnologyCreate,
+    service: TechnologyService = Depends(get_technology_service),
 ) -> Technology:
     """Create a new technology"""
     return await service.create_technology(technology_data)

@@ -86,7 +86,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,  # Explicit allowlist from environment
     allow_credentials=settings.cors_allow_credentials,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],  # Explicit methods
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],  # Explicit methods
     allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
     max_age=settings.cors_max_age,
 )

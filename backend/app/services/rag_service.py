@@ -86,7 +86,9 @@ class RAGService:
         filter_dict = {"category": category} if category else None
 
         # Search with similarity scores
-        results = self.vectorstore.similarity_search_with_score(question, k=k, filter=filter_dict)
+        results = self.vectorstore.similarity_search_with_score(
+            question, k=k, filter=filter_dict
+        )
 
         return [
             {
@@ -233,7 +235,12 @@ class RAGService:
         """
         # Import the existing processor
         sys.path.insert(
-            0, str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base")
+            0,
+            str(
+                Path(__file__).parent.parent.parent.parent.parent
+                / "tools"
+                / "knowledge-base"
+            ),
         )
 
         try:

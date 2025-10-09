@@ -34,7 +34,9 @@ class DoclingService:
             ImportError: If Docling is not installed
         """
         if not DOCLING_AVAILABLE:
-            raise ImportError("Docling not installed. " "Install with: pip install docling")
+            raise ImportError(
+                "Docling not installed. " "Install with: pip install docling"
+            )
 
         # Initialize document converter with optimized pipeline options
         pipeline_options = PdfPipelineOptions()
@@ -156,7 +158,9 @@ class DoclingService:
 
         # Remove common PDF artifacts
         cleaned_text = re.sub(r"\x0c", "", cleaned_text)  # Form feed
-        cleaned_text = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text)  # Control chars
+        cleaned_text = re.sub(
+            r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text
+        )  # Control chars
 
         return cleaned_text.strip()
 
@@ -211,7 +215,11 @@ class DoclingService:
         return metadata
 
     async def process_with_chunking(
-        self, content: bytes, file_type: str, chunk_size: int = 1000, chunk_overlap: int = 200
+        self,
+        content: bytes,
+        file_type: str,
+        chunk_size: int = 1000,
+        chunk_overlap: int = 200,
     ) -> List[Dict[str, Any]]:
         """
         Process document and return chunks with metadata

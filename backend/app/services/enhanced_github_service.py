@@ -18,7 +18,9 @@ class EnhancedGitHubService:
     """Enhanced GitHub service with caching and rate limiting"""
 
     def __init__(
-        self, access_token: Optional[str] = None, redis_service: Optional[RedisService] = None
+        self,
+        access_token: Optional[str] = None,
+        redis_service: Optional[RedisService] = None,
     ):
         """
         Initialize enhanced GitHub service
@@ -133,8 +135,12 @@ class EnhancedGitHubService:
                         "title": pr.title,
                         "state": pr.state,
                         "user": pr.user.login if pr.user else None,
-                        "created_at": pr.created_at.isoformat() if pr.created_at else None,
-                        "updated_at": pr.updated_at.isoformat() if pr.updated_at else None,
+                        "created_at": (
+                            pr.created_at.isoformat() if pr.created_at else None
+                        ),
+                        "updated_at": (
+                            pr.updated_at.isoformat() if pr.updated_at else None
+                        ),
                         "merged": pr.merged,
                         "mergeable": pr.mergeable,
                         "head": pr.head.ref if pr.head else None,
@@ -156,7 +162,11 @@ class EnhancedGitHubService:
     @track_github_api_call("list_issues", "GET")
     @with_rate_limit_retry(max_attempts=3)
     async def list_issues(
-        self, owner: str, name: str, state: str = "open", labels: Optional[List[str]] = None
+        self,
+        owner: str,
+        name: str,
+        state: str = "open",
+        labels: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         List repository issues
@@ -187,9 +197,15 @@ class EnhancedGitHubService:
                         "state": issue.state,
                         "user": issue.user.login if issue.user else None,
                         "labels": [label.name for label in issue.labels],
-                        "created_at": issue.created_at.isoformat() if issue.created_at else None,
-                        "updated_at": issue.updated_at.isoformat() if issue.updated_at else None,
-                        "closed_at": issue.closed_at.isoformat() if issue.closed_at else None,
+                        "created_at": (
+                            issue.created_at.isoformat() if issue.created_at else None
+                        ),
+                        "updated_at": (
+                            issue.updated_at.isoformat() if issue.updated_at else None
+                        ),
+                        "closed_at": (
+                            issue.closed_at.isoformat() if issue.closed_at else None
+                        ),
                         "html_url": issue.html_url,
                         "comments": issue.comments,
                     }
@@ -231,7 +247,9 @@ class EnhancedGitHubService:
 
             if action == "create":
                 label = repo.create_label(
-                    name=label_name, color=color or "ededed", description=description or ""
+                    name=label_name,
+                    color=color or "ededed",
+                    description=description or "",
                 )
                 return {
                     "action": "created",
@@ -296,10 +314,14 @@ class EnhancedGitHubService:
                         "path": workflow.path,
                         "state": workflow.state,
                         "created_at": (
-                            workflow.created_at.isoformat() if workflow.created_at else None
+                            workflow.created_at.isoformat()
+                            if workflow.created_at
+                            else None
                         ),
                         "updated_at": (
-                            workflow.updated_at.isoformat() if workflow.updated_at else None
+                            workflow.updated_at.isoformat()
+                            if workflow.updated_at
+                            else None
                         ),
                         "url": workflow.html_url,
                         "badge_url": workflow.badge_url,
