@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class RedisService:
-    """Service for Redis caching operations"""
+    """Service for Redis caching operations with project-level namespacing"""
 
     def __init__(self):
         """Initialize Redis service"""
@@ -49,12 +49,35 @@ class RedisService:
             await self.redis_client.close()
             logger.info("Redis connection closed")
 
-    async def get(self, key: str) -> Optional[Any]:
+    def _make_key(self, project_id: int, key_type: str, identifier: str) -> str:
         """
-        Get value from cache
+        Generate project-namespaced key.
+
+        Pattern: project:{project_id}:{key_type}:{identifier}
+
+        Examples:
+            project:123:repo:owner/name
+            project:123:rate_limit:github_api
+            project:456:pr:18
 
         Args:
-            key: Cache key
+            project_id: Project/repository ID
+            key_type: Type of cached data (repo, pr, issue, rate_limit, etc.)
+            identifier: Unique identifier for the cached item
+
+        Returns:
+            Namespaced cache key
+        """
+        return f"project:{project_id}:{key_type}:{identifier}"
+
+    async def get(self, project_id: int, key_type: str, identifier: str) -> Optional[Any]:
+        """
+        Get value from project-namespaced cache
+
+        Args:
+            project_id: Project/repository ID
+            key_type: Type of cached data
+            identifier: Unique identifier for the cached item
 
         Returns:
             Cached value or None if not found/error
@@ -63,27 +86,32 @@ class RedisService:
             return None
 
         try:
+            key = self._make_key(project_id, key_type, identifier)
             value = await self.redis_client.get(key)
             if value:
                 return json.loads(value)
             return None
         except Exception as e:
-            logger.error(f"Redis GET error for key {key}: {e}")
+            logger.error(f"Redis GET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
             return None
 
     async def set(
         self,
-        key: str,
+        project_id: int,
+        key_type: str,
+        identifier: str,
         value: Any,
         ttl: Optional[int] = None
     ) -> bool:
         """
-        Set value in cache
+        Set value in project-namespaced cache with TTL
 
         Args:
-            key: Cache key
+            project_id: Project/repository ID
+            key_type: Type of cached data
+            identifier: Unique identifier for the cached item
             value: Value to cache (will be JSON serialized)
-            ttl: Time to live in seconds (default: 300 = 5 minutes)
+            ttl: Time to live in seconds (default: 3600 = 1 hour)
 
         Returns:
             True if successful
@@ -92,23 +120,24 @@ class RedisService:
             return False
 
         try:
+            key = self._make_key(project_id, key_type, identifier)
             serialized = json.dumps(value)
-            if ttl:
-                await self.redis_client.setex(key, ttl, serialized)
-            else:
-                # Default TTL of 5 minutes
-                await self.redis_client.setex(key, 300, serialized)
+            ttl_seconds = ttl if ttl is not None else 3600
+            await self.redis_client.setex(key, ttl_seconds, serialized)
+            logger.debug(f"Cached data for project {project_id}, key_type {key_type}, identifier {identifier} with TTL {ttl_seconds}s")
             return True
         except Exception as e:
-            logger.error(f"Redis SET error for key {key}: {e}")
+            logger.error(f"Redis SET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
             return False
 
-    async def delete(self, key: str) -> bool:
+    async def delete(self, project_id: int, key_type: str, identifier: str) -> bool:
         """
-        Delete value from cache
+        Delete specific key from project's cache
 
         Args:
-            key: Cache key
+            project_id: Project/repository ID
+            key_type: Type of cached data
+            identifier: Unique identifier for the cached item
 
         Returns:
             True if successful
@@ -117,18 +146,25 @@ class RedisService:
             return False
 
         try:
+            key = self._make_key(project_id, key_type, identifier)
             await self.redis_client.delete(key)
+            logger.debug(f"Deleted cache for project {project_id}, key_type {key_type}, identifier {identifier}")
             return True
         except Exception as e:
-            logger.error(f"Redis DELETE error for key {key}: {e}")
+            logger.error(f"Redis DELETE error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
             return False
 
-    async def delete_pattern(self, pattern: str) -> int:
+    async def delete_pattern(self, project_id: int, pattern: str) -> int:
         """
-        Delete all keys matching a pattern
+        Delete all keys matching project-namespaced pattern.
+
+        Example:
+            delete_pattern(123, "repo:*")
+            -> Deletes all project:123:repo:* keys
 
         Args:
-            pattern: Redis key pattern (e.g., "github:repo:*")
+            project_id: Project/repository ID
+            pattern: Pattern to match within project namespace (e.g., "repo:*")
 
         Returns:
             Number of keys deleted
@@ -137,23 +173,28 @@ class RedisService:
             return 0
 
         try:
+            full_pattern = f"project:{project_id}:{pattern}"
             keys = []
-            async for key in self.redis_client.scan_iter(match=pattern):
+            async for key in self.redis_client.scan_iter(match=full_pattern):
                 keys.append(key)
 
             if keys:
-                return await self.redis_client.delete(*keys)
+                deleted = await self.redis_client.delete(*keys)
+                logger.info(f"Deleted {deleted} cache entries for project {project_id} matching pattern {pattern}")
+                return deleted
             return 0
         except Exception as e:
-            logger.error(f"Redis DELETE_PATTERN error for pattern {pattern}: {e}")
+            logger.error(f"Redis DELETE_PATTERN error for project {project_id}, pattern {pattern}: {e}")
             return 0
 
-    async def exists(self, key: str) -> bool:
+    async def exists(self, project_id: int, key_type: str, identifier: str) -> bool:
         """
-        Check if key exists in cache
+        Check if key exists in project's cache
 
         Args:
-            key: Cache key
+            project_id: Project/repository ID
+            key_type: Type of cached data
+            identifier: Unique identifier for the cached item
 
         Returns:
             True if key exists
@@ -162,14 +203,17 @@ class RedisService:
             return False
 
         try:
+            key = self._make_key(project_id, key_type, identifier)
             return await self.redis_client.exists(key) > 0
         except Exception as e:
-            logger.error(f"Redis EXISTS error for key {key}: {e}")
+            logger.error(f"Redis EXISTS error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
             return False
 
     def make_cache_key(self, *parts: str) -> str:
         """
-        Create a cache key from parts
+        Create a cache key from parts (DEPRECATED - use _make_key with project_id)
+
+        This method is kept for backward compatibility but should not be used for new code.
 
         Args:
             *parts: Key parts
@@ -177,6 +221,7 @@ class RedisService:
         Returns:
             Cache key string
         """
+        logger.warning("make_cache_key is deprecated, use _make_key with project_id instead")
         return ":".join(str(p) for p in parts)
 
 
