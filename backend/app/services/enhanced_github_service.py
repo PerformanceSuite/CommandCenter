@@ -5,6 +5,7 @@ Enhanced GitHub service with rate limiting, caching, and advanced features
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import logging
+import hashlib
 from github import Github, GithubException, Repository as GithubRepo
 
 from app.config import settings
@@ -21,7 +22,8 @@ class EnhancedGitHubService:
     def __init__(
         self,
         access_token: Optional[str] = None,
-        redis_service: Optional[RedisService] = None
+        redis_service: Optional[RedisService] = None,
+        repository_id: Optional[int] = None
     ):
         """
         Initialize enhanced GitHub service
@@ -29,11 +31,38 @@ class EnhancedGitHubService:
         Args:
             access_token: GitHub personal access token
             redis_service: Redis service for caching
+            repository_id: Repository ID for cache namespacing (optional)
         """
         self.token = access_token or settings.github_token
         self.github = Github(self.token) if self.token else Github()
         self.redis = redis_service
+        self.repository_id = repository_id
         self.cache_ttl = 300  # 5 minutes default cache TTL
+
+    def _get_project_id(self, owner: str, name: str) -> int:
+        """
+        Get project ID for cache namespacing.
+
+        If repository_id is set, use it. Otherwise, generate a stable
+        numeric ID from the owner/name combination using hash.
+
+        Args:
+            owner: Repository owner
+            name: Repository name
+
+        Returns:
+            Project ID for cache namespacing
+        """
+        if self.repository_id:
+            return self.repository_id
+
+        # Generate stable numeric ID from owner/name
+        # Use SHA-256 hash and take first 8 bytes as integer
+        repo_key = f"{owner}/{name}".lower()
+        hash_bytes = hashlib.sha256(repo_key.encode()).digest()
+        # Convert first 8 bytes to integer (positive by using & with max int64)
+        project_id = int.from_bytes(hash_bytes[:8], byteorder='big') & 0x7FFFFFFFFFFFFFFF
+        return project_id
 
     @track_github_api_call("get_repository", "GET")
     @with_rate_limit_retry(max_attempts=3)
@@ -54,14 +83,14 @@ class EnhancedGitHubService:
         Returns:
             Repository information dictionary
         """
-        cache_key = f"github:repo:{owner}:{name}"
+        project_id = self._get_project_id(owner, name)
 
         # Try cache first
         if use_cache and self.redis:
-            cached = await self.redis.get(cache_key)
+            cached = await self.redis.get(project_id, "repo", f"{owner}/{name}")
             if cached:
                 metrics_service.record_cache_hit("github")
-                logger.info(f"Cache hit for repository {owner}/{name}")
+                logger.info(f"Cache hit for repository {owner}/{name} (project_id: {project_id})")
                 return cached
             metrics_service.record_cache_miss("github")
 
@@ -92,7 +121,7 @@ class EnhancedGitHubService:
 
             # Cache the result
             if self.redis:
-                await self.redis.set(cache_key, repo_info, ttl=self.cache_ttl)
+                await self.redis.set(project_id, "repo", f"{owner}/{name}", repo_info, ttl=self.cache_ttl)
 
             return repo_info
 
@@ -121,11 +150,11 @@ class EnhancedGitHubService:
         Returns:
             List of pull request dictionaries
         """
-        cache_key = f"github:prs:{owner}:{name}:{state}"
+        project_id = self._get_project_id(owner, name)
 
         # Try cache first (shorter TTL for PRs as they change frequently)
         if use_cache and self.redis:
-            cached = await self.redis.get(cache_key)
+            cached = await self.redis.get(project_id, "prs", f"{owner}/{name}:{state}")
             if cached:
                 metrics_service.record_cache_hit("github")
                 return cached
@@ -151,9 +180,9 @@ class EnhancedGitHubService:
                     "html_url": pr.html_url,
                 })
 
-            # Cache with shorter TTL
+            # Cache with shorter TTL (1 minute for frequently changing PR data)
             if self.redis:
-                await self.redis.set(cache_key, pr_list, ttl=60)
+                await self.redis.set(project_id, "prs", f"{owner}/{name}:{state}", pr_list, ttl=60)
 
             return pr_list
 
@@ -368,8 +397,8 @@ class EnhancedGitHubService:
 
             # Invalidate cache
             if self.redis:
-                cache_key = f"github:repo:{owner}:{name}"
-                await self.redis.delete(cache_key)
+                project_id = self._get_project_id(owner, name)
+                await self.redis.delete(project_id, "repo", f"{owner}/{name}")
 
             return {
                 "updated": True,
@@ -389,6 +418,7 @@ class EnhancedGitHubService:
             name: Repository name
         """
         if self.redis:
-            pattern = f"github:*:{owner}:{name}*"
-            deleted = await self.redis.delete_pattern(pattern)
-            logger.info(f"Invalidated {deleted} cache entries for {owner}/{name}")
+            project_id = self._get_project_id(owner, name)
+            # Delete all cache entries for this project (repo, prs, issues, etc.)
+            deleted = await self.redis.delete_pattern(project_id, "*")
+            logger.info(f"Invalidated {deleted} cache entries for {owner}/{name} (project_id: {project_id})")
