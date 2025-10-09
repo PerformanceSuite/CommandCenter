@@ -2,6 +2,12 @@
 Pydantic schemas for API validation and serialization
 """
 
+from app.schemas.project import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectResponse,
+    ProjectWithCounts,
+)
 from app.schemas.repository import (
     RepositoryCreate,
     RepositoryUpdate,
@@ -37,6 +43,10 @@ from app.schemas.webhook import (
 )
 
 __all__ = [
+    "ProjectCreate",
+    "ProjectUpdate",
+    "ProjectResponse",
+    "ProjectWithCounts",
     "RepositoryCreate",
     "RepositoryUpdate",
     "RepositoryResponse",
