@@ -22,7 +22,7 @@ from app.routers import webhooks, github_features, rate_limits, research_tasks
 from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
-from app.middleware import limiter, add_security_headers, LoggingMiddleware
+from app.middleware import limiter, add_security_headers, LoggingMiddleware, ProjectContextMiddleware
 
 
 @asynccontextmanager
@@ -73,6 +73,9 @@ app = FastAPI(
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
+
+# Add project context middleware (extracts project_id from requests)
+app.add_middleware(ProjectContextMiddleware)
 
 # Add rate limiting
 app.state.limiter = limiter
