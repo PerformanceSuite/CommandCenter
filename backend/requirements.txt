@@ -27,7 +27,12 @@ cryptography==42.0.0
 # Rate Limiting
 slowapi==0.1.9
 
-# RAG and embeddings
+# RAG and embeddings - KnowledgeBeast Integration
+# Note: KnowledgeBeast v2.3.2 provides production-ready vector RAG
+# Dependencies: chromadb, sentence-transformers, numpy, tenacity
+knowledgebeast>=2.3.2,<3.0.0
+
+# Legacy RAG dependencies (for backward compatibility during migration)
 langchain>=0.1.0,<0.2.0
 langchain-community>=0.0.10,<0.1.0
 langchain-chroma>=0.1.0,<0.2.0

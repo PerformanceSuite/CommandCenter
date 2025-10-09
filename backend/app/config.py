@@ -40,12 +40,26 @@ class Settings(BaseSettings):
         description="Redis connection URL (e.g., redis://localhost:6379/0)",
     )
 
-    # RAG/Knowledge Base
+    # RAG/Knowledge Base (Legacy)
     knowledge_base_path: str = Field(
         default="./docs/knowledge-base/chromadb",
-        description="Path to ChromaDB vector store",
+        description="Path to ChromaDB vector store (legacy RAG)",
     )
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+    # KnowledgeBeast Integration (v2.3.2+)
+    use_knowledgebeast: bool = Field(
+        default=False,
+        description="Use KnowledgeBeast for RAG (gradual rollout flag)",
+    )
+    knowledgebeast_db_path: str = Field(
+        default="./kb_chroma_db",
+        description="Path to KnowledgeBeast ChromaDB storage",
+    )
+    knowledgebeast_embedding_model: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="KnowledgeBeast embedding model (all-MiniLM-L6-v2, all-mpnet-base-v2)",
+    )
 
     # Security
     SECRET_KEY: str = Field(

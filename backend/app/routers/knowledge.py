@@ -18,6 +18,7 @@ from app.schemas import (
     KnowledgeSearchResult,
 )
 from app.services.rag_service import RAGService
+from app.services.knowledgebeast_service import KnowledgeBeastService, KNOWLEDGEBEAST_AVAILABLE
 from app.services.docling_service import DoclingService
 from app.services.cache_service import CacheService
 from app.config import settings
@@ -25,7 +26,19 @@ from app.config import settings
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 
-# Dependency to get RAG service
+# Dependency to get knowledge service (KnowledgeBeast or legacy RAG)
+async def get_knowledge_service(
+    project_id: int = 1,  # TODO: Get from auth context/header
+    collection: str = "default"
+):
+    """Get knowledge service based on feature flag"""
+    if settings.use_knowledgebeast and KNOWLEDGEBEAST_AVAILABLE:
+        return KnowledgeBeastService(project_id=project_id)
+    else:
+        return RAGService(collection_name=collection)
+
+
+# Legacy dependency (deprecated - use get_knowledge_service)
 async def get_rag_service(collection_name: str = "default") -> RAGService:
     """Get RAG service instance with specified collection"""
     return RAGService(collection_name=collection_name)
@@ -46,8 +59,11 @@ async def get_cache_service() -> CacheService:
 @router.post("/query", response_model=List[KnowledgeSearchResult])
 async def query_knowledge_base(
     request: KnowledgeSearchRequest,
+    project_id: int = 1,  # TODO: Get from auth context
     collection: str = "default",
-    rag_service: RAGService = Depends(get_rag_service),
+    mode: str = "hybrid",  # New: vector, keyword, or hybrid
+    alpha: float = 0.7,    # New: hybrid blend (0=keyword, 1=vector)
+    knowledge_service = Depends(get_knowledge_service),
     cache_service: CacheService = Depends(get_cache_service),
     db: AsyncSession = Depends(get_db),
 ) -> List[KnowledgeSearchResult]:
@@ -56,13 +72,16 @@ async def query_knowledge_base(
 
     Args:
         request: Search request with query, filters, and limit
-        collection: Collection name for multi-collection support
+        project_id: Project ID for isolation
+        collection: Collection name (legacy compatibility)
+        mode: Search mode - 'vector', 'keyword', or 'hybrid' (default: hybrid)
+        alpha: Hybrid blend factor 0-1 (0=keyword only, 1=vector only)
 
     Returns:
         List of relevant knowledge entries with scores
     """
-    # Create cache key from query parameters
-    cache_key = f"rag_query:{collection}:{request.query}:{request.category}:{request.technology_id}:{request.limit}"
+    # Create cache key (include mode and alpha for KB)
+    cache_key = f"kb_query:{project_id}:{mode}:{alpha}:{request.query}:{request.category}:{request.limit}"
 
     # Try to get from cache first
     cached_result = await cache_service.get(cache_key)
@@ -70,12 +89,13 @@ async def query_knowledge_base(
         return [KnowledgeSearchResult(**item) for item in json.loads(cached_result)]
 
     try:
-        # Reinitialize RAG service with correct collection
-        rag_service = RAGService(collection_name=collection)
-
-        # Query the vector database
-        results = await rag_service.query(
-            question=request.query, category=request.category, k=request.limit
+        # Query using appropriate service
+        results = await knowledge_service.query(
+            question=request.query,
+            category=request.category,
+            k=request.limit,
+            mode=mode if settings.use_knowledgebeast else "hybrid",
+            alpha=alpha if settings.use_knowledgebeast else 0.7
         )
 
         # Format results
