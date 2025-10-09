@@ -25,10 +25,25 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add project_id header if available
+        const projectId = localStorage.getItem('project_id');
+        if (projectId) {
+          config.headers['X-Project-ID'] = projectId;
+        }
+
         return config;
       },
       (error) => Promise.reject(error)
     );
+
+    // Listen for project changes
+    window.addEventListener('projectChanged', ((event: CustomEvent) => {
+      const { projectId } = event.detail;
+      if (projectId) {
+        this.client.defaults.headers.common['X-Project-ID'] = projectId;
+      }
+    }) as EventListener);
 
     // Response interceptor
     this.client.interceptors.response.use(
@@ -38,10 +53,23 @@ class ApiClient {
           // Handle unauthorized
           localStorage.removeItem('auth_token');
           window.location.href = '/login';
+        } else if (error.response?.status === 400) {
+          // Check if it's a project_id related error
+          const detail = error.response?.data as { detail?: string };
+          if (detail?.detail?.includes('project_id')) {
+            console.error('Project context missing - please select a project');
+            // Could show a modal or notification here
+          }
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  // Projects
+  async getProjects(): Promise<Array<{ id: number; name: string; owner: string }>> {
+    const response = await this.client.get('/api/v1/projects');
+    return response.data;
   }
 
   // Repositories
