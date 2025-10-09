@@ -48,3 +48,8 @@ prometheus-fastapi-instrumentator==7.0.0
 
 # Rate limiting
 tenacity==8.2.3
+
+# Testing dependencies
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-mock==3.12.0
