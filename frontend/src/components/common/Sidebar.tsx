@@ -7,6 +7,7 @@ import {
   Database,
   Settings,
   Terminal,
+  FolderOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -17,6 +18,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+  { to: '/projects', icon: <FolderOpen size={20} />, label: 'Projects' },
   { to: '/radar', icon: <Radar size={20} />, label: 'Tech Radar' },
   { to: '/research', icon: <BookOpen size={20} />, label: 'Research Hub' },
   { to: '/knowledge', icon: <Database size={20} />, label: 'Knowledge Base' },

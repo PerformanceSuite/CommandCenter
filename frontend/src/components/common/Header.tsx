@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell, Settings } from 'lucide-react';
+import { ProjectSelector } from './ProjectSelector';
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -8,6 +9,7 @@ export const Header: React.FC = () => {
   const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
+    if (path === '/projects') return 'Projects';
     if (path === '/radar') return 'Technology Radar';
     if (path === '/research') return 'Research Hub';
     if (path === '/knowledge') return 'Knowledge Base';
@@ -28,13 +30,18 @@ export const Header: React.FC = () => {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4" role="banner">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
-          <p className="text-sm text-gray-500 mt-1" aria-label={`Current date: ${currentDate}`}>
-            <time dateTime={new Date().toISOString()}>
-              {currentDate}
-            </time>
-          </p>
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
+            <p className="text-sm text-gray-500 mt-1" aria-label={`Current date: ${currentDate}`}>
+              <time dateTime={new Date().toISOString()}>
+                {currentDate}
+              </time>
+            </p>
+          </div>
+
+          {/* Project Selector */}
+          <ProjectSelector />
         </div>
 
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">

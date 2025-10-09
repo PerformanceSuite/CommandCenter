@@ -25,6 +25,13 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Add project ID header if a project is selected
+        const projectId = localStorage.getItem('selected_project_id');
+        if (projectId) {
+          config.headers['X-Project-ID'] = projectId;
+        }
+
         return config;
       },
       (error) => Promise.reject(error)
@@ -140,6 +147,27 @@ class ApiClient {
       params: { limit },
     });
     return response.data;
+  }
+
+  // Generic HTTP methods for other APIs
+  async get<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
+    return this.client.get(url, config);
+  }
+
+  async post<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.client.post(url, data, config);
+  }
+
+  async put<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.client.put(url, data, config);
+  }
+
+  async patch<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.client.patch(url, data, config);
+  }
+
+  async delete(url: string, config?: any): Promise<AxiosResponse> {
+    return this.client.delete(url, config);
   }
 }
 
