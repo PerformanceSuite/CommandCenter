@@ -4,7 +4,7 @@ Repository model for tracking GitHub repositories
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, JSON, Text
+from sqlalchemy import String, DateTime, JSON, Text, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -19,6 +19,14 @@ class Repository(Base):
 
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
 
     # Repository identification
     owner: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -84,6 +92,7 @@ class Repository(Base):
     )
 
     # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="repositories")
     research_tasks: Mapped[list["ResearchTask"]] = relationship(
         "ResearchTask",
         back_populates="repository",

@@ -4,7 +4,7 @@ Technology model for tracking research areas and technologies
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Text, Enum as SQLEnum, DateTime
+from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -39,6 +39,14 @@ class Technology(Base):
 
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
 
     # Technology identification
     title: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
@@ -80,6 +88,7 @@ class Technology(Base):
     )
 
     # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="technologies")
     research_tasks: Mapped[list["ResearchTask"]] = relationship(
         "ResearchTask",
         back_populates="technology",

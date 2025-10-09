@@ -18,6 +18,14 @@ class WebhookConfig(Base):
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     # Repository reference
     repository_id: Mapped[int] = mapped_column(
         ForeignKey("repositories.id", ondelete="CASCADE"),
@@ -45,6 +53,7 @@ class WebhookConfig(Base):
     )
 
     # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="webhook_configs")
     repository: Mapped["Repository"] = relationship("Repository", back_populates="webhook_configs")
     events_received: Mapped[list["WebhookEvent"]] = relationship(
         "WebhookEvent",
@@ -63,6 +72,14 @@ class WebhookEvent(Base):
 
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
 
     # Webhook config reference
     config_id: Mapped[Optional[int]] = mapped_column(
@@ -89,6 +106,7 @@ class WebhookEvent(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="webhook_events")
     config: Mapped[Optional["WebhookConfig"]] = relationship("WebhookConfig", back_populates="events_received")
 
     def __repr__(self) -> str:
@@ -103,6 +121,14 @@ class GitHubRateLimit(Base):
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     # Rate limit type (core, search, graphql)
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
 
@@ -116,6 +142,9 @@ class GitHubRateLimit(Base):
 
     # Timestamps
     checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="github_rate_limits")
 
     def __repr__(self) -> str:
         return f"<GitHubRateLimit(resource_type='{self.resource_type}', remaining={self.remaining}/{self.limit})>"

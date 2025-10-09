@@ -18,6 +18,14 @@ class KnowledgeEntry(Base):
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     # Foreign key to technology
     technology_id: Mapped[Optional[int]] = mapped_column(
         Integer,
@@ -56,6 +64,7 @@ class KnowledgeEntry(Base):
     )
 
     # Relationships
+    project: Mapped["Project"] = relationship("Project", back_populates="knowledge_entries")
     technology: Mapped[Optional["Technology"]] = relationship(
         "Technology",
         back_populates="knowledge_entries"
