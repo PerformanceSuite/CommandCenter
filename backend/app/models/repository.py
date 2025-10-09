@@ -3,13 +3,17 @@ Repository model for tracking GitHub repositories
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, DateTime, JSON, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.database import Base
 from app.utils.crypto import encrypt_token, decrypt_token
+
+if TYPE_CHECKING:
+    from app.models.research_task import ResearchTask
+    from app.models.webhook import WebhookConfig
 
 
 class Repository(Base):
@@ -34,9 +38,7 @@ class Repository(Base):
 
     # Access control (encrypted)
     _encrypted_access_token: Mapped[Optional[str]] = mapped_column(
-        "access_token",
-        String(1024),
-        nullable=True
+        "access_token", String(1024), nullable=True
     )
     is_private: Mapped[bool] = mapped_column(default=False)
 
@@ -78,21 +80,15 @@ class Repository(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     research_tasks: Mapped[list["ResearchTask"]] = relationship(
-        "ResearchTask",
-        back_populates="repository",
-        cascade="all, delete-orphan"
+        "ResearchTask", back_populates="repository", cascade="all, delete-orphan"
     )
     webhook_configs: Mapped[list["WebhookConfig"]] = relationship(
-        "WebhookConfig",
-        back_populates="repository",
-        cascade="all, delete-orphan"
+        "WebhookConfig", back_populates="repository", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

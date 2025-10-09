@@ -3,8 +3,7 @@ Docling Integration Service
 Processes various document formats (PDF, Markdown, text) into clean text for RAG
 """
 
-from typing import Optional, List, Dict, Any
-from pathlib import Path
+from typing import List, Dict, Any
 import tempfile
 import os
 
@@ -14,6 +13,7 @@ try:
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
+
     DOCLING_AVAILABLE = True
 except ImportError:
     DOCLING_AVAILABLE = False
@@ -34,10 +34,7 @@ class DoclingService:
             ImportError: If Docling is not installed
         """
         if not DOCLING_AVAILABLE:
-            raise ImportError(
-                "Docling not installed. "
-                "Install with: pip install docling"
-            )
+            raise ImportError("Docling not installed. " "Install with: pip install docling")
 
         # Initialize document converter with optimized pipeline options
         pipeline_options = PdfPipelineOptions()
@@ -61,7 +58,7 @@ class DoclingService:
             Extracted and cleaned text content
         """
         # Create temporary file for PDF processing
-        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
             tmp_file.write(content)
             tmp_path = tmp_file.name
 
@@ -73,19 +70,19 @@ class DoclingService:
             text_content = []
 
             # Get document structure
-            if hasattr(result, 'document') and result.document:
+            if hasattr(result, "document") and result.document:
                 doc = result.document
 
                 # Extract text from document body
-                if hasattr(doc, 'export_to_markdown'):
+                if hasattr(doc, "export_to_markdown"):
                     # Use markdown export for better structure preservation
                     text_content.append(doc.export_to_markdown())
-                elif hasattr(doc, 'export_to_text'):
+                elif hasattr(doc, "export_to_text"):
                     text_content.append(doc.export_to_text())
                 else:
                     # Fallback: extract from pages
                     for page in doc.pages:
-                        if hasattr(page, 'text'):
+                        if hasattr(page, "text"):
                             text_content.append(page.text)
 
             # Join all text content
@@ -138,7 +135,7 @@ class DoclingService:
             Cleaned text
         """
         # Remove excessive whitespace
-        lines = text.split('\n')
+        lines = text.split("\n")
         cleaned_lines = []
 
         for line in lines:
@@ -150,15 +147,16 @@ class DoclingService:
                 cleaned_lines.append(line)
 
         # Join lines with single newlines
-        cleaned_text = '\n'.join(cleaned_lines)
+        cleaned_text = "\n".join(cleaned_lines)
 
         # Replace multiple consecutive newlines with double newline (paragraph break)
         import re
-        cleaned_text = re.sub(r'\n{3,}', '\n\n', cleaned_text)
+
+        cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text)
 
         # Remove common PDF artifacts
-        cleaned_text = re.sub(r'\x0c', '', cleaned_text)  # Form feed
-        cleaned_text = re.sub(r'[\x00-\x08\x0b-\x0c\x0e-\x1f]', '', cleaned_text)  # Control chars
+        cleaned_text = re.sub(r"\x0c", "", cleaned_text)  # Form feed
+        cleaned_text = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text)  # Control chars
 
         return cleaned_text.strip()
 
@@ -178,9 +176,9 @@ class DoclingService:
             "file_type": file_type,
         }
 
-        if file_type.lower() == 'pdf':
+        if file_type.lower() == "pdf":
             # Create temporary file for metadata extraction
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
                 tmp_file.write(content)
                 tmp_path = tmp_file.name
 
@@ -188,22 +186,22 @@ class DoclingService:
                 # Convert and extract metadata
                 result = self.converter.convert(tmp_path)
 
-                if hasattr(result, 'document') and result.document:
+                if hasattr(result, "document") and result.document:
                     doc = result.document
 
                     # Extract available metadata
-                    if hasattr(doc, 'metadata'):
+                    if hasattr(doc, "metadata"):
                         doc_metadata = doc.metadata
-                        if hasattr(doc_metadata, 'title'):
-                            metadata['title'] = doc_metadata.title
-                        if hasattr(doc_metadata, 'author'):
-                            metadata['author'] = doc_metadata.author
-                        if hasattr(doc_metadata, 'creation_date'):
-                            metadata['creation_date'] = str(doc_metadata.creation_date)
+                        if hasattr(doc_metadata, "title"):
+                            metadata["title"] = doc_metadata.title
+                        if hasattr(doc_metadata, "author"):
+                            metadata["author"] = doc_metadata.author
+                        if hasattr(doc_metadata, "creation_date"):
+                            metadata["creation_date"] = str(doc_metadata.creation_date)
 
                     # Page count
-                    if hasattr(doc, 'pages'):
-                        metadata['page_count'] = len(doc.pages)
+                    if hasattr(doc, "pages"):
+                        metadata["page_count"] = len(doc.pages)
 
             finally:
                 # Clean up temporary file
@@ -213,11 +211,7 @@ class DoclingService:
         return metadata
 
     async def process_with_chunking(
-        self,
-        content: bytes,
-        file_type: str,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200
+        self, content: bytes, file_type: str, chunk_size: int = 1000, chunk_overlap: int = 200
     ) -> List[Dict[str, Any]]:
         """
         Process document and return chunks with metadata
@@ -232,12 +226,12 @@ class DoclingService:
             List of chunks with metadata
         """
         # Process document based on type
-        if file_type.lower() == 'pdf':
+        if file_type.lower() == "pdf":
             text_content = await self.process_pdf(content)
-        elif file_type.lower() in ['md', 'markdown']:
-            text_content = await self.process_markdown(content.decode('utf-8'))
+        elif file_type.lower() in ["md", "markdown"]:
+            text_content = await self.process_markdown(content.decode("utf-8"))
         else:
-            text_content = await self.process_text(content.decode('utf-8'))
+            text_content = await self.process_text(content.decode("utf-8"))
 
         # Extract metadata
         metadata = await self.extract_metadata(content, file_type)
@@ -247,18 +241,17 @@ class DoclingService:
         text_length = len(text_content)
 
         for i in range(0, text_length, chunk_size - chunk_overlap):
-            chunk_text = text_content[i:i + chunk_size]
+            chunk_text = text_content[i : i + chunk_size]
 
             chunk_metadata = metadata.copy()
-            chunk_metadata.update({
-                "chunk_index": len(chunks),
-                "chunk_start": i,
-                "chunk_end": min(i + chunk_size, text_length),
-            })
+            chunk_metadata.update(
+                {
+                    "chunk_index": len(chunks),
+                    "chunk_start": i,
+                    "chunk_end": min(i + chunk_size, text_length),
+                }
+            )
 
-            chunks.append({
-                "content": chunk_text,
-                "metadata": chunk_metadata
-            })
+            chunks.append({"content": chunk_text, "metadata": chunk_metadata})
 
         return chunks

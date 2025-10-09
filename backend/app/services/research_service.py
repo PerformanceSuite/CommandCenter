@@ -35,7 +35,7 @@ class ResearchService:
         technology_id: Optional[int] = None,
         repository_id: Optional[int] = None,
         status_filter: Optional[TaskStatus] = None,
-        assigned_to: Optional[str] = None
+        assigned_to: Optional[str] = None,
     ) -> List[ResearchTask]:
         """
         List research tasks with filtering
@@ -79,8 +79,7 @@ class ResearchService:
 
         if not task:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Research task {task_id} not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Research task {task_id} not found"
             )
 
         return task
@@ -104,7 +103,7 @@ class ResearchService:
             if not technology:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Technology {task_data.technology_id} not found"
+                    detail=f"Technology {task_data.technology_id} not found",
                 )
 
         if task_data.repository_id:
@@ -112,7 +111,7 @@ class ResearchService:
             if not repository:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Repository {task_data.repository_id} not found"
+                    detail=f"Repository {task_data.repository_id} not found",
                 )
 
         # Create task
@@ -124,9 +123,7 @@ class ResearchService:
         return task
 
     async def update_research_task(
-        self,
-        task_id: int,
-        task_data: ResearchTaskUpdate
+        self, task_id: int, task_data: ResearchTaskUpdate
     ) -> ResearchTask:
         """
         Update research task
@@ -151,7 +148,7 @@ class ResearchService:
             if not technology:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Technology {update_dict['technology_id']} not found"
+                    detail=f"Technology {update_dict['technology_id']} not found",
                 )
 
         if "repository_id" in update_dict and update_dict["repository_id"]:
@@ -159,7 +156,7 @@ class ResearchService:
             if not repository:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Repository {update_dict['repository_id']} not found"
+                    detail=f"Repository {update_dict['repository_id']} not found",
                 )
 
         # Update task
@@ -184,11 +181,7 @@ class ResearchService:
         await self.repo.delete(task)
         await self.db.commit()
 
-    async def update_status(
-        self,
-        task_id: int,
-        new_status: TaskStatus
-    ) -> ResearchTask:
+    async def update_status(self, task_id: int, new_status: TaskStatus) -> ResearchTask:
         """
         Update task status
 
@@ -218,11 +211,7 @@ class ResearchService:
 
         return task
 
-    async def update_progress(
-        self,
-        task_id: int,
-        progress_percentage: int
-    ) -> ResearchTask:
+    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
         """
         Update task progress
 
@@ -239,7 +228,7 @@ class ResearchService:
         if not 0 <= progress_percentage <= 100:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Progress percentage must be between 0 and 100"
+                detail="Progress percentage must be between 0 and 100",
             )
 
         task = await self.get_research_task(task_id)
@@ -257,11 +246,7 @@ class ResearchService:
 
         return task
 
-    async def assign_task(
-        self,
-        task_id: int,
-        assigned_to: str
-    ) -> ResearchTask:
+    async def assign_task(self, task_id: int, assigned_to: str) -> ResearchTask:
         """
         Assign task to user
 
@@ -283,11 +268,7 @@ class ResearchService:
 
         return task
 
-    async def add_findings(
-        self,
-        task_id: int,
-        findings: str
-    ) -> ResearchTask:
+    async def add_findings(self, task_id: int, findings: str) -> ResearchTask:
         """
         Add findings to task
 
@@ -321,11 +302,7 @@ class ResearchService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(
-        self,
-        days: int = 7,
-        limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks
 
@@ -339,9 +316,7 @@ class ResearchService:
         return await self.repo.get_upcoming(days, limit)
 
     async def get_statistics(
-        self,
-        technology_id: Optional[int] = None,
-        repository_id: Optional[int] = None
+        self, technology_id: Optional[int] = None, repository_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Get research task statistics
@@ -362,19 +337,9 @@ class ResearchService:
             "overdue_count": len(overdue),
             "upcoming_count": len(upcoming),
             "overdue_tasks": [
-                {
-                    "id": t.id,
-                    "title": t.title,
-                    "due_date": t.due_date
-                }
-                for t in overdue[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in overdue[:5]
             ],
             "upcoming_tasks": [
-                {
-                    "id": t.id,
-                    "title": t.title,
-                    "due_date": t.due_date
-                }
-                for t in upcoming[:5]
-            ]
+                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in upcoming[:5]
+            ],
         }

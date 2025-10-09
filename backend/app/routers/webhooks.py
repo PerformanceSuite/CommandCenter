@@ -4,7 +4,7 @@ GitHub webhook management endpoints
 
 import logging
 import time
-from typing import List, Dict, Any
+from typing import List, Dict
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +32,7 @@ async def receive_github_webhook(
     x_github_event: str = Header(..., alias="X-GitHub-Event"),
     x_github_delivery: str = Header(..., alias="X-GitHub-Delivery"),
     x_hub_signature_256: str = Header(..., alias="X-Hub-Signature-256"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Dict[str, str]:
     """
     Receive and process GitHub webhook events
@@ -72,7 +72,7 @@ async def receive_github_webhook(
                 result = await db.execute(
                     select(WebhookConfig)
                     .where(WebhookConfig.repository_id == repo.id)
-                    .where(WebhookConfig.active == True)
+                    .where(WebhookConfig.active)
                 )
                 webhook_config = result.scalar_one_or_none()
 
@@ -101,7 +101,7 @@ async def receive_github_webhook(
             payload=payload,
             repository_full_name=repository_full_name,
             processed=False,
-            received_at=datetime.utcnow()
+            received_at=datetime.utcnow(),
         )
         db.add(webhook_event)
 
@@ -119,11 +119,7 @@ async def receive_github_webhook(
 
         logger.info(f"Successfully processed webhook event {x_github_delivery} ({x_github_event})")
 
-        return {
-            "status": "success",
-            "event_type": x_github_event,
-            "delivery_id": x_github_delivery
-        }
+        return {"status": "success", "event_type": x_github_event, "delivery_id": x_github_delivery}
 
     except Exception as e:
         duration = time.time() - start_time
@@ -131,7 +127,7 @@ async def receive_github_webhook(
         logger.error(f"Failed to process webhook: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process webhook: {str(e)}"
+            detail=f"Failed to process webhook: {str(e)}",
         )
 
 
@@ -182,9 +178,11 @@ async def process_push_event(event: WebhookEvent, db: AsyncSession):
                 repo.last_commit_sha = commit.get("id")
                 repo.last_commit_message = commit.get("message")
                 repo.last_commit_author = commit.get("author", {}).get("name")
-                repo.last_commit_date = datetime.fromisoformat(
-                    commit.get("timestamp").replace("Z", "+00:00")
-                ) if commit.get("timestamp") else None
+                repo.last_commit_date = (
+                    datetime.fromisoformat(commit.get("timestamp").replace("Z", "+00:00"))
+                    if commit.get("timestamp")
+                    else None
+                )
 
             await db.commit()
             logger.info(f"Updated repository {repo.full_name} from push event")
@@ -210,8 +208,7 @@ async def process_issue_event(event: WebhookEvent, db: AsyncSession):
 
 @router.post("/configs", response_model=WebhookConfigResponse, status_code=status.HTTP_201_CREATED)
 async def create_webhook_config(
-    config_data: WebhookConfigCreate,
-    db: AsyncSession = Depends(get_db)
+    config_data: WebhookConfigCreate, db: AsyncSession = Depends(get_db)
 ) -> WebhookConfig:
     """
     Create a new webhook configuration
@@ -224,15 +221,13 @@ async def create_webhook_config(
         Created webhook configuration
     """
     # Verify repository exists
-    result = await db.execute(
-        select(Repository).where(Repository.id == config_data.repository_id)
-    )
+    result = await db.execute(select(Repository).where(Repository.id == config_data.repository_id))
     repository = result.scalar_one_or_none()
 
     if not repository:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Repository {config_data.repository_id} not found"
+            detail=f"Repository {config_data.repository_id} not found",
         )
 
     # Check if webhook config already exists
@@ -244,7 +239,10 @@ async def create_webhook_config(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Webhook configuration already exists for repository {config_data.repository_id}"
+            detail=(
+                f"Webhook configuration already exists for "
+                f"repository {config_data.repository_id}"
+            ),
         )
 
     # Create webhook config
@@ -253,7 +251,7 @@ async def create_webhook_config(
         webhook_url=config_data.webhook_url,
         secret=config_data.secret,
         events=config_data.events,
-        active=True
+        active=True,
     )
 
     db.add(webhook_config)
@@ -265,8 +263,7 @@ async def create_webhook_config(
 
 @router.get("/configs", response_model=List[WebhookConfigResponse])
 async def list_webhook_configs(
-    repository_id: int = None,
-    db: AsyncSession = Depends(get_db)
+    repository_id: int = None, db: AsyncSession = Depends(get_db)
 ) -> List[WebhookConfig]:
     """
     List webhook configurations
@@ -288,10 +285,7 @@ async def list_webhook_configs(
 
 
 @router.get("/configs/{config_id}", response_model=WebhookConfigResponse)
-async def get_webhook_config(
-    config_id: int,
-    db: AsyncSession = Depends(get_db)
-) -> WebhookConfig:
+async def get_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> WebhookConfig:
     """
     Get webhook configuration by ID
 
@@ -302,15 +296,13 @@ async def get_webhook_config(
     Returns:
         Webhook configuration
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook configuration {config_id} not found"
+            detail=f"Webhook configuration {config_id} not found",
         )
 
     return config
@@ -318,9 +310,7 @@ async def get_webhook_config(
 
 @router.patch("/configs/{config_id}", response_model=WebhookConfigResponse)
 async def update_webhook_config(
-    config_id: int,
-    config_data: WebhookConfigUpdate,
-    db: AsyncSession = Depends(get_db)
+    config_id: int, config_data: WebhookConfigUpdate, db: AsyncSession = Depends(get_db)
 ) -> WebhookConfig:
     """
     Update webhook configuration
@@ -333,15 +323,13 @@ async def update_webhook_config(
     Returns:
         Updated webhook configuration
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook configuration {config_id} not found"
+            detail=f"Webhook configuration {config_id} not found",
         )
 
     # Update fields
@@ -356,10 +344,7 @@ async def update_webhook_config(
 
 
 @router.delete("/configs/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_webhook_config(
-    config_id: int,
-    db: AsyncSession = Depends(get_db)
-) -> None:
+async def delete_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> None:
     """
     Delete webhook configuration
 
@@ -367,15 +352,13 @@ async def delete_webhook_config(
         config_id: Webhook configuration ID
         db: Database session
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Webhook configuration {config_id} not found"
+            detail=f"Webhook configuration {config_id} not found",
         )
 
     await db.delete(config)
@@ -388,7 +371,7 @@ async def list_webhook_events(
     repository_full_name: str = None,
     processed: bool = None,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> List[WebhookEvent]:
     """
     List webhook events
@@ -414,7 +397,5 @@ async def list_webhook_events(
     if processed is not None:
         query = query.where(WebhookEvent.processed == processed)
 
-    result = await db.execute(
-        query.order_by(desc(WebhookEvent.received_at)).limit(limit)
-    )
+    result = await db.execute(query.order_by(desc(WebhookEvent.received_at)).limit(limit))
     return result.scalars().all()

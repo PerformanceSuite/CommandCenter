@@ -4,7 +4,7 @@ GitHub API rate limiting service with tracking and exponential backoff
 
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Dict, Any, Callable
 from functools import wraps
 import hashlib
@@ -15,10 +15,9 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
     retry_if_exception_type,
-    before_sleep_log
+    before_sleep_log,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.models import GitHubRateLimit
 
@@ -54,9 +53,12 @@ class RateLimitService:
                     "reset": rate_limits.core.reset,
                     "used": rate_limits.core.limit - rate_limits.core.remaining,
                     "percentage_used": (
-                        (rate_limits.core.limit - rate_limits.core.remaining) / rate_limits.core.limit * 100
-                        if rate_limits.core.limit > 0 else 0
-                    )
+                        (rate_limits.core.limit - rate_limits.core.remaining)
+                        / rate_limits.core.limit
+                        * 100
+                        if rate_limits.core.limit > 0
+                        else 0
+                    ),
                 },
                 "search": {
                     "limit": rate_limits.search.limit,
@@ -64,9 +66,12 @@ class RateLimitService:
                     "reset": rate_limits.search.reset,
                     "used": rate_limits.search.limit - rate_limits.search.remaining,
                     "percentage_used": (
-                        (rate_limits.search.limit - rate_limits.search.remaining) / rate_limits.search.limit * 100
-                        if rate_limits.search.limit > 0 else 0
-                    )
+                        (rate_limits.search.limit - rate_limits.search.remaining)
+                        / rate_limits.search.limit
+                        * 100
+                        if rate_limits.search.limit > 0
+                        else 0
+                    ),
                 },
                 "graphql": {
                     "limit": rate_limits.graphql.limit,
@@ -74,20 +79,19 @@ class RateLimitService:
                     "reset": rate_limits.graphql.reset,
                     "used": rate_limits.graphql.limit - rate_limits.graphql.remaining,
                     "percentage_used": (
-                        (rate_limits.graphql.limit - rate_limits.graphql.remaining) / rate_limits.graphql.limit * 100
-                        if rate_limits.graphql.limit > 0 else 0
-                    )
-                }
+                        (rate_limits.graphql.limit - rate_limits.graphql.remaining)
+                        / rate_limits.graphql.limit
+                        * 100
+                        if rate_limits.graphql.limit > 0
+                        else 0
+                    ),
+                },
             }
         except Exception as e:
             logger.error(f"Failed to get rate limit status: {e}")
             raise
 
-    async def store_rate_limit_status(
-        self,
-        db: AsyncSession,
-        token: Optional[str] = None
-    ) -> None:
+    async def store_rate_limit_status(self, db: AsyncSession, token: Optional[str] = None) -> None:
         """
         Store current rate limit status in database
 
@@ -109,21 +113,22 @@ class RateLimitService:
                     remaining=data["remaining"],
                     reset_at=data["reset"],
                     token_hash=token_hash,
-                    checked_at=datetime.utcnow()
+                    checked_at=datetime.utcnow(),
                 )
                 db.add(rate_limit)
 
             await db.commit()
-            logger.info(f"Stored rate limit status: {status['core']['remaining']}/{status['core']['limit']} remaining")
+            logger.info(
+                f"Stored rate limit status: {status['core']['remaining']}/"
+                f"{status['core']['limit']} remaining"
+            )
 
         except Exception as e:
             logger.error(f"Failed to store rate limit status: {e}")
             await db.rollback()
 
     def check_rate_limit_available(
-        self,
-        resource_type: str = "core",
-        min_remaining: int = 10
+        self, resource_type: str = "core", min_remaining: int = 10
     ) -> bool:
         """
         Check if rate limit is available
@@ -142,10 +147,7 @@ class RateLimitService:
             logger.error(f"Failed to check rate limit: {e}")
             return False
 
-    async def wait_for_rate_limit_reset(
-        self,
-        resource_type: str = "core"
-    ) -> None:
+    async def wait_for_rate_limit_reset(self, resource_type: str = "core") -> None:
         """
         Wait until rate limit resets
 
@@ -170,11 +172,7 @@ class RateLimitService:
             await asyncio.sleep(60)
 
 
-def with_rate_limit_retry(
-    max_attempts: int = 3,
-    min_wait: int = 1,
-    max_wait: int = 10
-):
+def with_rate_limit_retry(max_attempts: int = 3, min_wait: int = 1, max_wait: int = 10):
     """
     Decorator to add exponential backoff retry logic for GitHub API calls
 
@@ -186,13 +184,14 @@ def with_rate_limit_retry(
     Returns:
         Decorated function with retry logic
     """
+
     def decorator(func: Callable):
         @retry(
             stop=stop_after_attempt(max_attempts),
             wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
             retry=retry_if_exception_type((GithubException, RateLimitExceededException)),
             before_sleep=before_sleep_log(logger, logging.WARNING),
-            reraise=True
+            reraise=True,
         )
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -208,6 +207,7 @@ def with_rate_limit_retry(
                 raise
 
         return wrapper
+
     return decorator
 
 

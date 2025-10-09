@@ -3,7 +3,8 @@ RAG (Retrieval-Augmented Generation) service for knowledge base
 Wrapper around the existing process_docs.py knowledge base processor
 
 Note: RAG dependencies are optional and imported lazily.
-Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers
+Install with: pip install langchain langchain-community langchain-chroma chromadb
+    sentence-transformers
 """
 
 import sys
@@ -16,6 +17,7 @@ from app.config import settings
 try:
     from langchain_community.embeddings import HuggingFaceEmbeddings
     from langchain_chroma import Chroma
+
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
@@ -43,7 +45,8 @@ class RAGService:
         if not RAG_AVAILABLE:
             raise ImportError(
                 "RAG dependencies not installed. "
-                "Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers"
+                "Install with: pip install langchain langchain-community langchain-chroma "
+                "chromadb sentence-transformers"
             )
 
         self.db_path = db_path or settings.knowledge_base_path
@@ -62,14 +65,11 @@ class RAGService:
         self.vectorstore = Chroma(
             collection_name=collection_name,
             embedding_function=self.embeddings,
-            persist_directory=self.db_path
+            persist_directory=self.db_path,
         )
 
     async def query(
-        self,
-        question: str,
-        category: Optional[str] = None,
-        k: int = 5
+        self, question: str, category: Optional[str] = None, k: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Query the knowledge base
@@ -86,11 +86,7 @@ class RAGService:
         filter_dict = {"category": category} if category else None
 
         # Search with similarity scores
-        results = self.vectorstore.similarity_search_with_score(
-            question,
-            k=k,
-            filter=filter_dict
-        )
+        results = self.vectorstore.similarity_search_with_score(question, k=k, filter=filter_dict)
 
         return [
             {
@@ -104,10 +100,7 @@ class RAGService:
         ]
 
     async def add_document(
-        self,
-        content: str,
-        metadata: Dict[str, Any],
-        chunk_size: int = 1000
+        self, content: str, metadata: Dict[str, Any], chunk_size: int = 1000
     ) -> int:
         """
         Add a document to the knowledge base
@@ -127,7 +120,7 @@ class RAGService:
             chunk_size=chunk_size,
             chunk_overlap=200,
             length_function=len,
-            separators=["\n\n", "\n", " ", ""]
+            separators=["\n\n", "\n", " ", ""],
         )
 
         chunks = text_splitter.split_text(content)
@@ -154,9 +147,7 @@ class RAGService:
         # This requires the collection to support metadata filtering
         try:
             # Get all documents with this source
-            results = self.vectorstore.get(
-                where={"source": source}
-            )
+            results = self.vectorstore.get(where={"source": source})
 
             if results and results.get("ids"):
                 self.vectorstore.delete(ids=results["ids"])
@@ -223,17 +214,10 @@ class RAGService:
 
         except Exception as e:
             print(f"Error getting statistics: {e}")
-            return {
-                "total_chunks": 0,
-                "categories": {},
-                "error": str(e)
-            }
+            return {"total_chunks": 0, "categories": {}, "error": str(e)}
 
     def process_directory(
-        self,
-        directory: str,
-        category: str,
-        file_extensions: Optional[List[str]] = None
+        self, directory: str, category: str, file_extensions: Optional[List[str]] = None
     ) -> int:
         """
         Process all documents in a directory
@@ -248,7 +232,9 @@ class RAGService:
             Total number of chunks added
         """
         # Import the existing processor
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base"))
+        sys.path.insert(
+            0, str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base")
+        )
 
         try:
             from process_docs import PerformiaKnowledgeProcessor

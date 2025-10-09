@@ -29,10 +29,7 @@ class TechnologyRepository(BaseRepository[Technology]):
         return await self.find_one(title=title)
 
     async def list_by_domain(
-        self,
-        domain: TechnologyDomain,
-        skip: int = 0,
-        limit: int = 100
+        self, domain: TechnologyDomain, skip: int = 0, limit: int = 100
     ) -> List[Technology]:
         """
         List technologies by domain
@@ -50,18 +47,12 @@ class TechnologyRepository(BaseRepository[Technology]):
             .where(Technology.domain == domain)
             .offset(skip)
             .limit(limit)
-            .order_by(
-                Technology.priority.desc(),
-                Technology.relevance_score.desc()
-            )
+            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
         )
         return list(result.scalars().all())
 
     async def list_by_status(
-        self,
-        status: TechnologyStatus,
-        skip: int = 0,
-        limit: int = 100
+        self, status: TechnologyStatus, skip: int = 0, limit: int = 100
     ) -> List[Technology]:
         """
         List technologies by status
@@ -79,10 +70,7 @@ class TechnologyRepository(BaseRepository[Technology]):
             .where(Technology.status == status)
             .offset(skip)
             .limit(limit)
-            .order_by(
-                Technology.priority.desc(),
-                Technology.updated_at.desc()
-            )
+            .order_by(Technology.priority.desc(), Technology.updated_at.desc())
         )
         return list(result.scalars().all())
 
@@ -92,7 +80,7 @@ class TechnologyRepository(BaseRepository[Technology]):
         domain: Optional[TechnologyDomain] = None,
         status: Optional[TechnologyStatus] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> tuple[List[Technology], int]:
         """
         Search technologies with filters
@@ -117,7 +105,7 @@ class TechnologyRepository(BaseRepository[Technology]):
                 or_(
                     Technology.title.ilike(search_pattern),
                     Technology.description.ilike(search_pattern),
-                    Technology.tags.ilike(search_pattern)
+                    Technology.tags.ilike(search_pattern),
                 )
             )
 
@@ -135,10 +123,14 @@ class TechnologyRepository(BaseRepository[Technology]):
         total = total_result.scalar() or 0
 
         # Apply pagination and ordering
-        query = query.offset(skip).limit(limit).order_by(
-            Technology.priority.desc(),
-            Technology.relevance_score.desc(),
-            Technology.updated_at.desc()
+        query = (
+            query.offset(skip)
+            .limit(limit)
+            .order_by(
+                Technology.priority.desc(),
+                Technology.relevance_score.desc(),
+                Technology.updated_at.desc(),
+            )
         )
 
         result = await self.db.execute(query)
@@ -146,11 +138,7 @@ class TechnologyRepository(BaseRepository[Technology]):
 
         return technologies, total
 
-    async def get_high_priority(
-        self,
-        min_priority: int = 4,
-        limit: int = 10
-    ) -> List[Technology]:
+    async def get_high_priority(self, min_priority: int = 4, limit: int = 10) -> List[Technology]:
         """
         Get high priority technologies
 
@@ -164,10 +152,7 @@ class TechnologyRepository(BaseRepository[Technology]):
         result = await self.db.execute(
             select(Technology)
             .where(Technology.priority >= min_priority)
-            .order_by(
-                Technology.priority.desc(),
-                Technology.relevance_score.desc()
-            )
+            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
             .limit(limit)
         )
         return list(result.scalars().all())

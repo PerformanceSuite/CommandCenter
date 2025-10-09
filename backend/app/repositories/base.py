@@ -2,7 +2,7 @@
 Base repository class for common database operations
 """
 
-from typing import TypeVar, Generic, Type, Optional, List, Any, Dict
+from typing import TypeVar, Generic, Type, Optional, List, Any
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,16 +35,11 @@ class BaseRepository(Generic[ModelType]):
         Returns:
             Entity or None if not found
         """
-        result = await self.db.execute(
-            select(self.model).where(self.model.id == id)
-        )
+        result = await self.db.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
     async def get_all(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        order_by: Optional[Any] = None
+        self, skip: int = 0, limit: int = 100, order_by: Optional[Any] = None
     ) -> List[ModelType]:
         """
         Get all entities with pagination
@@ -122,9 +117,7 @@ class BaseRepository(Generic[ModelType]):
         Returns:
             True if deleted, False if not found
         """
-        result = await self.db.execute(
-            delete(self.model).where(self.model.id == id)
-        )
+        result = await self.db.execute(delete(self.model).where(self.model.id == id))
         await self.db.flush()
         return result.rowcount > 0
 

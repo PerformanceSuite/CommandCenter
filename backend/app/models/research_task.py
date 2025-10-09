@@ -3,16 +3,21 @@ ResearchTask model for tracking research activities
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.technology import Technology
+    from app.models.repository import Repository
+
 
 class TaskStatus(str, enum.Enum):
     """Research task status"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     BLOCKED = "blocked"
@@ -30,23 +35,17 @@ class ResearchTask(Base):
 
     # Foreign keys
     technology_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("technologies.id", ondelete="CASCADE"),
-        nullable=True
+        Integer, ForeignKey("technologies.id", ondelete="CASCADE"), nullable=True
     )
     repository_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("repositories.id", ondelete="CASCADE"),
-        nullable=True
+        Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=True
     )
 
     # Task details
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[TaskStatus] = mapped_column(
-        SQLEnum(TaskStatus),
-        nullable=False,
-        default=TaskStatus.PENDING
+        SQLEnum(TaskStatus), nullable=False, default=TaskStatus.PENDING
     )
 
     # Research artifacts
@@ -71,19 +70,15 @@ class ResearchTask(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     technology: Mapped[Optional["Technology"]] = relationship(
-        "Technology",
-        back_populates="research_tasks"
+        "Technology", back_populates="research_tasks"
     )
     repository: Mapped[Optional["Repository"]] = relationship(
-        "Repository",
-        back_populates="research_tasks"
+        "Repository", back_populates="research_tasks"
     )
 
     def __repr__(self) -> str:

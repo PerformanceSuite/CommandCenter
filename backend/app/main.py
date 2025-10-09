@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
@@ -31,14 +31,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     Lifespan context manager for startup and shutdown events
     """
     # Setup logging
-    log_level = os.getenv('LOG_LEVEL', 'INFO')
-    log_file = os.getenv('LOG_FILE', '/app/logs/commandcenter.log')
-    json_logs = os.getenv('JSON_LOGS', 'true').lower() == 'true'
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    log_file = os.getenv("LOG_FILE", "/app/logs/commandcenter.log")
+    json_logs = os.getenv("JSON_LOGS", "true").lower() == "true"
 
     setup_logging(
         log_level=log_level,
-        log_file=log_file if os.getenv('ENVIRONMENT') == 'production' else None,
-        json_format=json_logs
+        log_file=log_file if os.getenv("ENVIRONMENT") == "production" else None,
+        json_format=json_logs,
     )
 
     # Startup
@@ -158,7 +158,7 @@ async def global_exception_handler(request, exc):
         content={
             "error": "Internal server error",
             "detail": str(exc) if settings.debug else "An unexpected error occurred",
-        }
+        },
     )
 
 

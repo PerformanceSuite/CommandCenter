@@ -3,11 +3,14 @@ KnowledgeEntry model for RAG knowledge base entries
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.technology import Technology
 
 
 class KnowledgeEntry(Base):
@@ -20,9 +23,7 @@ class KnowledgeEntry(Base):
 
     # Foreign key to technology
     technology_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("technologies.id", ondelete="CASCADE"),
-        nullable=True
+        Integer, ForeignKey("technologies.id", ondelete="CASCADE"), nullable=True
     )
 
     # Content
@@ -33,7 +34,9 @@ class KnowledgeEntry(Base):
     # Source tracking
     source_file: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     source_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    source_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # pdf, html, manual, etc.
+    source_type: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )  # pdf, html, manual, etc.
 
     # Vector database reference
     vector_db_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -50,15 +53,12 @@ class KnowledgeEntry(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     technology: Mapped[Optional["Technology"]] = relationship(
-        "Technology",
-        back_populates="knowledge_entries"
+        "Technology", back_populates="knowledge_entries"
     )
 
     def __repr__(self) -> str:

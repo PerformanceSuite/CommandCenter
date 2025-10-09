@@ -18,7 +18,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     """
     Get the current authenticated user from JWT token
@@ -61,9 +61,7 @@ async def get_current_user(
 
     # Fetch user from database
     try:
-        result = await db.execute(
-            select(User).where(User.id == int(user_id))
-        )
+        result = await db.execute(select(User).where(User.id == int(user_id)))
         user = result.scalar_one_or_none()
     except Exception:
         raise credentials_exception
@@ -72,17 +70,12 @@ async def get_current_user(
         raise credentials_exception
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
 
     return user
 
 
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """
     Get current active user
 
@@ -96,16 +89,11 @@ async def get_current_active_user(
         HTTPException: If user is inactive
     """
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
     return current_user
 
 
-async def get_current_superuser(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
     """
     Get current superuser
 
@@ -119,10 +107,7 @@ async def get_current_superuser(
         HTTPException: If user is not a superuser
     """
     if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     return current_user
 
 

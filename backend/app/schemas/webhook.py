@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class WebhookConfigCreate(BaseModel):
     """Schema for creating webhook configuration"""
+
     repository_id: int
     webhook_url: str
     secret: str
@@ -17,6 +18,7 @@ class WebhookConfigCreate(BaseModel):
 
 class WebhookConfigUpdate(BaseModel):
     """Schema for updating webhook configuration"""
+
     webhook_url: Optional[str] = None
     secret: Optional[str] = None
     events: Optional[List[str]] = None
@@ -25,6 +27,7 @@ class WebhookConfigUpdate(BaseModel):
 
 class WebhookConfigResponse(BaseModel):
     """Schema for webhook configuration response"""
+
     id: int
     repository_id: int
     webhook_id: Optional[int]
@@ -41,6 +44,7 @@ class WebhookConfigResponse(BaseModel):
 
 class WebhookEventResponse(BaseModel):
     """Schema for webhook event response"""
+
     id: int
     config_id: Optional[int]
     event_type: str
@@ -58,9 +62,9 @@ class WebhookEventResponse(BaseModel):
 
 class WebhookPayload(BaseModel):
     """Schema for incoming webhook payload"""
+
     # GitHub sends various payloads depending on event type
     # This is a flexible schema that accepts any structure
-    pass
 
     class Config:
         extra = "allow"
@@ -68,6 +72,7 @@ class WebhookPayload(BaseModel):
 
 class GitHubRateLimitResponse(BaseModel):
     """Schema for GitHub rate limit status"""
+
     resource_type: str
     limit: int
     remaining: int
@@ -80,6 +85,7 @@ class GitHubRateLimitResponse(BaseModel):
 
 class RateLimitStatusResponse(BaseModel):
     """Schema for overall rate limit status"""
+
     core: GitHubRateLimitResponse
     search: Optional[GitHubRateLimitResponse] = None
     graphql: Optional[GitHubRateLimitResponse] = None

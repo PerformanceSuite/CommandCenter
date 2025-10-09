@@ -104,8 +104,4 @@ def create_token_pair(user_id: int, email: str) -> Dict[str, str]:
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}

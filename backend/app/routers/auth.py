@@ -33,9 +33,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/hour")
 async def register(
-    request: Request,
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
+    request: Request, user_data: UserCreate, db: AsyncSession = Depends(get_db)
 ) -> User:
     """
     Register a new user account
@@ -51,16 +49,11 @@ async def register(
         HTTPException: If email already exists
     """
     # Check if user already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     # Create new user
     hashed_password = get_password_hash(user_data.password)
@@ -69,7 +62,7 @@ async def register(
         hashed_password=hashed_password,
         full_name=user_data.full_name,
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
 
     db.add(user)
@@ -82,9 +75,7 @@ async def register(
 @router.post("/login", response_model=Token)
 @limiter.limit("10/minute")
 async def login(
-    request: Request,
-    user_credentials: UserLogin,
-    db: AsyncSession = Depends(get_db)
+    request: Request, user_credentials: UserLogin, db: AsyncSession = Depends(get_db)
 ) -> dict:
     """
     Login with email and password to get JWT tokens
@@ -100,9 +91,7 @@ async def login(
         HTTPException: If credentials are invalid
     """
     # Find user by email
-    result = await db.execute(
-        select(User).where(User.email == user_credentials.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_credentials.email))
     user = result.scalar_one_or_none()
 
     # Verify user exists and password is correct
@@ -115,10 +104,7 @@ async def login(
 
     # Check if user is active
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user account"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user account")
 
     # Update last login
     user.last_login = datetime.utcnow()
@@ -133,9 +119,7 @@ async def login(
 @router.post("/refresh", response_model=Token)
 @limiter.limit("20/minute")
 async def refresh_token(
-    request: Request,
-    refresh_request: RefreshTokenRequest,
-    db: AsyncSession = Depends(get_db)
+    request: Request, refresh_request: RefreshTokenRequest, db: AsyncSession = Depends(get_db)
 ) -> dict:
     """
     Refresh access token using refresh token
@@ -179,9 +163,7 @@ async def refresh_token(
         )
 
     # Verify user exists and is active
-    result = await db.execute(
-        select(User).where(User.id == int(user_id))
-    )
+    result = await db.execute(select(User).where(User.id == int(user_id)))
     user = result.scalar_one_or_none()
 
     if not user or not user.is_active:
@@ -198,9 +180,7 @@ async def refresh_token(
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+async def get_current_user_info(current_user: User = Depends(get_current_active_user)) -> User:
     """
     Get current authenticated user information
 

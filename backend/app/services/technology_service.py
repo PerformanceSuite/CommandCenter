@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Technology, TechnologyDomain, TechnologyStatus
 from app.repositories import TechnologyRepository
-from app.schemas import TechnologyCreate, TechnologyUpdate, TechnologyResponse
+from app.schemas import TechnologyCreate, TechnologyUpdate
 
 
 class TechnologyService:
@@ -31,7 +31,7 @@ class TechnologyService:
         limit: int = 50,
         domain: Optional[TechnologyDomain] = None,
         status_filter: Optional[TechnologyStatus] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
     ) -> tuple[List[Technology], int]:
         """
         List technologies with filtering and pagination
@@ -48,11 +48,7 @@ class TechnologyService:
         """
         if search:
             return await self.repo.search(
-                search_term=search,
-                domain=domain,
-                status=status_filter,
-                skip=skip,
-                limit=limit
+                search_term=search, domain=domain, status=status_filter, skip=skip, limit=limit
             )
         elif domain:
             technologies = await self.repo.list_by_domain(domain, skip, limit)
@@ -85,7 +81,7 @@ class TechnologyService:
         if not technology:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Technology {technology_id} not found"
+                detail=f"Technology {technology_id} not found",
             )
 
         return technology
@@ -121,7 +117,7 @@ class TechnologyService:
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Technology '{technology_data.title}' already exists"
+                detail=f"Technology '{technology_data.title}' already exists",
             )
 
         # Create technology
@@ -133,9 +129,7 @@ class TechnologyService:
         return technology
 
     async def update_technology(
-        self,
-        technology_id: int,
-        technology_data: TechnologyUpdate
+        self, technology_id: int, technology_data: TechnologyUpdate
     ) -> Technology:
         """
         Update technology
@@ -158,7 +152,7 @@ class TechnologyService:
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Technology '{technology_data.title}' already exists"
+                    detail=f"Technology '{technology_data.title}' already exists",
                 )
 
         # Update fields
@@ -184,11 +178,7 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(
-        self,
-        technology_id: int,
-        new_status: TechnologyStatus
-    ) -> Technology:
+    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
         """
         Update technology status
 
@@ -210,11 +200,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(
-        self,
-        technology_id: int,
-        new_priority: int
-    ) -> Technology:
+    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
         """
         Update technology priority
 
@@ -230,8 +216,7 @@ class TechnologyService:
         """
         if not 1 <= new_priority <= 5:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Priority must be between 1 and 5"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Priority must be between 1 and 5"
             )
 
         technology = await self.get_technology(technology_id)
@@ -242,11 +227,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(
-        self,
-        technology_id: int,
-        new_score: int
-    ) -> Technology:
+    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
         """
         Update technology relevance score
 
@@ -263,7 +244,7 @@ class TechnologyService:
         if not 0 <= new_score <= 100:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Relevance score must be between 0 and 100"
+                detail="Relevance score must be between 0 and 100",
             )
 
         technology = await self.get_technology(technology_id)
@@ -275,9 +256,7 @@ class TechnologyService:
         return technology
 
     async def get_high_priority_technologies(
-        self,
-        min_priority: int = 4,
-        limit: int = 10
+        self, min_priority: int = 4, limit: int = 10
     ) -> List[Technology]:
         """
         Get high priority technologies
@@ -308,14 +287,9 @@ class TechnologyService:
             "by_status": by_status,
             "by_domain": by_domain,
             "high_priority": [
-                {
-                    "id": t.id,
-                    "title": t.title,
-                    "priority": t.priority,
-                    "status": t.status.value
-                }
+                {"id": t.id, "title": t.title, "priority": t.priority, "status": t.status.value}
                 for t in high_priority
-            ]
+            ],
         }
 
     async def search_technologies(
@@ -324,7 +298,7 @@ class TechnologyService:
         domain: Optional[TechnologyDomain] = None,
         status: Optional[TechnologyStatus] = None,
         skip: int = 0,
-        limit: int = 50
+        limit: int = 50,
     ) -> tuple[List[Technology], int]:
         """
         Search technologies
@@ -340,9 +314,5 @@ class TechnologyService:
             Tuple of (list of technologies, total count)
         """
         return await self.repo.search(
-            search_term=query,
-            domain=domain,
-            status=status,
-            skip=skip,
-            limit=limit
+            search_term=query, domain=domain, status=status, skip=skip, limit=limit
         )

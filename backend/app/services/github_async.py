@@ -57,6 +57,7 @@ class GitHubAsyncService:
         Returns:
             True if authentication successful
         """
+
         def _auth():
             try:
                 repo = self.github.get_repo(f"{owner}/{name}")
@@ -79,6 +80,7 @@ class GitHubAsyncService:
         Returns:
             List of repository metadata dictionaries
         """
+
         def _list_repos():
             try:
                 if username:
@@ -89,20 +91,22 @@ class GitHubAsyncService:
 
                 repo_list = []
                 for repo in repos:
-                    repo_list.append({
-                        "owner": repo.owner.login,
-                        "name": repo.name,
-                        "full_name": repo.full_name,
-                        "description": repo.description,
-                        "url": repo.html_url,
-                        "clone_url": repo.clone_url,
-                        "default_branch": repo.default_branch,
-                        "is_private": repo.private,
-                        "stars": repo.stargazers_count,
-                        "forks": repo.forks_count,
-                        "language": repo.language,
-                        "github_id": repo.id,
-                    })
+                    repo_list.append(
+                        {
+                            "owner": repo.owner.login,
+                            "name": repo.name,
+                            "full_name": repo.full_name,
+                            "description": repo.description,
+                            "url": repo.html_url,
+                            "clone_url": repo.clone_url,
+                            "default_branch": repo.default_branch,
+                            "is_private": repo.private,
+                            "stars": repo.stargazers_count,
+                            "forks": repo.forks_count,
+                            "language": repo.language,
+                            "github_id": repo.id,
+                        }
+                    )
 
                 return repo_list
 
@@ -112,10 +116,7 @@ class GitHubAsyncService:
         return await self._run_in_executor(_list_repos)
 
     async def sync_repository(
-        self,
-        owner: str,
-        name: str,
-        last_known_sha: Optional[str] = None
+        self, owner: str, name: str, last_known_sha: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Sync repository information and check for changes
@@ -128,6 +129,7 @@ class GitHubAsyncService:
         Returns:
             Dictionary with sync information
         """
+
         def _sync():
             try:
                 repo: GithubRepo = self.github.get_repo(f"{owner}/{name}")
@@ -153,12 +155,14 @@ class GitHubAsyncService:
                 }
 
                 if latest_commit:
-                    sync_info.update({
-                        "last_commit_sha": latest_commit.sha,
-                        "last_commit_message": latest_commit.commit.message,
-                        "last_commit_author": latest_commit.commit.author.name,
-                        "last_commit_date": latest_commit.commit.author.date,
-                    })
+                    sync_info.update(
+                        {
+                            "last_commit_sha": latest_commit.sha,
+                            "last_commit_message": latest_commit.commit.message,
+                            "last_commit_author": latest_commit.commit.author.name,
+                            "last_commit_date": latest_commit.commit.author.date,
+                        }
+                    )
 
                     # Check if there are new commits
                     if last_known_sha and latest_commit.sha != last_known_sha:
@@ -182,6 +186,7 @@ class GitHubAsyncService:
         Returns:
             Repository information dictionary
         """
+
         def _get_info():
             try:
                 repo: GithubRepo = self.github.get_repo(f"{owner}/{name}")
@@ -220,6 +225,7 @@ class GitHubAsyncService:
         Returns:
             List of repository metadata dictionaries
         """
+
         def _search():
             try:
                 repos = self.github.search_repositories(query=query)
@@ -229,15 +235,17 @@ class GitHubAsyncService:
                     if i >= max_results:
                         break
 
-                    repo_list.append({
-                        "owner": repo.owner.login,
-                        "name": repo.name,
-                        "full_name": repo.full_name,
-                        "description": repo.description,
-                        "url": repo.html_url,
-                        "stars": repo.stargazers_count,
-                        "language": repo.language,
-                    })
+                    repo_list.append(
+                        {
+                            "owner": repo.owner.login,
+                            "name": repo.name,
+                            "full_name": repo.full_name,
+                            "description": repo.description,
+                            "url": repo.html_url,
+                            "stars": repo.stargazers_count,
+                            "language": repo.language,
+                        }
+                    )
 
                 return repo_list
 
@@ -247,11 +255,7 @@ class GitHubAsyncService:
         return await self._run_in_executor(_search)
 
     async def get_file_content(
-        self,
-        owner: str,
-        name: str,
-        path: str,
-        ref: Optional[str] = None
+        self, owner: str, name: str, path: str, ref: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Get file content from repository
@@ -265,6 +269,7 @@ class GitHubAsyncService:
         Returns:
             Dictionary with file content and metadata
         """
+
         def _get_file():
             try:
                 repo: GithubRepo = self.github.get_repo(f"{owner}/{name}")
@@ -274,7 +279,7 @@ class GitHubAsyncService:
                     raise Exception(f"Path {path} is a directory, not a file")
 
                 return {
-                    "content": file_content.decoded_content.decode('utf-8'),
+                    "content": file_content.decoded_content.decode("utf-8"),
                     "path": file_content.path,
                     "sha": file_content.sha,
                     "size": file_content.size,

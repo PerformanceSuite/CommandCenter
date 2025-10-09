@@ -7,13 +7,11 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
-import os
 from pathlib import Path
 
 from app.models import ResearchTask, TaskStatus
 from app.repositories import ResearchTaskRepository
-from app.schemas import ResearchTaskCreate, ResearchTaskUpdate, ResearchTaskResponse
+from app.schemas import ResearchTaskCreate, ResearchTaskUpdate
 
 
 class ResearchTaskService:
@@ -38,7 +36,7 @@ class ResearchTaskService:
         status: Optional[TaskStatus] = None,
         technology_id: Optional[int] = None,
         repository_id: Optional[int] = None,
-        assigned_to: Optional[str] = None
+        assigned_to: Optional[str] = None,
     ) -> tuple[List[ResearchTask], int]:
         """
         List research tasks with filtering and pagination
@@ -90,8 +88,7 @@ class ResearchTaskService:
 
         if not task:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Research task {task_id} not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Research task {task_id} not found"
             )
 
         return task
@@ -126,11 +123,7 @@ class ResearchTaskService:
 
         return task
 
-    async def update_task(
-        self,
-        task_id: int,
-        task_data: ResearchTaskUpdate
-    ) -> ResearchTask:
+    async def update_task(self, task_id: int, task_data: ResearchTaskUpdate) -> ResearchTask:
         """
         Update research task
 
@@ -150,11 +143,18 @@ class ResearchTaskService:
         update_data = task_data.model_dump(exclude_unset=True)
 
         # Handle status change to completed
-        if update_data.get("status") == TaskStatus.COMPLETED and task.status != TaskStatus.COMPLETED:
+        if (
+            update_data.get("status") == TaskStatus.COMPLETED
+            and task.status != TaskStatus.COMPLETED
+        ):
             update_data["completed_at"] = datetime.utcnow()
 
         # Clear completed_at if status changed from completed
-        if "status" in update_data and update_data["status"] != TaskStatus.COMPLETED and task.status == TaskStatus.COMPLETED:
+        if (
+            "status" in update_data
+            and update_data["status"] != TaskStatus.COMPLETED
+            and task.status == TaskStatus.COMPLETED
+        ):
             update_data["completed_at"] = None
 
         task = await self.repo.update(task, **update_data)
@@ -190,11 +190,7 @@ class ResearchTaskService:
         await self.repo.delete(task)
         await self.db.commit()
 
-    async def upload_document(
-        self,
-        task_id: int,
-        file: UploadFile
-    ) -> ResearchTask:
+    async def upload_document(self, task_id: int, file: UploadFile) -> ResearchTask:
         """
         Upload document for research task
 
@@ -213,8 +209,7 @@ class ResearchTaskService:
         # Validate file
         if not file.filename:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No filename provided"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="No filename provided"
             )
 
         # Create task-specific directory
@@ -239,7 +234,7 @@ class ResearchTaskService:
                 "path": str(file_path),
                 "uploaded_at": datetime.utcnow().isoformat(),
                 "size": len(content),
-                "content_type": file.content_type
+                "content_type": file.content_type,
             }
             uploaded_docs.append(doc_info)
 
@@ -255,7 +250,7 @@ class ResearchTaskService:
                 file_path.unlink()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to upload document: {str(e)}"
+                detail=f"Failed to upload document: {str(e)}",
             )
 
     async def get_overdue_tasks(self, limit: int = 100) -> List[ResearchTask]:
@@ -270,11 +265,7 @@ class ResearchTaskService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(
-        self,
-        days: int = 7,
-        limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -288,9 +279,7 @@ class ResearchTaskService:
         return await self.repo.get_upcoming(days, limit)
 
     async def get_statistics(
-        self,
-        technology_id: Optional[int] = None,
-        repository_id: Optional[int] = None
+        self, technology_id: Optional[int] = None, repository_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Get task statistics
@@ -303,8 +292,7 @@ class ResearchTaskService:
             Dictionary with statistics
         """
         stats = await self.repo.get_statistics(
-            technology_id=technology_id,
-            repository_id=repository_id
+            technology_id=technology_id, repository_id=repository_id
         )
 
         # Add additional statistics
@@ -316,11 +304,7 @@ class ResearchTaskService:
 
         return stats
 
-    async def update_progress(
-        self,
-        task_id: int,
-        progress_percentage: int
-    ) -> ResearchTask:
+    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
         """
         Update task progress percentage
 
@@ -337,7 +321,7 @@ class ResearchTaskService:
         if not 0 <= progress_percentage <= 100:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Progress percentage must be between 0 and 100"
+                detail="Progress percentage must be between 0 and 100",
             )
 
         task = await self.get_task(task_id)
@@ -346,9 +330,7 @@ class ResearchTaskService:
         # Auto-update status if progress reaches 100%
         if progress_percentage == 100 and task.status != TaskStatus.COMPLETED:
             task = await self.repo.update(
-                task,
-                status=TaskStatus.COMPLETED,
-                completed_at=datetime.utcnow()
+                task, status=TaskStatus.COMPLETED, completed_at=datetime.utcnow()
             )
 
         await self.db.commit()
