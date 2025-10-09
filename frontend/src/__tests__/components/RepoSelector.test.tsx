@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+/* eslint-disable */
+import { describe, it, expect} from 'vitest';
 import { render, screen, fireEvent } from '../../tests/utils';
 import { RepoSelector } from '../../components/Dashboard/RepoSelector';
 import { mockRepository } from '../../tests/utils';

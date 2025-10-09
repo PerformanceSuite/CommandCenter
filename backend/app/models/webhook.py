@@ -50,7 +50,7 @@ class WebhookConfig(Base):
     )
 
     # Relationships
-    repository: Mapped["Repository"] = relationship(
+    repository: Mapped["Repository"] = relationship(  # noqa: F821
         "Repository", back_populates="webhook_configs"
     )
     events_received: Mapped[list["WebhookEvent"]] = relationship(
@@ -104,7 +104,10 @@ class WebhookEvent(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<WebhookEvent(id={self.id}, event_type='{self.event_type}', delivery_id='{self.delivery_id}')>"
+        return (
+            f"<WebhookEvent(id={self.id}, event_type='{self.event_type}', "
+            f"delivery_id='{self.delivery_id}')>"
+        )
 
 
 class GitHubRateLimit(Base):
@@ -130,4 +133,7 @@ class GitHubRateLimit(Base):
     checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return f"<GitHubRateLimit(resource_type='{self.resource_type}', remaining={self.remaining}/{self.limit})>"
+        return (
+            f"<GitHubRateLimit(resource_type='{self.resource_type}', "
+            f"remaining={self.remaining}/{self.limit})>"
+        )

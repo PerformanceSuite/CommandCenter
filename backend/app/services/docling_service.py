@@ -3,8 +3,6 @@ Docling Integration Service
 Processes various document formats (PDF, Markdown, text) into clean text for RAG
 """
 
-from typing import Optional, List, Dict, Any
-from pathlib import Path
 import tempfile
 import os
 

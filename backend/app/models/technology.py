@@ -76,10 +76,10 @@ class Technology(Base):
     )
 
     # Relationships
-    research_tasks: Mapped[list["ResearchTask"]] = relationship(
+    research_tasks: Mapped[list["ResearchTask"]] = relationship(  # noqa: F821
         "ResearchTask", back_populates="technology", cascade="all, delete-orphan"
     )
-    knowledge_entries: Mapped[list["KnowledgeEntry"]] = relationship(
+    knowledge_entries: Mapped[list["KnowledgeEntry"]] = relationship(  # noqa: F821
         "KnowledgeEntry", back_populates="technology", cascade="all, delete-orphan"
     )
 

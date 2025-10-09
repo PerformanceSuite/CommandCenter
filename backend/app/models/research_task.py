@@ -78,10 +78,10 @@ class ResearchTask(Base):
     )
 
     # Relationships
-    technology: Mapped[Optional["Technology"]] = relationship(
+    technology: Mapped[Optional["Technology"]] = relationship(  # noqa: F821
         "Technology", back_populates="research_tasks"
     )
-    repository: Mapped[Optional["Repository"]] = relationship(
+    repository: Mapped[Optional["Repository"]] = relationship(  # noqa: F821
         "Repository", back_populates="research_tasks"
     )
 

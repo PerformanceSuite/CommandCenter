@@ -4,7 +4,7 @@ GitHub API rate limiting service with tracking and exponential backoff
 
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Dict, Any, Callable
 from functools import wraps
 import hashlib
@@ -122,7 +122,8 @@ class RateLimitService:
 
             await db.commit()
             logger.info(
-                f"Stored rate limit status: {status['core']['remaining']}/{status['core']['limit']} remaining"
+                f"Stored rate limit status: "
+                f"{status['core']['remaining']}/{status['core']['limit']} remaining"
             )
 
         except Exception as e:

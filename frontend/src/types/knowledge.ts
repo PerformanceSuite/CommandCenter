@@ -12,7 +12,7 @@ export interface KnowledgeSearchResult {
   technology_id?: number;
   source_file?: string;
   score: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export interface KnowledgeEntry {

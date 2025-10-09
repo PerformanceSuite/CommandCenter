@@ -54,7 +54,7 @@ class KnowledgeEntry(Base):
     )
 
     # Relationships
-    technology: Mapped[Optional["Technology"]] = relationship(
+    technology: Mapped[Optional["Technology"]] = relationship(  # noqa: F821
         "Technology", back_populates="knowledge_entries"
     )
 

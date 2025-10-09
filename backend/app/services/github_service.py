@@ -4,7 +4,6 @@ GitHub integration service for repository management
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-import httpx
 from github import Github, GithubException, Repository as GithubRepo
 
 from app.config import settings

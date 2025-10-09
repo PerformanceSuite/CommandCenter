@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Technology, TechnologyDomain, TechnologyStatus
 from app.repositories import TechnologyRepository
-from app.schemas import TechnologyCreate, TechnologyUpdate, TechnologyResponse
+from app.schemas import TechnologyCreate, TechnologyUpdate
 
 
 class TechnologyService:
