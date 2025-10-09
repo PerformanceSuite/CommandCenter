@@ -1,0 +1,5 @@
+
+# Session Management
+.claude/logs/sessions/
+*.tmp
+*.log

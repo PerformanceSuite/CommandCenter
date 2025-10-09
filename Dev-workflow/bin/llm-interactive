@@ -1,0 +1,361 @@
+#!/bin/bash
+
+# Interactive LLM CLI - Like Gemini/Claude CLI
+# Provides a persistent chat interface with model switching
+
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m' # No Color
+
+# Configuration
+DEV_WORKFLOW_DIR="/Users/danielconnolly/Projects/Dev-workflow"
+CURRENT_MODEL="${LLM_MODEL:-gpt-4o}"
+CONVERSATION_FILE="/tmp/llm_conversation_$$.txt"
+
+# ASCII Art Logo
+show_logo() {
+    echo -e "${BOLD}  >${NC} ${CYAN}L${BLUE}L${MAGENTA}M${NC}"
+    echo ""
+}
+
+# Ensure Docker is running (with better checks)
+ensure_docker() {
+    # Check Docker daemon
+    if ! docker info >/dev/null 2>&1; then
+        echo -e "${YELLOW}Starting Docker Desktop...${NC}"
+        open -a "Docker Desktop" 2>/dev/null
+        local count=0
+        while ! docker info >/dev/null 2>&1 && [ $count -lt 45 ]; do
+            sleep 1
+            count=$((count + 1))
+            printf "."
+        done
+        echo ""
+        sleep 2
+    fi
+    
+    # Check if LiteLLM container exists and is running
+    if ! docker ps 2>/dev/null | grep -q litellm; then
+        echo -e "${YELLOW}Starting LiteLLM proxy...${NC}"
+        cd "$DEV_WORKFLOW_DIR" 2>/dev/null
+        
+        # Stop any existing container first
+        docker compose down >/dev/null 2>&1
+        
+        # Start fresh
+        docker compose up -d >/dev/null 2>&1
+        
+        # Wait for proxy to be ready (give it more time)
+        echo -n "Waiting for API to be ready"
+        local count=0
+        while [ $count -lt 30 ]; do
+            if curl -s http://localhost:4000/health >/dev/null 2>&1; then
+                echo -e " ${GREEN}✓${NC}"
+                return 0
+            fi
+            sleep 1
+            count=$((count + 1))
+            printf "."
+        done
+        echo ""
+        
+        # Check if it's really running
+        if ! curl -s http://localhost:4000/health >/dev/null 2>&1; then
+            echo -e "${RED}Warning: API not responding yet. May need a moment to initialize.${NC}"
+        fi
+    else
+        # Container is running, check if API is responsive
+        if ! curl -s http://localhost:4000/health >/dev/null 2>&1; then
+            echo -e "${YELLOW}Container running but API not ready. Waiting...${NC}"
+            local count=0
+            while [ $count -lt 15 ] && ! curl -s http://localhost:4000/health >/dev/null 2>&1; do
+                sleep 1
+                count=$((count + 1))
+                printf "."
+            done
+            echo ""
+        fi
+    fi
+}
+
+# Show tips
+show_tips() {
+    echo -e "${DIM}Tips for getting started:${NC}"
+    echo -e "${DIM}1. Ask questions, paste files, or describe tasks.${NC}"
+    echo -e "${DIM}2. Be specific for the best results.${NC}"
+    echo -e "${DIM}3. Type ${NC}${CYAN}/models${NC}${DIM} to see available models.${NC}"
+    echo -e "${DIM}4. Type ${NC}${CYAN}/help${NC}${DIM} for more commands.${NC}"
+    echo ""
+}
+
+# Show inline help
+show_inline_help() {
+    echo -e "${CYAN}Commands:${NC}"
+    echo "  /models        - List available models with numbers"
+    echo "  /1 to /15      - Quick switch to model by number"
+    echo "  /gpt5          - Switch to GPT-5"
+    echo "  /opus          - Switch to Claude Opus 4.1"
+    echo "  /sonnet        - Switch to Claude Sonnet 4"
+    echo "  /gemini        - Switch to Gemini 2.5 Pro"
+    echo "  /fast          - Switch to Groq (ultra-fast)"
+    echo "  /local         - Switch to local Ollama"
+    echo "  /clear         - Clear screen"
+    echo "  /cost          - Show usage costs"
+    echo "  /status        - System status"
+    echo "  /exit or /quit - Exit LLM"
+}
+
+# List models with numbers
+list_models() {
+    echo -e "${CYAN}Available Models:${NC}"
+    echo "  ${BOLD}OpenAI:${NC}"
+    echo "  [1]  gpt-4o             - GPT-4 Optimized (latest)"
+    echo "  [2]  gpt-4o-mini        - GPT-4 Mini (fast)"
+    echo "  [15] gpt-4-turbo        - GPT-4 Turbo"
+    echo ""
+    echo "  ${BOLD}Anthropic Claude:${NC}"
+    echo "  [3]  claude-3-opus      - Claude 3 Opus (most capable)"
+    echo "  [4]  claude-3-5-sonnet  - Claude 3.5 Sonnet (balanced)"
+    echo "  [5]  claude-3-haiku     - Claude 3 Haiku (fast)"
+    echo ""
+    echo "  ${BOLD}Google Gemini:${NC}"
+    echo "  [6]  gemini-1.5-pro     - Gemini 1.5 Pro"
+    echo "  [7]  gemini-1.5-flash   - Gemini 1.5 Flash (fast)"
+    echo ""
+    echo "  ${BOLD}Groq (Ultra-fast):${NC}"
+    echo "  [8]  groq-llama3.1-8b   - Llama 3.1 8B (instant)"
+    echo "  [9]  groq-llama3.1-70b  - Llama 3.1 70B (powerful)"
+    echo "  [10] groq-mixtral       - Mixtral 8x7B"
+    echo ""
+    echo "  ${BOLD}OpenRouter:${NC}"
+    echo "  [11] openrouter-claude-3-opus - Claude via OpenRouter"
+    echo "  [12] openrouter-gpt-4   - GPT-4 via OpenRouter"
+    echo ""
+    echo "  ${BOLD}Local (FREE):${NC}"
+    echo "  [13] ollama-llama3.1-8b - Local Llama (Ollama)"
+    echo "  [14] ollama-qwen2.5-7b  - Local Qwen (Ollama)"
+    echo ""
+    echo -e "${YELLOW}Current: $CURRENT_MODEL${NC}"
+    echo -e "${DIM}Switch with: /1 through /15 or /modelname${NC}"
+}
+
+# Model array for number selection
+declare -a MODELS=(
+    "gpt-4o"
+    "gpt-4o-mini"
+    "claude-3-opus"
+    "claude-3-5-sonnet"
+    "claude-3-haiku"
+    "gemini-1.5-pro"
+    "gemini-1.5-flash"
+    "groq-llama3.1-8b"
+    "groq-llama3.1-70b"
+    "groq-mixtral"
+    "openrouter-claude-3-opus"
+    "openrouter-gpt-4"
+    "ollama-llama3.1-8b"
+    "ollama-qwen2.5-7b"
+    "gpt-4-turbo"
+)
+
+# Process query
+process_query() {
+    local query="$1"
+    if [[ -z "$query" ]]; then
+        return
+    fi
+    
+    # Add to conversation history
+    echo "User: $query" >> "$CONVERSATION_FILE"
+    
+    # Send to LLM - properly escape the query
+    response=$(MODEL="$CURRENT_MODEL" "$DEV_WORKFLOW_DIR/bin/ask" "$query" 2>/dev/null)
+    
+    if [[ -z "$response" ]]; then
+        echo -e "${RED}Error: No response. Checking connection...${NC}"
+        if ! curl -s http://localhost:4000/health >/dev/null 2>&1; then
+            echo -e "${YELLOW}LiteLLM proxy is not responding. Restarting...${NC}"
+            ensure_docker
+            echo -e "${GREEN}Please try your query again.${NC}"
+        else
+            echo -e "${RED}Connection OK but no response. Try a different model with /models${NC}"
+        fi
+    else
+        echo -e "$response"
+        echo "Assistant: $response" >> "$CONVERSATION_FILE"
+    fi
+}
+
+# Show status
+show_status() {
+    echo -e "${CYAN}System Status:${NC}"
+    if docker info >/dev/null 2>&1; then
+        echo -e "  ${GREEN}✓${NC} Docker: Running"
+        if docker ps 2>/dev/null | grep -q litellm; then
+            echo -e "  ${GREEN}✓${NC} LiteLLM: Running"
+            if curl -s http://localhost:4000/health >/dev/null 2>&1; then
+                echo -e "  ${GREEN}✓${NC} API: Responding"
+            else
+                echo -e "  ${YELLOW}⚠${NC}  API: Not responding"
+            fi
+        else
+            echo -e "  ${RED}✗${NC} LiteLLM: Not running"
+        fi
+    else
+        echo -e "  ${RED}✗${NC} Docker: Not running"
+    fi
+    if pgrep ollama >/dev/null; then
+        echo -e "  ${GREEN}✓${NC} Ollama: Running"
+    else
+        echo -e "  ${DIM}○${NC} Ollama: Not running (optional)"
+    fi
+    echo -e "  ${CYAN}Model:${NC} $CURRENT_MODEL"
+}
+
+# Show costs
+show_costs() {
+    if docker ps 2>/dev/null | grep -q litellm; then
+        echo -e "${CYAN}Recent costs:${NC}"
+        docker exec litellm sqlite3 /app/logs/litellm.db \
+            'select datetime(timestamp, "unixepoch") as time, 
+                    model, 
+                    printf("$%.4f", total_cost) as cost 
+             from requests 
+             order by timestamp desc 
+             limit 5;' 2>/dev/null || echo "No usage data yet"
+    else
+        echo -e "${YELLOW}LiteLLM not running${NC}"
+    fi
+}
+
+# Main interactive loop
+main() {
+    clear
+    show_logo
+    
+    # Ensure Docker is running
+    ensure_docker
+    
+    show_tips
+    
+    # Set up cleanup
+    trap "rm -f $CONVERSATION_FILE; echo -e '\n${CYAN}Goodbye!${NC}'; exit 0" INT TERM EXIT
+    
+    # Main loop
+    while true; do
+        # Show prompt with current model
+        echo -ne "${BOLD}>${NC} ${DIM}[$CURRENT_MODEL]${NC} "
+        
+        # Read user input
+        read -r input
+        
+        # Skip empty input
+        if [[ -z "$input" ]]; then
+            continue
+        fi
+        
+        # Check for commands
+        case "$input" in
+            /exit|/quit|/q)
+                break
+                ;;
+            /help|/h|/\?)
+                show_inline_help
+                ;;
+            /models|/list|/m)
+                list_models
+                ;;
+            /1|/2|/3|/4|/5|/6|/7|/8|/9|/10|/11|/12|/13|/14|/15)
+                # Extract number and switch model
+                num="${input#/}"
+                if [[ $num -ge 1 && $num -le ${#MODELS[@]} ]]; then
+                    CURRENT_MODEL="${MODELS[$((num-1))]}"
+                    echo -e "${GREEN}Switched to $CURRENT_MODEL${NC}"
+                else
+                    echo -e "${RED}Invalid model number${NC}"
+                fi
+                ;;
+            /gpt5|/gpt-5)
+                CURRENT_MODEL="gpt-5"
+                echo -e "${GREEN}Switched to GPT-5${NC}"
+                ;;
+            /gpt4|/gpt4o|/gpt-4o)
+                CURRENT_MODEL="gpt-4o"
+                echo -e "${GREEN}Switched to GPT-4o${NC}"
+                ;;
+            /opus)
+                CURRENT_MODEL="claude-opus-4.1"
+                echo -e "${GREEN}Switched to Claude Opus 4.1${NC}"
+                ;;
+            /sonnet)
+                CURRENT_MODEL="claude-sonnet-4"
+                echo -e "${GREEN}Switched to Claude Sonnet 4${NC}"
+                ;;
+            /claude)
+                CURRENT_MODEL="claude-3.5-sonnet"
+                echo -e "${GREEN}Switched to Claude 3.5 Sonnet${NC}"
+                ;;
+            /haiku)
+                CURRENT_MODEL="claude-3.5-haiku"
+                echo -e "${GREEN}Switched to Claude Haiku${NC}"
+                ;;
+            /gemini|/gemini-pro)
+                CURRENT_MODEL="gemini-2.5-pro"
+                echo -e "${GREEN}Switched to Gemini 2.5 Pro${NC}"
+                ;;
+            /flash)
+                CURRENT_MODEL="gemini-2.5-flash"
+                echo -e "${GREEN}Switched to Gemini Flash${NC}"
+                ;;
+            /fast|/groq)
+                CURRENT_MODEL="groq-llama3.1-8b"
+                echo -e "${GREEN}Switched to Groq (ultra-fast)${NC}"
+                ;;
+            /local|/ollama)
+                CURRENT_MODEL="ollama-llama3.1-8b"
+                echo -e "${GREEN}Switched to local Ollama${NC}"
+                ;;
+            /o3)
+                CURRENT_MODEL="o3"
+                echo -e "${GREEN}Switched to OpenAI o3${NC}"
+                ;;
+            /o4)
+                CURRENT_MODEL="o4-mini"
+                echo -e "${GREEN}Switched to OpenAI o4-mini${NC}"
+                ;;
+            /clear|/c)
+                clear
+                show_logo
+                > "$CONVERSATION_FILE"
+                echo -e "${GREEN}Screen cleared${NC}"
+                echo ""
+                show_tips
+                ;;
+            /status|/s)
+                show_status
+                ;;
+            /cost|/costs)
+                show_costs
+                ;;
+            /*)
+                echo -e "${YELLOW}Unknown command. Type /help for commands or /models for model list.${NC}"
+                ;;
+            *)
+                # Regular query
+                process_query "$input"
+                ;;
+        esac
+        
+        echo ""
+    done
+}
+
+# Run main
+main

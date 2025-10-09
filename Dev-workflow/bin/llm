@@ -1,0 +1,346 @@
+#!/bin/bash
+
+# Smart LLM CLI - Auto-starts Docker and provides slash commands
+# Usage: llm [your question] or llm /[command] [question]
+
+# Color codes for pretty output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Default model
+DEFAULT_MODEL="gpt-4o"
+CURRENT_MODEL="${LLM_MODEL:-$DEFAULT_MODEL}"
+
+# Project directory
+DEV_WORKFLOW_DIR="/Users/danielconnolly/Projects/Dev-workflow"
+
+# Model groups for easy selection
+declare -A MODEL_GROUPS
+MODEL_GROUPS["smart"]="gpt-5"
+MODEL_GROUPS["best"]="claude-opus-4.1"
+MODEL_GROUPS["fast"]="groq-llama3.1-8b"
+MODEL_GROUPS["free"]="ollama-llama3.1-8b"
+MODEL_GROUPS["cheap"]="claude-3.5-haiku"
+MODEL_GROUPS["code"]="claude-opus-4.1"
+MODEL_GROUPS["think"]="gemini-2.5-pro"
+MODEL_GROUPS["reason"]="o3"
+
+# Function to ensure Docker is running
+ensure_docker() {
+    # Check if Docker daemon is running
+    if ! docker info >/dev/null 2>&1; then
+        echo -e "${YELLOW}🚀 Starting Docker Desktop...${NC}"
+        open -a "Docker Desktop"
+        
+        # Wait for Docker to start (max 30 seconds)
+        local count=0
+        while ! docker info >/dev/null 2>&1 && [ $count -lt 30 ]; do
+            sleep 1
+            count=$((count + 1))
+            printf "."
+        done
+        echo ""
+        
+        if ! docker info >/dev/null 2>&1; then
+            echo -e "${RED}❌ Docker failed to start. Please start Docker Desktop manually.${NC}"
+            return 1
+        fi
+    fi
+    
+    # Check if LiteLLM container is running
+    if ! docker ps 2>/dev/null | grep -q litellm; then
+        echo -e "${YELLOW}🔄 Starting LiteLLM proxy...${NC}"
+        cd "$DEV_WORKFLOW_DIR" 2>/dev/null || {
+            echo -e "${RED}❌ Dev-workflow directory not found at $DEV_WORKFLOW_DIR${NC}"
+            return 1
+        }
+        
+        # Start the container
+        if docker compose up -d 2>&1 | grep -v "Pulling" | grep -v "warning"; then
+            # Wait for the service to be ready
+            echo -e "${CYAN}⏳ Waiting for LiteLLM to be ready...${NC}"
+            local count=0
+            while ! curl -s http://localhost:4000/health >/dev/null 2>&1 && [ $count -lt 10 ]; do
+                sleep 1
+                count=$((count + 1))
+                printf "."
+            done
+            echo ""
+            
+            if curl -s http://localhost:4000/health >/dev/null 2>&1; then
+                echo -e "${GREEN}✅ LiteLLM proxy is ready!${NC}"
+            else
+                echo -e "${YELLOW}⚠️  LiteLLM might still be starting. Try again in a few seconds.${NC}"
+            fi
+        else
+            echo -e "${RED}❌ Failed to start LiteLLM. Check Docker logs.${NC}"
+            return 1
+        fi
+    fi
+    
+    return 0
+}
+
+# Function to show available models
+show_models() {
+    echo -e "${BOLD}${CYAN}🤖 Available Models:${NC}"
+    echo ""
+    echo -e "${BOLD}Top Tier:${NC}"
+    echo "  /gpt5         - OpenAI GPT-5 (latest)"
+    echo "  /opus         - Claude Opus 4.1 (most capable)"
+    echo "  /gemini       - Gemini 2.5 Pro (thinking)"
+    echo ""
+    echo -e "${BOLD}Fast & Efficient:${NC}"
+    echo "  /sonnet       - Claude Sonnet 4"
+    echo "  /flash        - Gemini 2.5 Flash"
+    echo "  /groq         - Groq Llama 3.1 (ultra-fast)"
+    echo ""
+    echo -e "${BOLD}Specialized:${NC}"
+    echo "  /o3           - OpenAI o3 (reasoning)"
+    echo "  /o4           - OpenAI o4-mini (fast reasoning)"
+    echo "  /code         - Best for coding (Opus 4.1)"
+    echo "  /think        - Deep thinking (Gemini 2.5 Pro)"
+    echo ""
+    echo -e "${BOLD}Budget:${NC}"
+    echo "  /haiku        - Claude Haiku (cheap)"
+    echo "  /local        - Ollama local (FREE)"
+    echo ""
+    echo -e "${BOLD}Quick Selects:${NC}"
+    echo "  /smart        - Smartest available (GPT-5)"
+    echo "  /fast         - Fastest (Groq)"
+    echo "  /free         - Free local model"
+    echo "  /cheap        - Cheapest cloud"
+    echo ""
+    echo -e "${BOLD}Commands:${NC}"
+    echo "  /help         - Show this help"
+    echo "  /models       - List all models"
+    echo "  /compare      - Compare models"
+    echo "  /cost         - Check usage costs"
+    echo "  /status       - Check system status"
+    echo "  /stop         - Stop Docker containers"
+    echo ""
+    echo -e "${YELLOW}Current model: $CURRENT_MODEL${NC}"
+}
+
+# Function to run comparison
+compare_models() {
+    ensure_docker || return 1
+    
+    local prompt="${1:-What is consciousness?}"
+    echo -e "${BOLD}${CYAN}🔍 Comparing top models with:${NC} \"$prompt\""
+    echo ""
+    
+    for model in gpt-5 claude-opus-4.1 gemini-2.5-pro; do
+        echo -e "${BOLD}${GREEN}=== $model ===${NC}"
+        MODEL=$model "$DEV_WORKFLOW_DIR/bin/ask" "$prompt" 2>/dev/null | head -3
+        echo ""
+    done
+}
+
+# Function to check costs
+check_costs() {
+    if ! docker ps 2>/dev/null | grep -q litellm; then
+        echo -e "${YELLOW}LiteLLM not running. Starting it...${NC}"
+        ensure_docker || return 1
+    fi
+    
+    echo -e "${BOLD}${CYAN}💰 Recent Usage Costs:${NC}"
+    docker exec litellm sqlite3 /app/logs/litellm.db \
+        'select datetime(timestamp, "unixepoch") as time, 
+                model, 
+                printf("$%.4f", total_cost) as cost 
+         from requests 
+         order by timestamp desc 
+         limit 10;' 2>/dev/null || echo "No usage data yet"
+}
+
+# Function to check status
+check_status() {
+    echo -e "${BOLD}${CYAN}📊 System Status:${NC}"
+    
+    # Check Docker
+    if docker info >/dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} Docker: Running"
+        
+        # Check LiteLLM container
+        if docker ps 2>/dev/null | grep -q litellm; then
+            echo -e "${GREEN}✓${NC} LiteLLM Proxy: Running"
+            
+            # Check if proxy is responding
+            if curl -s http://localhost:4000/health >/dev/null 2>&1; then
+                echo -e "${GREEN}✓${NC} Proxy API: Responding"
+            else
+                echo -e "${YELLOW}○${NC} Proxy API: Starting up..."
+            fi
+        else
+            echo -e "${RED}✗${NC} LiteLLM Proxy: Not running"
+        fi
+    else
+        echo -e "${RED}✗${NC} Docker: Not running"
+    fi
+    
+    # Check Ollama
+    if pgrep ollama >/dev/null; then
+        echo -e "${GREEN}✓${NC} Ollama: Running (local models available)"
+    else
+        echo -e "${YELLOW}○${NC} Ollama: Not running (optional, for local models)"
+    fi
+    
+    echo -e "\n${BOLD}Current Model:${NC} $CURRENT_MODEL"
+}
+
+# Function to stop Docker containers
+stop_docker() {
+    echo -e "${YELLOW}🛑 Stopping LiteLLM proxy...${NC}"
+    cd "$DEV_WORKFLOW_DIR" 2>/dev/null && docker compose down
+    echo -e "${GREEN}✅ LiteLLM proxy stopped${NC}"
+}
+
+# Function to execute query with selected model
+run_query() {
+    local model="$1"
+    shift
+    local query="$*"
+    
+    if [[ -z "$query" ]]; then
+        echo -e "${RED}Error: No query provided${NC}"
+        echo "Usage: llm /model your question here"
+        return 1
+    fi
+    
+    # Ensure Docker is running before making queries
+    ensure_docker || return 1
+    
+    echo -e "${CYAN}🤖 Using ${BOLD}$model${NC}${CYAN}...${NC}\n"
+    MODEL="$model" "$DEV_WORKFLOW_DIR/bin/ask" "$query"
+}
+
+# Main logic
+main() {
+    # No arguments - show interactive menu
+    if [[ $# -eq 0 ]]; then
+        show_models
+        echo ""
+        echo -e "${BOLD}Usage:${NC}"
+        echo "  llm your question here              # Use default model (auto-starts Docker)"
+        echo "  llm /gpt5 your question here        # Use specific model"
+        echo "  llm /help                           # Show help"
+        echo "  llm /status                         # Check status"
+        echo "  llm /stop                           # Stop Docker containers"
+        return 0
+    fi
+    
+    # Check if first argument is a slash command
+    if [[ "$1" =~ ^/ ]]; then
+        command="${1:1}"  # Remove the slash
+        shift  # Remove command from arguments
+        
+        case "$command" in
+            # Model selections
+            gpt5|gpt-5)
+                run_query "gpt-5" "$@"
+                ;;
+            gpt4|gpt4o|gpt-4o)
+                run_query "gpt-4o" "$@"
+                ;;
+            gpt4.1|gpt41)
+                run_query "gpt-4.1" "$@"
+                ;;
+            opus|claude-opus)
+                run_query "claude-opus-4.1" "$@"
+                ;;
+            sonnet|claude-sonnet)
+                run_query "claude-sonnet-4" "$@"
+                ;;
+            claude|claude-3.5)
+                run_query "claude-3.5-sonnet" "$@"
+                ;;
+            haiku|claude-haiku)
+                run_query "claude-3.5-haiku" "$@"
+                ;;
+            gemini|gemini-pro)
+                run_query "gemini-2.5-pro" "$@"
+                ;;
+            flash|gemini-flash)
+                run_query "gemini-2.5-flash" "$@"
+                ;;
+            o3)
+                run_query "o3" "$@"
+                ;;
+            o4|o4mini)
+                run_query "o4-mini" "$@"
+                ;;
+            groq|llama)
+                run_query "groq-llama3.1-8b" "$@"
+                ;;
+            groq70|llama70)
+                run_query "groq-llama3.1-70b" "$@"
+                ;;
+            local|ollama)
+                run_query "ollama-llama3.1-8b" "$@"
+                ;;
+            
+            # Quick selects using model groups
+            smart|best)
+                run_query "${MODEL_GROUPS[$command]}" "$@"
+                ;;
+            fast)
+                run_query "${MODEL_GROUPS[fast]}" "$@"
+                ;;
+            free)
+                run_query "${MODEL_GROUPS[free]}" "$@"
+                ;;
+            cheap)
+                run_query "${MODEL_GROUPS[cheap]}" "$@"
+                ;;
+            code|coding)
+                run_query "${MODEL_GROUPS[code]}" "$@"
+                ;;
+            think|thinking)
+                run_query "${MODEL_GROUPS[think]}" "$@"
+                ;;
+            reason|reasoning)
+                run_query "${MODEL_GROUPS[reason]}" "$@"
+                ;;
+            
+            # Commands
+            help|h|\?)
+                show_models
+                ;;
+            models|list|ls)
+                show_models
+                ;;
+            compare|comp)
+                compare_models "$@"
+                ;;
+            cost|costs|usage)
+                check_costs
+                ;;
+            status|check)
+                check_status
+                ;;
+            stop|down|shutdown)
+                stop_docker
+                ;;
+            
+            # Unknown command
+            *)
+                echo -e "${RED}Unknown command: /$command${NC}"
+                echo "Try: llm /help"
+                return 1
+                ;;
+        esac
+    else
+        # No slash command - use default model
+        run_query "$CURRENT_MODEL" "$@"
+    fi
+}
+
+# Run main function with all arguments
+main "$@"

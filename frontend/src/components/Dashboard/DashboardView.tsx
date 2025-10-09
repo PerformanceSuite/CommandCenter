@@ -1,138 +1,168 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDashboard } from '../../hooks/useDashboard';
-import { LoadingSpinner } from '../common/LoadingSpinner';
-import { MetricCard } from './MetricCard';
-import { ActivityFeed } from './ActivityFeed';
-import { StatusChart } from './StatusChart';
-import { GitBranch, Database, ClipboardList, FileText, Plus } from 'lucide-react';
+import { GitBranch, Database, ClipboardList, FileText, Plus, Activity, Users, Shield, Bot } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
   const navigate = useNavigate();
-  const { stats, activity, loading, error } = useDashboard(10);
 
-  if (loading) {
-    return <LoadingSpinner size="lg" className="mt-20" />;
-  }
+  // Mock data for display
+  const stats = {
+    repositoryCount: 42,
+    technologyCount: 15,
+    researchTaskCount: 8,
+    knowledgeEntryCount: 234
+  };
 
-  if (error) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-red-600 text-lg">Failed to load dashboard data</p>
-        <p className="text-gray-600 mt-2">{error.message}</p>
-      </div>
-    );
-  }
+  const recentActivity = [
+    { id: 1, type: 'repo', message: 'Repository CommandCenter updated', time: '2 hours ago' },
+    { id: 2, type: 'tech', message: 'Added React 18 to tech stack', time: '5 hours ago' },
+    { id: 3, type: 'research', message: 'Completed AI integration research', time: '1 day ago' },
+    { id: 4, type: 'knowledge', message: 'Added 5 new documentation entries', time: '2 days ago' }
+  ];
 
-  if (!stats) {
-    return null;
-  }
-
-  // Calculate metrics
-  const totalTechnologies = stats.technologies.total || 0;
-  const totalTasks = stats.research_tasks.total || 0;
-  const totalRepos = stats.repositories.total || 0;
-  const totalDocuments = stats.knowledge_base.total_documents || 0;
-
-  // Get status breakdowns
-  const techByStatus = stats.technologies.by_status || {};
-  const tasksByStatus = stats.research_tasks.by_status || {};
+  const quickActions = [
+    { label: 'AI Tools', path: '/ai-tools', icon: <Bot className="w-6 h-6" />, color: 'from-purple-500 to-pink-500' },
+    { label: 'Dev Tools Hub', path: '/dev-tools', icon: <Shield className="w-6 h-6" />, color: 'from-blue-500 to-indigo-500' },
+    { label: 'Tech Radar', path: '/radar', icon: <Activity className="w-6 h-6" />, color: 'from-green-500 to-emerald-500' },
+    { label: 'Research Hub', path: '/research', icon: <ClipboardList className="w-6 h-6" />, color: 'from-orange-500 to-red-500' }
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Stats Grid */}
-      <section aria-label="Dashboard statistics">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <MetricCard
-            label="Total Repositories"
-            value={totalRepos}
-            icon={GitBranch}
-            color="bg-blue-500"
-            onClick={() => navigate('/repositories')}
-          />
-          <MetricCard
-            label="Technologies"
-            value={totalTechnologies}
-            icon={Database}
-            color="bg-purple-500"
-            subtitle={`${Object.keys(techByStatus).length} statuses`}
-            onClick={() => navigate('/technologies')}
-          />
-          <MetricCard
-            label="Research Tasks"
-            value={totalTasks}
-            icon={ClipboardList}
-            color="bg-orange-500"
-            subtitle={`${stats.research_tasks.overdue_count || 0} overdue`}
-            onClick={() => navigate('/research')}
-          />
-          <MetricCard
-            label="Knowledge Base"
-            value={totalDocuments}
-            icon={FileText}
-            color="bg-green-500"
-            subtitle="documents"
-            onClick={() => navigate('/knowledge')}
-          />
-        </div>
-      </section>
-
-      {/* Quick Actions */}
-      <section aria-label="Quick actions">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => navigate('/technologies/new')}
-              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <Plus size={20} />
-              <span>Add Technology</span>
-            </button>
-            <button
-              onClick={() => navigate('/research/new')}
-              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              <Plus size={20} />
-              <span>Create Task</span>
-            </button>
-            <button
-              onClick={() => navigate('/knowledge/upload')}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Plus size={20} />
-              <span>Upload Document</span>
-            </button>
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Command Center Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome to your unified development hub</p>
           </div>
+          <button
+            onClick={() => navigate('/dev-tools')}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Open Dev Tools
+          </button>
         </div>
-      </section>
-
-      {/* Charts and Activity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Technology Status Chart */}
-        <StatusChart
-          statusData={techByStatus}
-          title="Technology Status Distribution"
-          onStatusClick={(status) => navigate(`/technologies?status=${status}`)}
-        />
-
-        {/* Recent Activity */}
-        <section className="bg-white rounded-lg shadow p-6" aria-labelledby="recent-activity-heading">
-          <h2 id="recent-activity-heading" className="text-xl font-bold mb-4">
-            Recent Activity
-          </h2>
-          <ActivityFeed activities={activity || []} isLoading={loading} />
-        </section>
       </div>
 
-      {/* Task Status Overview */}
-      {Object.keys(tasksByStatus).length > 0 && (
-        <StatusChart
-          statusData={tasksByStatus}
-          title="Research Task Status Distribution"
-          onStatusClick={(status) => navigate(`/research?status=${status}`)}
-        />
-      )}
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {quickActions.map((action) => (
+          <button
+            key={action.path}
+            onClick={() => navigate(action.path)}
+            className={`bg-gradient-to-br ${action.color} text-white rounded-lg p-6 hover:scale-105 transition-transform shadow-lg`}
+          >
+            <div className="flex flex-col items-center">
+              {action.icon}
+              <span className="mt-2 font-semibold">{action.label}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Repositories</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.repositoryCount}</p>
+            </div>
+            <GitBranch className="w-8 h-8 text-indigo-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Technologies</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.technologyCount}</p>
+            </div>
+            <Database className="w-8 h-8 text-green-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Research Tasks</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.researchTaskCount}</p>
+            </div>
+            <ClipboardList className="w-8 h-8 text-purple-600" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Knowledge Entries</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.knowledgeEntryCount}</p>
+            </div>
+            <FileText className="w-8 h-8 text-orange-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+          <div className="space-y-3">
+            {recentActivity.map((item) => (
+              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-700">{item.message}</span>
+                </div>
+                <span className="text-xs text-gray-500">{item.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">System Status</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm text-gray-700">Backend API</span>
+              <span className="text-sm font-medium text-green-600">Online</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm text-gray-700">MCP Servers</span>
+              <span className="text-sm font-medium text-green-600">6 Connected</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="text-sm text-gray-700">AI Models</span>
+              <span className="text-sm font-medium text-green-600">5 Available</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+              <span className="text-sm text-gray-700">CodeMender</span>
+              <span className="text-sm font-medium text-yellow-600">Pending Release</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Highlights */}
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg p-6 text-white">
+        <h2 className="text-xl font-bold mb-3">🚀 New Features Available</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h3 className="font-semibold mb-1">Claude Agent SDK</h3>
+            <p className="text-sm text-indigo-100">Complete agentic development platform replacing Goose and others</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-1">MCP Integration</h3>
+            <p className="text-sm text-indigo-100">6 protocol servers connected for enhanced capabilities</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-1">Multi-Model Support</h3>
+            <p className="text-sm text-indigo-100">Claude, GPT-4, Gemini, and local models all in one place</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

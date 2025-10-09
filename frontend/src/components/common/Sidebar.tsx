@@ -7,6 +7,8 @@ import {
   Database,
   Settings,
   Terminal,
+  Bot,
+  Layers,
 } from 'lucide-react';
 
 interface NavItem {
@@ -20,6 +22,8 @@ const navItems: NavItem[] = [
   { to: '/radar', icon: <Radar size={20} />, label: 'Tech Radar' },
   { to: '/research', icon: <BookOpen size={20} />, label: 'Research Hub' },
   { to: '/knowledge', icon: <Database size={20} />, label: 'Knowledge Base' },
+  { to: '/ai-tools', icon: <Bot size={20} />, label: 'AI Tools' },
+  { to: '/dev-tools', icon: <Layers size={20} />, label: 'Dev Tools Hub' },
   { to: '/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];
 

@@ -18,7 +18,7 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import init_db, close_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
-from app.routers import webhooks, github_features, rate_limits, research_tasks
+from app.routers import webhooks, github_features, rate_limits, research_tasks, ai_tools, dev_tools
 from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
@@ -143,6 +143,8 @@ app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 app.include_router(webhooks.router, prefix=settings.api_v1_prefix)
 app.include_router(github_features.router, prefix=settings.api_v1_prefix)
 app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
+app.include_router(ai_tools.router, prefix=settings.api_v1_prefix)
+app.include_router(dev_tools.router, prefix=settings.api_v1_prefix)
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()

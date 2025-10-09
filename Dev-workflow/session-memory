@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ -f ".claude/memory.md" ]; then
+    cat .claude/memory.md
+else
+    echo "No memory file found. It will be created on first session-end."
+fi

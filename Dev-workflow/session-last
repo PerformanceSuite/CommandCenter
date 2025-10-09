@@ -1,0 +1,7 @@
+#!/bin/bash
+LAST=$(ls -t .claude/logs/sessions/*.md 2>/dev/null | head -1)
+if [ -n "$LAST" ]; then
+    cat "$LAST"
+else
+    echo "No previous sessions found."
+fi

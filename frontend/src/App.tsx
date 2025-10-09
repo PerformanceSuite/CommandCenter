@@ -11,6 +11,8 @@ const RadarView = lazy(() => import('./components/TechnologyRadar/RadarView').th
 const ResearchView = lazy(() => import('./components/ResearchHub/ResearchView').then(m => ({ default: m.ResearchView })));
 const KnowledgeView = lazy(() => import('./components/KnowledgeBase/KnowledgeView').then(m => ({ default: m.KnowledgeView })));
 const SettingsView = lazy(() => import('./components/Settings/SettingsView').then(m => ({ default: m.SettingsView })));
+const AIToolsView = lazy(() => import('./components/AITools/AIToolsView').then(m => ({ default: m.AIToolsView })));
+const DevToolsView = lazy(() => import('./components/DevTools/DevToolsView').then(m => ({ default: m.DevToolsView })));
 
 // Loading fallback component
 const PageLoadingFallback = () => (
@@ -36,6 +38,8 @@ function App() {
                   <Route path="/radar" element={<RadarView />} />
                   <Route path="/research" element={<ResearchView />} />
                   <Route path="/knowledge" element={<KnowledgeView />} />
+                  <Route path="/ai-tools" element={<AIToolsView />} />
+                  <Route path="/dev-tools" element={<DevToolsView />} />
                   <Route path="/settings" element={<SettingsView />} />
                 </Routes>
               </Suspense>

@@ -1,0 +1,37 @@
+#!/bin/bash
+set -eo pipefail
+MODEL="${MODEL:-gpt-4o}"
+URL="${URL:-http://localhost:4000/v1/chat/completions}"
+
+# Get the prompt from all arguments
+prompt="$*"
+
+# Create the JSON payload
+json_payload=$(cat <<EOF
+{
+  "model": "$MODEL",
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": $(echo "$prompt" | jq -Rs .)}
+  ],
+  "temperature": 0.7,
+  "stream": false
+}
+EOF
+)
+
+# Make the API call
+response=$(curl -sS "$URL" \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer sk-1234' \
+  -d "$json_payload" 2>/dev/null)
+
+# Extract the content or show error
+if echo "$response" | jq -e '.choices[0].message.content' >/dev/null 2>&1; then
+    echo "$response" | jq -r '.choices[0].message.content'
+elif echo "$response" | jq -e '.error' >/dev/null 2>&1; then
+    echo "Error: $(echo "$response" | jq -r '.error.message')"
+else
+    echo "Error: Unexpected response"
+    echo "$response"
+fi

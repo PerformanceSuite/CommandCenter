@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Gemini: Review Current File",
+            "type": "shell",
+            "command": "node",
+            "args": [
+                "${workspaceFolder}/gemini-tools/gemini-cli.js",
+                "review",
+                "${file}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Gemini: Explain Current File",
+            "type": "shell",
+            "command": "node",
+            "args": [
+                "${workspaceFolder}/gemini-tools/gemini-cli.js",
+                "explain",
+                "${file}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Gemini: Generate Tests",
+            "type": "shell",
+            "command": "node",
+            "args": [
+                "${workspaceFolder}/gemini-tools/gemini-cli.js",
+                "tests",
+                "${file}"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}

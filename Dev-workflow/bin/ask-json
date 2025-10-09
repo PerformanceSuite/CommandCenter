@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+MODEL="${MODEL:-gpt-4o}"
+URL="${URL:-http://localhost:4000/v1/chat/completions}"
+
+prompt="$*"
+
+curl -sS "$URL" \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer dev_master_key_please_change' \
+  -d @<(cat <<JSON
+{
+  "model": "$MODEL",
+  "messages": [
+    {"role": "system", "content": "You output strict JSON when asked."},
+    {"role": "user", "content": ${prompt@Q}}
+  ],
+  "temperature": ${TEMP:-0.0},
+  "response_format": {"type": "json_object"},
+  "stream": false
+}
+JSON
+)
