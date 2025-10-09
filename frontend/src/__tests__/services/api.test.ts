@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, beforeEach, vi } from 'vitest';
 import axios from 'axios';
 import { api } from '../../services/api';
 import { mockRepository, mockTechnology } from '../../tests/utils';

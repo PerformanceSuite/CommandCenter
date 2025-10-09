@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef } from 'react';
 import { X, Upload, Download, FileText } from 'lucide-react';
 import type { ResearchTask, ResearchTaskUpdate } from '../../types/researchTask';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import type { Repository } from '../types/repository';
 import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/technology';

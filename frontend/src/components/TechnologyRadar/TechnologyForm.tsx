@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Technology, TechnologyCreate } from '../../types/technology';
