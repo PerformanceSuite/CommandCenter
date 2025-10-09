@@ -13,6 +13,7 @@ from app.database import Base
 
 class TechnologyDomain(str, enum.Enum):
     """Technology domain categories"""
+
     AUDIO_DSP = "audio-dsp"
     AI_ML = "ai-ml"
     MUSIC_THEORY = "music-theory"
@@ -24,6 +25,7 @@ class TechnologyDomain(str, enum.Enum):
 
 class TechnologyStatus(str, enum.Enum):
     """Technology research/implementation status"""
+
     DISCOVERY = "discovery"
     RESEARCH = "research"
     EVALUATION = "evaluation"
@@ -45,23 +47,19 @@ class Technology(Base):
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Technology identification
     title: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     vendor: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     domain: Mapped[TechnologyDomain] = mapped_column(
-        SQLEnum(TechnologyDomain),
-        nullable=False,
-        default=TechnologyDomain.OTHER
+        SQLEnum(TechnologyDomain), nullable=False, default=TechnologyDomain.OTHER
     )
 
     # Status and priority
     status: Mapped[TechnologyStatus] = mapped_column(
-        SQLEnum(TechnologyStatus),
-        nullable=False,
-        default=TechnologyStatus.DISCOVERY
+        SQLEnum(TechnologyStatus), nullable=False, default=TechnologyStatus.DISCOVERY
     )
     relevance_score: Mapped[int] = mapped_column(default=50)  # 0-100
     priority: Mapped[int] = mapped_column(default=3)  # 1-5 (5=highest)
@@ -82,22 +80,16 @@ class Technology(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="technologies")
     research_tasks: Mapped[list["ResearchTask"]] = relationship(
-        "ResearchTask",
-        back_populates="technology",
-        cascade="all, delete-orphan"
+        "ResearchTask", back_populates="technology", cascade="all, delete-orphan"
     )
     knowledge_entries: Mapped[list["KnowledgeEntry"]] = relationship(
-        "KnowledgeEntry",
-        back_populates="technology",
-        cascade="all, delete-orphan"
+        "KnowledgeEntry", back_populates="technology", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

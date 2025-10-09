@@ -23,14 +23,12 @@ class KnowledgeEntry(Base):
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Foreign key to technology
     technology_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
-        ForeignKey("technologies.id", ondelete="CASCADE"),
-        nullable=True
+        Integer, ForeignKey("technologies.id", ondelete="CASCADE"), nullable=True
     )
 
     # Content
@@ -41,7 +39,9 @@ class KnowledgeEntry(Base):
     # Source tracking
     source_file: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     source_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    source_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # pdf, html, manual, etc.
+    source_type: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )  # pdf, html, manual, etc.
 
     # Vector database reference
     vector_db_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -58,16 +58,15 @@ class KnowledgeEntry(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="knowledge_entries")
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="knowledge_entries"
+    )
     technology: Mapped[Optional["Technology"]] = relationship(
-        "Technology",
-        back_populates="knowledge_entries"
+        "Technology", back_populates="knowledge_entries"
     )
 
     def __repr__(self) -> str:

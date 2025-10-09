@@ -44,7 +44,9 @@ class GitHubService:
                 return False
             raise
 
-    async def list_user_repos(self, username: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def list_user_repos(
+        self, username: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         List repositories for a user
 
@@ -64,20 +66,22 @@ class GitHubService:
 
             repo_list = []
             for repo in repos:
-                repo_list.append({
-                    "owner": repo.owner.login,
-                    "name": repo.name,
-                    "full_name": repo.full_name,
-                    "description": repo.description,
-                    "url": repo.html_url,
-                    "clone_url": repo.clone_url,
-                    "default_branch": repo.default_branch,
-                    "is_private": repo.private,
-                    "stars": repo.stargazers_count,
-                    "forks": repo.forks_count,
-                    "language": repo.language,
-                    "github_id": repo.id,
-                })
+                repo_list.append(
+                    {
+                        "owner": repo.owner.login,
+                        "name": repo.name,
+                        "full_name": repo.full_name,
+                        "description": repo.description,
+                        "url": repo.html_url,
+                        "clone_url": repo.clone_url,
+                        "default_branch": repo.default_branch,
+                        "is_private": repo.private,
+                        "stars": repo.stargazers_count,
+                        "forks": repo.forks_count,
+                        "language": repo.language,
+                        "github_id": repo.id,
+                    }
+                )
 
             return repo_list
 
@@ -85,10 +89,7 @@ class GitHubService:
             raise Exception(f"Failed to list repositories: {e}")
 
     async def sync_repository(
-        self,
-        owner: str,
-        name: str,
-        last_known_sha: Optional[str] = None
+        self, owner: str, name: str, last_known_sha: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Sync repository information and check for changes
@@ -125,12 +126,14 @@ class GitHubService:
             }
 
             if latest_commit:
-                sync_info.update({
-                    "last_commit_sha": latest_commit.sha,
-                    "last_commit_message": latest_commit.commit.message,
-                    "last_commit_author": latest_commit.commit.author.name,
-                    "last_commit_date": latest_commit.commit.author.date,
-                })
+                sync_info.update(
+                    {
+                        "last_commit_sha": latest_commit.sha,
+                        "last_commit_message": latest_commit.commit.message,
+                        "last_commit_author": latest_commit.commit.author.name,
+                        "last_commit_date": latest_commit.commit.author.date,
+                    }
+                )
 
                 # Check if there are new commits
                 if last_known_sha and latest_commit.sha != last_known_sha:
@@ -176,7 +179,9 @@ class GitHubService:
         except GithubException as e:
             raise Exception(f"Failed to get repository info: {e}")
 
-    async def search_repositories(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
+    async def search_repositories(
+        self, query: str, max_results: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Search for repositories on GitHub
 
@@ -195,15 +200,17 @@ class GitHubService:
                 if i >= max_results:
                     break
 
-                repo_list.append({
-                    "owner": repo.owner.login,
-                    "name": repo.name,
-                    "full_name": repo.full_name,
-                    "description": repo.description,
-                    "url": repo.html_url,
-                    "stars": repo.stargazers_count,
-                    "language": repo.language,
-                })
+                repo_list.append(
+                    {
+                        "owner": repo.owner.login,
+                        "name": repo.name,
+                        "full_name": repo.full_name,
+                        "description": repo.description,
+                        "url": repo.html_url,
+                        "stars": repo.stargazers_count,
+                        "language": repo.language,
+                    }
+                )
 
             return repo_list
 

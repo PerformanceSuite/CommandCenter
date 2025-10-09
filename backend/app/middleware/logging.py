@@ -44,13 +44,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         logger.info(
             f"Request started: {request.method} {request.url.path}",
             extra={
-                'request_id': request_id,
-                'method': request.method,
-                'path': request.url.path,
-                'query_params': str(request.query_params),
-                'client_ip': request.client.host if request.client else None,
-                'user_agent': request.headers.get('user-agent'),
-            }
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "query_params": str(request.query_params),
+                "client_ip": request.client.host if request.client else None,
+                "user_agent": request.headers.get("user-agent"),
+            },
         )
 
         # Process request
@@ -62,10 +62,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 f"Request failed: {request.method} {request.url.path}",
                 exc_info=exc,
                 extra={
-                    'request_id': request_id,
-                    'method': request.method,
-                    'path': request.url.path,
-                }
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                },
             )
             raise
 
@@ -76,15 +76,15 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         logger.info(
             f"Request completed: {request.method} {request.url.path}",
             extra={
-                'request_id': request_id,
-                'method': request.method,
-                'path': request.url.path,
-                'status_code': response.status_code,
-                'duration': duration,
-            }
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "duration": duration,
+            },
         )
 
         # Add request ID to response headers
-        response.headers['X-Request-ID'] = request_id
+        response.headers["X-Request-ID"] = request_id
 
         return response

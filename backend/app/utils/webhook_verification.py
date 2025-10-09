@@ -9,9 +9,7 @@ from fastapi import HTTPException, Header, Request, status
 
 
 def verify_github_signature(
-    payload_body: bytes,
-    secret: str,
-    signature_header: Optional[str] = None
+    payload_body: bytes, secret: str, signature_header: Optional[str] = None
 ) -> bool:
     """
     Verify GitHub webhook signature
@@ -30,32 +28,26 @@ def verify_github_signature(
     if not signature_header:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="X-Hub-Signature-256 header is missing"
+            detail="X-Hub-Signature-256 header is missing",
         )
 
     # GitHub sends signature in format: sha256=<hash>
     if not signature_header.startswith("sha256="):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid signature format"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature format"
         )
 
     # Extract the hash from the header
     expected_signature = signature_header[7:]  # Remove 'sha256=' prefix
 
     # Compute HMAC-SHA256
-    mac = hmac.new(
-        secret.encode('utf-8'),
-        msg=payload_body,
-        digestmod=hashlib.sha256
-    )
+    mac = hmac.new(secret.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
     computed_signature = mac.hexdigest()
 
     # Compare signatures using constant-time comparison
     if not hmac.compare_digest(computed_signature, expected_signature):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid webhook signature"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature"
         )
 
     return True

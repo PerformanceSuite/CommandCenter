@@ -18,10 +18,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         super().__init__(ResearchTask, db)
 
     async def list_by_technology(
-        self,
-        technology_id: int,
-        skip: int = 0,
-        limit: int = 100
+        self, technology_id: int, skip: int = 0, limit: int = 100
     ) -> List[ResearchTask]:
         """
         List tasks by technology
@@ -44,10 +41,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         return list(result.scalars().all())
 
     async def list_by_repository(
-        self,
-        repository_id: int,
-        skip: int = 0,
-        limit: int = 100
+        self, repository_id: int, skip: int = 0, limit: int = 100
     ) -> List[ResearchTask]:
         """
         List tasks by repository
@@ -70,10 +64,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         return list(result.scalars().all())
 
     async def list_by_status(
-        self,
-        status: TaskStatus,
-        skip: int = 0,
-        limit: int = 100
+        self, status: TaskStatus, skip: int = 0, limit: int = 100
     ) -> List[ResearchTask]:
         """
         List tasks by status
@@ -96,10 +87,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         return list(result.scalars().all())
 
     async def list_by_assignee(
-        self,
-        assigned_to: str,
-        skip: int = 0,
-        limit: int = 100
+        self, assigned_to: str, skip: int = 0, limit: int = 100
     ) -> List[ResearchTask]:
         """
         List tasks by assignee
@@ -121,10 +109,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         )
         return list(result.scalars().all())
 
-    async def get_overdue(
-        self,
-        limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_overdue(self, limit: int = 100) -> List[ResearchTask]:
         """
         Get overdue tasks
 
@@ -139,22 +124,16 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             select(ResearchTask)
             .where(
                 ResearchTask.due_date < now,
-                ResearchTask.status.in_([
-                    TaskStatus.PENDING,
-                    TaskStatus.IN_PROGRESS,
-                    TaskStatus.BLOCKED
-                ])
+                ResearchTask.status.in_(
+                    [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED]
+                ),
             )
             .order_by(ResearchTask.due_date.asc())
             .limit(limit)
         )
         return list(result.scalars().all())
 
-    async def get_upcoming(
-        self,
-        days: int = 7,
-        limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -166,6 +145,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             List of upcoming research tasks
         """
         from datetime import timedelta
+
         now = datetime.utcnow()
         future = now + timedelta(days=days)
 
@@ -173,10 +153,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             select(ResearchTask)
             .where(
                 ResearchTask.due_date.between(now, future),
-                ResearchTask.status.in_([
-                    TaskStatus.PENDING,
-                    TaskStatus.IN_PROGRESS
-                ])
+                ResearchTask.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
             )
             .order_by(ResearchTask.due_date.asc())
             .limit(limit)
@@ -197,9 +174,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         return counts
 
     async def get_statistics(
-        self,
-        technology_id: Optional[int] = None,
-        repository_id: Optional[int] = None
+        self, technology_id: Optional[int] = None, repository_id: Optional[int] = None
     ) -> dict:
         """
         Get task statistics
@@ -226,7 +201,4 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         for count, status in result:
             status_counts[status.value] = count
 
-        return {
-            "by_status": status_counts,
-            "total": sum(status_counts.values())
-        }
+        return {"by_status": status_counts, "total": sum(status_counts.values())}

@@ -29,9 +29,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         return await self.find_one(full_name=full_name)
 
     async def get_by_owner_and_name(
-        self,
-        owner: str,
-        name: str
+        self, owner: str, name: str
     ) -> Optional[Repository]:
         """
         Get repository by owner and name
@@ -44,18 +42,12 @@ class RepositoryRepository(BaseRepository[Repository]):
             Repository or None if not found
         """
         result = await self.db.execute(
-            select(Repository).where(
-                Repository.owner == owner,
-                Repository.name == name
-            )
+            select(Repository).where(Repository.owner == owner, Repository.name == name)
         )
         return result.scalar_one_or_none()
 
     async def list_by_owner(
-        self,
-        owner: str,
-        skip: int = 0,
-        limit: int = 100
+        self, owner: str, skip: int = 0, limit: int = 100
     ) -> List[Repository]:
         """
         List repositories by owner
@@ -78,10 +70,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         return list(result.scalars().all())
 
     async def search_by_language(
-        self,
-        language: str,
-        skip: int = 0,
-        limit: int = 100
+        self, language: str, skip: int = 0, limit: int = 100
     ) -> List[Repository]:
         """
         Search repositories by programming language
@@ -103,10 +92,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         )
         return list(result.scalars().all())
 
-    async def get_recently_synced(
-        self,
-        limit: int = 10
-    ) -> List[Repository]:
+    async def get_recently_synced(self, limit: int = 10) -> List[Repository]:
         """
         Get recently synced repositories
 

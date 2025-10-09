@@ -23,42 +23,49 @@ class WebhookConfig(Base):
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Repository reference
     repository_id: Mapped[int] = mapped_column(
-        ForeignKey("repositories.id", ondelete="CASCADE"),
-        nullable=False
+        ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False
     )
 
     # Webhook details
-    webhook_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # GitHub webhook ID
+    webhook_id: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )  # GitHub webhook ID
     webhook_url: Mapped[str] = mapped_column(String(512), nullable=False)
-    secret: Mapped[str] = mapped_column(String(512), nullable=False)  # Webhook secret for verification
+    secret: Mapped[str] = mapped_column(
+        String(512), nullable=False
+    )  # Webhook secret for verification
 
     # Event types
-    events: Mapped[dict] = mapped_column(JSON, default=list)  # List of subscribed events
+    events: Mapped[dict] = mapped_column(
+        JSON, default=list
+    )  # List of subscribed events
 
     # Status
     active: Mapped[bool] = mapped_column(Boolean, default=True)
-    last_delivery_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_delivery_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="webhook_configs")
-    repository: Mapped["Repository"] = relationship("Repository", back_populates="webhook_configs")
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="webhook_configs"
+    )
+    repository: Mapped["Repository"] = relationship(
+        "Repository", back_populates="webhook_configs"
+    )
     events_received: Mapped[list["WebhookEvent"]] = relationship(
-        "WebhookEvent",
-        back_populates="config",
-        cascade="all, delete-orphan"
+        "WebhookEvent", back_populates="config", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
@@ -78,24 +85,29 @@ class WebhookEvent(Base):
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Webhook config reference
     config_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("webhook_configs.id", ondelete="SET NULL"),
-        nullable=True
+        ForeignKey("webhook_configs.id", ondelete="SET NULL"), nullable=True
     )
 
     # Event details
-    event_type: Mapped[str] = mapped_column(String(100), nullable=False)  # push, pull_request, issue, etc.
-    delivery_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)  # GitHub delivery ID
+    event_type: Mapped[str] = mapped_column(
+        String(100), nullable=False
+    )  # push, pull_request, issue, etc.
+    delivery_id: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True
+    )  # GitHub delivery ID
 
     # Event payload
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Repository info (denormalized for easier querying)
-    repository_full_name: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    repository_full_name: Mapped[Optional[str]] = mapped_column(
+        String(512), nullable=True
+    )
 
     # Processing status
     processed: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -106,8 +118,12 @@ class WebhookEvent(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="webhook_events")
-    config: Mapped[Optional["WebhookConfig"]] = relationship("WebhookConfig", back_populates="events_received")
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="webhook_events"
+    )
+    config: Mapped[Optional["WebhookConfig"]] = relationship(
+        "WebhookConfig", back_populates="events_received"
+    )
 
     def __repr__(self) -> str:
         return f"<WebhookEvent(id={self.id}, event_type='{self.event_type}', delivery_id='{self.delivery_id}')>"
@@ -126,7 +142,7 @@ class GitHubRateLimit(Base):
         Integer,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Rate limit type (core, search, graphql)
@@ -144,7 +160,9 @@ class GitHubRateLimit(Base):
     checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="github_rate_limits")
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="github_rate_limits"
+    )
 
     def __repr__(self) -> str:
         return f"<GitHubRateLimit(resource_type='{self.resource_type}', remaining={self.remaining}/{self.limit})>"
