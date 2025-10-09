@@ -11,6 +11,7 @@ from app.models.research_task import TaskStatus
 
 class ResearchTaskBase(BaseModel):
     """Base schema for research task"""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     status: TaskStatus = TaskStatus.PENDING
@@ -25,11 +26,13 @@ class ResearchTaskBase(BaseModel):
 
 class ResearchTaskCreate(ResearchTaskBase):
     """Schema for creating a research task"""
+
     pass
 
 
 class ResearchTaskUpdate(BaseModel):
     """Schema for updating a research task"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
@@ -43,6 +46,7 @@ class ResearchTaskUpdate(BaseModel):
 
 class ResearchTaskInDB(ResearchTaskBase):
     """Schema for research task in database"""
+
     id: int
     uploaded_documents: Optional[list] = None
     completed_at: Optional[datetime] = None
@@ -57,11 +61,13 @@ class ResearchTaskInDB(ResearchTaskBase):
 
 class ResearchTaskResponse(ResearchTaskInDB):
     """Schema for research task API response"""
+
     pass
 
 
 class KnowledgeEntryBase(BaseModel):
     """Base schema for knowledge entry"""
+
     title: str = Field(..., min_length=1, max_length=512)
     content: str = Field(..., min_length=1)
     category: str = Field(..., min_length=1, max_length=100)
@@ -73,12 +79,14 @@ class KnowledgeEntryBase(BaseModel):
 
 class KnowledgeEntryCreate(KnowledgeEntryBase):
     """Schema for creating a knowledge entry"""
+
     vector_db_id: Optional[str] = None
     embedding_model: Optional[str] = None
 
 
 class KnowledgeEntryUpdate(BaseModel):
     """Schema for updating a knowledge entry"""
+
     title: Optional[str] = Field(None, min_length=1, max_length=512)
     content: Optional[str] = Field(None, min_length=1)
     category: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -89,6 +97,7 @@ class KnowledgeEntryUpdate(BaseModel):
 
 class KnowledgeEntryInDB(KnowledgeEntryBase):
     """Schema for knowledge entry in database"""
+
     id: int
     vector_db_id: Optional[str] = None
     embedding_model: Optional[str] = None
@@ -104,11 +113,13 @@ class KnowledgeEntryInDB(KnowledgeEntryBase):
 
 class KnowledgeEntryResponse(KnowledgeEntryInDB):
     """Schema for knowledge entry API response"""
+
     pass
 
 
 class KnowledgeSearchRequest(BaseModel):
     """Schema for knowledge base search request"""
+
     query: str = Field(..., min_length=1)
     category: Optional[str] = None
     technology_id: Optional[int] = None
@@ -117,6 +128,7 @@ class KnowledgeSearchRequest(BaseModel):
 
 class KnowledgeSearchResult(BaseModel):
     """Schema for knowledge search result"""
+
     content: str
     title: str
     category: str
@@ -128,6 +140,7 @@ class KnowledgeSearchResult(BaseModel):
 
 class ResearchTaskListResponse(BaseModel):
     """Schema for research task list response"""
+
     total: int
     items: list[ResearchTaskResponse]
     page: int = 1

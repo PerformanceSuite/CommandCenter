@@ -25,15 +25,13 @@ class RedisService:
         """Connect to Redis"""
         try:
             # Check if Redis URL is configured
-            redis_url = getattr(settings, 'redis_url', None)
+            redis_url = getattr(settings, "redis_url", None)
             if not redis_url:
                 logger.warning("Redis URL not configured, caching disabled")
                 return
 
             self.redis_client = redis.from_url(
-                redis_url,
-                encoding="utf-8",
-                decode_responses=True
+                redis_url, encoding="utf-8", decode_responses=True
             )
             # Test connection
             await self.redis_client.ping()
@@ -70,7 +68,9 @@ class RedisService:
         """
         return f"project:{project_id}:{key_type}:{identifier}"
 
-    async def get(self, project_id: int, key_type: str, identifier: str) -> Optional[Any]:
+    async def get(
+        self, project_id: int, key_type: str, identifier: str
+    ) -> Optional[Any]:
         """
         Get value from project-namespaced cache
 
@@ -92,7 +92,9 @@ class RedisService:
                 return json.loads(value)
             return None
         except Exception as e:
-            logger.error(f"Redis GET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
+            logger.error(
+                f"Redis GET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}"
+            )
             return None
 
     async def set(
@@ -101,7 +103,7 @@ class RedisService:
         key_type: str,
         identifier: str,
         value: Any,
-        ttl: Optional[int] = None
+        ttl: Optional[int] = None,
     ) -> bool:
         """
         Set value in project-namespaced cache with TTL
@@ -124,10 +126,14 @@ class RedisService:
             serialized = json.dumps(value)
             ttl_seconds = ttl if ttl is not None else 3600
             await self.redis_client.setex(key, ttl_seconds, serialized)
-            logger.debug(f"Cached data for project {project_id}, key_type {key_type}, identifier {identifier} with TTL {ttl_seconds}s")
+            logger.debug(
+                f"Cached data for project {project_id}, key_type {key_type}, identifier {identifier} with TTL {ttl_seconds}s"
+            )
             return True
         except Exception as e:
-            logger.error(f"Redis SET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
+            logger.error(
+                f"Redis SET error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}"
+            )
             return False
 
     async def delete(self, project_id: int, key_type: str, identifier: str) -> bool:
@@ -148,10 +154,14 @@ class RedisService:
         try:
             key = self._make_key(project_id, key_type, identifier)
             await self.redis_client.delete(key)
-            logger.debug(f"Deleted cache for project {project_id}, key_type {key_type}, identifier {identifier}")
+            logger.debug(
+                f"Deleted cache for project {project_id}, key_type {key_type}, identifier {identifier}"
+            )
             return True
         except Exception as e:
-            logger.error(f"Redis DELETE error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
+            logger.error(
+                f"Redis DELETE error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}"
+            )
             return False
 
     async def delete_pattern(self, project_id: int, pattern: str) -> int:
@@ -180,11 +190,15 @@ class RedisService:
 
             if keys:
                 deleted = await self.redis_client.delete(*keys)
-                logger.info(f"Deleted {deleted} cache entries for project {project_id} matching pattern {pattern}")
+                logger.info(
+                    f"Deleted {deleted} cache entries for project {project_id} matching pattern {pattern}"
+                )
                 return deleted
             return 0
         except Exception as e:
-            logger.error(f"Redis DELETE_PATTERN error for project {project_id}, pattern {pattern}: {e}")
+            logger.error(
+                f"Redis DELETE_PATTERN error for project {project_id}, pattern {pattern}: {e}"
+            )
             return 0
 
     async def exists(self, project_id: int, key_type: str, identifier: str) -> bool:
@@ -206,7 +220,9 @@ class RedisService:
             key = self._make_key(project_id, key_type, identifier)
             return await self.redis_client.exists(key) > 0
         except Exception as e:
-            logger.error(f"Redis EXISTS error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}")
+            logger.error(
+                f"Redis EXISTS error for project {project_id}, key_type {key_type}, identifier {identifier}: {e}"
+            )
             return False
 
     def make_cache_key(self, *parts: str) -> str:
@@ -221,7 +237,9 @@ class RedisService:
         Returns:
             Cache key string
         """
-        logger.warning("make_cache_key is deprecated, use _make_key with project_id instead")
+        logger.warning(
+            "make_cache_key is deprecated, use _make_key with project_id instead"
+        )
         return ":".join(str(p) for p in parts)
 
 

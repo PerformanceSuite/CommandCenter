@@ -31,14 +31,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     Lifespan context manager for startup and shutdown events
     """
     # Setup logging
-    log_level = os.getenv('LOG_LEVEL', 'INFO')
-    log_file = os.getenv('LOG_FILE', '/app/logs/commandcenter.log')
-    json_logs = os.getenv('JSON_LOGS', 'true').lower() == 'true'
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    log_file = os.getenv("LOG_FILE", "/app/logs/commandcenter.log")
+    json_logs = os.getenv("JSON_LOGS", "true").lower() == "true"
 
     setup_logging(
         log_level=log_level,
-        log_file=log_file if os.getenv('ENVIRONMENT') == 'production' else None,
-        json_format=json_logs
+        log_file=log_file if os.getenv("ENVIRONMENT") == "production" else None,
+        json_format=json_logs,
     )
 
     # Startup
@@ -86,7 +86,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,  # Explicit allowlist from environment
     allow_credentials=settings.cors_allow_credentials,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],  # Explicit methods
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],  # Explicit methods
     allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
     max_age=settings.cors_max_age,
 )
@@ -158,7 +165,7 @@ async def global_exception_handler(request, exc):
         content={
             "error": "Internal server error",
             "detail": str(exc) if settings.debug else "An unexpected error occurred",
-        }
+        },
     )
 
 

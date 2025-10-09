@@ -23,7 +23,7 @@ class EnhancedGitHubService:
         self,
         access_token: Optional[str] = None,
         redis_service: Optional[RedisService] = None,
-        repository_id: Optional[int] = None
+        repository_id: Optional[int] = None,
     ):
         """
         Initialize enhanced GitHub service
@@ -61,16 +61,15 @@ class EnhancedGitHubService:
         repo_key = f"{owner}/{name}".lower()
         hash_bytes = hashlib.sha256(repo_key.encode()).digest()
         # Convert first 8 bytes to integer (positive by using & with max int64)
-        project_id = int.from_bytes(hash_bytes[:8], byteorder='big') & 0x7FFFFFFFFFFFFFFF
+        project_id = (
+            int.from_bytes(hash_bytes[:8], byteorder="big") & 0x7FFFFFFFFFFFFFFF
+        )
         return project_id
 
     @track_github_api_call("get_repository", "GET")
     @with_rate_limit_retry(max_attempts=3)
     async def get_repository_info(
-        self,
-        owner: str,
-        name: str,
-        use_cache: bool = True
+        self, owner: str, name: str, use_cache: bool = True
     ) -> Dict[str, Any]:
         """
         Get repository information with caching
@@ -90,7 +89,9 @@ class EnhancedGitHubService:
             cached = await self.redis.get(project_id, "repo", f"{owner}/{name}")
             if cached:
                 metrics_service.record_cache_hit("github")
-                logger.info(f"Cache hit for repository {owner}/{name} (project_id: {project_id})")
+                logger.info(
+                    f"Cache hit for repository {owner}/{name} (project_id: {project_id})"
+                )
                 return cached
             metrics_service.record_cache_miss("github")
 
@@ -121,7 +122,9 @@ class EnhancedGitHubService:
 
             # Cache the result
             if self.redis:
-                await self.redis.set(project_id, "repo", f"{owner}/{name}", repo_info, ttl=self.cache_ttl)
+                await self.redis.set(
+                    project_id, "repo", f"{owner}/{name}", repo_info, ttl=self.cache_ttl
+                )
 
             return repo_info
 
@@ -132,11 +135,7 @@ class EnhancedGitHubService:
     @track_github_api_call("list_pull_requests", "GET")
     @with_rate_limit_retry(max_attempts=3)
     async def list_pull_requests(
-        self,
-        owner: str,
-        name: str,
-        state: str = "open",
-        use_cache: bool = True
+        self, owner: str, name: str, state: str = "open", use_cache: bool = True
     ) -> List[Dict[str, Any]]:
         """
         List pull requests with caching
@@ -166,23 +165,31 @@ class EnhancedGitHubService:
 
             pr_list = []
             for pr in pulls:
-                pr_list.append({
-                    "number": pr.number,
-                    "title": pr.title,
-                    "state": pr.state,
-                    "user": pr.user.login if pr.user else None,
-                    "created_at": pr.created_at.isoformat() if pr.created_at else None,
-                    "updated_at": pr.updated_at.isoformat() if pr.updated_at else None,
-                    "merged": pr.merged,
-                    "mergeable": pr.mergeable,
-                    "head": pr.head.ref if pr.head else None,
-                    "base": pr.base.ref if pr.base else None,
-                    "html_url": pr.html_url,
-                })
+                pr_list.append(
+                    {
+                        "number": pr.number,
+                        "title": pr.title,
+                        "state": pr.state,
+                        "user": pr.user.login if pr.user else None,
+                        "created_at": (
+                            pr.created_at.isoformat() if pr.created_at else None
+                        ),
+                        "updated_at": (
+                            pr.updated_at.isoformat() if pr.updated_at else None
+                        ),
+                        "merged": pr.merged,
+                        "mergeable": pr.mergeable,
+                        "head": pr.head.ref if pr.head else None,
+                        "base": pr.base.ref if pr.base else None,
+                        "html_url": pr.html_url,
+                    }
+                )
 
             # Cache with shorter TTL (1 minute for frequently changing PR data)
             if self.redis:
-                await self.redis.set(project_id, "prs", f"{owner}/{name}:{state}", pr_list, ttl=60)
+                await self.redis.set(
+                    project_id, "prs", f"{owner}/{name}:{state}", pr_list, ttl=60
+                )
 
             return pr_list
 
@@ -197,7 +204,7 @@ class EnhancedGitHubService:
         owner: str,
         name: str,
         state: str = "open",
-        labels: Optional[List[str]] = None
+        labels: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         List repository issues
@@ -221,18 +228,26 @@ class EnhancedGitHubService:
                 if issue.pull_request:
                     continue
 
-                issue_list.append({
-                    "number": issue.number,
-                    "title": issue.title,
-                    "state": issue.state,
-                    "user": issue.user.login if issue.user else None,
-                    "labels": [label.name for label in issue.labels],
-                    "created_at": issue.created_at.isoformat() if issue.created_at else None,
-                    "updated_at": issue.updated_at.isoformat() if issue.updated_at else None,
-                    "closed_at": issue.closed_at.isoformat() if issue.closed_at else None,
-                    "html_url": issue.html_url,
-                    "comments": issue.comments,
-                })
+                issue_list.append(
+                    {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "user": issue.user.login if issue.user else None,
+                        "labels": [label.name for label in issue.labels],
+                        "created_at": (
+                            issue.created_at.isoformat() if issue.created_at else None
+                        ),
+                        "updated_at": (
+                            issue.updated_at.isoformat() if issue.updated_at else None
+                        ),
+                        "closed_at": (
+                            issue.closed_at.isoformat() if issue.closed_at else None
+                        ),
+                        "html_url": issue.html_url,
+                        "comments": issue.comments,
+                    }
+                )
 
             return issue_list
 
@@ -249,7 +264,7 @@ class EnhancedGitHubService:
         action: str,
         label_name: str,
         color: Optional[str] = None,
-        description: Optional[str] = None
+        description: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Manage repository labels
@@ -272,15 +287,15 @@ class EnhancedGitHubService:
                 label = repo.create_label(
                     name=label_name,
                     color=color or "ededed",
-                    description=description or ""
+                    description=description or "",
                 )
                 return {
                     "action": "created",
                     "label": {
                         "name": label.name,
                         "color": label.color,
-                        "description": label.description
-                    }
+                        "description": label.description,
+                    },
                 }
 
             elif action == "update":
@@ -288,24 +303,21 @@ class EnhancedGitHubService:
                 label.edit(
                     name=label_name,
                     color=color or label.color,
-                    description=description or label.description
+                    description=description or label.description,
                 )
                 return {
                     "action": "updated",
                     "label": {
                         "name": label.name,
                         "color": label.color,
-                        "description": label.description
-                    }
+                        "description": label.description,
+                    },
                 }
 
             elif action == "delete":
                 label = repo.get_label(label_name)
                 label.delete()
-                return {
-                    "action": "deleted",
-                    "label": label_name
-                }
+                return {"action": "deleted", "label": label_name}
 
             else:
                 raise ValueError(f"Invalid action: {action}")
@@ -316,11 +328,7 @@ class EnhancedGitHubService:
 
     @track_github_api_call("get_actions_workflows", "GET")
     @with_rate_limit_retry(max_attempts=3)
-    async def list_workflows(
-        self,
-        owner: str,
-        name: str
-    ) -> List[Dict[str, Any]]:
+    async def list_workflows(self, owner: str, name: str) -> List[Dict[str, Any]]:
         """
         List GitHub Actions workflows
 
@@ -337,16 +345,26 @@ class EnhancedGitHubService:
 
             workflow_list = []
             for workflow in workflows:
-                workflow_list.append({
-                    "id": workflow.id,
-                    "name": workflow.name,
-                    "path": workflow.path,
-                    "state": workflow.state,
-                    "created_at": workflow.created_at.isoformat() if workflow.created_at else None,
-                    "updated_at": workflow.updated_at.isoformat() if workflow.updated_at else None,
-                    "url": workflow.html_url,
-                    "badge_url": workflow.badge_url,
-                })
+                workflow_list.append(
+                    {
+                        "id": workflow.id,
+                        "name": workflow.name,
+                        "path": workflow.path,
+                        "state": workflow.state,
+                        "created_at": (
+                            workflow.created_at.isoformat()
+                            if workflow.created_at
+                            else None
+                        ),
+                        "updated_at": (
+                            workflow.updated_at.isoformat()
+                            if workflow.updated_at
+                            else None
+                        ),
+                        "url": workflow.html_url,
+                        "badge_url": workflow.badge_url,
+                    }
+                )
 
             return workflow_list
 
@@ -357,10 +375,7 @@ class EnhancedGitHubService:
     @track_github_api_call("update_repository_settings", "PATCH")
     @with_rate_limit_retry(max_attempts=3)
     async def update_repository_settings(
-        self,
-        owner: str,
-        name: str,
-        settings_update: Dict[str, Any]
+        self, owner: str, name: str, settings_update: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Update repository settings
@@ -400,10 +415,7 @@ class EnhancedGitHubService:
                 project_id = self._get_project_id(owner, name)
                 await self.redis.delete(project_id, "repo", f"{owner}/{name}")
 
-            return {
-                "updated": True,
-                "settings": settings_update
-            }
+            return {"updated": True, "settings": settings_update}
 
         except GithubException as e:
             logger.error(f"Failed to update settings for {owner}/{name}: {e}")
@@ -421,4 +433,6 @@ class EnhancedGitHubService:
             project_id = self._get_project_id(owner, name)
             # Delete all cache entries for this project (repo, prs, issues, etc.)
             deleted = await self.redis.delete_pattern(project_id, "*")
-            logger.info(f"Invalidated {deleted} cache entries for {owner}/{name} (project_id: {project_id})")
+            logger.info(
+                f"Invalidated {deleted} cache entries for {owner}/{name} (project_id: {project_id})"
+            )

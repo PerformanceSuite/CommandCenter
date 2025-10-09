@@ -11,7 +11,7 @@ from app.services import (
     RAGService,
     RepositoryService,
     TechnologyService,
-    ResearchService
+    ResearchService,
 )
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -36,7 +36,7 @@ def get_research_service(db: AsyncSession = Depends(get_db)) -> ResearchService:
 async def get_dashboard_stats(
     repo_service: RepositoryService = Depends(get_repository_service),
     tech_service: TechnologyService = Depends(get_technology_service),
-    research_service: ResearchService = Depends(get_research_service)
+    research_service: ResearchService = Depends(get_research_service),
 ) -> Dict[str, Any]:
     """Get dashboard statistics"""
 
@@ -47,11 +47,7 @@ async def get_dashboard_stats(
 
     # Knowledge base stats - skip to avoid 8+ second initialization delay
     # RAG service is initialized lazily only when actually needed (e.g., when querying)
-    kb_stats = {
-        "total_documents": 0,
-        "total_chunks": 0,
-        "status": "available"
-    }
+    kb_stats = {"total_documents": 0, "total_chunks": 0, "status": "available"}
 
     return {
         "repositories": repo_stats,
@@ -66,7 +62,7 @@ async def get_recent_activity(
     limit: int = 10,
     repo_service: RepositoryService = Depends(get_repository_service),
     tech_service: TechnologyService = Depends(get_technology_service),
-    research_service: ResearchService = Depends(get_research_service)
+    research_service: ResearchService = Depends(get_research_service),
 ) -> Dict[str, Any]:
     """Get recent activity across the platform"""
 
