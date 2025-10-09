@@ -19,6 +19,7 @@ try:
     from langchain_chroma import Chroma
     import chromadb
     from chromadb.config import Settings as ChromaSettings
+
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
@@ -39,7 +40,9 @@ class RAGService:
     This ensures that queries for Repository A only search Repository A's documents.
     """
 
-    def __init__(self, db_path: Optional[str] = None, repository_id: Optional[int] = None):
+    def __init__(
+        self, db_path: Optional[str] = None, repository_id: Optional[int] = None
+    ):
         """
         Initialize RAG service with repository-based collection isolation
 
@@ -82,7 +85,7 @@ class RAGService:
         self.vectorstore = Chroma(
             collection_name=collection_name,
             embedding_function=self.embeddings,
-            persist_directory=self.db_path
+            persist_directory=self.db_path,
         )
 
     def _get_collection_name(self, repository_id: int) -> str:
@@ -120,8 +123,8 @@ class RAGService:
                 name=collection_name,
                 metadata={
                     "repository_id": repository_id,
-                    "created_at": str(datetime.utcnow())
-                }
+                    "created_at": str(datetime.utcnow()),
+                },
             )
             print(f"Created new collection: {collection_name}")
 
@@ -132,7 +135,7 @@ class RAGService:
         question: str,
         category: Optional[str] = None,
         k: int = 5,
-        repository_id: Optional[int] = None
+        repository_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Query the knowledge base
@@ -150,11 +153,15 @@ class RAGService:
             List of relevant document chunks with metadata
         """
         # Use provided repository_id or fall back to instance repository_id
-        target_repo_id = repository_id if repository_id is not None else self.repository_id
+        target_repo_id = (
+            repository_id if repository_id is not None else self.repository_id
+        )
 
         # If repository_id is specified, reinitialize with that repository's collection
         if target_repo_id is not None and target_repo_id != self.repository_id:
-            temp_service = RAGService(db_path=self.db_path, repository_id=target_repo_id)
+            temp_service = RAGService(
+                db_path=self.db_path, repository_id=target_repo_id
+            )
             vectorstore = temp_service.vectorstore
         else:
             vectorstore = self.vectorstore
@@ -164,9 +171,7 @@ class RAGService:
 
         # Search with similarity scores
         results = vectorstore.similarity_search_with_score(
-            question,
-            k=k,
-            filter=filter_dict
+            question, k=k, filter=filter_dict
         )
 
         return [
@@ -186,7 +191,7 @@ class RAGService:
         content: str,
         metadata: Dict[str, Any],
         chunk_size: int = 1000,
-        repository_id: Optional[int] = None
+        repository_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Add a document to the repository's knowledge base collection
@@ -203,11 +208,15 @@ class RAGService:
         from langchain.text_splitter import RecursiveCharacterTextSplitter
 
         # Use provided repository_id or fall back to instance repository_id
-        target_repo_id = repository_id if repository_id is not None else self.repository_id
+        target_repo_id = (
+            repository_id if repository_id is not None else self.repository_id
+        )
 
         # If repository_id is specified, reinitialize with that repository's collection
         if target_repo_id is not None and target_repo_id != self.repository_id:
-            temp_service = RAGService(db_path=self.db_path, repository_id=target_repo_id)
+            temp_service = RAGService(
+                db_path=self.db_path, repository_id=target_repo_id
+            )
             vectorstore = temp_service.vectorstore
         else:
             vectorstore = self.vectorstore
@@ -222,7 +231,7 @@ class RAGService:
             chunk_size=chunk_size,
             chunk_overlap=200,
             length_function=len,
-            separators=["\n\n", "\n", " ", ""]
+            separators=["\n\n", "\n", " ", ""],
         )
 
         chunks = text_splitter.split_text(content)
@@ -237,8 +246,12 @@ class RAGService:
             "status": "added",
             "chunks_added": len(chunks),
             "repository_id": target_repo_id,
-            "collection": self._get_collection_name(target_repo_id) if target_repo_id else "knowledge_default",
-            "document_ids": ids
+            "collection": (
+                self._get_collection_name(target_repo_id)
+                if target_repo_id
+                else "knowledge_default"
+            ),
+            "document_ids": ids,
         }
 
     async def delete_by_source(self, source: str) -> bool:
@@ -255,9 +268,7 @@ class RAGService:
         # This requires the collection to support metadata filtering
         try:
             # Get all documents with this source
-            results = self.vectorstore.get(
-                where={"source": source}
-            )
+            results = self.vectorstore.get(where={"source": source})
 
             if results and results.get("ids"):
                 self.vectorstore.delete(ids=results["ids"])
@@ -331,11 +342,7 @@ class RAGService:
 
         except Exception as e:
             print(f"Error getting statistics: {e}")
-            return {
-                "total_chunks": 0,
-                "categories": {},
-                "error": str(e)
-            }
+            return {"total_chunks": 0, "categories": {}, "error": str(e)}
 
     async def get_collection_stats(self, repository_id: int) -> Dict[str, Any]:
         """
@@ -356,7 +363,7 @@ class RAGService:
                 "repository_id": repository_id,
                 "collection_name": collection_name,
                 "document_count": collection.count(),
-                "metadata": collection.metadata
+                "metadata": collection.metadata,
             }
         except Exception as e:
             return {
@@ -364,10 +371,12 @@ class RAGService:
                 "collection_name": collection_name,
                 "document_count": 0,
                 "error": str(e),
-                "exists": False
+                "exists": False,
             }
 
-    async def delete_document(self, repository_id: int, document_id: str) -> Dict[str, Any]:
+    async def delete_document(
+        self, repository_id: int, document_id: str
+    ) -> Dict[str, Any]:
         """
         Delete document from repository's collection
 
@@ -385,14 +394,14 @@ class RAGService:
             return {
                 "status": "deleted",
                 "document_id": document_id,
-                "repository_id": repository_id
+                "repository_id": repository_id,
             }
         except Exception as e:
             return {
                 "status": "error",
                 "document_id": document_id,
                 "repository_id": repository_id,
-                "error": str(e)
+                "error": str(e),
             }
 
     async def delete_collection(self, repository_id: int) -> Dict[str, Any]:
@@ -412,14 +421,14 @@ class RAGService:
             return {
                 "status": "deleted",
                 "collection": collection_name,
-                "repository_id": repository_id
+                "repository_id": repository_id,
             }
         except Exception as e:
             return {
                 "status": "not_found",
                 "collection": collection_name,
                 "repository_id": repository_id,
-                "error": str(e)
+                "error": str(e),
             }
 
     async def list_all_collections(self) -> List[Dict[str, Any]]:
@@ -433,11 +442,7 @@ class RAGService:
             collections = self.chroma_client.list_collections()
 
             return [
-                {
-                    "name": col.name,
-                    "count": col.count(),
-                    "metadata": col.metadata
-                }
+                {"name": col.name, "count": col.count(), "metadata": col.metadata}
                 for col in collections
             ]
         except Exception as e:
@@ -445,10 +450,7 @@ class RAGService:
             return []
 
     def process_directory(
-        self,
-        directory: str,
-        category: str,
-        file_extensions: Optional[List[str]] = None
+        self, directory: str, category: str, file_extensions: Optional[List[str]] = None
     ) -> int:
         """
         Process all documents in a directory
@@ -463,7 +465,14 @@ class RAGService:
             Total number of chunks added
         """
         # Import the existing processor
-        sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base"))
+        sys.path.insert(
+            0,
+            str(
+                Path(__file__).parent.parent.parent.parent.parent
+                / "tools"
+                / "knowledge-base"
+            ),
+        )
 
         try:
             from process_docs import PerformiaKnowledgeProcessor

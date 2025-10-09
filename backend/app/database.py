@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     AsyncEngine,
     create_async_engine,
-    async_sessionmaker
+    async_sessionmaker,
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
@@ -18,6 +18,7 @@ from app.config import settings
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
+
     pass
 
 
@@ -26,7 +27,7 @@ engine: AsyncEngine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
     poolclass=NullPool if "sqlite" in settings.database_url else None,
-    future=True
+    future=True,
 )
 
 # Create session factory
@@ -35,7 +36,7 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autocommit=False,
-    autoflush=False
+    autoflush=False,
 )
 
 
