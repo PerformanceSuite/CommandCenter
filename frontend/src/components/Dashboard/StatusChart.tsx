@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, TooltipItem } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
 // Register Chart.js components
@@ -69,7 +69,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
         },
         tooltip: {
           callbacks: {
-            label: (context: any) => {
+            label: (context: TooltipItem<'pie'>) => {
               const label = context.label || '';
               const value = context.parsed || 0;
               const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
@@ -79,7 +79,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
           },
         },
       },
-      onClick: (_event: any, elements: any[]) => {
+      onClick: (_event: unknown, elements: { index: number }[]) => {
         if (elements.length > 0 && onStatusClick) {
           const index = elements[0].index;
           const status = Object.keys(statusData)[index];

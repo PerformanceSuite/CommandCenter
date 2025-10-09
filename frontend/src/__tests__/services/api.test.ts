@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
 import { api } from '../../services/api';
 import { mockRepository, mockTechnology } from '../../tests/utils';
@@ -23,7 +23,7 @@ describe('ApiClient', () => {
       },
     };
 
-    mockedAxios.create = vi.fn(() => mockInstance as any);
+    mockedAxios.create = vi.fn(() => mockInstance as unknown as ReturnType<typeof axios.create>);
   });
 
   describe('Repository operations', () => {
@@ -32,6 +32,7 @@ describe('ApiClient', () => {
       const mockGet = vi.fn().mockResolvedValue({ data: repos });
 
       // Replace the client's get method
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.get = mockGet;
 
       const result = await api.getRepositories();
@@ -43,6 +44,7 @@ describe('ApiClient', () => {
     it('fetches single repository', async () => {
       const repo = mockRepository();
       const mockGet = vi.fn().mockResolvedValue({ data: repo });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.get = mockGet;
 
       const result = await api.getRepository('1');
@@ -54,6 +56,7 @@ describe('ApiClient', () => {
     it('creates repository', async () => {
       const newRepo = mockRepository();
       const mockPost = vi.fn().mockResolvedValue({ data: newRepo });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.post = mockPost;
 
       const repoData = { owner: 'test', name: 'repo' };
@@ -66,6 +69,7 @@ describe('ApiClient', () => {
     it('updates repository', async () => {
       const updated = mockRepository({ description: 'Updated' });
       const mockPut = vi.fn().mockResolvedValue({ data: updated });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.put = mockPut;
 
       const updateData = { description: 'Updated' };
@@ -77,6 +81,7 @@ describe('ApiClient', () => {
 
     it('deletes repository', async () => {
       const mockDelete = vi.fn().mockResolvedValue({});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.delete = mockDelete;
 
       await api.deleteRepository('1');
@@ -86,6 +91,7 @@ describe('ApiClient', () => {
 
     it('syncs repository', async () => {
       const mockPost = vi.fn().mockResolvedValue({});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.post = mockPost;
 
       await api.syncRepository('1');
@@ -98,6 +104,7 @@ describe('ApiClient', () => {
     it('fetches all technologies', async () => {
       const techs = [mockTechnology(), mockTechnology({ id: 2 })];
       const mockGet = vi.fn().mockResolvedValue({ data: techs });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.get = mockGet;
 
       const result = await api.getTechnologies();
@@ -109,6 +116,7 @@ describe('ApiClient', () => {
     it('creates technology', async () => {
       const newTech = mockTechnology();
       const mockPost = vi.fn().mockResolvedValue({ data: newTech });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.post = mockPost;
 
       const techData = { title: 'Python', domain: 'ai-ml' };
@@ -123,6 +131,7 @@ describe('ApiClient', () => {
     it('queries knowledge base', async () => {
       const mockResponse = { answer: 'Test answer', sources: [] };
       const mockPost = vi.fn().mockResolvedValue({ data: mockResponse });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (api as any).client.post = mockPost;
 
       const result = await api.queryKnowledge('test query');

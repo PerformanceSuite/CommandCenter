@@ -5,9 +5,18 @@ import type {
   ResearchTaskUpdate,
   ResearchTaskFilter,
   TaskStatus,
+  DocumentUpload,
 } from '../types/researchTask';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+interface TaskStatistics {
+  total_tasks: number;
+  by_status: Record<string, number>;
+  by_priority?: Record<string, number>;
+  completion_rate?: number;
+  [key: string]: unknown;
+}
 
 class ResearchTaskApiClient {
   private client: AxiosInstance;
@@ -171,8 +180,8 @@ class ResearchTaskApiClient {
   /**
    * Get documents for a research task
    */
-  async getTaskDocuments(taskId: number): Promise<any> {
-    const response = await this.client.get(
+  async getTaskDocuments(taskId: number): Promise<DocumentUpload[]> {
+    const response = await this.client.get<DocumentUpload[]>(
       `/api/v1/research-tasks/${taskId}/documents`
     );
     return response.data;
@@ -184,7 +193,7 @@ class ResearchTaskApiClient {
   async getStatistics(
     technologyId?: number,
     repositoryId?: number
-  ): Promise<any> {
+  ): Promise<TaskStatistics> {
     const params = new URLSearchParams();
 
     if (technologyId) {
@@ -194,7 +203,7 @@ class ResearchTaskApiClient {
       params.append('repository_id', repositoryId.toString());
     }
 
-    const response = await this.client.get(
+    const response = await this.client.get<TaskStatistics>(
       `/api/v1/research-tasks/statistics/overview?${params.toString()}`
     );
     return response.data;

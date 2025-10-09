@@ -5,7 +5,7 @@ import { TechnologyDomain as DomainEnum, TechnologyStatus as StatusEnum } from '
 
 interface TechnologyFormProps {
   technology?: Technology;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: TechnologyCreate) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }

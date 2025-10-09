@@ -5,6 +5,30 @@ import type { ResearchEntry } from '../types/research';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+interface KnowledgeQueryResponse {
+  answer: string;
+  sources: Array<{
+    content: string;
+    title?: string;
+    score?: number;
+  }>;
+}
+
+interface DashboardStats {
+  total_repositories: number;
+  total_technologies: number;
+  total_research_entries: number;
+  [key: string]: number | string;
+}
+
+interface ActivityItem {
+  id: number;
+  type: string;
+  title: string;
+  timestamp: string;
+  [key: string]: unknown;
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -124,19 +148,19 @@ class ApiClient {
   }
 
   // Knowledge Base
-  async queryKnowledge(query: string): Promise<any> {
-    const response = await this.client.post('/api/v1/knowledge/query', { query });
+  async queryKnowledge(query: string): Promise<KnowledgeQueryResponse> {
+    const response = await this.client.post<KnowledgeQueryResponse>('/api/v1/knowledge/query', { query });
     return response.data;
   }
 
   // Dashboard
-  async getDashboardStats(): Promise<any> {
-    const response = await this.client.get('/api/v1/dashboard/stats');
+  async getDashboardStats(): Promise<DashboardStats> {
+    const response = await this.client.get<DashboardStats>('/api/v1/dashboard/stats');
     return response.data;
   }
 
-  async getDashboardActivity(limit: number = 10): Promise<any> {
-    const response = await this.client.get('/api/v1/dashboard/recent-activity', {
+  async getDashboardActivity(limit: number = 10): Promise<ActivityItem[]> {
+    const response = await this.client.get<ActivityItem[]>('/api/v1/dashboard/recent-activity', {
       params: { limit },
     });
     return response.data;

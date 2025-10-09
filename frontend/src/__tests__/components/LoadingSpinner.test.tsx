@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '../../tests/utils';
+import { render } from '../../tests/utils';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 
 describe('LoadingSpinner', () => {
