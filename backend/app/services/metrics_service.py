@@ -12,84 +12,78 @@ logger = logging.getLogger(__name__)
 
 # GitHub API metrics
 github_api_requests_total = Counter(
-    'github_api_requests_total',
-    'Total number of GitHub API requests',
-    ['endpoint', 'method', 'status']
+    "github_api_requests_total",
+    "Total number of GitHub API requests",
+    ["endpoint", "method", "status"],
 )
 
 github_api_request_duration_seconds = Histogram(
-    'github_api_request_duration_seconds',
-    'GitHub API request duration in seconds',
-    ['endpoint', 'method']
+    "github_api_request_duration_seconds",
+    "GitHub API request duration in seconds",
+    ["endpoint", "method"],
 )
 
 github_api_rate_limit_remaining = Gauge(
-    'github_api_rate_limit_remaining',
-    'GitHub API rate limit remaining',
-    ['resource_type']
+    "github_api_rate_limit_remaining",
+    "GitHub API rate limit remaining",
+    ["resource_type"],
 )
 
 github_api_rate_limit_limit = Gauge(
-    'github_api_rate_limit_limit',
-    'GitHub API rate limit total',
-    ['resource_type']
+    "github_api_rate_limit_limit", "GitHub API rate limit total", ["resource_type"]
 )
 
 github_api_errors_total = Counter(
-    'github_api_errors_total',
-    'Total number of GitHub API errors',
-    ['endpoint', 'error_type']
+    "github_api_errors_total",
+    "Total number of GitHub API errors",
+    ["endpoint", "error_type"],
 )
 
 # Webhook metrics
 webhook_events_received_total = Counter(
-    'webhook_events_received_total',
-    'Total number of webhook events received',
-    ['event_type', 'repository']
+    "webhook_events_received_total",
+    "Total number of webhook events received",
+    ["event_type", "repository"],
 )
 
 webhook_events_processed_total = Counter(
-    'webhook_events_processed_total',
-    'Total number of webhook events processed successfully',
-    ['event_type']
+    "webhook_events_processed_total",
+    "Total number of webhook events processed successfully",
+    ["event_type"],
 )
 
 webhook_events_failed_total = Counter(
-    'webhook_events_failed_total',
-    'Total number of webhook events that failed processing',
-    ['event_type', 'error_type']
+    "webhook_events_failed_total",
+    "Total number of webhook events that failed processing",
+    ["event_type", "error_type"],
 )
 
 webhook_processing_duration_seconds = Histogram(
-    'webhook_processing_duration_seconds',
-    'Webhook event processing duration in seconds',
-    ['event_type']
+    "webhook_processing_duration_seconds",
+    "Webhook event processing duration in seconds",
+    ["event_type"],
 )
 
 # Cache metrics
 cache_hits_total = Counter(
-    'cache_hits_total',
-    'Total number of cache hits',
-    ['cache_type']
+    "cache_hits_total", "Total number of cache hits", ["cache_type"]
 )
 
 cache_misses_total = Counter(
-    'cache_misses_total',
-    'Total number of cache misses',
-    ['cache_type']
+    "cache_misses_total", "Total number of cache misses", ["cache_type"]
 )
 
 # Repository sync metrics
 repository_sync_total = Counter(
-    'repository_sync_total',
-    'Total number of repository syncs',
-    ['repository', 'status']
+    "repository_sync_total",
+    "Total number of repository syncs",
+    ["repository", "status"],
 )
 
 repository_sync_duration_seconds = Histogram(
-    'repository_sync_duration_seconds',
-    'Repository sync duration in seconds',
-    ['repository']
+    "repository_sync_duration_seconds",
+    "Repository sync duration in seconds",
+    ["repository"],
 )
 
 
@@ -98,10 +92,7 @@ class MetricsService:
 
     @staticmethod
     def record_github_api_request(
-        endpoint: str,
-        method: str,
-        status: str,
-        duration: float
+        endpoint: str, method: str, status: str, duration: float
     ):
         """
         Record a GitHub API request
@@ -113,14 +104,11 @@ class MetricsService:
             duration: Request duration in seconds
         """
         github_api_requests_total.labels(
-            endpoint=endpoint,
-            method=method,
-            status=status
+            endpoint=endpoint, method=method, status=status
         ).inc()
 
         github_api_request_duration_seconds.labels(
-            endpoint=endpoint,
-            method=method
+            endpoint=endpoint, method=method
         ).observe(duration)
 
     @staticmethod
@@ -132,10 +120,7 @@ class MetricsService:
             endpoint: API endpoint that failed
             error_type: Type of error
         """
-        github_api_errors_total.labels(
-            endpoint=endpoint,
-            error_type=error_type
-        ).inc()
+        github_api_errors_total.labels(endpoint=endpoint, error_type=error_type).inc()
 
     @staticmethod
     def update_rate_limit_metrics(resource_type: str, remaining: int, limit: int):
@@ -147,7 +132,9 @@ class MetricsService:
             remaining: Remaining requests
             limit: Total limit
         """
-        github_api_rate_limit_remaining.labels(resource_type=resource_type).set(remaining)
+        github_api_rate_limit_remaining.labels(resource_type=resource_type).set(
+            remaining
+        )
         github_api_rate_limit_limit.labels(resource_type=resource_type).set(limit)
 
     @staticmethod
@@ -160,8 +147,7 @@ class MetricsService:
             repository: Repository full name
         """
         webhook_events_received_total.labels(
-            event_type=event_type,
-            repository=repository
+            event_type=event_type, repository=repository
         ).inc()
 
     @staticmethod
@@ -174,7 +160,9 @@ class MetricsService:
             duration: Processing duration in seconds
         """
         webhook_events_processed_total.labels(event_type=event_type).inc()
-        webhook_processing_duration_seconds.labels(event_type=event_type).observe(duration)
+        webhook_processing_duration_seconds.labels(event_type=event_type).observe(
+            duration
+        )
 
     @staticmethod
     def record_webhook_failed(event_type: str, error_type: str):
@@ -186,8 +174,7 @@ class MetricsService:
             error_type: Type of error
         """
         webhook_events_failed_total.labels(
-            event_type=event_type,
-            error_type=error_type
+            event_type=event_type, error_type=error_type
         ).inc()
 
     @staticmethod
@@ -220,10 +207,7 @@ class MetricsService:
             status: Sync status (success/error)
             duration: Sync duration in seconds
         """
-        repository_sync_total.labels(
-            repository=repository,
-            status=status
-        ).inc()
+        repository_sync_total.labels(repository=repository, status=status).inc()
         repository_sync_duration_seconds.labels(repository=repository).observe(duration)
 
 
@@ -238,6 +222,7 @@ def track_github_api_call(endpoint: str, method: str = "GET"):
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -255,9 +240,12 @@ def track_github_api_call(endpoint: str, method: str = "GET"):
                 raise
             finally:
                 duration = time.time() - start_time
-                MetricsService.record_github_api_request(endpoint, method, status, duration)
+                MetricsService.record_github_api_request(
+                    endpoint, method, status, duration
+                )
 
         return wrapper
+
     return decorator
 
 
