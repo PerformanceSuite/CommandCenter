@@ -89,35 +89,25 @@ class KnowledgeBeastService:
         self._init_components()
 
     def _init_components(self):
-        """Initialize KnowledgeBeast core components"""
+        """Initialize KnowledgeBeast core components per README.md example"""
         try:
-            # Embedding engine with LRU cache (1000 embeddings)
-            self.embedding_engine = EmbeddingEngine(
-                model_name=self.embedding_model, cache_size=1000
-            )
+            # Following the pattern from README.md lines 90-143 (Hybrid Search section)
 
-            # Vector store with per-project collection
-            self.vector_store = VectorStore(
-                persist_directory=self.db_path,
-                collection_name=self.collection_name,
-                enable_circuit_breaker=True,
-                circuit_breaker_threshold=5,
-            )
-
-            # Document repository for keyword search
+            # 1. Create document repository (for keyword search)
             self.repository = DocumentRepository()
 
-            # Hybrid query engine (vector + keyword)
+            # 2. Create hybrid query engine (this creates its own EmbeddingEngine internally)
             self.query_engine = HybridQueryEngine(
-                repository=self.repository,
-                vector_store=self.vector_store,
-                embedding_engine=self.embedding_engine,
+                self.repository,
+                model_name=self.embedding_model,
+                alpha=0.7,  # 70% vector, 30% keyword
+                cache_size=1000
             )
 
             logger.info(f"KnowledgeBeast initialized successfully for project {self.project_id}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize KnowledgeBeast: {e}")
+            logger.error(f"Failed to initialize KnowledgeBeast: {e}", exc_info=True)
             raise
 
     async def query(
@@ -153,30 +143,31 @@ class KnowledgeBeastService:
         )
 
         try:
-            # Generate query embedding for vector/hybrid modes
-            if mode in ["vector", "hybrid"]:
-                query_embedding = self.embedding_engine.embed(question)
-
-            # Perform search based on mode
+            # Use HybridQueryEngine's actual API (from query_engine.py)
             if mode == "vector":
-                results = self.vector_store.query(
-                    query_embeddings=query_embedding,
-                    n_results=k,
-                    where={"category": category} if category else None,
-                )
+                # search_vector returns: Tuple[List[Tuple[doc_id, doc, score]], degraded_mode]
+                raw_results, degraded = self.query_engine.search_vector(question, top_k=k)
             elif mode == "keyword":
-                results = self.query_engine.search_keyword(question, top_k=k)
+                # search_keyword returns: List[Tuple[doc_id, doc, score]]
+                raw_results = self.query_engine.search_keyword(question)
+                raw_results = raw_results[:k]  # Limit to top-k
+                degraded = False
             else:  # hybrid (default)
-                results = self.query_engine.search_hybrid(question, top_k=k, alpha=alpha)
+                # search_hybrid returns: Tuple[List[Tuple[doc_id, doc, score]], degraded_mode]
+                raw_results, degraded = self.query_engine.search_hybrid(question, alpha=alpha, top_k=k)
 
             # Format results to match CommandCenter schema
-            formatted_results = self._format_results(results)
+            formatted_results = self._format_results(raw_results)
 
-            logger.debug(f"Query returned {len(formatted_results)} results")
+            # Filter by category if requested
+            if category:
+                formatted_results = [r for r in formatted_results if r.get("category") == category]
+
+            logger.debug(f"Query returned {len(formatted_results)} results (degraded={degraded})")
             return formatted_results
 
         except Exception as e:
-            logger.error(f"Query failed: {e}")
+            logger.error(f"Query failed: {e}", exc_info=True)
             raise
 
     async def add_document(
@@ -184,6 +175,8 @@ class KnowledgeBeastService:
     ) -> int:
         """
         Add a document to the knowledge base
+
+        Following README.md pattern (lines 104-122): add to repository + index terms
 
         Args:
             content: Document content
@@ -208,40 +201,31 @@ class KnowledgeBeastService:
         )
 
         try:
-            # Import chunker (only when needed)
-            try:
-                from knowledgebeast.chunking.recursive_chunker import RecursiveChunker
-            except ImportError:
-                # Fallback to simple chunking if advanced chunking not available
-                logger.warning("RecursiveChunker not available, using simple chunking")
-                chunks = self._simple_chunk(content, chunk_size)
-            else:
-                # Use advanced recursive chunking
-                chunker = RecursiveChunker(chunk_size=chunk_size, chunk_overlap=200)
-                chunks = chunker.chunk(content)
+            # For now, use simple chunking (KB doesn't have built-in chunking in v2.3.1)
+            chunks = self._simple_chunk(content, chunk_size)
 
             if not chunks:
                 logger.warning("No chunks generated from document")
                 return 0
 
-            # Generate embeddings for each chunk (batch processing)
-            embeddings = self.embedding_engine.embed(chunks)
-
             # Generate unique IDs for chunks
             timestamp = int(time.time() * 1000)
-            ids = [f"doc_{timestamp}_{i}" for i in range(len(chunks))]
 
-            # Prepare metadata for each chunk
-            metadatas = [metadata.copy() for _ in chunks]
+            # Add each chunk to repository (following README pattern)
+            for i, chunk in enumerate(chunks):
+                doc_id = f"doc_{timestamp}_{i}"
 
-            # Add to vector store
-            self.vector_store.add(
-                ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas
-            )
+                # Create document data structure
+                doc_data = {
+                    'name': metadata.get('title', metadata.get('source', 'Untitled')),
+                    'content': chunk,
+                    'path': metadata.get('source', 'unknown'),
+                    'category': metadata.get('category', 'unknown'),
+                    'metadata': metadata
+                }
 
-            # Also add to repository for keyword search
-            for doc_id, chunk, meta in zip(ids, chunks, metadatas):
-                self.repository.add_document(doc_id, {"content": chunk, **meta})
+                # Add to repository (this is what HybridQueryEngine uses)
+                self.repository.add_document(doc_id, doc_data)
 
                 # Index terms for keyword search
                 terms = set(chunk.lower().split())
@@ -249,11 +233,14 @@ class KnowledgeBeastService:
                     if len(term) > 2:  # Skip very short terms
                         self.repository.index_term(term, doc_id)
 
+            # Refresh HybridQueryEngine's embedding cache
+            self.query_engine.refresh_embeddings()
+
             logger.info(f"Successfully added {len(chunks)} chunks to project {self.project_id}")
             return len(chunks)
 
         except Exception as e:
-            logger.error(f"Failed to add document: {e}")
+            logger.error(f"Failed to add document: {e}", exc_info=True)
             raise
 
     async def delete_by_source(self, source: str) -> bool:
@@ -269,28 +256,31 @@ class KnowledgeBeastService:
         logger.info(f"Deleting documents: project={self.project_id}, source={source}")
 
         try:
-            # Query documents with this source
-            results = self.vector_store.get(where={"source": source})
+            # Find documents in repository with matching source
+            doc_ids_to_delete = []
 
-            if results and results.get("ids"):
-                doc_ids = results["ids"]
+            for doc_id, doc_data in self.repository.documents.items():
+                if doc_data.get('path') == source or doc_data.get('metadata', {}).get('source') == source:
+                    doc_ids_to_delete.append(doc_id)
 
-                # Delete from vector store
-                self.vector_store.delete(ids=doc_ids)
-
+            if doc_ids_to_delete:
                 # Delete from repository
-                for doc_id in doc_ids:
-                    if doc_id in self.repository.documents:
-                        del self.repository.documents[doc_id]
+                for doc_id in doc_ids_to_delete:
+                    del self.repository.documents[doc_id]
 
-                logger.info(f"Deleted {len(doc_ids)} documents with source={source}")
+                # Also remove from inverted index (term → doc_id mapping)
+                for term, doc_set in list(self.repository.inverted_index.items()):
+                    for doc_id in doc_ids_to_delete:
+                        doc_set.discard(doc_id)
+
+                logger.info(f"Deleted {len(doc_ids_to_delete)} documents with source={source}")
                 return True
 
             logger.warning(f"No documents found with source={source}")
             return False
 
         except Exception as e:
-            logger.error(f"Failed to delete documents: {e}")
+            logger.error(f"Failed to delete documents: {e}", exc_info=True)
             return False
 
     async def get_categories(self) -> List[str]:
@@ -301,20 +291,17 @@ class KnowledgeBeastService:
             List of unique category names
         """
         try:
-            # Get all documents
-            all_docs = self.vector_store.get()
-
-            # Extract unique categories
+            # Extract unique categories from repository
             categories = set()
-            if all_docs.get("metadatas"):
-                for metadata in all_docs["metadatas"]:
-                    if "category" in metadata:
-                        categories.add(metadata["category"])
+            for doc_data in self.repository.documents.values():
+                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category')
+                if category:
+                    categories.add(category)
 
             return sorted(list(categories))
 
         except Exception as e:
-            logger.error(f"Failed to get categories: {e}")
+            logger.error(f"Failed to get categories: {e}", exc_info=True)
             return []
 
     async def get_statistics(self) -> Dict[str, Any]:
@@ -326,49 +313,36 @@ class KnowledgeBeastService:
             - total_chunks: Total number of document chunks
             - categories: Category breakdown
             - embedding_model: Model name
-            - collection_name: ChromaDB collection name
             - cache_hit_rate: Embedding cache efficiency
-            - circuit_breaker_state: Health status
         """
         try:
-            # Get vector store statistics
-            vector_stats = self.vector_store.get_stats()
+            # Get repository statistics
+            repo_stats = self.repository.get_stats()
 
-            # Get embedding engine statistics
-            embedding_stats = self.embedding_engine.get_stats()
+            # Get embedding cache statistics
+            embedding_stats = self.query_engine.get_embedding_stats()
 
             # Get category breakdown
-            all_docs = self.vector_store.get()
             categories = {}
-            if all_docs.get("metadatas"):
-                for metadata in all_docs["metadatas"]:
-                    category = metadata.get("category", "unknown")
-                    categories[category] = categories.get(category, 0) + 1
-
-            # Get circuit breaker status
-            circuit_breaker_stats = (
-                vector_stats.get("circuit_breaker", {})
-                if "circuit_breaker" in vector_stats
-                else {"state": "disabled"}
-            )
+            for doc_data in self.repository.documents.values():
+                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category', 'unknown')
+                categories[category] = categories.get(category, 0) + 1
 
             return {
-                "total_chunks": vector_stats.get("total_documents", 0),
+                "total_chunks": repo_stats.get("documents", 0),
                 "categories": categories,
-                "embedding_model": self.embedding_engine.model_name,
-                "embedding_dim": self.embedding_engine.embedding_dim,
+                "embedding_model": self.embedding_model,
                 "collection_name": self.collection_name,
                 "project_id": self.project_id,
                 "db_path": self.db_path,
-                "cache_hit_rate": embedding_stats.get("cache_hit_rate", 0.0),
-                "cache_size": embedding_stats.get("cache_size", 0),
-                "cache_capacity": embedding_stats.get("cache_capacity", 0),
-                "circuit_breaker_state": circuit_breaker_stats.get("state", "unknown"),
-                "total_queries": vector_stats.get("total_queries", 0),
+                "cache_hit_rate": embedding_stats.get("hit_rate", 0.0),
+                "cache_size": embedding_stats.get("size", 0),
+                "cache_capacity": embedding_stats.get("capacity", 0),
+                "total_terms": repo_stats.get("terms", 0),
             }
 
         except Exception as e:
-            logger.error(f"Failed to get statistics: {e}")
+            logger.error(f"Failed to get statistics: {e}", exc_info=True)
             return {
                 "total_chunks": 0,
                 "categories": {},
@@ -384,79 +358,50 @@ class KnowledgeBeastService:
             Health status dictionary with 'status' key
         """
         try:
-            health = self.vector_store.get_health()
+            # Check if repository is accessible
+            doc_count = len(self.repository.documents)
+
             return {
-                "status": health.get("status", "unknown"),
-                "chromadb_available": health.get("chromadb_available", False),
-                "circuit_breaker_state": health.get("circuit_breaker_state", "unknown"),
-                "document_count": health.get("document_count", 0),
+                "status": "healthy",
+                "document_count": doc_count,
                 "collection": self.collection_name,
             }
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error(f"Health check failed: {e}", exc_info=True)
             return {"status": "unhealthy", "error": str(e)}
 
     def _format_results(self, results: Any) -> List[Dict[str, Any]]:
         """
         Format KnowledgeBeast results to CommandCenter schema
 
+        HybridQueryEngine returns: List[Tuple[doc_id, doc_data, score]]
+        where doc_data has: {'name', 'content', 'path', 'category', 'metadata'}
+
         Args:
-            results: Raw results from KnowledgeBeast (vector/keyword/hybrid)
+            results: Raw results from HybridQueryEngine
 
         Returns:
             List of formatted results matching CommandCenter API schema
         """
         formatted = []
 
-        # Handle different result formats
-        if isinstance(results, dict):
-            # Vector search results (from VectorStore.query)
-            if "ids" in results and "documents" in results and results["ids"]:
-                for i in range(len(results["ids"][0])):
-                    formatted.append(
-                        {
-                            "content": results["documents"][0][i],
-                            "metadata": (
-                                results["metadatas"][0][i] if "metadatas" in results else {}
-                            ),
-                            "score": (
-                                float(results["distances"][0][i])
-                                if "distances" in results
-                                else 0.0
-                            ),
-                            "category": (
-                                results["metadatas"][0][i].get("category", "unknown")
-                                if "metadatas" in results
-                                else "unknown"
-                            ),
-                            "source": (
-                                results["metadatas"][0][i].get("source", "unknown")
-                                if "metadatas" in results
-                                else "unknown"
-                            ),
-                            "title": (
-                                results["metadatas"][0][i].get("title", "Untitled")
-                                if "metadatas" in results
-                                else "Untitled"
-                            ),
-                        }
-                    )
-
-        elif isinstance(results, list):
-            # Hybrid/keyword search results (list of tuples: (doc_id, doc_data, score))
+        # HybridQueryEngine returns list of tuples: (doc_id, doc_data, score)
+        if isinstance(results, list):
             for result in results:
                 if len(result) == 3:
                     doc_id, doc_data, score = result
+
+                    # Extract metadata
+                    metadata = doc_data.get("metadata", {})
+
                     formatted.append(
                         {
                             "content": doc_data.get("content", ""),
-                            "metadata": {
-                                k: v for k, v in doc_data.items() if k != "content"
-                            },
+                            "metadata": metadata,
                             "score": float(score),
-                            "category": doc_data.get("category", "unknown"),
-                            "source": doc_data.get("source", "unknown"),
-                            "title": doc_data.get("title", "Untitled"),
+                            "category": doc_data.get("category", metadata.get("category", "unknown")),
+                            "source": doc_data.get("path", metadata.get("source", "unknown")),
+                            "title": doc_data.get("name", metadata.get("title", "Untitled")),
                         }
                     )
 
