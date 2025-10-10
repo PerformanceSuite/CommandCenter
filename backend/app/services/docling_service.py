@@ -10,18 +10,13 @@ import os
 
 # Lazy imports - only import when DoclingService is instantiated
 try:
-    from docling.document_converter import DocumentConverter
-    from docling.datamodel.base_models import InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
-    from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
+    from docling.document_converter import DocumentConverter, PipelineOptions
 
     DOCLING_AVAILABLE = True
 except ImportError:
     DOCLING_AVAILABLE = False
     DocumentConverter = None
-    InputFormat = None
-    PdfPipelineOptions = None
-    PyPdfiumDocumentBackend = None
+    PipelineOptions = None
 
 
 class DoclingService:
@@ -39,16 +34,9 @@ class DoclingService:
                 "Docling not installed. " "Install with: pip install docling"
             )
 
-        # Initialize document converter with optimized pipeline options
-        pipeline_options = PdfPipelineOptions()
-        pipeline_options.do_ocr = False  # Disable OCR for faster processing
-        pipeline_options.do_table_structure = True  # Enable table extraction
-
-        self.converter = DocumentConverter(
-            format_options={
-                InputFormat.PDF: pipeline_options,
-            }
-        )
+        # Initialize document converter with default options
+        # Docling v1.20.0 API simplified - no need for format-specific options
+        self.converter = DocumentConverter()
 
     async def process_pdf(self, content: bytes) -> str:
         """
