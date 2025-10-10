@@ -61,6 +61,11 @@ services:
       CHROMADB_PATH: /app/rag_storage/chromadb
       KNOWLEDGE_BASE_PATH: /app/rag_storage/chromadb
 
+      # KnowledgeBeast Integration
+      USE_KNOWLEDGEBEAST: ${USE_KNOWLEDGEBEAST:-false}
+      KNOWLEDGEBEAST_DB_PATH: ${KNOWLEDGEBEAST_DB_PATH:-./kb_chroma_db}
+      KNOWLEDGEBEAST_EMBEDDING_MODEL: ${KNOWLEDGEBEAST_EMBEDDING_MODEL:-all-MiniLM-L6-v2}
+
       # API Keys
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
