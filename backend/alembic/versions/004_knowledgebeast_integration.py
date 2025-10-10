@@ -17,8 +17,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '004'
-down_revision = '003'
+revision = '004_knowledgebeast_integration'
+down_revision = '003_add_project_isolation'
 branch_labels = None
 depends_on = None
 
