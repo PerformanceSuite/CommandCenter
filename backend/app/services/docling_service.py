@@ -10,7 +10,8 @@ import os
 
 # Lazy imports - only import when DoclingService is instantiated
 try:
-    from docling.document_converter import DocumentConverter, PipelineOptions
+    from docling.document_converter import DocumentConverter
+    from docling.document_converter import PipelineOptions
 
     DOCLING_AVAILABLE = True
 except ImportError:
