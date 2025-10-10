@@ -3,6 +3,8 @@ export interface KnowledgeSearchRequest {
   category?: string;
   technology_id?: number;
   limit?: number;
+  mode?: 'vector' | 'keyword' | 'hybrid';  // Search mode (default: hybrid)
+  alpha?: number;  // Hybrid search weight: 0.0=keyword only, 1.0=vector only (default: 0.7)
 }
 
 export interface KnowledgeSearchResult {

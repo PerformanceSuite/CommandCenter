@@ -28,11 +28,18 @@ class KnowledgeApiClient {
   }
 
   async query(request: KnowledgeSearchRequest, collection: string = 'default'): Promise<KnowledgeSearchResult[]> {
+    // Extract mode and alpha for query params
+    const { mode, alpha, ...bodyRequest } = request;
+
     const response: AxiosResponse<KnowledgeSearchResult[]> = await axios.post(
       `${this.baseURL}/query`,
-      request,
+      bodyRequest,
       {
-        params: { collection },
+        params: {
+          collection,
+          ...(mode && { mode }),
+          ...(alpha !== undefined && { alpha }),
+        },
         headers: {
           ...this.getAuthHeaders(),
           'Content-Type': 'application/json',

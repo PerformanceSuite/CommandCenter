@@ -12,6 +12,8 @@ export const KnowledgeView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [searchMode, setSearchMode] = useState<'vector' | 'keyword' | 'hybrid'>('hybrid');
+  const [alpha, setAlpha] = useState(0.7);
 
   const {
     searchResults,
@@ -54,6 +56,8 @@ export const KnowledgeView: React.FC = () => {
       query,
       category: selectedCategory || undefined,
       limit: 10,
+      mode: searchMode,
+      alpha: searchMode === 'hybrid' ? alpha : undefined,
     };
 
     try {
@@ -61,7 +65,7 @@ export const KnowledgeView: React.FC = () => {
     } catch (err) {
       console.error('Search failed:', err);
     }
-  }, [query, selectedCategory, performQuery, clearSearchResults]);
+  }, [query, selectedCategory, searchMode, alpha, performQuery, clearSearchResults]);
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -189,6 +193,83 @@ export const KnowledgeView: React.FC = () => {
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
+        </div>
+
+        {/* Search Mode Controls */}
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search Mode Selector */}
+            <div>
+              <label htmlFor="searchMode" className="block text-sm font-medium text-gray-700 mb-2">
+                Search Mode
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSearchMode('vector')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    searchMode === 'vector'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title="Vector search uses semantic similarity for meaning-based matching"
+                >
+                  🔍 Vector
+                </button>
+                <button
+                  onClick={() => setSearchMode('keyword')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    searchMode === 'keyword'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title="Keyword search uses exact term matching (BM25)"
+                >
+                  📝 Keyword
+                </button>
+                <button
+                  onClick={() => setSearchMode('hybrid')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    searchMode === 'hybrid'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title="Hybrid search combines both vector and keyword methods"
+                >
+                  🎯 Hybrid
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                {searchMode === 'vector' && '🔍 Semantic similarity - finds meaning, not just words'}
+                {searchMode === 'keyword' && '📝 Exact matching - finds specific terms'}
+                {searchMode === 'hybrid' && '🎯 Best of both - balances semantic + keyword'}
+              </p>
+            </div>
+
+            {/* Alpha Slider (only for hybrid mode) */}
+            {searchMode === 'hybrid' && (
+              <div>
+                <label htmlFor="alpha" className="block text-sm font-medium text-gray-700 mb-2">
+                  Search Weight: {alpha.toFixed(1)} ({alpha === 0 ? 'Keyword Only' : alpha === 1 ? 'Vector Only' : `${Math.round(alpha * 100)}% Vector`})
+                </label>
+                <input
+                  type="range"
+                  id="alpha"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={alpha}
+                  onChange={(e) => setAlpha(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                  title="Adjust the balance between vector (semantic) and keyword (exact) search"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>← Keyword</span>
+                  <span>Balanced</span>
+                  <span>Vector →</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Category Filters */}
