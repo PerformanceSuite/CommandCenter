@@ -145,3 +145,128 @@ class ResearchTaskListResponse(BaseModel):
     items: list[ResearchTaskResponse]
     page: int = 1
     page_size: int = 50
+
+
+# ============================================================================
+# Research Agent Orchestration Schemas (Phase 2)
+# ============================================================================
+
+class AgentTaskRequest(BaseModel):
+    """Request schema for individual agent task"""
+
+    role: str = Field(..., description="Agent role: technology_scout, deep_researcher, comparator, integrator, monitor")
+    prompt: str = Field(..., min_length=1)
+    model: Optional[str] = None
+    provider: Optional[str] = None
+    temperature: float = Field(default=0.7, ge=0, le=2)
+    max_tokens: int = Field(default=4096, ge=1, le=32000)
+
+
+class MultiAgentLaunchRequest(BaseModel):
+    """Request schema for launching multiple agents"""
+
+    tasks: list[AgentTaskRequest]
+    max_concurrent: int = Field(default=3, ge=1, le=10)
+    project_id: int
+
+
+class TechnologyDeepDiveRequest(BaseModel):
+    """Request schema for technology deep dive"""
+
+    technology_name: str = Field(..., min_length=1)
+    research_questions: Optional[list[str]] = None
+    project_id: int
+    model: Optional[str] = None
+    provider: Optional[str] = None
+
+
+class AgentResultMetadata(BaseModel):
+    """Metadata about agent execution"""
+
+    agent_role: str
+    model: str
+    provider: str
+    usage: dict
+    execution_time_seconds: float
+
+
+class AgentResult(BaseModel):
+    """Result from individual agent"""
+
+    data: dict
+    metadata: Optional[AgentResultMetadata] = None
+    error: Optional[str] = None
+
+
+class ResearchOrchestrationResponse(BaseModel):
+    """Response schema for research orchestration task"""
+
+    task_id: str
+    status: str  # pending|running|completed|failed
+    technology: Optional[str] = None
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+    results: Optional[list[AgentResult]] = None
+    summary: Optional[str] = None
+    error: Optional[str] = None
+
+
+class TechnologyMonitorRequest(BaseModel):
+    """Request schema for technology monitoring"""
+
+    technology_id: int
+    sources: list[str] = Field(default=["hackernews", "github"])  # hackernews, github, arxiv
+    days_back: int = Field(default=7, ge=1, le=30)
+
+
+class MonitoringAlert(BaseModel):
+    """Alert from monitoring system"""
+
+    type: str  # security|breaking_change|deprecation|opportunity
+    severity: str  # low|medium|high|critical
+    description: str
+    action_required: Optional[str] = None
+    source_url: Optional[str] = None
+
+
+class TechnologyMonitorResponse(BaseModel):
+    """Response schema for technology monitoring"""
+
+    technology_id: int
+    technology_name: str
+    period: str
+    hackernews: Optional[dict] = None
+    github: Optional[dict] = None
+    arxiv: Optional[dict] = None
+    alerts: list[MonitoringAlert] = []
+    last_updated: datetime
+
+
+class ModelInfo(BaseModel):
+    """Information about an AI model"""
+
+    model_id: str
+    provider: str
+    tier: str  # premium|standard|economy|local
+    cost_per_1m_tokens: Optional[float] = None
+    max_tokens: int
+    description: Optional[str] = None
+
+
+class AvailableModelsResponse(BaseModel):
+    """Response schema for available models"""
+
+    providers: dict  # provider -> list of models
+    default_provider: str
+    default_model: str
+
+
+class ResearchSummaryResponse(BaseModel):
+    """Summary statistics for research activities"""
+
+    total_tasks: int
+    completed_tasks: int
+    failed_tasks: int
+    agents_deployed: int
+    total_cost_usd: float
+    avg_execution_time_seconds: float

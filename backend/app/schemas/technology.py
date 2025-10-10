@@ -3,10 +3,16 @@ Pydantic schemas for Technology endpoints
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
-from app.models.technology import TechnologyDomain, TechnologyStatus
+from app.models.technology import (
+    TechnologyDomain,
+    TechnologyStatus,
+    IntegrationDifficulty,
+    MaturityLevel,
+    CostTier,
+)
 
 
 class TechnologyBase(BaseModel):
@@ -25,6 +31,22 @@ class TechnologyBase(BaseModel):
     repository_url: Optional[str] = None
     website_url: Optional[str] = None
     tags: Optional[str] = None
+
+    # Technology Radar v2 fields
+    latency_ms: Optional[float] = Field(None, ge=0)
+    throughput_qps: Optional[int] = Field(None, ge=0)
+    integration_difficulty: Optional[IntegrationDifficulty] = None
+    integration_time_estimate_days: Optional[int] = Field(None, ge=0)
+    maturity_level: Optional[MaturityLevel] = None
+    stability_score: Optional[int] = Field(None, ge=0, le=100)
+    cost_tier: Optional[CostTier] = None
+    cost_monthly_usd: Optional[float] = Field(None, ge=0)
+    dependencies: Optional[Dict[str, Any]] = None
+    alternatives: Optional[str] = None
+    last_hn_mention: Optional[datetime] = None
+    hn_score_avg: Optional[int] = Field(None, ge=0)
+    github_stars: Optional[int] = Field(None, ge=0)
+    github_last_commit: Optional[datetime] = None
 
 
 class TechnologyCreate(TechnologyBase):
@@ -49,6 +71,22 @@ class TechnologyUpdate(BaseModel):
     repository_url: Optional[str] = None
     website_url: Optional[str] = None
     tags: Optional[str] = None
+
+    # Technology Radar v2 fields
+    latency_ms: Optional[float] = Field(None, ge=0)
+    throughput_qps: Optional[int] = Field(None, ge=0)
+    integration_difficulty: Optional[IntegrationDifficulty] = None
+    integration_time_estimate_days: Optional[int] = Field(None, ge=0)
+    maturity_level: Optional[MaturityLevel] = None
+    stability_score: Optional[int] = Field(None, ge=0, le=100)
+    cost_tier: Optional[CostTier] = None
+    cost_monthly_usd: Optional[float] = Field(None, ge=0)
+    dependencies: Optional[Dict[str, Any]] = None
+    alternatives: Optional[str] = None
+    last_hn_mention: Optional[datetime] = None
+    hn_score_avg: Optional[int] = Field(None, ge=0)
+    github_stars: Optional[int] = Field(None, ge=0)
+    github_last_commit: Optional[datetime] = None
 
 
 class TechnologyInDB(TechnologyBase):

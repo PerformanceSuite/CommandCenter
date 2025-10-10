@@ -49,7 +49,6 @@ prometheus-fastapi-instrumentator==7.0.0
 # Rate limiting
 tenacity==8.2.3
 
-# Multi-provider AI routing
+# Multi-provider AI routing (Phase 2 Research Workflow)
 openai>=1.12.0,<2.0.0  # OpenRouter uses OpenAI SDK
-openrouter>=0.2.0,<1.0.0  # OpenRouter client (if available)
-litellm>=1.30.0,<2.0.0  # Alternative: Self-hosted proxy for 100+ LLMs
+litellm>=1.30.0,<2.0.0  # Self-hosted proxy for 100+ LLMs

@@ -19,6 +19,7 @@ from app.config import settings
 from app.database import init_db, close_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
+from app.routers import research_orchestration
 from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
@@ -146,6 +147,7 @@ app.include_router(projects.router, prefix=settings.api_v1_prefix)  # Project is
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(research_tasks.router, prefix=settings.api_v1_prefix)
+app.include_router(research_orchestration.router)  # Phase 2 research workflow
 app.include_router(dashboard.router, prefix=settings.api_v1_prefix)
 app.include_router(knowledge.router, prefix=settings.api_v1_prefix)
 app.include_router(webhooks.router, prefix=settings.api_v1_prefix)
