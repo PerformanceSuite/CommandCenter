@@ -92,6 +92,32 @@ class Settings(BaseSettings):
     # API Settings
     api_v1_prefix: str = "/api/v1"
 
+    # Multi-Provider AI Routing
+    openrouter_api_key: Optional[str] = Field(
+        default=None,
+        description="OpenRouter API key for multi-provider AI access",
+    )
+    anthropic_api_key: Optional[str] = Field(
+        default=None,
+        description="Anthropic API key (direct access)",
+    )
+    openai_api_key: Optional[str] = Field(
+        default=None,
+        description="OpenAI API key (direct access)",
+    )
+    google_api_key: Optional[str] = Field(
+        default=None,
+        description="Google AI API key (direct access)",
+    )
+    default_ai_provider: str = Field(
+        default="openrouter",
+        description="Default AI provider (openrouter, anthropic, openai, google, litellm)",
+    )
+    default_model: str = Field(
+        default="anthropic/claude-3.5-sonnet",
+        description="Default AI model to use for research agents",
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )

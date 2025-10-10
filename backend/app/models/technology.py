@@ -4,7 +4,7 @@ Technology model for tracking research areas and technologies
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer
+from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer, Float, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -32,6 +32,37 @@ class TechnologyStatus(str, enum.Enum):
     IMPLEMENTATION = "implementation"
     INTEGRATED = "integrated"
     ARCHIVED = "archived"
+
+
+class IntegrationDifficulty(str, enum.Enum):
+    """Integration complexity level"""
+
+    TRIVIAL = "trivial"  # < 1 day
+    EASY = "easy"  # 1-3 days
+    MODERATE = "moderate"  # 1-2 weeks
+    COMPLEX = "complex"  # 2-4 weeks
+    VERY_COMPLEX = "very_complex"  # > 1 month
+
+
+class MaturityLevel(str, enum.Enum):
+    """Technology maturity level"""
+
+    ALPHA = "alpha"  # Experimental, unstable API
+    BETA = "beta"  # Feature-complete, stabilizing
+    STABLE = "stable"  # Production-ready, stable API
+    MATURE = "mature"  # Battle-tested, widely adopted
+    LEGACY = "legacy"  # Maintained but declining
+
+
+class CostTier(str, enum.Enum):
+    """Cost category"""
+
+    FREE = "free"  # Open source, no cost
+    FREEMIUM = "freemium"  # Free tier + paid plans
+    AFFORDABLE = "affordable"  # < $100/month
+    MODERATE = "moderate"  # $100-$500/month
+    EXPENSIVE = "expensive"  # > $500/month
+    ENTERPRISE = "enterprise"  # Custom pricing
 
 
 class Technology(Base):
@@ -76,6 +107,37 @@ class Technology(Base):
 
     # Tags for filtering
     tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Comma-separated
+
+    # Technology Radar v2 - Enhanced Evaluation Fields
+    # Performance characteristics
+    latency_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # P99 latency
+    throughput_qps: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Queries/sec
+
+    # Integration assessment
+    integration_difficulty: Mapped[Optional[IntegrationDifficulty]] = mapped_column(
+        SQLEnum(IntegrationDifficulty), nullable=True
+    )
+    integration_time_estimate_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Maturity and stability
+    maturity_level: Mapped[Optional[MaturityLevel]] = mapped_column(
+        SQLEnum(MaturityLevel), nullable=True
+    )
+    stability_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 0-100
+
+    # Cost analysis
+    cost_tier: Mapped[Optional[CostTier]] = mapped_column(SQLEnum(CostTier), nullable=True)
+    cost_monthly_usd: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Dependencies and relationships
+    dependencies: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # {"tech_id": "relationship"}
+    alternatives: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Comma-separated tech IDs
+
+    # Monitoring and alerts
+    last_hn_mention: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    hn_score_avg: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    github_stars: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    github_last_commit: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
