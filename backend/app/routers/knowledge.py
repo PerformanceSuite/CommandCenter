@@ -90,13 +90,22 @@ async def query_knowledge_base(
 
     try:
         # Query using appropriate service
-        results = await knowledge_service.query(
-            question=request.query,
-            category=request.category,
-            k=request.limit,
-            mode=mode if settings.use_knowledgebeast else "hybrid",
-            alpha=alpha if settings.use_knowledgebeast else 0.7
-        )
+        if settings.use_knowledgebeast and KNOWLEDGEBEAST_AVAILABLE:
+            # KnowledgeBeast supports mode and alpha parameters
+            results = await knowledge_service.query(
+                question=request.query,
+                category=request.category,
+                k=request.limit,
+                mode=mode,
+                alpha=alpha
+            )
+        else:
+            # Legacy RAG service doesn't support mode/alpha
+            results = await knowledge_service.query(
+                question=request.query,
+                category=request.category,
+                k=request.limit
+            )
 
         # Format results
         search_results = []
