@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Bell, Settings } from 'lucide-react';
 import { ProjectSelector } from './ProjectSelector';
 
 export const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const pageTitle = useMemo(() => {
     const path = location.pathname;
@@ -53,6 +54,7 @@ export const Header: React.FC = () => {
             <Bell size={20} aria-hidden="true" />
           </button>
           <button
+            onClick={() => navigate('/settings')}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             aria-label="Settings"
             type="button"
