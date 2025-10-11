@@ -110,11 +110,11 @@ class Settings(BaseSettings):
         description="Google AI API key (direct access)",
     )
     default_ai_provider: str = Field(
-        default="openrouter",
+        default="anthropic",
         description="Default AI provider (openrouter, anthropic, openai, google, litellm)",
     )
     default_model: str = Field(
-        default="anthropic/claude-3.5-sonnet",
+        default="claude-3-5-sonnet-20241022",
         description="Default AI model to use for research agents",
     )
 
