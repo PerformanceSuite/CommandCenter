@@ -67,7 +67,24 @@ if [ -d ".agent-coordination" ]; then
     find .agent-coordination -type f -name "*.lock" -mtime +1 -delete 2>/dev/null
 fi
 
-# 8. Summary
+# 8. Verify repository organization
+echo "🔍 Verifying repository structure..."
+
+# Check for loose files in root that shouldn't be there
+LOOSE_FILES=$(find . -maxdepth 1 -type f \( -name "*.md" -o -name "*.sh" -o -name "*.html" \) ! -name "README.md" ! -name "CLAUDE.md" ! -name "SECURITY.md" ! -name "Makefile" 2>/dev/null)
+if [ ! -z "$LOOSE_FILES" ]; then
+    echo "⚠️  Warning: Loose files found in root:"
+    echo "$LOOSE_FILES" | sed 's/^/   /'
+fi
+
+# Check for loose directories that might need organizing
+LOOSE_DIRS=$(find . -maxdepth 1 -type d ! -name "." ! -name ".." ! -name ".git" ! -name ".claude" ! -name "backend" ! -name "frontend" ! -name "docs" ! -name "scripts" ! -name "monitoring" ! -name "traefik" ! -name "node_modules" ! -name ".venv" 2>/dev/null)
+if [ ! -z "$LOOSE_DIRS" ]; then
+    echo "⚠️  Warning: Unexpected directories in root:"
+    echo "$LOOSE_DIRS" | sed 's/^/   /'
+fi
+
+# 9. Summary
 echo ""
 echo "✅ Cleanup complete!"
 echo ""
@@ -81,8 +98,15 @@ if [ -d "backend/.venv" ]; then
 fi
 
 echo ""
+echo "📁 Repository structure verified:"
+echo "   Root files: $(find . -maxdepth 1 -type f | wc -l | tr -d ' ')"
+echo "   Root dirs: $(find . -maxdepth 1 -type d ! -name "." ! -name ".git" | wc -l | tr -d ' ')"
+echo "   Docs organized: $(find docs -type d | wc -l | tr -d ' ') folders"
+
+echo ""
 echo "🎯 Next steps:"
 echo "   - Review git status: git status"
 echo "   - Check for uncommitted work: git diff"
+echo "   - Push commits: git push origin main"
 echo "   - Exit Claude Code when ready"
 echo ""
