@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 import type { Technology } from '../../types/technology';
-import { TrendingUp, Beaker, TestTube, Rocket, Edit2, Trash2, ExternalLink } from 'lucide-react';
+import { TrendingUp, Beaker, TestTube, Rocket, Edit2, Trash2, ExternalLink, Star, MessageCircle, GitBranch, Zap, Timer, Code, DollarSign, Activity } from 'lucide-react';
 
 interface TechnologyCardProps {
   technology: Technology;
@@ -15,6 +15,31 @@ const statusConfig: Record<string, { label: string; icon: any; color: string }> 
   implementation: { label: 'Implementation', icon: Rocket, color: 'bg-orange-100 text-orange-700' },
   integrated: { label: 'Integrated', icon: Rocket, color: 'bg-green-100 text-green-700' },
   archived: { label: 'Archived', icon: Beaker, color: 'bg-gray-100 text-gray-700' },
+};
+
+const costTierColors: Record<string, string> = {
+  free: 'bg-green-100 text-green-700',
+  freemium: 'bg-emerald-100 text-emerald-700',
+  affordable: 'bg-blue-100 text-blue-700',
+  moderate: 'bg-yellow-100 text-yellow-700',
+  expensive: 'bg-orange-100 text-orange-700',
+  enterprise: 'bg-red-100 text-red-700',
+};
+
+const maturityLevelColors: Record<string, string> = {
+  alpha: 'bg-red-100 text-red-700',
+  beta: 'bg-orange-100 text-orange-700',
+  stable: 'bg-green-100 text-green-700',
+  mature: 'bg-blue-100 text-blue-700',
+  legacy: 'bg-gray-100 text-gray-700',
+};
+
+const integrationDifficultyLabels: Record<string, string> = {
+  trivial: 'Trivial',
+  easy: 'Easy',
+  moderate: 'Moderate',
+  complex: 'Complex',
+  very_complex: 'Very Complex',
 };
 
 export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology, onEdit, onDelete }) => {
@@ -41,6 +66,20 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
     if (!technology.tags) return [];
     return technology.tags.split(',').map(t => t.trim()).filter(Boolean);
   }, [technology.tags]);
+
+  // Check if v2 fields exist
+  const hasV2Fields = useMemo(() => {
+    return !!(
+      technology.latency_ms ||
+      technology.throughput_qps ||
+      technology.integration_difficulty ||
+      technology.maturity_level ||
+      technology.stability_score ||
+      technology.cost_tier ||
+      technology.github_stars ||
+      technology.hn_score_avg
+    );
+  }, [technology]);
 
   const handleDelete = () => {
     if (onDelete) {
@@ -133,6 +172,35 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
         </div>
       )}
 
+      {/* V2 Quick Metrics (badges) */}
+      {hasV2Fields && (
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-gray-100">
+          {technology.github_stars !== null && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+              <Star size={12} className="text-yellow-500" />
+              <span className="font-medium">{technology.github_stars.toLocaleString()}</span>
+            </div>
+          )}
+          {technology.hn_score_avg !== null && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+              <MessageCircle size={12} className="text-orange-500" />
+              <span className="font-medium">HN {technology.hn_score_avg.toFixed(1)}</span>
+            </div>
+          )}
+          {technology.maturity_level && (
+            <div className={`px-2 py-1 rounded text-xs font-medium ${maturityLevelColors[technology.maturity_level]}`}>
+              {technology.maturity_level.charAt(0).toUpperCase() + technology.maturity_level.slice(1)}
+            </div>
+          )}
+          {technology.cost_tier && (
+            <div className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 ${costTierColors[technology.cost_tier]}`}>
+              <DollarSign size={12} />
+              {technology.cost_tier.charAt(0).toUpperCase() + technology.cost_tier.slice(1)}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* External Links */}
       <div className="flex gap-2 mb-3">
         {technology.website_url && (
@@ -171,16 +239,129 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
       </div>
 
       {/* Expandable Details */}
-      {(technology.notes || technology.use_cases) && (
+      {(technology.notes || technology.use_cases || hasV2Fields) && (
         <div className="mb-3">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-sm text-primary-600 hover:text-primary-700"
+            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
-            {expanded ? 'Show less' : 'Show more'}
+            {expanded ? '▼ Show less' : '▶ Show detailed evaluation'}
           </button>
           {expanded && (
-            <div className="mt-2 space-y-2 text-sm">
+            <div className="mt-3 space-y-3 text-sm">
+              {/* Performance Metrics */}
+              {(technology.latency_ms !== null || technology.throughput_qps !== null || technology.stability_score !== null) && (
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <Zap size={14} className="text-blue-600" />
+                    Performance & Stability
+                  </p>
+                  <div className="space-y-1">
+                    {technology.latency_ms !== null && (
+                      <div className="flex items-center gap-2">
+                        <Timer size={12} className="text-gray-500" />
+                        <span className="text-gray-600">P99 Latency:</span>
+                        <span className="font-medium">{technology.latency_ms}ms</span>
+                      </div>
+                    )}
+                    {technology.throughput_qps !== null && (
+                      <div className="flex items-center gap-2">
+                        <Activity size={12} className="text-gray-500" />
+                        <span className="text-gray-600">Throughput:</span>
+                        <span className="font-medium">{technology.throughput_qps} QPS</span>
+                      </div>
+                    )}
+                    {technology.stability_score !== null && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-gray-600">Stability Score:</span>
+                          <span className="font-medium">{technology.stability_score}/100</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all"
+                            style={{ width: `${technology.stability_score}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Integration Assessment */}
+              {(technology.integration_difficulty || technology.integration_time_estimate_days !== null) && (
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <p className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <Code size={14} className="text-purple-600" />
+                    Integration Assessment
+                  </p>
+                  <div className="space-y-1">
+                    {technology.integration_difficulty && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Difficulty:</span>
+                        <span className="font-medium">{integrationDifficultyLabels[technology.integration_difficulty]}</span>
+                      </div>
+                    )}
+                    {technology.integration_time_estimate_days !== null && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">Estimated Time:</span>
+                        <span className="font-medium">{technology.integration_time_estimate_days} days</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Cost Analysis */}
+              {(technology.cost_monthly_usd !== null) && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <p className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <DollarSign size={14} className="text-green-600" />
+                    Cost Analysis
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">Monthly Cost:</span>
+                    <span className="font-medium">${technology.cost_monthly_usd.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Monitoring Data */}
+              {(technology.last_hn_mention || technology.github_last_commit) && (
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <p className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <GitBranch size={14} className="text-orange-600" />
+                    Activity Monitoring
+                  </p>
+                  <div className="space-y-1">
+                    {technology.last_hn_mention && (
+                      <div className="flex items-center gap-2">
+                        <MessageCircle size={12} className="text-gray-500" />
+                        <span className="text-gray-600">Last HN Mention:</span>
+                        <span className="font-medium">{new Date(technology.last_hn_mention).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {technology.github_last_commit && (
+                      <div className="flex items-center gap-2">
+                        <GitBranch size={12} className="text-gray-500" />
+                        <span className="text-gray-600">Last Commit:</span>
+                        <span className="font-medium">{new Date(technology.github_last_commit).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Alternatives */}
+              {technology.alternatives && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-semibold text-gray-800 mb-2">Alternatives</p>
+                  <p className="text-gray-600">{technology.alternatives}</p>
+                </div>
+              )}
+
+              {/* Use Cases & Notes (existing fields) */}
               {technology.use_cases && (
                 <div>
                   <p className="font-medium text-gray-700">Use Cases:</p>
