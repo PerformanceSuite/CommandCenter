@@ -51,55 +51,127 @@ class AIRouterService:
     """
 
     # Model catalog (subset - expand as needed)
+    # Updated October 2025 with latest models from all providers
     MODEL_INFO = {
-        "anthropic/claude-3.5-sonnet": {
+        # Anthropic Claude models (latest as of Oct 2025)
+        "claude-sonnet-4-5-20250929": {
             "provider": "anthropic",
             "tier": "standard",
             "context_window": 200000,
             "cost_per_1m_input_tokens": 3.00,
             "cost_per_1m_output_tokens": 15.00,
+            "max_tokens": 8192,
+            "description": "Latest Claude Sonnet 4.5 (Sep 2025) - Best balance of intelligence and speed",
         },
-        "anthropic/claude-3-opus": {
+        "claude-3-7-sonnet-20250219": {
+            "provider": "anthropic",
+            "tier": "standard",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 3.00,
+            "cost_per_1m_output_tokens": 15.00,
+            "max_tokens": 8192,
+            "description": "Claude 3.7 Sonnet (Feb 2025) - Extended context and improved reasoning",
+        },
+        "claude-3-5-sonnet-20241022": {
+            "provider": "anthropic",
+            "tier": "standard",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 3.00,
+            "cost_per_1m_output_tokens": 15.00,
+            "max_tokens": 8192,
+            "description": "Claude 3.5 Sonnet (Oct 2024) - Stable production model",
+        },
+        "claude-3-5-haiku-20241022": {
+            "provider": "anthropic",
+            "tier": "economy",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 0.80,
+            "cost_per_1m_output_tokens": 4.00,
+            "max_tokens": 8192,
+            "description": "Claude 3.5 Haiku - Fast and economical, improved over 3.0",
+        },
+        "claude-3-opus-20240229": {
             "provider": "anthropic",
             "tier": "premium",
             "context_window": 200000,
             "cost_per_1m_input_tokens": 15.00,
             "cost_per_1m_output_tokens": 75.00,
+            "max_tokens": 4096,
+            "description": "Claude 3 Opus - Most capable for complex tasks",
         },
-        "anthropic/claude-3-haiku": {
-            "provider": "anthropic",
-            "tier": "economy",
-            "context_window": 200000,
-            "cost_per_1m_input_tokens": 0.25,
-            "cost_per_1m_output_tokens": 1.25,
-        },
-        "openai/gpt-4-turbo": {
+        # OpenAI GPT models (latest as of Oct 2025)
+        "gpt-4.1-2025": {
             "provider": "openai",
             "tier": "standard",
             "context_window": 128000,
-            "cost_per_1m_input_tokens": 10.00,
-            "cost_per_1m_output_tokens": 30.00,
+            "cost_per_1m_input_tokens": 2.50,
+            "cost_per_1m_output_tokens": 10.00,
+            "max_tokens": 16384,
+            "description": "GPT-4.1 (2025) - Latest generation with improved reasoning",
         },
-        "openai/gpt-3.5-turbo": {
+        "gpt-4o-2024-11-20": {
+            "provider": "openai",
+            "tier": "standard",
+            "context_window": 128000,
+            "cost_per_1m_input_tokens": 2.50,
+            "cost_per_1m_output_tokens": 10.00,
+            "max_tokens": 16384,
+            "description": "GPT-4o (Nov 2024) - Optimized for speed and cost",
+        },
+        "gpt-4o-mini-2024-07-18": {
             "provider": "openai",
             "tier": "economy",
-            "context_window": 16000,
-            "cost_per_1m_input_tokens": 0.50,
-            "cost_per_1m_output_tokens": 1.50,
+            "context_window": 128000,
+            "cost_per_1m_input_tokens": 0.15,
+            "cost_per_1m_output_tokens": 0.60,
+            "max_tokens": 16384,
+            "description": "GPT-4o Mini - Most affordable GPT-4 class model",
         },
-        "google/gemini-pro": {
+        "o1-preview-2024-09-12": {
+            "provider": "openai",
+            "tier": "premium",
+            "context_window": 128000,
+            "cost_per_1m_input_tokens": 15.00,
+            "cost_per_1m_output_tokens": 60.00,
+            "max_tokens": 32768,
+            "description": "O1 Preview - Advanced reasoning model (slower, high quality)",
+        },
+        "o1-mini-2024-09-12": {
+            "provider": "openai",
+            "tier": "standard",
+            "context_window": 128000,
+            "cost_per_1m_input_tokens": 3.00,
+            "cost_per_1m_output_tokens": 12.00,
+            "max_tokens": 65536,
+            "description": "O1 Mini - Fast reasoning model",
+        },
+        # Google Gemini models (latest as of Oct 2025)
+        "gemini-2.0-flash-exp": {
+            "provider": "google",
+            "tier": "economy",
+            "context_window": 1000000,
+            "cost_per_1m_input_tokens": 0.00,
+            "cost_per_1m_output_tokens": 0.00,
+            "max_tokens": 8192,
+            "description": "Gemini 2.0 Flash Experimental - Free during preview, fastest Gemini model",
+        },
+        "gemini-1.5-pro": {
             "provider": "google",
             "tier": "standard",
-            "context_window": 1000000,
-            "cost_per_1m_input_tokens": 0.50,
-            "cost_per_1m_output_tokens": 1.50,
+            "context_window": 2000000,
+            "cost_per_1m_input_tokens": 1.25,
+            "cost_per_1m_output_tokens": 5.00,
+            "max_tokens": 8192,
+            "description": "Gemini 1.5 Pro - 2M context window, production ready",
         },
-        "google/gemini-flash": {
+        "gemini-1.5-flash": {
             "provider": "google",
             "tier": "economy",
             "context_window": 1000000,
             "cost_per_1m_input_tokens": 0.075,
             "cost_per_1m_output_tokens": 0.30,
+            "max_tokens": 8192,
+            "description": "Gemini 1.5 Flash - Balanced speed and cost",
         },
     }
 
