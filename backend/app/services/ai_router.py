@@ -50,6 +50,59 @@ class AIRouterService:
     - Usage tracking
     """
 
+    # Model catalog (subset - expand as needed)
+    MODEL_INFO = {
+        "anthropic/claude-3.5-sonnet": {
+            "provider": "anthropic",
+            "tier": "standard",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 3.00,
+            "cost_per_1m_output_tokens": 15.00,
+        },
+        "anthropic/claude-3-opus": {
+            "provider": "anthropic",
+            "tier": "premium",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 15.00,
+            "cost_per_1m_output_tokens": 75.00,
+        },
+        "anthropic/claude-3-haiku": {
+            "provider": "anthropic",
+            "tier": "economy",
+            "context_window": 200000,
+            "cost_per_1m_input_tokens": 0.25,
+            "cost_per_1m_output_tokens": 1.25,
+        },
+        "openai/gpt-4-turbo": {
+            "provider": "openai",
+            "tier": "standard",
+            "context_window": 128000,
+            "cost_per_1m_input_tokens": 10.00,
+            "cost_per_1m_output_tokens": 30.00,
+        },
+        "openai/gpt-3.5-turbo": {
+            "provider": "openai",
+            "tier": "economy",
+            "context_window": 16000,
+            "cost_per_1m_input_tokens": 0.50,
+            "cost_per_1m_output_tokens": 1.50,
+        },
+        "google/gemini-pro": {
+            "provider": "google",
+            "tier": "standard",
+            "context_window": 1000000,
+            "cost_per_1m_input_tokens": 0.50,
+            "cost_per_1m_output_tokens": 1.50,
+        },
+        "google/gemini-flash": {
+            "provider": "google",
+            "tier": "economy",
+            "context_window": 1000000,
+            "cost_per_1m_input_tokens": 0.075,
+            "cost_per_1m_output_tokens": 0.30,
+        },
+    }
+
     def __init__(self):
         """Initialize AI router with configured providers"""
         self.default_provider = AIProvider(settings.default_ai_provider)
@@ -265,62 +318,9 @@ class AIRouterService:
         Returns:
             Dict with 'provider', 'tier', 'context_window', 'cost_per_1m_tokens'
         """
-        # Model catalog (subset - expand as needed)
-        MODEL_CATALOG = {
-            "anthropic/claude-3.5-sonnet": {
-                "provider": "anthropic",
-                "tier": ModelTier.STANDARD,
-                "context_window": 200000,
-                "cost_per_1m_input_tokens": 3.00,
-                "cost_per_1m_output_tokens": 15.00,
-            },
-            "anthropic/claude-3-opus": {
-                "provider": "anthropic",
-                "tier": ModelTier.PREMIUM,
-                "context_window": 200000,
-                "cost_per_1m_input_tokens": 15.00,
-                "cost_per_1m_output_tokens": 75.00,
-            },
-            "anthropic/claude-3-haiku": {
-                "provider": "anthropic",
-                "tier": ModelTier.ECONOMY,
-                "context_window": 200000,
-                "cost_per_1m_input_tokens": 0.25,
-                "cost_per_1m_output_tokens": 1.25,
-            },
-            "openai/gpt-4-turbo": {
-                "provider": "openai",
-                "tier": ModelTier.STANDARD,
-                "context_window": 128000,
-                "cost_per_1m_input_tokens": 10.00,
-                "cost_per_1m_output_tokens": 30.00,
-            },
-            "openai/gpt-3.5-turbo": {
-                "provider": "openai",
-                "tier": ModelTier.ECONOMY,
-                "context_window": 16000,
-                "cost_per_1m_input_tokens": 0.50,
-                "cost_per_1m_output_tokens": 1.50,
-            },
-            "google/gemini-pro": {
-                "provider": "google",
-                "tier": ModelTier.STANDARD,
-                "context_window": 1000000,
-                "cost_per_1m_input_tokens": 0.50,
-                "cost_per_1m_output_tokens": 1.50,
-            },
-            "google/gemini-flash": {
-                "provider": "google",
-                "tier": ModelTier.ECONOMY,
-                "context_window": 1000000,
-                "cost_per_1m_input_tokens": 0.075,
-                "cost_per_1m_output_tokens": 0.30,
-            },
-        }
-
-        return MODEL_CATALOG.get(model, {
+        return self.MODEL_INFO.get(model, {
             "provider": "unknown",
-            "tier": ModelTier.STANDARD,
+            "tier": "standard",
             "context_window": 4096,
             "cost_per_1m_input_tokens": 0.0,
             "cost_per_1m_output_tokens": 0.0,
