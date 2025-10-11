@@ -112,8 +112,8 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 ## 📖 Documentation
 
 ### Getting Started
-- [Quick Start Guide](./QUICK_START_PORTS.md) - Get running in 5 minutes
-- [Security Notice](./SECURITY_NOTICE.md) - Data isolation requirements
+- [Quick Start Guide](./docs/archived/QUICK_START_PORTS.md) - Get running in 5 minutes
+- [Security Notice](./docs/archived/SECURITY_NOTICE.md) - Data isolation requirements
 - [Configuration Guide](./docs/CONFIGURATION.md) - Environment setup
 
 ### Deployment & Operations
