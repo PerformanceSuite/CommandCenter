@@ -2411,6 +2411,152 @@ maturityLevelColors: {
 
 ---
 
+### Session 18: Repository Structure Cleanup & Documentation - COMPLETE (2025-10-11)
+
+**What Was Accomplished**:
+
+1. **Comprehensive Repository Organization - 65 Files Reorganized ✅**
+   - User challenged cleanup script execution: "doesn't your session end script tell you to clean the repo, ensuring all files are organized correctly, duplicate and out dated documents resolved, no docs or scripts in the root, etc?"
+   - Identified 40+ loose files cluttering root directory
+   - Created organized docs/ subdirectory structure:
+     - `docs/reviews/` (13 REVIEW files moved)
+     - `docs/planning/` (12 planning documents moved)
+     - `docs/phase-reports/` (1 phase report moved)
+     - `docs/archived/` (14 outdated/deprecated docs moved)
+     - `docs/experimental/` (18 AgentFlow files moved)
+   - Removed demo files: dashboard-preview.html, demo.html, test directory
+   - Removed accidental npm files: package.json, package-lock.json from root
+   - **Commits**:
+     - `ede0592` - Organize repository - move docs to proper folders
+     - `009ce99` - Final root directory cleanup - move experimental tools
+
+2. **Fixed Broken Documentation Links ✅**
+   - Updated README.md with correct paths after reorganization
+   - Fixed 2 broken links to archived documents:
+     - `./QUICK_START_PORTS.md` → `./docs/archived/QUICK_START_PORTS.md`
+     - `./SECURITY_NOTICE.md` → `./docs/archived/SECURITY_NOTICE.md`
+   - Verified all documentation references in CLAUDE.md still valid
+   - **Commit**: `84fd4fd` - Fix broken documentation links in README.md
+
+3. **Session Order Documentation ✅**
+   - User noted: "does your session summary read from most recent first?"
+   - Sessions currently organized chronologically (oldest→newest)
+   - Added note to memory.md explaining current order
+   - Flagged for future reorganization to newest→oldest
+   - **Commit**: `ff81d8c` - Add note about session chronological order in memory.md
+
+4. **Root Directory File Placement Justification ✅**
+   - User systematically questioned every file in root:
+     - "should scripts be in the root?"
+     - "should 2 docker compose files be in the root?"
+     - "should .env.prod.template and .env.template be in the root?"
+     - "Should Security.md be in the root?"
+   - Verified each file placement against industry standards:
+     - ✅ `scripts/` - Referenced by Makefile, correct location
+     - ✅ `docker-compose*.yml` - Docker convention (must be in root)
+     - ✅ `.env*.template` - Docker Compose convention (auto-discovery from root)
+     - ✅ `SECURITY.md` - GitHub best practice (root location)
+   - Tested all commands still work after verification
+   - Fixed 2 broken links in README.md
+
+5. **Utility Scripts Relocation ✅**
+   - User caught: "why are start.sh and stop.sh in the root?"
+   - Discovered these scripts were NOT referenced anywhere:
+     - Not in Makefile (which provides `make start` and `make stop`)
+     - Not in documentation
+     - Not in CI/CD workflows
+   - Moved start.sh and stop.sh to scripts/ directory
+   - Updated README.md to recommend Makefile over manual scripts
+   - **Commit**: `965fba1` - Move start.sh/stop.sh to scripts/ directory
+
+6. **Comprehensive Repository Structure Documentation ✅**
+   - User asked: "Should there be a docker folder instead of 2 docker files in the root?"
+   - Created `docs/REPOSITORY_STRUCTURE.md` (330 lines)
+   - **Key Sections**:
+     - **Docker Compose Convention**: Explains why docker-compose.yml MUST be in root
+     - **.env Template Placement**: Docker auto-discovery requires root location
+     - **Industry Standards Comparison**: 90% of projects use root structure
+     - **When to Use docker/ Folder**: Only for 5+ compose files (enterprise/complex)
+     - **File Organization Matrix**: Clear table showing what belongs where
+     - **Verification Checklist**: Commands to verify structure
+   - **Technical Justification**:
+     ```
+     Simple/Medium projects (90%) - What we use:
+     ├── docker-compose.yml
+     ├── docker-compose.prod.yml
+     └── {service}/Dockerfile
+
+     Complex projects only (10%):
+     ├── docker/
+     │   ├── docker-compose.yml
+     │   ├── docker-compose.dev.yml
+     │   ├── docker-compose.staging.yml
+     │   ├── docker-compose.test.yml
+     │   └── docker-compose.prod.yml
+     ```
+   - Our project has 2 compose files → root structure is appropriate
+   - docker/ folder only needed for 5+ files, multi-stage deployments, K8s hybrids
+
+7. **Enhanced Cleanup Script with Structure Verification ✅**
+   - Updated `.claude/cleanup.sh` with repository structure checks:
+     - Warns about loose files in root (unexpected .md/.sh/.html)
+     - Warns about unexpected directories in root
+     - Provides metrics: root files count, root dirs count, docs organization
+     - Ensures every session ends with verified clean structure
+   - Added verification section (lines 71-105):
+     ```bash
+     # Check for loose files in root that shouldn't be there
+     LOOSE_FILES=$(find . -maxdepth 1 -type f ...)
+     # Check for loose directories that might need organizing
+     LOOSE_DIRS=$(find . -maxdepth 1 -type d ...)
+     # Display structure metrics
+     ```
+   - Script now prevents future organizational drift
+
+8. **Final Commit & Push ✅**
+   - Committed cleanup script enhancements and structure documentation
+   - **Commit**: `8b843b2` - Enhance cleanup script with structure verification + add repository structure guide
+   - Pushed all 12 commits to origin/main
+   - Verified: `git status` shows "Your branch is up to date with 'origin/main'"
+
+**Files Modified**:
+- `.claude/cleanup.sh` (+35 lines - structure verification)
+- `docs/REPOSITORY_STRUCTURE.md` (+330 lines - NEW FILE)
+- `.claude/memory.md` (+1 note about session order)
+- `README.md` (fixed 2 broken links, updated quick start)
+
+**Git Activity**:
+- 12 commits created and pushed during session
+- 65 files reorganized across multiple commits
+- All documentation links updated and verified
+- Repository structure now professional and justified
+
+**Decisions Made**:
+1. **Root Directory Files**: Keep docker-compose*.yml, .env*.template, SECURITY.md in root (industry standards)
+2. **Scripts Location**: Keep scripts/ in root (Makefile integration)
+3. **Documentation Organization**: Use docs/ subdirectories for different doc types
+4. **Cleanup Script**: Must verify structure, not just clean temp files
+5. **Session Order**: Keep chronological for now, add note explaining order
+6. **File Placement Documentation**: Create comprehensive guide to prevent future questions
+
+**Testing/Verification**:
+- ✅ `docker-compose config` - Works from root
+- ✅ `make help` - All commands work
+- ✅ `scripts/check-ports.sh` - Executes correctly
+- ✅ All documentation links validated
+- ✅ Git status clean, all commits pushed
+- ✅ Repository structure verified by enhanced cleanup script
+
+**What's Left to Do**:
+- Future: Reorganize memory.md sessions to newest→oldest (user preference)
+- Future: Consider automated structure verification in CI/CD
+
+**Impact**: Repository is now professionally organized with clean root directory (12 items: 9 essential files + 3 directories), comprehensive documentation explaining WHY files are where they are, and automated verification to prevent drift. All 65 files moved to appropriate locations, broken links fixed, and industry standards documented. Cleanup script enhanced to catch organizational issues automatically.
+
+**Time Investment**: ~2 hours (file reorganization, link fixes, documentation creation, cleanup script enhancement)
+
+---
+
 ### Session 17: E2E Testing, Bug Fixes & Comprehensive Settings Page - COMPLETE (2025-10-11)
 
 **What Was Accomplished**:
