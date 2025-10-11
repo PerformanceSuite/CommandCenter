@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Technology, TechnologyCreate } from '../../types/technology';
-import { TechnologyDomain as DomainEnum, TechnologyStatus as StatusEnum } from '../../types/technology';
+import {
+  TechnologyDomain as DomainEnum,
+  TechnologyStatus as StatusEnum,
+  IntegrationDifficulty,
+  MaturityLevel,
+  CostTier,
+} from '../../types/technology';
 
 interface TechnologyFormProps {
   technology?: Technology;
@@ -30,6 +36,17 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
     repository_url: technology?.repository_url || '',
     website_url: technology?.website_url || '',
     tags: technology?.tags || '',
+    // Technology Radar v2 fields
+    latency_ms: technology?.latency_ms || null,
+    throughput_qps: technology?.throughput_qps || null,
+    integration_difficulty: technology?.integration_difficulty || null,
+    integration_time_estimate_days: technology?.integration_time_estimate_days || null,
+    maturity_level: technology?.maturity_level || null,
+    stability_score: technology?.stability_score || null,
+    cost_tier: technology?.cost_tier || null,
+    cost_monthly_usd: technology?.cost_monthly_usd || null,
+    dependencies: technology?.dependencies || null,
+    alternatives: technology?.alternatives || '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +66,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
     }
   };
 
-  const handleNumberChange = (name: string, value: number) => {
+  const handleNumberChange = (name: string, value: number | null) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -355,6 +372,201 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="https://github.com/example/repo"
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Technology Radar v2 - Advanced Evaluation */}
+          <section>
+            <h3 className="text-lg font-semibold mb-4">Advanced Evaluation (Technology Radar v2)</h3>
+
+            {/* Performance Characteristics */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-700 mb-3">Performance</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="latency_ms" className="block text-sm font-medium text-gray-700 mb-1">
+                    Latency (ms) - P99
+                  </label>
+                  <input
+                    type="number"
+                    id="latency_ms"
+                    name="latency_ms"
+                    value={formData.latency_ms || ''}
+                    onChange={(e) => handleNumberChange('latency_ms', e.target.value ? parseFloat(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="P99 latency in milliseconds"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="throughput_qps" className="block text-sm font-medium text-gray-700 mb-1">
+                    Throughput (QPS)
+                  </label>
+                  <input
+                    type="number"
+                    id="throughput_qps"
+                    name="throughput_qps"
+                    value={formData.throughput_qps || ''}
+                    onChange={(e) => handleNumberChange('throughput_qps', e.target.value ? parseInt(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Queries per second"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Integration Assessment */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-700 mb-3">Integration</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="integration_difficulty" className="block text-sm font-medium text-gray-700 mb-1">
+                    Integration Difficulty
+                  </label>
+                  <select
+                    id="integration_difficulty"
+                    name="integration_difficulty"
+                    value={formData.integration_difficulty || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select difficulty</option>
+                    {Object.values(IntegrationDifficulty).map((diff) => (
+                      <option key={diff} value={diff}>
+                        {diff.replace('_', ' ').toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="integration_time_estimate_days" className="block text-sm font-medium text-gray-700 mb-1">
+                    Integration Time (days)
+                  </label>
+                  <input
+                    type="number"
+                    id="integration_time_estimate_days"
+                    name="integration_time_estimate_days"
+                    value={formData.integration_time_estimate_days || ''}
+                    onChange={(e) => handleNumberChange('integration_time_estimate_days', e.target.value ? parseInt(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Estimated integration days"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Maturity and Stability */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-700 mb-3">Maturity & Stability</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="maturity_level" className="block text-sm font-medium text-gray-700 mb-1">
+                    Maturity Level
+                  </label>
+                  <select
+                    id="maturity_level"
+                    name="maturity_level"
+                    value={formData.maturity_level || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select maturity</option>
+                    {Object.values(MaturityLevel).map((level) => (
+                      <option key={level} value={level}>
+                        {level.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="stability_score" className="block text-sm font-medium text-gray-700 mb-1">
+                    Stability Score (0-100)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      id="stability_score"
+                      name="stability_score"
+                      min="0"
+                      max="100"
+                      value={formData.stability_score || 50}
+                      onChange={(e) => handleNumberChange('stability_score', parseInt(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-lg font-semibold w-12 text-right">
+                      {formData.stability_score || 50}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cost Analysis */}
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-700 mb-3">Cost Analysis</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="cost_tier" className="block text-sm font-medium text-gray-700 mb-1">
+                    Cost Tier
+                  </label>
+                  <select
+                    id="cost_tier"
+                    name="cost_tier"
+                    value={formData.cost_tier || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Select cost tier</option>
+                    {Object.values(CostTier).map((tier) => (
+                      <option key={tier} value={tier}>
+                        {tier.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="cost_monthly_usd" className="block text-sm font-medium text-gray-700 mb-1">
+                    Monthly Cost (USD)
+                  </label>
+                  <input
+                    type="number"
+                    id="cost_monthly_usd"
+                    name="cost_monthly_usd"
+                    step="0.01"
+                    value={formData.cost_monthly_usd || ''}
+                    onChange={(e) => handleNumberChange('cost_monthly_usd', e.target.value ? parseFloat(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Monthly cost in USD"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dependencies and Alternatives */}
+            <div>
+              <h4 className="text-md font-medium text-gray-700 mb-3">Relationships</h4>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="alternatives" className="block text-sm font-medium text-gray-700 mb-1">
+                    Alternative Technologies
+                  </label>
+                  <input
+                    type="text"
+                    id="alternatives"
+                    name="alternatives"
+                    value={formData.alternatives || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Comma-separated technology names"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    List alternative technologies (e.g., "React, Vue, Angular")
+                  </p>
+                </div>
               </div>
             </div>
           </section>
