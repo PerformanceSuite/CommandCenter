@@ -3,6 +3,7 @@ import TechnologyDeepDiveForm from './TechnologyDeepDiveForm';
 import CustomAgentLauncher from './CustomAgentLauncher';
 import ResearchTaskList from './ResearchTaskList';
 import ResearchSummary from './ResearchSummary';
+import ErrorBoundary from './ErrorBoundary';
 
 type ActiveTab = 'deep-dive' | 'custom-agents' | 'task-list' | 'summary';
 
@@ -48,10 +49,26 @@ const ResearchHubView: React.FC = () => {
 
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === 'deep-dive' && <TechnologyDeepDiveForm />}
-        {activeTab === 'custom-agents' && <CustomAgentLauncher />}
-        {activeTab === 'task-list' && <ResearchTaskList />}
-        {activeTab === 'summary' && <ResearchSummary />}
+        {activeTab === 'deep-dive' && (
+          <ErrorBoundary>
+            <TechnologyDeepDiveForm />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'custom-agents' && (
+          <ErrorBoundary>
+            <CustomAgentLauncher />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'task-list' && (
+          <ErrorBoundary>
+            <ResearchTaskList />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'summary' && (
+          <ErrorBoundary>
+            <ResearchSummary />
+          </ErrorBoundary>
+        )}
       </div>
 
       <style>{`

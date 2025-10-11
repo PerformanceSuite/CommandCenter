@@ -8,11 +8,35 @@ const ResearchSummary: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSummary();
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const data = await researchApi.getResearchSummary();
+        if (isMounted) {
+          setSummary(data);
+          setError(null);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.response?.data?.detail || err.message || 'Failed to load summary');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
 
     // Refresh every 10 seconds
-    const interval = setInterval(loadSummary, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(loadData, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const loadSummary = async () => {

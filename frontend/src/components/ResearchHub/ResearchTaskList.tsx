@@ -10,12 +10,13 @@ const ResearchTaskList: React.FC = () => {
 
   useEffect(() => {
     // Poll for task updates every 3 seconds
+    // Empty dependency array - interval created once on mount, not on every task update
     const interval = setInterval(() => {
       refreshTasks();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [tasks]);
+  }, []); // Fixed: removed 'tasks' from deps to prevent memory leak
 
   const refreshTasks = async () => {
     if (tasks.size === 0) return;
