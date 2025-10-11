@@ -67,6 +67,24 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
   };
 
   const handleNumberChange = (name: string, value: number | null) => {
+    // Validate numeric ranges
+    if (value !== null) {
+      if (name === 'stability_score' && (value < 0 || value > 100)) {
+        return; // Stability score must be 0-100
+      }
+      if (name === 'latency_ms' && value < 0) {
+        return; // Latency cannot be negative
+      }
+      if (name === 'throughput_qps' && value < 0) {
+        return; // Throughput cannot be negative
+      }
+      if (name === 'integration_time_estimate_days' && value < 0) {
+        return; // Integration time cannot be negative
+      }
+      if (name === 'cost_monthly_usd' && value < 0) {
+        return; // Cost cannot be negative
+      }
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -392,10 +410,13 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     type="number"
                     id="latency_ms"
                     name="latency_ms"
+                    min="0"
+                    step="0.01"
                     value={formData.latency_ms || ''}
                     onChange={(e) => handleNumberChange('latency_ms', e.target.value ? parseFloat(e.target.value) : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="P99 latency in milliseconds"
+                    title="99th percentile latency in milliseconds (e.g., 50.5ms)"
                   />
                 </div>
 
@@ -407,10 +428,12 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     type="number"
                     id="throughput_qps"
                     name="throughput_qps"
+                    min="0"
                     value={formData.throughput_qps || ''}
                     onChange={(e) => handleNumberChange('throughput_qps', e.target.value ? parseInt(e.target.value) : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Queries per second"
+                    title="Maximum queries per second the technology can handle"
                   />
                 </div>
               </div>
@@ -430,6 +453,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     value={formData.integration_difficulty || ''}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    title="Estimated complexity of integrating this technology (TRIVIAL: <1 day, EASY: 1-3 days, MODERATE: 1-2 weeks, COMPLEX: 2-4 weeks, VERY_COMPLEX: >1 month)"
                   >
                     <option value="">Select difficulty</option>
                     {Object.values(IntegrationDifficulty).map((diff) => (
@@ -448,10 +472,12 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     type="number"
                     id="integration_time_estimate_days"
                     name="integration_time_estimate_days"
+                    min="0"
                     value={formData.integration_time_estimate_days || ''}
                     onChange={(e) => handleNumberChange('integration_time_estimate_days', e.target.value ? parseInt(e.target.value) : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Estimated integration days"
+                    title="Estimated number of days needed for full integration"
                   />
                 </div>
               </div>
@@ -536,11 +562,13 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     type="number"
                     id="cost_monthly_usd"
                     name="cost_monthly_usd"
+                    min="0"
                     step="0.01"
                     value={formData.cost_monthly_usd || ''}
                     onChange={(e) => handleNumberChange('cost_monthly_usd', e.target.value ? parseFloat(e.target.value) : null)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Monthly cost in USD"
+                    title="Average monthly cost in USD for expected usage"
                   />
                 </div>
               </div>
@@ -550,6 +578,10 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <div>
               <h4 className="text-md font-medium text-gray-700 mb-3">Relationships</h4>
               <div className="space-y-4">
+                {/* TODO: Add UI for 'dependencies' field (JSON object: Record<string, string>)
+                    This field stores technology dependencies as key-value pairs.
+                    Future enhancement: Add a key-value pair editor or JSON editor component.
+                    For now, dependencies can be managed via API directly. */}
                 <div>
                   <label htmlFor="alternatives" className="block text-sm font-medium text-gray-700 mb-1">
                     Alternative Technologies
@@ -562,6 +594,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Comma-separated technology names"
+                    title="List alternative or competing technologies"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     List alternative technologies (e.g., "React, Vue, Angular")
