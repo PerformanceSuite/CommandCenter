@@ -6,6 +6,15 @@ import type {
   ResearchTaskFilter,
   TaskStatus,
 } from '../types/researchTask';
+import type {
+  TechnologyDeepDiveRequest,
+  MultiAgentLaunchRequest,
+  TechnologyMonitorRequest,
+  ResearchTask as OrchestrationTask,
+  AvailableModelsResponse,
+  ResearchSummaryResponse,
+  TechnologyMonitorResponse,
+} from '../types/research';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -219,6 +228,84 @@ class ResearchTaskApiClient {
   async getOverdueTasks(): Promise<ResearchTask[]> {
     const response = await this.client.get<ResearchTask[]>(
       `/api/v1/research-tasks/overdue/list`
+    );
+    return response.data;
+  }
+
+  // ===== Phase 2: Research Orchestration API =====
+
+  /**
+   * Launch technology deep dive research with 3 parallel agents
+   * Returns task_id immediately, use getResearchTaskStatus() to check results
+   */
+  async launchTechnologyDeepDive(
+    request: TechnologyDeepDiveRequest
+  ): Promise<OrchestrationTask> {
+    const response = await this.client.post<OrchestrationTask>(
+      '/api/v1/research/technology-deep-dive',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Launch custom multi-agent research with full control over agents, prompts, and models
+   * Returns task_id immediately, use getResearchTaskStatus() to check results
+   */
+  async launchCustomAgents(
+    request: MultiAgentLaunchRequest
+  ): Promise<OrchestrationTask> {
+    const response = await this.client.post<OrchestrationTask>(
+      '/api/v1/research/launch-agents',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Get status and results of a research orchestration task
+   * Task status can be: pending, running, completed, failed
+   */
+  async getResearchTaskStatus(taskId: string): Promise<OrchestrationTask> {
+    const response = await this.client.get<OrchestrationTask>(
+      `/api/v1/research/tasks/${taskId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Monitor a technology across multiple sources (HackerNews, GitHub, arXiv)
+   * Returns current monitoring report with alerts for significant events
+   */
+  async monitorTechnology(
+    technologyId: number,
+    request: TechnologyMonitorRequest
+  ): Promise<TechnologyMonitorResponse> {
+    const response = await this.client.post<TechnologyMonitorResponse>(
+      `/api/v1/research/technologies/${technologyId}/monitor`,
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Get list of available AI models from all providers
+   * Returns models organized by provider with tier, cost, and capability info
+   */
+  async getAvailableModels(): Promise<AvailableModelsResponse> {
+    const response = await this.client.get<AvailableModelsResponse>(
+      '/api/v1/research/models'
+    );
+    return response.data;
+  }
+
+  /**
+   * Get summary statistics for all research activities
+   * Returns total tasks, completion rates, cost, and performance metrics
+   */
+  async getResearchSummary(): Promise<ResearchSummaryResponse> {
+    const response = await this.client.get<ResearchSummaryResponse>(
+      '/api/v1/research/summary'
     );
     return response.data;
   }

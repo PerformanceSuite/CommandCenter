@@ -354,7 +354,7 @@ async def get_available_models():
                 if model_info["provider"] == provider.value:
                     provider_models.append({
                         "model_id": model_id,
-                        "tier": model_info["tier"].value,
+                        "tier": model_info["tier"],  # Already a string in MODEL_INFO
                         "cost_per_1m_tokens": model_info.get("cost_per_1m_tokens"),
                         "max_tokens": model_info.get("max_tokens", 4096),
                         "description": model_info.get("description"),

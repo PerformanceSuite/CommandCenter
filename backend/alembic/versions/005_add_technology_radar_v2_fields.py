@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '005_add_technology_radar_v2_fields'
+revision: str = '005_tech_radar_v2'
 down_revision: Union[str, Sequence[str], None] = '004_knowledgebeast_integration'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,6 +30,16 @@ def upgrade() -> None:
     - Dependencies and alternatives tracking
     - Automated monitoring metrics (HN mentions, GitHub stats)
     """
+    # Create enum types FIRST (PostgreSQL requires this before using them in columns)
+    integration_difficulty_enum = postgresql.ENUM('trivial', 'easy', 'moderate', 'complex', 'very_complex', name='integrationdifficulty', create_type=False)
+    integration_difficulty_enum.create(op.get_bind(), checkfirst=True)
+
+    maturity_level_enum = postgresql.ENUM('alpha', 'beta', 'stable', 'mature', 'legacy', name='maturitylevel', create_type=False)
+    maturity_level_enum.create(op.get_bind(), checkfirst=True)
+
+    cost_tier_enum = postgresql.ENUM('free', 'freemium', 'affordable', 'moderate', 'expensive', 'enterprise', name='costtier', create_type=False)
+    cost_tier_enum.create(op.get_bind(), checkfirst=True)
+
     # Performance characteristics
     op.add_column('technologies', sa.Column('latency_ms', sa.Float(), nullable=True, comment='P99 latency in milliseconds'))
     op.add_column('technologies', sa.Column('throughput_qps', sa.Integer(), nullable=True, comment='Throughput in queries per second'))
