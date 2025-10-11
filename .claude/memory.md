@@ -41,6 +41,10 @@ Successfully implemented and executed a comprehensive multi-agent parallel devel
 
 ## Recent Work
 
+**Note**: Sessions are organized chronologically (oldest→newest). Session 17 (2025-10-11) is the most recent and contains the latest work. Future cleanup will reorganize to newest→oldest for easier reference.
+
+---
+
 ### Session: AgentFlow Integration Architecture Planning (2025-10-06)
 
 **What Was Accomplished**:
