@@ -88,10 +88,11 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 
 3. **Start services:**
    ```bash
-   # Check for port conflicts first
-   ./scripts/check-ports.sh
+   # Recommended: Use Makefile (handles port checks automatically)
+   make start
 
-   # Start Docker Compose
+   # Or manually with docker-compose
+   ./scripts/check-ports.sh  # Check for port conflicts first
    docker-compose up -d
    ```
 
