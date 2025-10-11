@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { useTechnologies } from '../../hooks/useTechnologies';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { TechnologyCard } from './TechnologyCard';
+import { MatrixView } from './MatrixView';
 import { TechnologyForm } from './TechnologyForm';
-import { Plus, Search, Filter, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, AlertCircle, Grid, List } from 'lucide-react';
 import { TechnologyDomain, TechnologyStatus, Technology, TechnologyCreate, TechnologyUpdate } from '../../types/technology';
 
 export const RadarView: React.FC = () => {
@@ -25,6 +26,7 @@ export const RadarView: React.FC = () => {
   const [selectedDomains, setSelectedDomains] = useState<Set<TechnologyDomain>>(new Set());
   const [selectedStatuses, setSelectedStatuses] = useState<Set<TechnologyStatus>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'card' | 'matrix'>('card');
 
   // Filter technologies
   const filteredTechnologies = useMemo(() => {
@@ -155,16 +157,45 @@ export const RadarView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Button */}
+      {/* Header with View Toggle and Create Button */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Technology Radar</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors flex items-center gap-2"
-        >
-          <Plus size={20} />
-          Add Technology
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-md p-1">
+            <button
+              onClick={() => setViewMode('card')}
+              className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${
+                viewMode === 'card'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Card View"
+            >
+              <Grid size={18} />
+              Cards
+            </button>
+            <button
+              onClick={() => setViewMode('matrix')}
+              className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${
+                viewMode === 'matrix'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Matrix View"
+            >
+              <List size={18} />
+              Matrix
+            </button>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Technology
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -276,63 +307,105 @@ export const RadarView: React.FC = () => {
         )}
       </div>
 
-      {/* Technologies Grid */}
-      {domainEntries.length > 0 ? (
-        domainEntries.map(([domain, techs]) => (
-          <section
-            key={domain}
-            className="bg-white rounded-lg shadow p-6"
-            aria-labelledby={`domain-${domain}-heading`}
+      {/* Technologies View */}
+      {viewMode === 'matrix' ? (
+        /* Matrix View */
+        filteredTechnologies.length > 0 ? (
+          <MatrixView
+            technologies={filteredTechnologies}
+            onEdit={setEditingTechnology}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <div
+            className="bg-white rounded-lg shadow p-12 text-center"
+            role="status"
+            aria-live="polite"
           >
-            <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
-              {domain.replace(/-/g, ' ')} ({techs.length})
-            </h2>
-            <div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              role="list"
-              aria-label={`Technologies in ${domain} domain`}
-            >
-              {techs.map((tech) => (
-                <TechnologyCard
-                  key={tech.id}
-                  technology={tech}
-                  onEdit={setEditingTechnology}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          </section>
-        ))
+            {hasActiveFilters ? (
+              <>
+                <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Clear filters
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add Your First Technology
+                </button>
+              </>
+            )}
+          </div>
+        )
       ) : (
-        <div
-          className="bg-white rounded-lg shadow p-12 text-center"
-          role="status"
-          aria-live="polite"
-        >
-          {hasActiveFilters ? (
-            <>
-              <p className="text-gray-500 text-lg">No technologies match your filters</p>
-              <button
-                onClick={clearFilters}
-                className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+        /* Card Grid View */
+        domainEntries.length > 0 ? (
+          domainEntries.map(([domain, techs]) => (
+            <section
+              key={domain}
+              className="bg-white rounded-lg shadow p-6"
+              aria-labelledby={`domain-${domain}-heading`}
+            >
+              <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
+                {domain.replace(/-/g, ' ')} ({techs.length})
+              </h2>
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                role="list"
+                aria-label={`Technologies in ${domain} domain`}
               >
-                Clear filters
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-gray-500 text-lg">No technologies tracked yet</p>
-              <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Add Your First Technology
-              </button>
-            </>
-          )}
-        </div>
+                {techs.map((tech) => (
+                  <TechnologyCard
+                    key={tech.id}
+                    technology={tech}
+                    onEdit={setEditingTechnology}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        ) : (
+          <div
+            className="bg-white rounded-lg shadow p-12 text-center"
+            role="status"
+            aria-live="polite"
+          >
+            {hasActiveFilters ? (
+              <>
+                <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Clear filters
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add Your First Technology
+                </button>
+              </>
+            )}
+          </div>
+        )
       )}
 
       {/* Create Modal */}
