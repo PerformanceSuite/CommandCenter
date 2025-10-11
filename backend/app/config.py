@@ -114,8 +114,12 @@ class Settings(BaseSettings):
         description="Default AI provider (openrouter, anthropic, openai, google, litellm)",
     )
     default_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
-        description="Default AI model to use for research agents",
+        default="claude-sonnet-4-5-20250929",
+        description="Default AI model to use for research agents. Latest models (Oct 2025): "
+        "Anthropic: claude-sonnet-4-5-20250929, claude-opus-4-1-20250805 | "
+        "OpenAI: gpt-5, gpt-5-mini, gpt-4-1 | "
+        "Google: gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite | "
+        "See docs/AI_MODELS.md for full reference and update strategy",
     )
 
     model_config = SettingsConfigDict(
