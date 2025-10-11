@@ -102,12 +102,13 @@ class TechnologyService:
         """
         return await self.repo.get_by_title(title)
 
-    async def create_technology(self, technology_data: TechnologyCreate) -> Technology:
+    async def create_technology(self, technology_data: TechnologyCreate, project_id: int = 1) -> Technology:
         """
         Create new technology
 
         Args:
             technology_data: Technology creation data
+            project_id: Project ID for isolation (default: 1)
 
         Returns:
             Created technology
@@ -124,8 +125,10 @@ class TechnologyService:
                 detail=f"Technology '{technology_data.title}' already exists",
             )
 
-        # Create technology
-        technology = await self.repo.create(**technology_data.model_dump())
+        # Create technology with project_id
+        tech_data = technology_data.model_dump()
+        tech_data['project_id'] = project_id
+        technology = await self.repo.create(**tech_data)
 
         await self.db.commit()
         await self.db.refresh(technology)
