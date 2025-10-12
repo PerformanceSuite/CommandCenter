@@ -9,6 +9,7 @@ from pathlib import Path
 import json
 import yaml
 import time
+import os
 from cli.api_client import APIClient, APIError
 from cli.output import (
     display_analysis_results,
@@ -17,6 +18,41 @@ from cli.output import (
     display_statistics,
     create_progress_bar,
 )
+
+# Watch mode ignore patterns
+WATCH_IGNORE_PATTERNS = {'.git', '__pycache__', 'node_modules', '.venv', 'venv'}
+MAX_WATCH_FAILURES = 3
+
+
+def export_analysis_result(result, export_format, output_path=None):
+    """
+    Export analysis results to file.
+
+    Args:
+        result: Analysis result dictionary
+        export_format: Export format ('json' or 'yaml')
+        output_path: Optional custom output path
+
+    Returns:
+        Path: Path to exported file
+    """
+    export_path = Path(output_path) if output_path else Path(f"analysis-{result.get('id')}.{export_format}")
+
+    # Validate parent directory is writable if it exists
+    if export_path.parent.exists() and not os.access(export_path.parent, os.W_OK):
+        display_error(f"No write permission for directory: {export_path.parent}")
+        raise click.Abort()
+
+    export_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(export_path, "w") as f:
+        if export_format == "json":
+            json.dump(result, f, indent=2)
+        else:
+            yaml.dump(result, f)
+
+    display_success(f"Exported to {export_path}")
+    return export_path
 
 
 @click.group()
@@ -82,27 +118,34 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
             from watchdog.events import FileSystemEventHandler
 
             project_path = Path(path).resolve()
-            last_analysis_time = 0
-            debounce_seconds = 1.0
 
             class AnalysisHandler(FileSystemEventHandler):
+                """File system event handler with debouncing and failure tracking."""
+
+                def __init__(self, perform_analysis_fn, debounce_seconds=1.0):
+                    super().__init__()
+                    self.last_analysis_time = 0
+                    self.debounce_seconds = debounce_seconds
+                    self.perform_analysis = perform_analysis_fn
+                    self.consecutive_failures = 0
+
                 def on_any_event(self, event):
-                    nonlocal last_analysis_time
+                    """Handle file system events with debouncing and ignore patterns."""
                     # Ignore changes in common ignored directories
-                    if any(ignored in event.src_path for ignored in
-                           ['.git', '__pycache__', 'node_modules', '.venv', 'venv']):
+                    if any(ignored in event.src_path for ignored in WATCH_IGNORE_PATTERNS):
                         return
 
-                    # Debounce: only analyze if 1 second has passed
+                    # Debounce: only analyze if enough time has passed
                     current_time = time.time()
-                    if current_time - last_analysis_time < debounce_seconds:
+                    if current_time - self.last_analysis_time < self.debounce_seconds:
                         return
 
-                    last_analysis_time = current_time
+                    self.last_analysis_time = current_time
                     click.echo(f"\n[{time.strftime('%H:%M:%S')}] File changed, re-analyzing...")
-                    perform_analysis()
+                    self.perform_analysis()
 
             def perform_analysis():
+                """Perform analysis with error handling and failure tracking."""
                 try:
                     with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
                         with create_progress_bar("Analyzing...") as progress:
@@ -113,26 +156,29 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
                         display_analysis_results(result, format=config.output.format)
 
                         if export:
-                            export_path = Path(output) if output else Path(f"analysis-{result.get('id')}.{export}")
-                            export_path.parent.mkdir(parents=True, exist_ok=True)
-                            with open(export_path, "w") as f:
-                                if export == "json":
-                                    json.dump(result, f, indent=2)
-                                else:
-                                    yaml.dump(result, f)
-                            display_success(f"Exported to {export_path}")
+                            export_analysis_result(result, export, output)
+
+                        # Reset failure counter on success
+                        handler.consecutive_failures = 0
 
                 except Exception as e:
+                    handler.consecutive_failures += 1
                     display_error(f"Analysis failed: {e}")
+
+                    if handler.consecutive_failures >= MAX_WATCH_FAILURES:
+                        display_error(f"Too many consecutive failures ({MAX_WATCH_FAILURES}), exiting watch mode")
+                        observer.stop()
 
             # Initial analysis
             click.echo(f"[Watch Mode] Watching {project_path}")
             click.echo("Press Ctrl+C to exit or Enter to manually trigger analysis\n")
+
+            handler = AnalysisHandler(perform_analysis)
             perform_analysis()
 
             # Setup file watcher
             observer = Observer()
-            observer.schedule(AnalysisHandler(), str(project_path), recursive=True)
+            observer.schedule(handler, str(project_path), recursive=True)
             observer.start()
 
             try:
@@ -178,14 +224,7 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
 
             # Export if requested
             if export:
-                export_path = Path(output) if output else Path(f"analysis-{result.get('id')}.{export}")
-                export_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(export_path, "w") as f:
-                    if export == "json":
-                        json.dump(result, f, indent=2)
-                    else:
-                        yaml.dump(result, f)
-                display_success(f"Exported to {export_path}")
+                export_analysis_result(result, export, output)
 
     except APIError as e:
         display_error(f"Analysis failed: {e.message}")
