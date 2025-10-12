@@ -40,6 +40,8 @@ class User(Base):
 
     # Relationships
     jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")
+    schedules: Mapped[list["Schedule"]] = relationship("Schedule", back_populates="user")
+    integrations: Mapped[list["Integration"]] = relationship("Integration", back_populates="user")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email='{self.email}')>"

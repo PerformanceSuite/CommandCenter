@@ -22,6 +22,7 @@ celery_app = Celery(
     broker=CELERY_BROKER_URL,
     backend=CELERY_RESULT_BACKEND,
     include=[
+        "app.tasks.job_tasks",
         "app.tasks.analysis_tasks",
         "app.tasks.export_tasks",
         "app.tasks.webhook_tasks",
@@ -96,6 +97,7 @@ def debug_task(self):
 # Import task modules to register them with Celery
 # Note: Import after celery_app is configured to avoid circular imports
 try:
+    from app.tasks import job_tasks  # noqa: F401
     from app.tasks import analysis_tasks  # noqa: F401
     from app.tasks import export_tasks  # noqa: F401
     from app.tasks import webhook_tasks  # noqa: F401

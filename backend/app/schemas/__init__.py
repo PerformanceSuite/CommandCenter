@@ -51,6 +51,14 @@ from app.schemas.project_analysis import (
     ProjectAnalysisResult,
     AnalysisStatistics,
 )
+from app.schemas.job import (
+    JobCreate,
+    JobUpdate,
+    JobResponse,
+    JobListResponse,
+    JobProgressResponse,
+    JobStatisticsResponse,
+)
 
 __all__ = [
     "ProjectCreate",
@@ -90,4 +98,10 @@ __all__ = [
     "ProjectAnalysisRequest",
     "ProjectAnalysisResult",
     "AnalysisStatistics",
+    "JobCreate",
+    "JobUpdate",
+    "JobResponse",
+    "JobListResponse",
+    "JobProgressResponse",
+    "JobStatisticsResponse",
 ]

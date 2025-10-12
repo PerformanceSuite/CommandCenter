@@ -391,3 +391,51 @@ class JobService:
             "average_duration_seconds": avg_duration,
             "active_jobs": pending + running,
         }
+
+    async def dispatch_job(
+        self,
+        job_id: int,
+        delay_seconds: int = 0,
+    ) -> str:
+        """
+        Dispatch a job to Celery for async execution.
+
+        Args:
+            job_id: Job ID to execute
+            delay_seconds: Optional delay before execution (default: 0)
+
+        Returns:
+            str: Celery task ID
+
+        Raises:
+            HTTPException: If job not found or cannot be dispatched
+        """
+        job = await self.get_job(job_id)
+
+        # Check if job is in pending status
+        if job.status != JobStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Job {job_id} cannot be dispatched (status: {job.status})",
+            )
+
+        # Import Celery task
+        from app.tasks.job_tasks import execute_job
+
+        # Dispatch job to Celery
+        if delay_seconds > 0:
+            # Schedule for future execution
+            task = execute_job.apply_async(
+                args=[job_id, job.job_type, job.parameters],
+                countdown=delay_seconds,
+            )
+        else:
+            # Execute immediately
+            task = execute_job.delay(job_id, job.job_type, job.parameters)
+
+        # Update job with Celery task ID
+        job.celery_task_id = task.id
+        await self.db.commit()
+        await self.db.refresh(job)
+
+        return task.id

@@ -65,6 +65,12 @@ class Project(Base):
     jobs: Mapped[list["Job"]] = relationship(
         "Job", back_populates="project", cascade="all, delete-orphan"
     )
+    schedules: Mapped[list["Schedule"]] = relationship(
+        "Schedule", back_populates="project", cascade="all, delete-orphan"
+    )
+    integrations: Mapped[list["Integration"]] = relationship(
+        "Integration", back_populates="project", cascade="all, delete-orphan"
+    )
 
     # Unique constraint: owner + name must be unique
     __table_args__ = (UniqueConstraint("owner", "name", name="uq_project_owner_name"),)
