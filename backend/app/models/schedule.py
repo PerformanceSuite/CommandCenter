@@ -64,6 +64,9 @@ class Schedule(Base):
     interval_seconds: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True
     )  # For interval-based scheduling
+    timezone: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="UTC"
+    )  # Timezone for schedule execution (IANA timezone)
 
     # Execution window (optional time constraints)
     start_time: Mapped[Optional[datetime]] = mapped_column(
@@ -102,6 +105,17 @@ class Schedule(Base):
     tags: Mapped[Optional[dict]] = mapped_column(
         JSON, default=dict
     )  # Custom tags for filtering
+
+    # Audit logging
+    last_error: Mapped[Optional[str]] = mapped_column(
+        String(1000), nullable=True
+    )  # Last execution error message
+    last_success_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )  # Last successful execution
+    last_failure_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )  # Last failed execution
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -181,6 +195,7 @@ class Schedule(Base):
             "frequency": self.frequency,
             "cron_expression": self.cron_expression,
             "interval_seconds": self.interval_seconds,
+            "timezone": self.timezone,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "enabled": self.enabled,
@@ -191,6 +206,9 @@ class Schedule(Base):
             "failure_count": self.failure_count,
             "success_rate": self.success_rate,
             "is_active": self.is_active,
+            "last_error": self.last_error,
+            "last_success_at": self.last_success_at.isoformat() if self.last_success_at else None,
+            "last_failure_at": self.last_failure_at.isoformat() if self.last_failure_at else None,
             "created_by": self.created_by,
             "tags": self.tags,
             "created_at": self.created_at.isoformat() if self.created_at else None,
