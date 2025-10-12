@@ -92,7 +92,7 @@ class SARIFExporter(BaseExporter):
             "driver": {
                 "name": self.tool_name,
                 "semanticVersion": self.tool_version,
-                "informationUri": "https://github.com/your-org/commandcenter",
+                "informationUri": "https://github.com/PerformanceSuite/CommandCenter",
                 "rules": self._create_rules(),
             }
         }
@@ -114,7 +114,7 @@ class SARIFExporter(BaseExporter):
                 "fullDescription": {
                     "text": "A dependency is significantly outdated and may have security vulnerabilities or missing features."
                 },
-                "helpUri": "https://github.com/your-org/commandcenter/docs/rules/CC001",
+                "helpUri": "https://github.com/PerformanceSuite/CommandCenter/docs/rules/CC001",
                 "defaultConfiguration": {"level": self.SARIF_LEVEL_WARNING},
             },
             {
@@ -124,7 +124,7 @@ class SARIFExporter(BaseExporter):
                 "fullDescription": {
                     "text": "A recommended dependency is missing that could improve the project."
                 },
-                "helpUri": "https://github.com/your-org/commandcenter/docs/rules/CC002",
+                "helpUri": "https://github.com/PerformanceSuite/CommandCenter/docs/rules/CC002",
                 "defaultConfiguration": {"level": self.SARIF_LEVEL_NOTE},
             },
             {
@@ -134,7 +134,7 @@ class SARIFExporter(BaseExporter):
                 "fullDescription": {
                     "text": "An area requiring research or evaluation has been identified."
                 },
-                "helpUri": "https://github.com/your-org/commandcenter/docs/rules/CC003",
+                "helpUri": "https://github.com/PerformanceSuite/CommandCenter/docs/rules/CC003",
                 "defaultConfiguration": {"level": self.SARIF_LEVEL_NOTE},
             },
             {
@@ -144,7 +144,7 @@ class SARIFExporter(BaseExporter):
                 "fullDescription": {
                     "text": "A technology or framework has been detected in the project."
                 },
-                "helpUri": "https://github.com/your-org/commandcenter/docs/rules/CC004",
+                "helpUri": "https://github.com/PerformanceSuite/CommandCenter/docs/rules/CC004",
                 "defaultConfiguration": {"level": self.SARIF_LEVEL_NONE},
             },
         ]

@@ -316,8 +316,12 @@ class ExcelExporter(CSVExporter):
         output.seek(0)
         return output.getvalue()
 
-    def _create_summary_sheet(self, wb):
-        """Create summary sheet."""
+    def _create_summary_sheet(self, wb: Any) -> None:
+        """Create summary sheet.
+
+        Args:
+            wb: openpyxl Workbook instance
+        """
         from openpyxl.styles import Font, PatternFill
 
         ws = wb.create_sheet("Summary", 0)
@@ -354,8 +358,12 @@ class ExcelExporter(CSVExporter):
         for col in ["A", "B"]:
             ws.column_dimensions[col].width = 25
 
-    def _create_technologies_sheet(self, wb):
-        """Create technologies sheet."""
+    def _create_technologies_sheet(self, wb: Any) -> None:
+        """Create technologies sheet.
+
+        Args:
+            wb: openpyxl Workbook instance
+        """
         from openpyxl.styles import Font, PatternFill
 
         ws = wb.create_sheet("Technologies")
@@ -379,8 +387,12 @@ class ExcelExporter(CSVExporter):
         for col in range(1, 6):
             ws.column_dimensions[get_column_letter(col)].width = 20
 
-    def _create_dependencies_sheet(self, wb):
-        """Create dependencies sheet."""
+    def _create_dependencies_sheet(self, wb: Any) -> None:
+        """Create dependencies sheet.
+
+        Args:
+            wb: openpyxl Workbook instance
+        """
         from openpyxl.styles import Font, PatternFill
 
         ws = wb.create_sheet("Dependencies")
@@ -413,8 +425,12 @@ class ExcelExporter(CSVExporter):
         for col in range(1, 6):
             ws.column_dimensions[get_column_letter(col)].width = 18
 
-    def _create_metrics_sheet(self, wb):
-        """Create metrics sheet."""
+    def _create_metrics_sheet(self, wb: Any) -> None:
+        """Create metrics sheet.
+
+        Args:
+            wb: openpyxl Workbook instance
+        """
         from openpyxl.styles import Font
 
         ws = wb.create_sheet("Metrics")
@@ -442,8 +458,12 @@ class ExcelExporter(CSVExporter):
         ws.column_dimensions["A"].width = 25
         ws.column_dimensions["B"].width = 15
 
-    def _create_research_gaps_sheet(self, wb):
-        """Create research gaps sheet."""
+    def _create_research_gaps_sheet(self, wb: Any) -> None:
+        """Create research gaps sheet.
+
+        Args:
+            wb: openpyxl Workbook instance
+        """
         from openpyxl.styles import Font, PatternFill
 
         ws = wb.create_sheet("Research Gaps")
