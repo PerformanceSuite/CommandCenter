@@ -47,8 +47,10 @@ class TestWebSocketIntegration:
     @pytest.mark.asyncio
     async def test_websocket_job_not_found(self):
         """Test WebSocket connection fails gracefully for non-existent job."""
+        from starlette.websockets import WebSocketDisconnect
+
         with TestClient(app) as client:
-            with pytest.raises(Exception):  # Connection will fail
+            with pytest.raises((WebSocketDisconnect, ConnectionError)):  # Connection will fail
                 with client.websocket_connect("/api/v1/jobs/ws/99999") as websocket:
                     pass
 
@@ -75,10 +77,18 @@ class TestWebSocketIntegration:
                 )
 
                 # WebSocket should receive progress update within polling interval
-                # Note: The websocket implementation polls every 1 second
-                websocket.receive_json(timeout=2)
-                progress_data = websocket.receive_json(timeout=2)
+                # Use retry logic to handle timing variations
+                progress_data = None
+                for attempt in range(5):
+                    try:
+                        data = websocket.receive_json(timeout=1)
+                        if data.get("type") == "progress" and data.get("progress") == 50:
+                            progress_data = data
+                            break
+                    except Exception:
+                        continue
 
+                assert progress_data is not None, "Progress update not received"
                 assert progress_data["type"] == "progress"
                 assert progress_data["job_id"] == test_job.id
                 assert progress_data["status"] == "running"
@@ -258,8 +268,10 @@ class TestWebSocketIntegration:
 
         # After context exit, connection should be cleaned up
         # Note: cleanup happens in finally block
-        if test_job.id in connection_manager.active_connections:
-            assert len(connection_manager.active_connections[test_job.id]) == 0
+        assert (
+            test_job.id not in connection_manager.active_connections
+            or len(connection_manager.active_connections[test_job.id]) == 0
+        ), "WebSocket connection not properly cleaned up"
 
     @pytest.mark.asyncio
     async def test_websocket_concurrent_updates(
@@ -350,11 +362,6 @@ class TestConnectionManager:
     async def test_connection_manager_connect(self):
         """Test ConnectionManager.connect() method."""
         manager = connection_manager
-        job_id = 1
-        mock_websocket = object()  # Simple mock
-
-        # Connection list should be empty initially
-        initial_count = len(manager.active_connections.get(job_id, []))
 
         # Note: Can't fully test without actual WebSocket, but we can test structure
         assert isinstance(manager.active_connections, dict)

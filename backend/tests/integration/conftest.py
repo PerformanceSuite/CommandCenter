@@ -153,7 +153,10 @@ async def websocket_test_client(db_session: AsyncSession) -> AsyncClient:
     """
 
     async def override_get_db():
-        yield db_session
+        try:
+            yield db_session
+        finally:
+            await db_session.rollback()
 
     app.dependency_overrides[get_db] = override_get_db
 
@@ -165,7 +168,7 @@ async def websocket_test_client(db_session: AsyncSession) -> AsyncClient:
 
 # Celery testing utilities
 @pytest.fixture(scope="function")
-def celery_config():
+def celery_config() -> Dict[str, Any]:
     """Configure Celery for testing."""
     return {
         "broker_url": "memory://",
@@ -176,8 +179,9 @@ def celery_config():
 
 
 @pytest.fixture(scope="function")
-def mock_celery_task(mocker):
+def mock_celery_task(mocker: Any):
     """Mock Celery task execution for testing."""
+    from unittest.mock import MagicMock
     mock_task = mocker.MagicMock()
     mock_task.delay.return_value.id = "test-task-id-123"
     mock_task.delay.return_value.state = "PENDING"

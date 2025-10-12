@@ -11,15 +11,16 @@ Tests the complete async job workflow including:
 
 import pytest
 import asyncio
+import datetime
 from typing import Dict, Any
 from unittest.mock import patch, MagicMock
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 from app.models import Job, JobStatus, Project, Repository
 from app.services.job_service import JobService
 from app.tasks.job_tasks import execute_job
-from app.schemas import JobCreate
 
 
 pytestmark = pytest.mark.integration
@@ -194,7 +195,7 @@ class TestCeleryJobIntegration:
             await async_client.post(f"/api/v1/jobs/{job_id}/dispatch")
 
         # Cancel the job
-        with patch("app.services.job_service.app.control.revoke") as mock_revoke:
+        with patch("celery.app.control.Control.revoke") as mock_revoke:
             response = await async_client.post(f"/api/v1/jobs/{job_id}/cancel")
 
             assert response.status_code == 200
@@ -500,9 +501,6 @@ class TestJobErrorHandling:
         service = JobService(db_session)
 
         # Set job as running for extended period
-        import datetime
-        from app.models.job import Job as JobModel
-
         job = await service.get_job(test_job.id)
         job.started_at = datetime.datetime.utcnow() - datetime.timedelta(hours=2)
         await db_session.commit()
@@ -581,8 +579,9 @@ class TestJobServiceMethods:
         await service.delete_job(job_id)
 
         # Job should no longer exist
-        with pytest.raises(Exception):
+        with pytest.raises(HTTPException) as exc_info:
             await service.get_job(job_id)
+        assert exc_info.value.status_code == 404
 
     @pytest.mark.asyncio
     async def test_get_statistics(
