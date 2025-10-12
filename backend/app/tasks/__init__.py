@@ -73,6 +73,14 @@ celery_app.conf.update(
     redbeat_redis_url=CELERY_BROKER_URL,
 )
 
+# Import and set beat schedule
+try:
+    from app.beat_schedule import beat_schedule
+    celery_app.conf.beat_schedule = beat_schedule
+except ImportError:
+    print("Warning: Could not import beat_schedule")
+    celery_app.conf.beat_schedule = {}
+
 # Task routing rules
 celery_app.conf.task_routes = {
     "app.tasks.analysis_tasks.*": {"queue": "analysis", "priority": 8},

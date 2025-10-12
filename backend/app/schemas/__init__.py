@@ -72,6 +72,17 @@ from app.schemas.batch import (
     BatchImportResponse,
     BatchStatisticsResponse,
 )
+from app.schemas.schedule import (
+    ScheduleCreate,
+    ScheduleUpdate,
+    ScheduleResponse,
+    ScheduleListResponse,
+    ScheduleExecutionRequest,
+    ScheduleExecutionResponse,
+    ScheduleStatistics,
+    ScheduleHealthIssue,
+    ScheduleHealthReport,
+)
 
 __all__ = [
     "ProjectCreate",
@@ -128,4 +139,13 @@ __all__ = [
     "BatchExportResponse",
     "BatchImportResponse",
     "BatchStatisticsResponse",
+    "ScheduleCreate",
+    "ScheduleUpdate",
+    "ScheduleResponse",
+    "ScheduleListResponse",
+    "ScheduleExecutionRequest",
+    "ScheduleExecutionResponse",
+    "ScheduleStatistics",
+    "ScheduleHealthIssue",
+    "ScheduleHealthReport",
 ]

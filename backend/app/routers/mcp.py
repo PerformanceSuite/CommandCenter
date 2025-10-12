@@ -328,9 +328,31 @@ async def list_prompts(db: Session = Depends(get_db)):
 # Startup event handler to initialize MCP server
 async def initialize_mcp_server():
     """Initialize MCP server on application startup."""
+    from app.database import async_session
+    from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
+    from app.mcp.providers.commandcenter_tools import CommandCenterToolProvider
+    from app.mcp.providers.commandcenter_prompts import CommandCenterPromptProvider
+
     server = get_mcp_server()
 
     if not server.is_initialized():
+        # Create database session for providers
+        async with async_session() as db:
+            # Register CommandCenter resource provider
+            resource_provider = CommandCenterResourceProvider(db)
+            server.register_resource_provider(resource_provider)
+            logger.info("Registered CommandCenter resource provider")
+
+            # Register CommandCenter tool provider
+            tool_provider = CommandCenterToolProvider(db)
+            server.register_tool_provider(tool_provider)
+            logger.info("Registered CommandCenter tool provider")
+
+        # Register CommandCenter prompt provider (no DB needed)
+        prompt_provider = CommandCenterPromptProvider()
+        server.register_prompt_provider(prompt_provider)
+        logger.info("Registered CommandCenter prompt provider")
+
         await server.initialize()
         await server.start()
         logger.info("MCP server initialized and started")
