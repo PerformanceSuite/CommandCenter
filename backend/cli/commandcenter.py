@@ -11,6 +11,7 @@ from cli.commands.analyze import analyze
 from cli.commands.agents import agents
 from cli.commands.search import search
 from cli.commands.config_cmd import config as config_cmd
+from cli.commands.completion import completion
 
 
 @click.group()
@@ -65,6 +66,7 @@ cli.add_command(analyze)
 cli.add_command(agents)
 cli.add_command(search)
 cli.add_command(config_cmd)
+cli.add_command(completion)
 
 
 if __name__ == "__main__":

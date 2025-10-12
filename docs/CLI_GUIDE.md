@@ -132,6 +132,36 @@ commandcenter analyze project --github vercel/next.js
 commandcenter analyze project --github microsoft/vscode --export yaml
 ```
 
+#### Watch Mode
+
+```bash
+# Watch project for changes and re-analyze automatically
+commandcenter analyze project . --watch
+
+# Watch with export
+commandcenter analyze project . --watch --export json --output results.json
+
+# Press Enter to manually trigger analysis
+# Press Ctrl+C to exit watch mode
+```
+
+**Watch Mode Features:**
+- Auto-detects file changes with 1-second debounce
+- Ignores `.git`, `__pycache__`, `node_modules`, `.venv`, `venv`
+- Manual trigger with Enter key
+- Clean exit with Ctrl+C
+
+#### Export with Custom Output Path
+
+```bash
+# Export to default path
+commandcenter analyze project . --export json
+
+# Export to custom path
+commandcenter analyze project . --export json --output ./reports/analysis.json
+commandcenter analyze project . --export yaml -o results/scan.yaml
+```
+
 #### Analysis Statistics
 
 ```bash
@@ -242,39 +272,45 @@ See [Configuration](#configuration) section above.
 
 ## Shell Completion
 
-Enable tab completion for your shell.
+Enable tab completion for your shell using the `completion` command.
 
 ### Bash
 
 ```bash
-# Add to ~/.bashrc
-eval "$(_COMMANDCENTER_COMPLETE=bash_source commandcenter)"
+# Temporary (current session only)
+eval "$(commandcenter completion bash)"
 
-# Or use completion script
-commandcenter completion bash > ~/.commandcenter/commandcenter-completion.bash
-echo "source ~/.commandcenter/commandcenter-completion.bash" >> ~/.bashrc
+# Permanent (add to ~/.bashrc)
+echo 'eval "$(commandcenter completion bash)"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### Zsh
 
 ```bash
-# Add to ~/.zshrc
-eval "$(_COMMANDCENTER_COMPLETE=zsh_source commandcenter)"
+# Temporary (current session only)
+eval "$(commandcenter completion zsh)"
 
-# Or use completion script
-commandcenter completion zsh > ~/.commandcenter/commandcenter-completion.zsh
-echo "source ~/.commandcenter/commandcenter-completion.zsh" >> ~/.zshrc
+# Permanent (add to ~/.zshrc)
+echo 'eval "$(commandcenter completion zsh)"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ### Fish
 
 ```bash
-# Add to ~/.config/fish/completions/commandcenter.fish
-_COMMANDCENTER_COMPLETE=fish_source commandcenter | source
+# Temporary (current session only)
+commandcenter completion fish | source
 
-# Or use completion script
+# Permanent (add to config)
 commandcenter completion fish > ~/.config/fish/completions/commandcenter.fish
 ```
+
+**Shell completion enables:**
+- Command name completion
+- Subcommand completion
+- Option completion
+- Path completion for file arguments
 
 ## Examples
 
