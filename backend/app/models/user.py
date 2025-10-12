@@ -5,7 +5,7 @@ User model for authentication and authorization
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -37,6 +37,9 @@ class User(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Relationships
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email='{self.email}')>"

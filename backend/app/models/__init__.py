@@ -10,6 +10,7 @@ from app.models.research_task import ResearchTask, TaskStatus
 from app.models.knowledge_entry import KnowledgeEntry
 from app.models.webhook import WebhookConfig, WebhookEvent, GitHubRateLimit
 from app.models.project_analysis import ProjectAnalysis
+from app.models.job import Job, JobStatus, JobType
 
 __all__ = [
     "Project",
@@ -25,4 +26,7 @@ __all__ = [
     "WebhookEvent",
     "GitHubRateLimit",
     "ProjectAnalysis",
+    "Job",
+    "JobStatus",
+    "JobType",
 ]

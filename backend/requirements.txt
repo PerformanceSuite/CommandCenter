@@ -67,3 +67,8 @@ click>=8.1.0
 rich>=13.0.0
 watchdog>=3.0.0  # For --watch mode
 textual>=0.47.0  # TUI (Text User Interface) framework
+
+# Task Queue (Phase 2)
+celery==5.3.4
+flower==2.0.1
+celery-redbeat==2.2.0  # Redis-backed beat scheduler

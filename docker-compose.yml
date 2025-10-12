@@ -118,6 +118,104 @@ services:
     networks:
       - commandcenter
 
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_celery_worker
+    command: celery -A app.tasks worker --loglevel=info --concurrency=4
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://commandcenter:${DB_PASSWORD:-changeme}@postgres:5432/commandcenter
+      POSTGRES_USER: commandcenter
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: commandcenter
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_SALT: ${ENCRYPTION_SALT:-dev-encryption-salt-change-in-production}
+
+      # Storage
+      RAG_STORAGE_PATH: /app/rag_storage
+      CHROMADB_PATH: /app/rag_storage/chromadb
+
+      # API Keys
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Environment
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DEBUG: ${DEBUG:-false}
+    volumes:
+      - rag_storage:/app/rag_storage
+      - ./backend/output:/app/output
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - commandcenter
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_celery_beat
+    command: celery -A app.tasks beat --loglevel=info
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://commandcenter:${DB_PASSWORD:-changeme}@postgres:5432/commandcenter
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+
+      # Security
+      SECRET_KEY: ${SECRET_KEY}
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Environment
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - commandcenter
+
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_flower
+    command: celery -A app.tasks flower --port=5555
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - commandcenter
+
 volumes:
   postgres_data:
     driver: local
