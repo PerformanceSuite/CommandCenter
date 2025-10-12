@@ -9,6 +9,7 @@ from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.knowledge_entry import KnowledgeEntry
 from app.models.webhook import WebhookConfig, WebhookEvent, GitHubRateLimit
+from app.models.project_analysis import ProjectAnalysis
 
 __all__ = [
     "Project",
@@ -23,4 +24,5 @@ __all__ = [
     "WebhookConfig",
     "WebhookEvent",
     "GitHubRateLimit",
+    "ProjectAnalysis",
 ]

@@ -55,3 +55,9 @@ openai>=2.3.0,<3.0.0  # OpenRouter uses OpenAI SDK, direct OpenAI access (latest
 anthropic>=0.69.0,<0.70.0  # Direct Anthropic/Claude access (latest: 0.69.0, Sep 2025)
 google-genai>=1.0.0,<2.0.0  # Google Gen AI SDK (GA May 2025, replaces google-generativeai)
 litellm>=1.30.0,<1.50.0  # Self-hosted proxy for 100+ LLMs (tested 1.30-1.45)
+
+# Project Analyzer dependencies
+toml>=0.10.2  # Parse TOML files (Cargo.toml, pyproject.toml)
+PyYAML>=6.0  # Parse YAML files (docker-compose, k8s)
+lxml>=4.9.0  # Parse XML files (pom.xml)
+packaging>=23.0  # Version comparison for research gap analysis
