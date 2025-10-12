@@ -89,6 +89,17 @@ class MCPServer:
         self._connection_manager.register_handler(
             "prompts/get", self._handle_get_prompt
         )
+        # Context management handlers
+        self._connection_manager.register_handler("context/set", self._handle_context_set)
+        self._connection_manager.register_handler("context/get", self._handle_context_get)
+        self._connection_manager.register_handler("context/has", self._handle_context_has)
+        self._connection_manager.register_handler(
+            "context/delete", self._handle_context_delete
+        )
+        self._connection_manager.register_handler(
+            "context/clear", self._handle_context_clear
+        )
+        self._connection_manager.register_handler("context/list", self._handle_context_list)
 
     # Provider management
     def register_resource_provider(self, provider: ResourceProvider) -> None:
@@ -392,6 +403,168 @@ class MCPServer:
 
         # No provider found the prompt
         raise PromptNotFoundError(name)
+
+    # Context management handlers
+    async def _handle_context_set(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/set request.
+
+        Sets a context key-value pair for the current session.
+
+        Args:
+            request: JSON-RPC request with params: {key: str, value: Any}
+            session: Client session
+
+        Returns:
+            Success confirmation
+
+        Raises:
+            InvalidParamsError: If key or value not provided
+        """
+        params = request.params or {}
+        key = params.get("key")
+        value = params.get("value")
+
+        if not key:
+            raise InvalidParamsError("Context key parameter required")
+
+        if value is None:
+            raise InvalidParamsError("Context value parameter required")
+
+        session.set_context(key, value)
+        self._logger.debug(f"Session {session.session_id} set context: {key}")
+
+        return {"success": True, "key": key}
+
+    async def _handle_context_get(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/get request.
+
+        Gets a context value for the current session.
+
+        Args:
+            request: JSON-RPC request with params: {key: str, default: Any (optional)}
+            session: Client session
+
+        Returns:
+            Context value
+
+        Raises:
+            InvalidParamsError: If key not provided
+        """
+        params = request.params or {}
+        key = params.get("key")
+        default = params.get("default")
+
+        if not key:
+            raise InvalidParamsError("Context key parameter required")
+
+        value = session.get_context(key, default)
+        self._logger.debug(f"Session {session.session_id} get context: {key}")
+
+        return {"key": key, "value": value, "exists": session.has_context(key)}
+
+    async def _handle_context_has(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/has request.
+
+        Checks if a context key exists for the current session.
+
+        Args:
+            request: JSON-RPC request with params: {key: str}
+            session: Client session
+
+        Returns:
+            Boolean indicating if key exists
+
+        Raises:
+            InvalidParamsError: If key not provided
+        """
+        params = request.params or {}
+        key = params.get("key")
+
+        if not key:
+            raise InvalidParamsError("Context key parameter required")
+
+        exists = session.has_context(key)
+        self._logger.debug(f"Session {session.session_id} check context: {key} = {exists}")
+
+        return {"key": key, "exists": exists}
+
+    async def _handle_context_delete(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/delete request.
+
+        Deletes a context key from the current session.
+
+        Args:
+            request: JSON-RPC request with params: {key: str}
+            session: Client session
+
+        Returns:
+            Success confirmation
+
+        Raises:
+            InvalidParamsError: If key not provided
+        """
+        params = request.params or {}
+        key = params.get("key")
+
+        if not key:
+            raise InvalidParamsError("Context key parameter required")
+
+        deleted = session.delete_context(key)
+        self._logger.debug(f"Session {session.session_id} delete context: {key} = {deleted}")
+
+        return {"success": deleted, "key": key}
+
+    async def _handle_context_clear(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/clear request.
+
+        Clears all context from the current session.
+
+        Args:
+            request: JSON-RPC request (no params needed)
+            session: Client session
+
+        Returns:
+            Success confirmation
+        """
+        session.clear_context()
+        self._logger.info(f"Session {session.session_id} cleared all context")
+
+        return {"success": True, "message": "All context cleared"}
+
+    async def _handle_context_list(
+        self, request: JSONRPCRequest, session: MCPSession
+    ) -> Dict[str, Any]:
+        """
+        Handle context/list request.
+
+        Lists all context keys and values for the current session.
+
+        Args:
+            request: JSON-RPC request (no params needed)
+            session: Client session
+
+        Returns:
+            Dictionary of all context
+        """
+        context = session.get_all_context()
+        self._logger.debug(f"Session {session.session_id} list context: {len(context)} items")
+
+        return {"context": context, "count": len(context)}
 
     # Session management
     async def create_session(

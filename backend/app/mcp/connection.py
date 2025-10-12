@@ -69,6 +69,97 @@ class MCPSession:
         self.client_info.update(client_info)
         self.set_initialized(True)
 
+    # Context management methods
+    def set_context(self, key: str, value: Any) -> None:
+        """
+        Set a context value for this session.
+
+        Context is preserved across multiple requests within the same session,
+        enabling stateful interactions.
+
+        Args:
+            key: Context key
+            value: Context value (must be JSON serializable)
+
+        Example:
+            session.set_context("current_project_id", 1)
+            session.set_context("analysis_state", {"step": 2, "items": [1, 2, 3]})
+        """
+        self.metadata[key] = value
+
+    def get_context(self, key: str, default: Any = None) -> Any:
+        """
+        Get a context value from this session.
+
+        Args:
+            key: Context key
+            default: Default value if key not found
+
+        Returns:
+            Context value or default
+
+        Example:
+            project_id = session.get_context("current_project_id")
+            state = session.get_context("analysis_state", {})
+        """
+        return self.metadata.get(key, default)
+
+    def has_context(self, key: str) -> bool:
+        """
+        Check if a context key exists.
+
+        Args:
+            key: Context key
+
+        Returns:
+            True if key exists in context
+
+        Example:
+            if session.has_context("current_project_id"):
+                project_id = session.get_context("current_project_id")
+        """
+        return key in self.metadata
+
+    def delete_context(self, key: str) -> bool:
+        """
+        Delete a context key.
+
+        Args:
+            key: Context key to delete
+
+        Returns:
+            True if key was deleted, False if key didn't exist
+
+        Example:
+            session.delete_context("temporary_data")
+        """
+        if key in self.metadata:
+            del self.metadata[key]
+            return True
+        return False
+
+    def clear_context(self) -> None:
+        """
+        Clear all context data for this session.
+
+        Example:
+            session.clear_context()  # Reset session state
+        """
+        self.metadata.clear()
+
+    def get_all_context(self) -> Dict[str, Any]:
+        """
+        Get all context data for this session.
+
+        Returns:
+            Dictionary of all context key-value pairs
+
+        Example:
+            context = session.get_all_context()
+            print(f"Session has {len(context)} context items")
+        """
+        return self.metadata.copy()
+
 
 class MCPConnectionManager:
     """
@@ -300,3 +391,112 @@ class MCPConnectionManager:
             "initialized": session.is_initialized(),
             "metadata": session.metadata,
         }
+
+    # Session context management
+    async def set_session_context(
+        self, session_id: str, key: str, value: Any
+    ) -> bool:
+        """
+        Set context value for a session.
+
+        Args:
+            session_id: Session identifier
+            key: Context key
+            value: Context value
+
+        Returns:
+            True if successful, False if session not found
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return False
+
+        session.set_context(key, value)
+        return True
+
+    async def get_session_context(
+        self, session_id: str, key: str, default: Any = None
+    ) -> Any:
+        """
+        Get context value from a session.
+
+        Args:
+            session_id: Session identifier
+            key: Context key
+            default: Default value if key not found
+
+        Returns:
+            Context value, default, or None if session not found
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return None
+
+        return session.get_context(key, default)
+
+    async def has_session_context(self, session_id: str, key: str) -> bool:
+        """
+        Check if session has a context key.
+
+        Args:
+            session_id: Session identifier
+            key: Context key
+
+        Returns:
+            True if key exists, False otherwise
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return False
+
+        return session.has_context(key)
+
+    async def delete_session_context(self, session_id: str, key: str) -> bool:
+        """
+        Delete context key from a session.
+
+        Args:
+            session_id: Session identifier
+            key: Context key
+
+        Returns:
+            True if deleted, False if session or key not found
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return False
+
+        return session.delete_context(key)
+
+    async def clear_session_context(self, session_id: str) -> bool:
+        """
+        Clear all context from a session.
+
+        Args:
+            session_id: Session identifier
+
+        Returns:
+            True if successful, False if session not found
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return False
+
+        session.clear_context()
+        return True
+
+    async def get_all_session_context(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get all context from a session.
+
+        Args:
+            session_id: Session identifier
+
+        Returns:
+            Dictionary of context or None if session not found
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return None
+
+        return session.get_all_context()
