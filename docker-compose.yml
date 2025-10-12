@@ -72,8 +72,10 @@ services:
       GITHUB_TOKEN: ${GITHUB_TOKEN}
       SLACK_TOKEN: ${SLACK_TOKEN:-}
 
-      # Redis
+      # Redis & Celery
       REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
 
       # Environment
       ENVIRONMENT: ${ENVIRONMENT:-production}

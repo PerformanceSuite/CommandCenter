@@ -59,6 +59,15 @@ from app.schemas.job import (
     JobProgressResponse,
     JobStatisticsResponse,
 )
+from app.schemas.batch import (
+    BatchAnalyzeRequest,
+    BatchExportRequest,
+    BatchImportRequest,
+    BatchAnalyzeResponse,
+    BatchExportResponse,
+    BatchImportResponse,
+    BatchStatisticsResponse,
+)
 
 __all__ = [
     "ProjectCreate",
@@ -104,4 +113,11 @@ __all__ = [
     "JobListResponse",
     "JobProgressResponse",
     "JobStatisticsResponse",
+    "BatchAnalyzeRequest",
+    "BatchExportRequest",
+    "BatchImportRequest",
+    "BatchAnalyzeResponse",
+    "BatchExportResponse",
+    "BatchImportResponse",
+    "BatchStatisticsResponse",
 ]

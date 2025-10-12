@@ -19,7 +19,7 @@ from app.config import settings
 from app.database import init_db, close_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
-from app.routers import research_orchestration, mcp, jobs
+from app.routers import research_orchestration, mcp, jobs, batch
 from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
@@ -161,6 +161,7 @@ app.include_router(github_features.router, prefix=settings.api_v1_prefix)
 app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
 app.include_router(mcp.router)  # MCP (Model Context Protocol) endpoints
 app.include_router(jobs.router)  # Jobs API for async task management
+app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()

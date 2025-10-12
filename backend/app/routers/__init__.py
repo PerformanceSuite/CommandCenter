@@ -9,6 +9,7 @@ from app.routers import (
     dashboard,
     knowledge,
     research_tasks,
+    batch,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "dashboard",
     "knowledge",
     "research_tasks",
+    "batch",
 ]
