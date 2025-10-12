@@ -35,19 +35,49 @@ console = Console()
     "--interactive",
     "-i",
     is_flag=True,
-    help="Interactive search mode",
+    help="Interactive search mode (prompt-based)",
+)
+@click.option(
+    "--tui",
+    is_flag=True,
+    help="Launch full TUI (Text User Interface) mode",
 )
 @click.pass_context
-def search(ctx, query, filter_type, limit, interactive):
+def search(ctx, query, filter_type, limit, interactive, tui):
     """
     Search knowledge base using RAG.
 
     Examples:
       commandcenter search "FastAPI authentication"
       commandcenter search "RAG implementation" --filter technology
-      commandcenter search --interactive
+      commandcenter search --interactive  # Prompt-based interactive mode
+      commandcenter search --tui          # Full TUI interface
     """
     config = ctx.obj["config"]
+
+    # TUI mode takes precedence
+    if tui:
+        try:
+            from cli.tui import SearchApp
+
+            app = SearchApp(
+                api_url=config.api.url,
+                auth_token=config.auth.token,
+                timeout=config.api.timeout,
+            )
+            app.run()
+            return
+
+        except ImportError:
+            display_error(
+                "TUI mode requires 'textual' library. Install with: pip install textual"
+            )
+            raise click.Abort()
+        except Exception as e:
+            display_error(f"TUI failed to start: {e}")
+            if config.output.verbose:
+                raise
+            raise click.Abort()
 
     def perform_search(search_query: str):
         """Execute a search query."""

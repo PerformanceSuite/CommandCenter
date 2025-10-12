@@ -57,6 +57,17 @@ class CodeMetrics(BaseModel):
     architecture_pattern: Optional[str] = Field(
         None, description="Detected architecture pattern"
     )
+    cyclomatic_complexity: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description="Average cyclomatic complexity per file (AST-based, Python only)",
+    )
+    total_functions: Optional[int] = Field(
+        None, ge=0, description="Total number of functions detected"
+    )
+    total_classes: Optional[int] = Field(
+        None, ge=0, description="Total number of classes detected"
+    )
 
 
 class ResearchGap(BaseModel):
