@@ -86,6 +86,9 @@ class WebhookConfig(Base):
     events_received: Mapped[list["WebhookEvent"]] = relationship(
         "WebhookEvent", back_populates="config", cascade="all, delete-orphan"
     )
+    deliveries: Mapped[list["WebhookDelivery"]] = relationship(
+        "WebhookDelivery", back_populates="config", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<WebhookConfig(id={self.id}, repository_id={self.repository_id})>"
@@ -146,6 +149,74 @@ class WebhookEvent(Base):
 
     def __repr__(self) -> str:
         return f"<WebhookEvent(id={self.id}, event_type='{self.event_type}', delivery_id='{self.delivery_id}')>"
+
+
+class WebhookDelivery(Base):
+    """Track individual webhook delivery attempts"""
+
+    __tablename__ = "webhook_deliveries"
+
+    # Primary key
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign key to project for isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Webhook config reference
+    config_id: Mapped[int] = mapped_column(
+        ForeignKey("webhook_configs.id", ondelete="CASCADE"), nullable=False
+    )
+
+    # Event details
+    event_type: Mapped[str] = mapped_column(
+        String(100), nullable=False
+    )  # analysis.complete, export.complete, etc.
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+    # Delivery details
+    target_url: Mapped[str] = mapped_column(
+        String(512), nullable=False
+    )  # URL to deliver to
+    attempt_number: Mapped[int] = mapped_column(
+        Integer, default=1
+    )  # Retry attempt (1-based)
+
+    # Status
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # pending, delivered, failed, retrying
+    http_status_code: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    response_body: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Timing
+    scheduled_for: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )  # When to attempt delivery
+    attempted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    duration_ms: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )  # Request duration in milliseconds
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    project: Mapped["Project"] = relationship(
+        "Project", back_populates="webhook_deliveries"
+    )
+    config: Mapped["WebhookConfig"] = relationship(
+        "WebhookConfig", back_populates="deliveries"
+    )
+
+    def __repr__(self) -> str:
+        return f"<WebhookDelivery(id={self.id}, event_type='{self.event_type}', status='{self.status}', attempt={self.attempt_number})>"
 
 
 class GitHubRateLimit(Base):

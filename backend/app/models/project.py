@@ -59,6 +59,9 @@ class Project(Base):
     webhook_events: Mapped[list["WebhookEvent"]] = relationship(
         "WebhookEvent", back_populates="project", cascade="all, delete-orphan"
     )
+    webhook_deliveries: Mapped[list["WebhookDelivery"]] = relationship(
+        "WebhookDelivery", back_populates="project", cascade="all, delete-orphan"
+    )
     github_rate_limits: Mapped[list["GitHubRateLimit"]] = relationship(
         "GitHubRateLimit", back_populates="project", cascade="all, delete-orphan"
     )

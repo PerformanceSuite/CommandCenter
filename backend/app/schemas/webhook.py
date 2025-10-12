@@ -90,3 +90,55 @@ class RateLimitStatusResponse(BaseModel):
     core: GitHubRateLimitResponse
     search: Optional[GitHubRateLimitResponse] = None
     graphql: Optional[GitHubRateLimitResponse] = None
+
+
+class WebhookDeliveryCreate(BaseModel):
+    """Schema for creating webhook delivery"""
+
+    config_id: int
+    event_type: str
+    payload: Dict[str, Any]
+    target_url: Optional[str] = None
+
+
+class WebhookDeliveryResponse(BaseModel):
+    """Schema for webhook delivery response"""
+
+    id: int
+    project_id: int
+    config_id: int
+    event_type: str
+    payload: Dict[str, Any]
+    target_url: str
+    attempt_number: int
+    status: str
+    http_status_code: Optional[int]
+    response_body: Optional[str]
+    error_message: Optional[str]
+    scheduled_for: datetime
+    attempted_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    duration_ms: Optional[int]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class WebhookDeliveryListResponse(BaseModel):
+    """Schema for list of webhook deliveries with pagination"""
+
+    deliveries: List[WebhookDeliveryResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class WebhookStatisticsResponse(BaseModel):
+    """Schema for webhook statistics"""
+
+    total_configs: int
+    total_deliveries: int
+    successful_deliveries: int
+    failed_deliveries: int
+    success_rate: float

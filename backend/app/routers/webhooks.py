@@ -8,16 +8,21 @@ from typing import List, Dict, Any
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 
 from app.database import get_db
-from app.models import WebhookConfig, WebhookEvent, Repository
+from app.models import WebhookConfig, WebhookEvent, WebhookDelivery, Repository
 from app.schemas import (
     WebhookConfigCreate,
     WebhookConfigUpdate,
     WebhookConfigResponse,
     WebhookEventResponse,
+    WebhookDeliveryCreate,
+    WebhookDeliveryResponse,
+    WebhookDeliveryListResponse,
+    WebhookStatisticsResponse,
 )
+from app.services.webhook_service import WebhookService
 from app.utils.webhook_verification import verify_github_signature
 from app.services.metrics_service import metrics_service
 
@@ -426,3 +431,204 @@ async def list_webhook_events(
         query.order_by(desc(WebhookEvent.received_at)).limit(limit)
     )
     return result.scalars().all()
+
+
+# ===== Webhook Delivery Endpoints =====
+
+
+@router.post(
+    "/deliveries",
+    response_model=WebhookDeliveryResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_webhook_delivery(
+    delivery_data: WebhookDeliveryCreate,
+    db: AsyncSession = Depends(get_db),
+) -> WebhookDelivery:
+    """
+    Create a new webhook delivery
+
+    Args:
+        delivery_data: Webhook delivery data
+        db: Database session
+
+    Returns:
+        Created webhook delivery
+    """
+    # TODO: Get project_id from auth context (currently hardcoded)
+    project_id = 1
+
+    service = WebhookService(db)
+    try:
+        delivery = await service.create_delivery(
+            config_id=delivery_data.config_id,
+            project_id=project_id,
+            event_type=delivery_data.event_type,
+            payload=delivery_data.payload,
+            target_url=delivery_data.target_url,
+        )
+
+        if not delivery:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Event type not subscribed or filtered",
+            )
+
+        return delivery
+    finally:
+        await service.close()
+
+
+@router.get("/deliveries", response_model=WebhookDeliveryListResponse)
+async def list_webhook_deliveries(
+    config_id: int = None,
+    event_type: str = None,
+    status_filter: str = None,
+    page: int = 1,
+    page_size: int = 50,
+    db: AsyncSession = Depends(get_db),
+) -> Dict[str, Any]:
+    """
+    List webhook deliveries with pagination
+
+    Args:
+        config_id: Optional filter by webhook config ID
+        event_type: Optional filter by event type
+        status_filter: Optional filter by delivery status
+        page: Page number (1-based)
+        page_size: Items per page
+        db: Database session
+
+    Returns:
+        Paginated list of webhook deliveries
+    """
+    query = select(WebhookDelivery)
+
+    # Apply filters
+    if config_id:
+        query = query.where(WebhookDelivery.config_id == config_id)
+
+    if event_type:
+        query = query.where(WebhookDelivery.event_type == event_type)
+
+    if status_filter:
+        query = query.where(WebhookDelivery.status == status_filter)
+
+    # Count total
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar()
+
+    # Apply pagination
+    offset = (page - 1) * page_size
+    result = await db.execute(
+        query.order_by(desc(WebhookDelivery.created_at))
+        .limit(page_size)
+        .offset(offset)
+    )
+    deliveries = result.scalars().all()
+
+    return {
+        "deliveries": deliveries,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+@router.get("/deliveries/{delivery_id}", response_model=WebhookDeliveryResponse)
+async def get_webhook_delivery(
+    delivery_id: int, db: AsyncSession = Depends(get_db)
+) -> WebhookDelivery:
+    """
+    Get webhook delivery by ID
+
+    Args:
+        delivery_id: Webhook delivery ID
+        db: Database session
+
+    Returns:
+        Webhook delivery
+    """
+    result = await db.execute(
+        select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
+    )
+    delivery = result.scalar_one_or_none()
+
+    if not delivery:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Webhook delivery {delivery_id} not found",
+        )
+
+    return delivery
+
+
+@router.post("/deliveries/{delivery_id}/retry", status_code=status.HTTP_202_ACCEPTED)
+async def retry_webhook_delivery(
+    delivery_id: int, db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Retry a failed webhook delivery
+
+    Args:
+        delivery_id: Webhook delivery ID
+        db: Database session
+
+    Returns:
+        Retry status
+    """
+    # Fetch delivery
+    result = await db.execute(
+        select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
+    )
+    delivery = result.scalar_one_or_none()
+
+    if not delivery:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Webhook delivery {delivery_id} not found",
+        )
+
+    # Check if delivery can be retried
+    if delivery.status not in ["failed", "exhausted", "retrying"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot retry delivery with status '{delivery.status}'",
+        )
+
+    # Schedule for immediate retry
+    delivery.status = "pending"
+    delivery.scheduled_for = datetime.utcnow()
+    delivery.error_message = None
+    await db.commit()
+
+    logger.info(f"Manually scheduled retry for webhook delivery {delivery_id}")
+
+    return {
+        "status": "scheduled",
+        "delivery_id": delivery_id,
+        "message": "Delivery scheduled for retry",
+    }
+
+
+@router.get("/statistics", response_model=WebhookStatisticsResponse)
+async def get_webhook_statistics(
+    config_id: int = None, db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Get webhook delivery statistics
+
+    Args:
+        config_id: Optional filter by webhook config ID
+        db: Database session
+
+    Returns:
+        Webhook statistics
+    """
+    service = WebhookService(db)
+    try:
+        stats = await service.get_delivery_statistics(config_id)
+        return stats
+    finally:
+        await service.close()
