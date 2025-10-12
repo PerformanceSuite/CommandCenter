@@ -1,5 +1,53 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "commandcenter-cli"
+version = "0.1.0"
+description = "CommandCenter CLI - R&D Management & Knowledge Base"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "CommandCenter Team", email = "team@commandcenter.dev"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "httpx>=0.24.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.5.0",
+    "watchdog>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+commandcenter = "cli.commandcenter:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cli*"]
+
 [tool.coverage.run]
-source = ["app"]
+source = ["app", "cli"]
 omit = [
     "*/tests/*",
     "*/alembic/*",

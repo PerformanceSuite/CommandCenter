@@ -41,6 +41,16 @@ from app.schemas.webhook import (
     GitHubRateLimitResponse,
     RateLimitStatusResponse,
 )
+from app.schemas.project_analysis import (
+    Dependency,
+    DependencyType,
+    DetectedTechnology,
+    CodeMetrics,
+    ResearchGap,
+    ProjectAnalysisRequest,
+    ProjectAnalysisResult,
+    AnalysisStatistics,
+)
 
 __all__ = [
     "ProjectCreate",
@@ -72,4 +82,12 @@ __all__ = [
     "WebhookPayload",
     "GitHubRateLimitResponse",
     "RateLimitStatusResponse",
+    "Dependency",
+    "DependencyType",
+    "DetectedTechnology",
+    "CodeMetrics",
+    "ResearchGap",
+    "ProjectAnalysisRequest",
+    "ProjectAnalysisResult",
+    "AnalysisStatistics",
 ]

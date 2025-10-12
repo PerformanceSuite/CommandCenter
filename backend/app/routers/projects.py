@@ -1,5 +1,5 @@
 """
-Project CRUD endpoints for multi-project isolation
+Project CRUD endpoints for multi-project isolation and project analysis
 """
 
 from typing import List
@@ -19,6 +19,12 @@ from app.schemas.project import (
     ProjectResponse,
     ProjectWithCounts,
 )
+from app.schemas.project_analysis import (
+    ProjectAnalysisRequest,
+    ProjectAnalysisResult,
+    AnalysisStatistics,
+)
+from app.services.project_analyzer import ProjectAnalyzer
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -185,3 +191,119 @@ async def delete_project(project_id: int, db: AsyncSession = Depends(get_db)) ->
 
     await db.delete(project)
     await db.commit()
+
+
+# Project Analysis Endpoints
+
+
+@router.post(
+    "/analyze",
+    response_model=ProjectAnalysisResult,
+    summary="Analyze project codebase",
+    description="Scan project to detect dependencies, technologies, and research gaps",
+)
+async def analyze_project(
+    request: ProjectAnalysisRequest, db: AsyncSession = Depends(get_db)
+) -> ProjectAnalysisResult:
+    """
+    Analyze a project directory.
+
+    Scans codebase to detect:
+    - Dependencies and versions
+    - Technologies and frameworks
+    - Code metrics and complexity
+    - Research gaps and upgrade opportunities
+    """
+    analyzer = ProjectAnalyzer(db)
+
+    try:
+        result = await analyzer.analyze_project(
+            project_path=request.project_path, use_cache=request.use_cache
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Analysis failed: {str(e)}",
+        )
+
+
+@router.get(
+    "/analysis/{analysis_id}",
+    response_model=ProjectAnalysisResult,
+    summary="Get cached analysis",
+    description="Retrieve previously cached project analysis by ID",
+)
+async def get_analysis(
+    analysis_id: int, db: AsyncSession = Depends(get_db)
+) -> ProjectAnalysisResult:
+    """Get cached project analysis by ID"""
+    analyzer = ProjectAnalyzer(db)
+    result = await analyzer.get_analysis_by_id(analysis_id)
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Analysis {analysis_id} not found",
+        )
+
+    return result
+
+
+@router.get(
+    "/analysis/statistics",
+    response_model=AnalysisStatistics,
+    summary="Get analysis statistics",
+    description="Get aggregate statistics across all project analyses",
+)
+async def get_analysis_statistics(db: AsyncSession = Depends(get_db)) -> AnalysisStatistics:
+    """Get analysis statistics"""
+    from app.models.project_analysis import ProjectAnalysis
+
+    # Count total analyses
+    total_result = await db.execute(select(func.count(ProjectAnalysis.id)))
+    total_analyses = total_result.scalar()
+
+    # Count unique projects
+    unique_result = await db.execute(select(func.count(ProjectAnalysis.project_path.distinct())))
+    unique_projects = unique_result.scalar()
+
+    # Get all analyses to aggregate stats
+    analyses_result = await db.execute(select(ProjectAnalysis))
+    analyses = analyses_result.scalars().all()
+
+    # Aggregate counts
+    total_deps = 0
+    total_techs = 0
+    total_gaps = 0
+    critical_gaps = 0
+    high_gaps = 0
+    outdated_deps = 0
+
+    for analysis in analyses:
+        if analysis.dependencies:
+            deps = analysis.dependencies.get("items", [])
+            total_deps += len(deps)
+            outdated_deps += sum(1 for dep in deps if dep.get("is_outdated", False))
+
+        if analysis.detected_technologies:
+            total_techs += len(analysis.detected_technologies.get("items", []))
+
+        if analysis.research_gaps:
+            gaps = analysis.research_gaps.get("items", [])
+            total_gaps += len(gaps)
+            critical_gaps += sum(1 for gap in gaps if gap.get("severity") == "critical")
+            high_gaps += sum(1 for gap in gaps if gap.get("severity") == "high")
+
+    return AnalysisStatistics(
+        total_analyses=total_analyses,
+        unique_projects=unique_projects,
+        total_dependencies=total_deps,
+        total_technologies=total_techs,
+        total_gaps=total_gaps,
+        critical_gaps=critical_gaps,
+        high_gaps=high_gaps,
+        outdated_dependencies=outdated_deps,
+    )
