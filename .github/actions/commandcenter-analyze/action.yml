@@ -1,0 +1,178 @@
+name: 'CommandCenter Analysis'
+description: 'Analyze repository with CommandCenter and post results to PR'
+author: 'CommandCenter'
+
+branding:
+  icon: 'search'
+  color: 'blue'
+
+inputs:
+  commandcenter-url:
+    description: 'CommandCenter API URL'
+    required: true
+  api-token:
+    description: 'CommandCenter API token'
+    required: true
+  project-id:
+    description: 'CommandCenter project ID'
+    required: true
+  repository-id:
+    description: 'CommandCenter repository ID'
+    required: false
+  post-comment:
+    description: 'Post results as PR comment'
+    required: false
+    default: 'true'
+  fail-on-errors:
+    description: 'Fail workflow if analysis finds critical issues'
+    required: false
+    default: 'false'
+  analysis-depth:
+    description: 'Analysis depth (quick, standard, comprehensive)'
+    required: false
+    default: 'standard'
+
+outputs:
+  job-id:
+    description: 'CommandCenter job ID'
+    value: ${{ steps.analyze.outputs.job_id }}
+  status:
+    description: 'Analysis status'
+    value: ${{ steps.analyze.outputs.status }}
+  summary:
+    description: 'Analysis summary'
+    value: ${{ steps.analyze.outputs.summary }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Trigger Analysis
+      id: analyze
+      shell: bash
+      env:
+        COMMANDCENTER_URL: ${{ inputs.commandcenter-url }}
+        API_TOKEN: ${{ inputs.api-token }}
+        PROJECT_ID: ${{ inputs.project-id }}
+        REPOSITORY_ID: ${{ inputs.repository-id }}
+        ANALYSIS_DEPTH: ${{ inputs.analysis-depth }}
+      run: |
+        # Create analysis job
+        echo "Creating analysis job..."
+
+        response=$(curl -s -X POST "$COMMANDCENTER_URL/api/v1/jobs" \
+          -H "Authorization: Bearer $API_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "project_id": '"$PROJECT_ID"',
+            "job_type": "repository_analysis",
+            "parameters": {
+              "repository_id": '"${REPOSITORY_ID:-null}"',
+              "depth": "'"$ANALYSIS_DEPTH"'",
+              "commit_sha": "'"$GITHUB_SHA"'",
+              "branch": "'"$GITHUB_REF_NAME"'",
+              "pr_number": '"${GITHUB_EVENT_NUMBER:-null}"'
+            }
+          }')
+
+        job_id=$(echo "$response" | jq -r '.id')
+        echo "job_id=$job_id" >> $GITHUB_OUTPUT
+        echo "Created job: $job_id"
+
+        # Dispatch job
+        curl -s -X POST "$COMMANDCENTER_URL/api/v1/jobs/$job_id/dispatch" \
+          -H "Authorization: Bearer $API_TOKEN"
+
+        # Poll for completion
+        echo "Waiting for analysis to complete..."
+        max_wait=300  # 5 minutes
+        elapsed=0
+
+        while [ $elapsed -lt $max_wait ]; do
+          status_response=$(curl -s "$COMMANDCENTER_URL/api/v1/jobs/$job_id" \
+            -H "Authorization: Bearer $API_TOKEN")
+
+          status=$(echo "$status_response" | jq -r '.status')
+          progress=$(echo "$status_response" | jq -r '.progress')
+
+          echo "Status: $status ($progress%)"
+
+          if [ "$status" = "completed" ]; then
+            echo "Analysis completed successfully"
+            echo "status=completed" >> $GITHUB_OUTPUT
+
+            # Get summary
+            summary=$(echo "$status_response" | jq -r '.result.summary // "No summary available"')
+            echo "summary<<EOF" >> $GITHUB_OUTPUT
+            echo "$summary" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            break
+          elif [ "$status" = "failed" ]; then
+            echo "Analysis failed"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          sleep 10
+          elapsed=$((elapsed + 10))
+        done
+
+        if [ $elapsed -ge $max_wait ]; then
+          echo "Analysis timed out after $max_wait seconds"
+          echo "status=timeout" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+    - name: Post PR Comment
+      if: github.event_name == 'pull_request' && inputs.post-comment == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        JOB_ID: ${{ steps.analyze.outputs.job_id }}
+        SUMMARY: ${{ steps.analyze.outputs.summary }}
+        COMMANDCENTER_URL: ${{ inputs.commandcenter-url }}
+      run: |
+        # Create PR comment with results
+        comment_body="## CommandCenter Analysis Results
+
+        **Job ID:** $JOB_ID
+        **Status:** ✅ Completed
+
+        ### Summary
+        $SUMMARY
+
+        [View full results]($COMMANDCENTER_URL/jobs/$JOB_ID)
+
+        ---
+        _Analyzed by CommandCenter_"
+
+        # Post comment using GitHub API
+        curl -s -X POST \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/${{ github.event.pull_request.number }}/comments" \
+          -d "{\"body\": $(echo "$comment_body" | jq -Rs .)}"
+
+        echo "Posted analysis results to PR #${{ github.event.pull_request.number }}"
+
+    - name: Check for Critical Issues
+      if: inputs.fail-on-errors == 'true'
+      shell: bash
+      env:
+        COMMANDCENTER_URL: ${{ inputs.commandcenter-url }}
+        API_TOKEN: ${{ inputs.api-token }}
+        JOB_ID: ${{ steps.analyze.outputs.job_id }}
+      run: |
+        # Get job results
+        response=$(curl -s "$COMMANDCENTER_URL/api/v1/jobs/$JOB_ID" \
+          -H "Authorization: Bearer $API_TOKEN")
+
+        # Check for critical issues (customize based on your needs)
+        critical_count=$(echo "$response" | jq -r '.result.critical_issues // 0')
+
+        if [ "$critical_count" -gt 0 ]; then
+          echo "::error::Analysis found $critical_count critical issues"
+          exit 1
+        fi
+
+        echo "No critical issues found"
