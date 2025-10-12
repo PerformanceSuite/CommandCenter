@@ -29,6 +29,8 @@ Command Center supports multiple deployment strategies:
 
 ### Deployment Architecture
 
+**Phase 2 Architecture** (with async processing):
+
 ```
 ┌─────────────────┐
 │   Internet      │
@@ -39,20 +41,28 @@ Command Center supports multiple deployment strategies:
     │  :80    │
     └────┬────┘
          │
-    ┌────┴────────────────┐
-    │                     │
-┌───▼────┐         ┌──────▼──┐
-│Frontend│         │ Backend │
-│  :3000 │         │  :8000  │
-└────────┘         └─────┬───┘
-                         │
-                ┌────────┴────────┐
-                │                 │
-           ┌────▼────┐      ┌─────▼────┐
-           │PostgreSQL│      │  Redis   │
-           │  :5432  │      │  :6379   │
-           └─────────┘      └──────────┘
+    ┌────┴────────────────────────────────────┐
+    │                                          │
+┌───▼────┐         ┌──────▼──┐         ┌──────▼──────┐
+│Frontend│         │ Backend │◄────WS──┤ Celery      │
+│  :3000 │         │  :8000  │         │ Workers (4) │
+└────────┘         └─────┬───┘         └──────┬──────┘
+                         │                    │
+                ┌────────┴────────┬───────────┴──────────┐
+                │                 │                      │
+           ┌────▼────┐      ┌─────▼────┐          ┌─────▼────┐
+           │PostgreSQL│      │  Redis   │          │Celery Beat│
+           │  :5432  │      │  :6379   │          │(scheduler)│
+           └─────────┘      └──────────┘          └──────────┘
 ```
+
+**Key Components:**
+- **Backend API** (FastAPI) - REST API + WebSocket server
+- **Celery Workers** - Async task processing (4+ workers)
+- **Celery Beat** - Periodic task scheduler
+- **Redis** - Message broker + result backend
+- **PostgreSQL** - Primary database
+- **WebSocket** - Real-time job progress updates
 
 ---
 
@@ -67,12 +77,19 @@ Command Center supports multiple deployment strategies:
 - Docker 20.10+
 - Docker Compose 2.0+
 
-**Recommended:**
-- 4 CPU cores
-- 8GB RAM
-- 50GB disk space (for knowledge base)
+**Recommended (Phase 2 with Celery):**
+- 4-6 CPU cores (for Celery workers)
+- 8-12GB RAM (Celery workers + Redis)
+- 50GB disk space (for knowledge base + job results)
 - Docker 24.0+
 - Docker Compose 2.20+
+- Redis 7.0+ (required for Celery)
+
+**Phase 2 Services:**
+- **Celery Workers**: 4 concurrent workers for async jobs
+- **Celery Beat**: Periodic task scheduler
+- **Redis**: Message broker + result backend + caching
+- **WebSocket Server**: Real-time progress updates
 
 ### Software Dependencies
 
@@ -87,6 +104,8 @@ docker compose version  # 2.0+
 python --version       # Python 3.11+
 node --version         # Node.js 18+
 git --version          # Git 2.30+
+redis-cli --version    # Redis CLI (for debugging)
+celery --version       # Celery 5.3+ (for local development)
 ```
 
 ---
@@ -154,6 +173,19 @@ BACKEND_PORT=8000
 FRONTEND_PORT=3000
 POSTGRES_PORT=5432
 REDIS_PORT=6379
+```
+
+**Celery Configuration (Phase 2):**
+
+```bash
+# Celery workers
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
+CELERY_WORKER_CONCURRENCY=4
+
+# Redis
+REDIS_URL=redis://redis:6379
+REDIS_MAX_CONNECTIONS=50
 ```
 
 ### 4. Environment Variable Reference
@@ -238,6 +270,14 @@ docker compose exec backend alembic upgrade head
 - **Backend API:** http://localhost:8000
 - **API Docs:** http://localhost:8000/docs
 - **Health Check:** http://localhost:8000/health
+- **Metrics (Prometheus):** http://localhost:8000/metrics
+
+**Phase 2 Services**:
+- **Jobs API:** http://localhost:8000/api/v1/jobs
+- **WebSocket:** ws://localhost:8000/api/v1/jobs/ws/{job_id}
+- **Export API:** http://localhost:8000/api/v1/export
+- **Schedules API:** http://localhost:8000/api/v1/schedules
+- **Webhooks API:** http://localhost:8000/api/v1/webhooks
 
 ### Production Deployment
 
@@ -292,6 +332,80 @@ docker compose ps
 
 # Remove all containers and volumes (DANGER!)
 docker compose down -v
+```
+
+### Phase 2 Service Management
+
+**Celery Workers:**
+
+```bash
+# View Celery worker logs
+docker compose logs -f celery-worker
+
+# Check active tasks
+docker compose exec celery-worker celery -A app.tasks inspect active
+
+# View worker stats
+docker compose exec celery-worker celery -A app.tasks inspect stats
+
+# Restart workers (pick up new code)
+docker compose restart celery-worker
+
+# Scale workers (run 8 instead of 4)
+docker compose up -d --scale celery-worker=8
+```
+
+**Celery Beat (Scheduler):**
+
+```bash
+# View Beat scheduler logs
+docker compose logs -f celery-beat
+
+# Check scheduled tasks
+docker compose exec celery-beat celery -A app.tasks inspect scheduled
+
+# Restart Beat (reload schedule)
+docker compose restart celery-beat
+```
+
+**Redis:**
+
+```bash
+# Connect to Redis CLI
+docker compose exec redis redis-cli
+
+# Check Redis info
+docker compose exec redis redis-cli info
+
+# Monitor Redis commands (real-time)
+docker compose exec redis redis-cli monitor
+
+# Clear all Redis data (DANGER!)
+docker compose exec redis redis-cli FLUSHALL
+```
+
+**WebSocket Debugging:**
+
+```bash
+# Test WebSocket connection
+# Install wscat: npm install -g wscat
+wscat -c ws://localhost:8000/api/v1/jobs/ws/123
+
+# Monitor WebSocket connections
+docker compose logs -f backend | grep -i websocket
+```
+
+**Job Monitoring:**
+
+```bash
+# View active jobs
+curl http://localhost:8000/api/v1/jobs/active/list | jq
+
+# Get job statistics
+curl http://localhost:8000/api/v1/jobs/statistics/summary | jq
+
+# Cancel a running job
+curl -X POST http://localhost:8000/api/v1/jobs/123/cancel
 ```
 
 ---
