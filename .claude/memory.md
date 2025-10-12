@@ -225,18 +225,49 @@ Conducted comprehensive self-review of Phase 2 plan and identified critical refi
   - Security, testing, dependency analysis
   - Three execution options with recommendations
 
+**Phase 2 Revised Plan - APPROVED ✅**
+
+User selected **Option C (Hybrid)** - API-complete + MCP, defer frontend
+
+**Final Scope:**
+- ✅ All 7 core API components
+- ✅ MCP integration (8h) - Connects to Phase 1 MCP core
+- ⏳ Frontend deferred to Phase 2.5 (10h, can be parallel work)
+
+**Timeline:** 3.5 weeks (98 hours, not 108)
+- Week 1: Foundation (33h) - Jobs, Batch, Observability
+- Week 2: Integrations (43h) - Webhooks, Scheduling, Slack/Jira, MCP
+- Week 3: Export & Polish (22h) - SARIF/HTML/CSV, tests, docs
+
+**Key Revisions from Initial Plan:**
+- Webhooks: 10h → 4h (70% exists)
+- Observability: 8h → 5h (50% exists)
+- Jobs: 15h → 18h (+migrations, WebSocket)
+- Added MCP: +8h (missing from initial plan)
+- Deferred Frontend: -10h (to Phase 2.5)
+
+**Documentation Created:**
+- `docs/planning/PHASE2_REVISED_PLAN.md` (650+ lines)
+  - Week-by-week breakdown
+  - 8 components with detailed specs
+  - 4 database migrations defined
+  - Docker Compose updates specified
+  - Testing strategy detailed
+  - Critical path analysis
+
 **Session Commits:**
 - `a033a3e`: Memory.md timestamp updates
-- `f2a3d46`: Phase 2 comprehensive plan
-- *(pending)*: Phase 2 review documentation
+- `f2a3d46`: Phase 2 initial plan (500+ lines)
+- `ce7dbfb`: Phase 2 review (755 lines)
+- *(pending)*: Phase 2 revised plan (650+ lines)
 
 **Next Session Recommendation**:
-Review Phase 2 findings and choose execution option:
-1. **Option A**: Full scope (4 weeks) - Complete feature set
-2. **Option B**: Reduced scope (3 weeks) - Faster delivery
-3. **Option C**: Hybrid (3.5 weeks) - API-complete, defer frontend ← **RECOMMENDED**
-
-Then proceed with PHASE2_REVISED_PLAN.md and begin Sprint 1.1.
+Begin Phase 2 Sprint 1.1 - Async Job System:
+1. Setup Celery infrastructure (2h pre-work)
+2. Create 4 database migrations (Job, Schedule, Integration, Webhook updates)
+3. Implement job model and API
+4. Add WebSocket progress endpoint
+5. Write 25+ tests
 
 ---
 
