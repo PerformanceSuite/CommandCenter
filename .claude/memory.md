@@ -7,27 +7,31 @@
 ## 🎯 START HERE - Next Session Quick Reference
 
 ### Immediate Priority
-**🎉 Phase 2 Sprint 2.1 COMPLETE!** Enhanced webhooks fully implemented.
+**🚧 Phase 2 Sprint 2.2 IN PROGRESS** - Scheduled Analysis (4/15 hours complete)
 
-**Next: Phase 2 Sprint 2.2 - Scheduled Analysis (15 hours)**
-- Implement cron-based scheduling system
-- Add schedule management endpoints
-- Create scheduled job dispatcher
-- Implement schedule conflict detection
-- Add timezone support
-- Create schedule audit logging
+**Completed:**
+- ✅ Schedule model enhancements (timezone, audit logging)
+- ✅ ScheduleService with cron parsing (730 LOC)
+- ✅ Conflict detection and next run calculation
+
+**Next Steps:**
+- Implement schedule dispatcher Celery task
+- Create schedule management REST endpoints (CRUD)
+- Add Celery Beat integration
+- Write comprehensive tests
+- Create scheduling documentation
 
 ### Current Sprint Status
 - ✅ **Sprint 1.1**: Jobs API + Celery Workers (18h) - COMPLETE
 - ✅ **Sprint 1.2**: Batch Operations (2h actual) - COMPLETE
 - ✅ **Sprint 1.3**: Observability (5h) - COMPLETE
 - ✅ **Sprint 2.1**: Enhanced Webhooks (4h) - COMPLETE
-- 🎯 **Sprint 2.2**: Scheduled Analysis (15h) - NEXT
+- 🚧 **Sprint 2.2**: Scheduled Analysis (15h) - IN PROGRESS (4/15h)
 
 ### Git Status
 - **Branch**: main
 - **In sync with origin**: Check with `git status`
-- **Last Commit**: `c6be72a` - Sprint 2.1 Enhanced Webhooks
+- **Last Commit**: `ae7b2ef` - Sprint 2.2 Part 1 (Schedule enhancements)
 
 ### Active Issues
 - Authentication hardcoded to project_id=1 (needs middleware)
@@ -62,9 +66,13 @@
 
 ## 🏗️ Current Status - Recent Sessions
 
-### Session 30: Phase 2 Sprint 2.1 Enhanced Webhooks COMPLETE ✅
+### Session 30: Sprint 2.1 COMPLETE + Sprint 2.2 Part 1 🚧
 
 **Date**: 2025-10-12
+**Duration**: Extended session covering two sprints
+
+#### Part 1: Phase 2 Sprint 2.1 Enhanced Webhooks COMPLETE ✅
+
 **Status**: COMPLETE - 4/4 hours (100% on target)
 
 **Deliverables:**
@@ -119,9 +127,64 @@
 - Troubleshooting guide
 - Database schema reference
 
-**Commit:** `c6be72a` - feat: Phase 2 Sprint 2.1 - Enhanced Webhooks COMPLETE
+**Commits:**
+- `c6be72a` - feat: Phase 2 Sprint 2.1 - Enhanced Webhooks COMPLETE
+- `4cc236d` - docs: Update memory.md for Session 30
 
-**Phase 2 Progress:** 29/114 hours (25.4%)
+#### Part 2: Phase 2 Sprint 2.2 Scheduled Analysis IN PROGRESS 🚧
+
+**Status**: IN PROGRESS - 4/15 hours (26.7%)
+
+**Deliverables Completed:**
+- Enhanced Schedule model with timezone and audit logging
+- ScheduleService with comprehensive cron scheduling (730 LOC)
+- Database migration 012 for schedule enhancements
+
+**Schedule Model Enhancements:**
+- Added `timezone` field (IANA timezone, default UTC)
+- Added audit fields: `last_error`, `last_success_at`, `last_failure_at`
+- Updated `to_dict()` method to include new fields
+
+**ScheduleService Features (730 LOC):**
+- **Cron Parsing**: Uses croniter for expression validation and next run calculation
+- **Timezone Support**: Full pytz integration for timezone-aware scheduling
+- **Next Run Calculation**: Supports 6 frequency types:
+  - Once (one-time execution)
+  - Hourly (top of hour alignment)
+  - Daily (midnight alignment)
+  - Weekly (Monday alignment)
+  - Monthly (first day of month)
+  - Cron (custom expressions with full cron syntax)
+- **Conflict Detection**: Detects overlapping schedules with parameter matching
+- **Execution Tracking**: Records success/failure with error messages
+- **Statistics**: Aggregates runs, success rate, frequency distribution
+
+**Key Methods:**
+- `create_schedule()` - Create with validation and conflict detection
+- `update_schedule()` - Update with automatic next run recalculation
+- `execute_schedule()` - Execute via JobService and update stats
+- `get_due_schedules()` - Find schedules ready for execution
+- `record_execution_result()` - Track success/failure with audit
+- `_calculate_next_run()` - Timezone-aware next run calculation
+- `_check_conflicts()` - Parameter overlap detection
+
+**Files Created (2):**
+- `backend/app/services/schedule_service.py` (730 LOC)
+- `backend/alembic/versions/012_enhance_schedules_timezone_audit.py`
+
+**Files Modified (1):**
+- `backend/app/models/schedule.py` - Added 4 new fields
+
+**Remaining Tasks for Sprint 2.2:**
+- [ ] Implement schedule dispatcher Celery task
+- [ ] Create schedule management REST endpoints (CRUD + statistics)
+- [ ] Add Celery Beat integration for automatic execution
+- [ ] Write comprehensive tests (service + endpoints)
+- [ ] Create SCHEDULING.md documentation
+
+**Commit:** `ae7b2ef` - feat: Sprint 2.2 Part 1 - Schedule enhancements and ScheduleService
+
+**Phase 2 Progress:** 33/114 hours (28.9%)
 
 ---
 
@@ -361,7 +424,14 @@
   - ✅ Event filtering with wildcards
   - ✅ 5 delivery tracking endpoints
   - ✅ Comprehensive documentation
-- ⏳ **Sprint 2.2**: Scheduled Analysis (15h) - NEXT
+- 🚧 **Sprint 2.2**: Scheduled Analysis (15h) - IN PROGRESS (4/15h)
+  - ✅ Schedule model enhancements (timezone, audit logging)
+  - ✅ ScheduleService with cron parsing and conflict detection
+  - ⏳ Schedule dispatcher Celery task
+  - ⏳ Schedule management REST endpoints
+  - ⏳ Celery Beat integration
+  - ⏳ Comprehensive tests
+  - ⏳ Documentation
 - ⏳ **Sprint 2.3**: External Integrations (16h)
 - ⏳ **Sprint 2.4**: MCP Integration (8h)
 
@@ -372,7 +442,8 @@
 
 **Sprint 1 Total**: 25/33 hours actual (75.8% efficiency)
 **Sprint 2.1 Total**: 4/4 hours actual (100% efficiency)
-**Phase 2 Total**: 29/114 hours complete (25.4%)
+**Sprint 2.2 Total**: 4/15 hours actual (26.7% progress)
+**Phase 2 Total**: 33/114 hours complete (28.9%)
 
 ---
 
