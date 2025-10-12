@@ -2,6 +2,8 @@
 Project CRUD endpoints for multi-project isolation and project analysis
 """
 
+import os
+from pathlib import Path
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +29,57 @@ from app.schemas.project_analysis import (
 from app.services.project_analyzer import ProjectAnalyzer
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+# Security: Allowed directories for project analysis
+# Configure via environment variable or use defaults
+ALLOWED_ANALYSIS_DIRS = os.getenv(
+    "ALLOWED_ANALYSIS_DIRS",
+    "/projects,/repositories,/tmp/analysis,/workspace"
+).split(",")
+ALLOWED_ANALYSIS_DIRS = [Path(d.strip()) for d in ALLOWED_ANALYSIS_DIRS if d.strip()]
+
+
+def validate_project_path(path: str) -> Path:
+    """
+    Validate project path to prevent path traversal attacks.
+
+    Security: Ensures the project path is within allowed directories
+    to prevent unauthorized file system access.
+
+    Args:
+        path: User-provided project path
+
+    Returns:
+        Resolved Path object if valid
+
+    Raises:
+        ValueError: If path is invalid or outside allowed directories
+    """
+    try:
+        project_path = Path(path).resolve()
+    except (ValueError, RuntimeError) as e:
+        raise ValueError(f"Invalid path format: {path}") from e
+
+    # Check if path exists
+    if not project_path.exists():
+        raise ValueError(f"Path does not exist: {path}")
+
+    # Check if path is within allowed directories
+    is_allowed = any(
+        project_path.is_relative_to(allowed_dir)
+        for allowed_dir in ALLOWED_ANALYSIS_DIRS
+        if allowed_dir.exists()
+    )
+
+    if not is_allowed:
+        allowed_str = ", ".join(str(d) for d in ALLOWED_ANALYSIS_DIRS)
+        raise ValueError(
+            f"Path '{path}' is not within allowed analysis directories. "
+            f"Allowed: {allowed_str}"
+        )
+
+    return project_path
 
 
 @router.post(
@@ -213,12 +266,23 @@ async def analyze_project(
     - Technologies and frameworks
     - Code metrics and complexity
     - Research gaps and upgrade opportunities
+
+    Security: Validates project path to prevent path traversal attacks.
     """
+    # Security: Validate path before analysis
+    try:
+        validated_path = validate_project_path(request.project_path)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid project path: {str(e)}"
+        )
+
     analyzer = ProjectAnalyzer(db)
 
     try:
         result = await analyzer.analyze_project(
-            project_path=request.project_path, use_cache=request.use_cache
+            project_path=str(validated_path), use_cache=request.use_cache
         )
         return result
     except ValueError as e:

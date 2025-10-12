@@ -307,5 +307,10 @@ class MCPProtocolHandler:
             )
         else:
             # Unexpected error
+            # Security: Log full exception details for debugging, but only return
+            # error type to client to prevent information disclosure
             self._logger.exception(f"Unexpected error handling request {request_id}")
-            return self.create_internal_error(request_id, str(exception))
+            error_data = {"type": type(exception).__name__}
+            return self.create_error_response(
+                request_id, self.INTERNAL_ERROR, "Internal server error", error_data
+            )

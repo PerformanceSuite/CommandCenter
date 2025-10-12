@@ -2,12 +2,18 @@
 Configuration management for CommandCenter CLI.
 
 Handles loading, saving, and managing CLI configuration from ~/.commandcenter/config.yaml.
+
+Security: API tokens are stored securely in the system keyring, not in plain text config files.
 """
 
 from pathlib import Path
 from typing import Optional
 import yaml
+import keyring
+import logging
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 
 class APIConfig(BaseModel):
@@ -21,9 +27,75 @@ class APIConfig(BaseModel):
 
 
 class AuthConfig(BaseModel):
-    """Authentication configuration."""
+    """
+    Authentication configuration.
 
-    token: Optional[str] = Field(default=None, description="API authentication token")
+    Security Note: API tokens are stored in the system keyring for secure storage.
+    The token field is excluded from config file serialization.
+    """
+
+    # Note: token field removed - stored in keyring instead
+    # Use Config.save_token() and Config.load_token() methods
+
+    @staticmethod
+    def save_token(token: str) -> None:
+        """
+        Save API token securely to system keyring.
+
+        Args:
+            token: API authentication token
+
+        Raises:
+            keyring.errors.KeyringError: If keyring storage fails
+        """
+        try:
+            keyring.set_password("commandcenter", "api_token", token)
+            logger.info("API token saved securely to system keyring")
+        except Exception as e:
+            logger.error(f"Failed to save token to keyring: {e}")
+            raise
+
+    @staticmethod
+    def load_token() -> Optional[str]:
+        """
+        Load API token from system keyring.
+
+        Returns:
+            str or None: API token if found, None otherwise
+
+        Raises:
+            keyring.errors.KeyringError: If keyring access fails
+        """
+        try:
+            token = keyring.get_password("commandcenter", "api_token")
+            if token:
+                logger.debug("API token loaded from system keyring")
+            return token
+        except Exception as e:
+            logger.error(f"Failed to load token from keyring: {e}")
+            return None
+
+    @staticmethod
+    def delete_token() -> bool:
+        """
+        Delete API token from system keyring.
+
+        Returns:
+            bool: True if deleted, False if token didn't exist
+
+        Raises:
+            keyring.errors.KeyringError: If keyring access fails
+        """
+        try:
+            keyring.delete_password("commandcenter", "api_token")
+            logger.info("API token deleted from system keyring")
+            return True
+        except keyring.errors.PasswordDeleteError:
+            logger.debug("No token found in keyring to delete")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to delete token from keyring: {e}")
+            raise
 
 
 class OutputConfig(BaseModel):
@@ -89,6 +161,9 @@ class Config(BaseModel):
         """
         Save configuration to YAML file.
 
+        Security Note: API tokens are NOT saved to the YAML file. They are stored
+        separately in the system keyring using save_token() method.
+
         Args:
             path: Path to save configuration file
         """
@@ -147,3 +222,64 @@ class Config(BaseModel):
             Path: Default config path (~/.commandcenter/config.yaml)
         """
         return Path.home() / ".commandcenter" / "config.yaml"
+
+    # Token management convenience methods (delegate to AuthConfig)
+
+    def save_token(self, token: str) -> None:
+        """
+        Save API token securely to system keyring.
+
+        Convenience wrapper for AuthConfig.save_token().
+
+        Args:
+            token: API authentication token
+
+        Example:
+            config = Config.load(config_path)
+            config.save_token("sk-...")
+        """
+        AuthConfig.save_token(token)
+
+    def load_token(self) -> Optional[str]:
+        """
+        Load API token from system keyring.
+
+        Convenience wrapper for AuthConfig.load_token().
+
+        Returns:
+            str or None: API token if found, None otherwise
+
+        Example:
+            config = Config.load(config_path)
+            token = config.load_token()
+        """
+        return AuthConfig.load_token()
+
+    def delete_token(self) -> bool:
+        """
+        Delete API token from system keyring.
+
+        Convenience wrapper for AuthConfig.delete_token().
+
+        Returns:
+            bool: True if deleted, False if token didn't exist
+
+        Example:
+            config = Config.load(config_path)
+            config.delete_token()
+        """
+        return AuthConfig.delete_token()
+
+    def has_token(self) -> bool:
+        """
+        Check if API token exists in system keyring.
+
+        Returns:
+            bool: True if token exists, False otherwise
+
+        Example:
+            config = Config.load(config_path)
+            if not config.has_token():
+                print("Please configure your API token")
+        """
+        return self.load_token() is not None

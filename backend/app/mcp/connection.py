@@ -30,17 +30,18 @@ class MCPSession:
 
     def __init__(
         self,
-        session_id: Optional[str] = None,
         client_info: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize MCP session.
 
+        Security: Session ID is always generated server-side to prevent
+        session fixation attacks. Clients cannot provide their own session ID.
+
         Args:
-            session_id: Optional session ID (generated if not provided)
             client_info: Optional client information
         """
-        self.session_id = session_id or str(uuid4())
+        self.session_id = str(uuid4())
         self.client_info = client_info or {}
         self.created_at = datetime.utcnow()
         self.last_activity = datetime.utcnow()
