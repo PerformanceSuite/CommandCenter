@@ -1,0 +1,35 @@
+{
+  "phase": "1a",
+  "queue": [
+    {
+      "pr_number": 19,
+      "title": "Phase 1: Security Critical Fixes",
+      "priority": 1,
+      "merge_after": [],
+      "auto_merge": true,
+      "conditions": {
+        "ci_passing": true,
+        "review_score": 10,
+        "no_conflicts": true,
+        "manual_approval": false
+      },
+      "reason": "Security fixes block all production MCP deployment"
+    },
+    {
+      "pr_number": 18,
+      "title": "Phase 1: VIZTRTR MCP SDK Fixes",
+      "priority": 2,
+      "merge_after": [19],
+      "auto_merge": true,
+      "conditions": {
+        "ci_passing": true,
+        "review_score": 10,
+        "no_conflicts": true,
+        "manual_approval": false
+      },
+      "reason": "First production MCP server"
+    }
+  ],
+  "merge_strategy": "squash",
+  "auto_delete_branch": true
+}

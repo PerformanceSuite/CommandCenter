@@ -1,0 +1,20 @@
+{
+  "dependencies": {},
+  "merge_order": [
+    [
+      "knowledgebeast-review-agent",
+      "viztrtr-review-agent",
+      "agentflow-review-agent",
+      "commandcenter-integration-review-agent",
+      "mcp-architecture-security-review-agent"
+    ]
+  ],
+  "phase0_review_agents": [
+    "knowledgebeast-review-agent",
+    "viztrtr-review-agent",
+    "agentflow-review-agent",
+    "commandcenter-integration-review-agent",
+    "mcp-architecture-security-review-agent"
+  ],
+  "description": "All review agents are independent and can run in parallel. No dependencies between them."
+}

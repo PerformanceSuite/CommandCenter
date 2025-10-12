@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "testing-agent": ["backend-agent", "frontend-agent"],
+    "docs-agent": ["security-agent", "backend-agent", "rag-agent"],
+    "github-agent": ["backend-agent"]
+  },
+  "merge_order": [
+    ["security-agent", "backend-agent", "frontend-agent", "rag-agent", "devops-agent"],
+    ["github-agent"],
+    ["testing-agent"],
+    ["docs-agent"]
+  ],
+  "phase1_independent": [
+    "security-agent",
+    "backend-agent",
+    "frontend-agent",
+    "rag-agent",
+    "devops-agent"
+  ],
+  "phase2_dependent": [
+    "github-agent",
+    "testing-agent",
+    "docs-agent"
+  ],
+  "mcp_phase1_independent": [
+    "mcp-infrastructure-agent",
+    "knowledgebeast-mcp-agent",
+    "api-manager-agent"
+  ]
+}

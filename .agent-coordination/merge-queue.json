@@ -1,0 +1,147 @@
+{
+  "queue": [],
+  "merged": [
+    {
+      "agent": "security-agent",
+      "pr_number": 1,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/1",
+      "branch": "feature/security-hardening",
+      "merged_at": "2025-10-06T02:37:12Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 1931,
+        "deletions": 20,
+        "files_changed": 23
+      }
+    },
+    {
+      "agent": "backend-agent",
+      "pr_number": 2,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/2",
+      "branch": "feature/backend-architecture",
+      "merged_at": "2025-10-06T02:37:12Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 1189,
+        "deletions": 440,
+        "files_changed": 18
+      }
+    },
+    {
+      "agent": "frontend-agent",
+      "pr_number": 3,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/3",
+      "branch": "feature/frontend-improvements",
+      "merged_at": "2025-10-06T02:38:31Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 469,
+        "deletions": 172,
+        "files_changed": 12
+      }
+    },
+    {
+      "agent": "rag-agent",
+      "pr_number": 4,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/4",
+      "branch": "feature/rag-completion",
+      "merged_at": "2025-10-06T02:40:58Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 918,
+        "deletions": 5,
+        "files_changed": 7
+      },
+      "conflicts_resolved": true
+    },
+    {
+      "agent": "devops-agent",
+      "pr_number": 5,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/5",
+      "branch": "feature/devops-infrastructure",
+      "merged_at": "2025-10-06T02:43:04Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 3024,
+        "deletions": 0,
+        "files_changed": 23
+      },
+      "conflicts_resolved": true
+    },
+    {
+      "agent": "testing-agent",
+      "pr_number": 6,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/6",
+      "branch": "feature/testing-coverage",
+      "merged_at": "2025-10-06T03:26:24Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 2846,
+        "deletions": 28,
+        "files_changed": 28
+      },
+      "conflicts_resolved": true
+    },
+    {
+      "agent": "docs-agent",
+      "pr_number": 7,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/7",
+      "branch": "feature/documentation-updates",
+      "merged_at": "2025-10-06T03:26:56Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 4170,
+        "deletions": 5,
+        "files_changed": 9
+      },
+      "conflicts_resolved": false
+    },
+    {
+      "agent": "github-agent",
+      "pr_number": 8,
+      "pr_url": "https://github.com/PerformanceSuite/CommandCenter/pull/8",
+      "branch": "feature/github-optimization",
+      "merged_at": "2025-10-06T03:28:15Z",
+      "review_score": 10,
+      "changes": {
+        "insertions": 3569,
+        "deletions": 13,
+        "files_changed": 22
+      },
+      "conflicts_resolved": true
+    }
+  ],
+  "conflicts": [],
+  "phase1_summary": {
+    "total_agents": 5,
+    "total_prs_merged": 5,
+    "total_insertions": 7531,
+    "total_deletions": 637,
+    "total_files_changed": 83,
+    "all_review_scores_10": true,
+    "conflicts_encountered": 2,
+    "conflicts_resolved": 2
+  },
+  "phase2_summary": {
+    "total_agents": 3,
+    "total_prs_merged": 3,
+    "total_insertions": 10585,
+    "total_deletions": 46,
+    "total_files_changed": 59,
+    "all_review_scores_10": true,
+    "conflicts_encountered": 2,
+    "conflicts_resolved": 2
+  },
+  "overall_summary": {
+    "total_phases": 2,
+    "total_agents": 8,
+    "total_prs_merged": 8,
+    "total_insertions": 18116,
+    "total_deletions": 683,
+    "total_files_changed": 142,
+    "all_review_scores_10": true,
+    "conflicts_encountered": 4,
+    "conflicts_resolved": 4,
+    "success_rate": "100%"
+  }
+}
