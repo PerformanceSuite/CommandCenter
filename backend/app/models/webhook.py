@@ -51,6 +51,25 @@ class WebhookConfig(Base):
         DateTime, nullable=True
     )
 
+    # Delivery configuration (Phase 2 enhancements)
+    delivery_mode: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="async"
+    )  # async, sync, batch
+    retry_count: Mapped[int] = mapped_column(
+        Integer, default=3
+    )  # Number of retry attempts
+    retry_delay_seconds: Mapped[int] = mapped_column(
+        Integer, default=300
+    )  # Delay between retries (5 minutes)
+    max_delivery_time_seconds: Mapped[int] = mapped_column(
+        Integer, default=3600
+    )  # Max time for delivery (1 hour)
+
+    # Statistics
+    total_deliveries: Mapped[int] = mapped_column(Integer, default=0)
+    successful_deliveries: Mapped[int] = mapped_column(Integer, default=0)
+    failed_deliveries: Mapped[int] = mapped_column(Integer, default=0)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
