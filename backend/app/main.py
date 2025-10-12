@@ -7,16 +7,17 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 from prometheus_client import make_asgi_app
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
-from app.database import init_db, close_db
+from app.database import init_db, close_db, get_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
 from app.routers import research_orchestration, mcp, jobs, batch
@@ -120,16 +121,47 @@ instrumentator.instrument(app)
 setup_custom_metrics(app)
 
 
-# Health check endpoint
+# Health check endpoints
 @app.get("/health", tags=["health"])
 async def health_check() -> JSONResponse:
-    """Health check endpoint"""
+    """
+    Basic health check endpoint for load balancers.
+    Returns 200 if the application is running.
+    """
     return JSONResponse(
         content={
             "status": "healthy",
             "app": settings.app_name,
             "version": settings.app_version,
         }
+    )
+
+
+@app.get("/health/detailed", tags=["health"])
+async def detailed_health_check(
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """
+    Detailed health check with component status.
+    Checks PostgreSQL, Redis, and Celery workers.
+
+    Returns:
+        200: All components healthy
+        503: One or more components unhealthy
+    """
+    from app.services.health_service import health_service
+
+    health_status = await health_service.get_overall_health(db)
+
+    status_code = 200
+    if health_status["status"] == "unhealthy":
+        status_code = 503
+    elif health_status["status"] == "degraded":
+        status_code = 200  # Still return 200 for degraded (e.g., Redis disabled)
+
+    return JSONResponse(
+        content=health_status,
+        status_code=status_code,
     )
 
 
