@@ -1,7 +1,10 @@
 """
 Research Task management endpoints
 """
-
+import os
+import uuid
+from pathlib import Path
+from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -115,56 +118,7 @@ async def upload_document(
     service: ResearchService = Depends(get_research_service),
 ) -> ResearchTaskResponse:
     """Upload a document to a research task"""
-    import os
-    import uuid
-    from pathlib import Path
-
-    # Get the task to ensure it exists
-    task = await service.get_research_task(task_id)
-
-    # Create uploads directory if it doesn't exist
-    upload_dir = Path("uploads/research_tasks")
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate unique filename
-    file_extension = os.path.splitext(file.filename)[1]
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = upload_dir / unique_filename
-
-    # Save the file
-    contents = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(contents)
-
-    # Update task's uploaded_documents list
-    uploaded_documents = task.uploaded_documents or []
-    uploaded_documents.append(
-        {
-            "filename": file.filename,
-            "stored_filename": unique_filename,
-            "file_path": str(file_path),
-            "content_type": file.content_type,
-            "size": len(contents),
-            "uploaded_at": str(datetime.utcnow()),
-        }
-    )
-
-    # Import datetime at the top level
-    from datetime import datetime
-
-    # Update the task
-    from app.schemas import ResearchTaskUpdate
-
-    update_data = ResearchTaskUpdate()
-
-    # Update via repository directly since we need to update uploaded_documents
-    from app.repositories import ResearchTaskRepository
-
-    repo = ResearchTaskRepository(service.db)
-    updated_task = await repo.update(task, uploaded_documents=uploaded_documents)
-    await service.db.commit()
-    await service.db.refresh(updated_task)
-
+    updated_task = await service.upload_document_to_task(task_id, file)
     return ResearchTaskResponse.model_validate(updated_task)
 
 

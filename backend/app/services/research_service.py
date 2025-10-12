@@ -2,10 +2,12 @@
 Research task business logic service
 Handles research task operations with transaction management
 """
-
+import os
+import uuid
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ResearchTask, TaskStatus
@@ -296,6 +298,52 @@ class ResearchService:
         await self.db.refresh(task)
 
         return task
+
+    async def upload_document_to_task(
+        self, task_id: int, file: UploadFile
+    ) -> ResearchTask:
+        """
+        Upload a document and associate it with a research task.
+
+        Args:
+            task_id: The ID of the research task.
+            file: The file to upload.
+
+        Returns:
+            The updated research task.
+        """
+        task = await self.get_research_task(task_id)
+
+        upload_dir = Path("uploads/research_tasks")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        file_extension = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = upload_dir / unique_filename
+
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+
+        uploaded_documents = task.uploaded_documents or []
+        uploaded_documents.append(
+            {
+                "filename": file.filename,
+                "stored_filename": unique_filename,
+                "file_path": str(file_path),
+                "content_type": file.content_type,
+                "size": len(contents),
+                "uploaded_at": str(datetime.utcnow()),
+            }
+        )
+
+        updated_task = await self.repo.update(
+            task, uploaded_documents=uploaded_documents
+        )
+        await self.db.commit()
+        await self.db.refresh(updated_task)
+
+        return updated_task
 
     async def get_overdue_tasks(self, limit: int = 100) -> List[ResearchTask]:
         """
