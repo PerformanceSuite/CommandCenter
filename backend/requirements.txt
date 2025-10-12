@@ -61,3 +61,8 @@ toml>=0.10.2  # Parse TOML files (Cargo.toml, pyproject.toml)
 PyYAML>=6.0  # Parse YAML files (docker-compose, k8s)
 lxml>=4.9.0  # Parse XML files (pom.xml)
 packaging>=23.0  # Version comparison for research gap analysis
+
+# CLI dependencies
+click>=8.1.0
+rich>=13.0.0
+watchdog>=3.0.0  # For --watch mode
