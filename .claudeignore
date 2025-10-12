@@ -1,0 +1,92 @@
+# .claudeignore - Optimize Claude Code context usage
+
+# Archives and historical data (still in git, just excluded from Claude context)
+.claude/archives/
+*.archive.md
+*-backup.md
+
+# Large documentation files (reference as needed, but don't auto-load)
+docs/PRD.md
+docs/ARCHITECTURE.md
+docs/MCP_*.md
+docs/WORKFLOWGUARD_*.md
+docs/OBSERVER_*.md
+docs/AI_PROVIDER_*.md
+docs/AUTOMATED_*.md
+docs/DUAL_INSTANCE_*.md
+docs/archived/
+docs/experimental/
+docs/phase-reports/
+docs/planning/
+docs/reviews/
+
+# Generated/build files
+dist/
+build/
+*.pyc
+__pycache__/
+node_modules/
+coverage/
+.pytest_cache/
+htmlcov/
+*.egg-info/
+
+# Database and storage
+*.db
+*.sqlite*
+rag_storage/
+chromadb/
+uploaded_research/
+processed_docs/
+postgres_data/
+redis_data/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+.DS_Store
+
+# Docker volumes and configs
+docker-compose.override.yml
+volumes/
+backups/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.code-workspace
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Git worktrees and agent coordination
+.agent-worktrees/
+.agent-coordination/
+worktrees/
+
+# Test data and fixtures
+test-data/
+fixtures/
+*.test.json
+*.test.csv
+
+# Monitoring and metrics data
+monitoring/data/
+grafana-storage/
+prometheus-data/
+
+# Keep these documentation files for quick reference:
+# - README.md
+# - CLAUDE.md
+# - docs/API.md (when working on API)
+# - docs/DEPLOYMENT.md (when deploying)
+# - .claude/memory.md (current session context)
+# - .claude/MEMORY_MANAGEMENT.md (memory guidelines)
