@@ -72,3 +72,6 @@ textual>=0.47.0  # TUI (Text User Interface) framework
 celery==5.3.4
 flower==2.0.1
 celery-redbeat==2.2.0  # Redis-backed beat scheduler
+
+# Export formats (Sprint 3.1)
+openpyxl==3.1.2  # Excel export support
