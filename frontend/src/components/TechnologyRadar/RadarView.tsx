@@ -12,13 +12,42 @@ import { TechnologyDomain, TechnologyStatus, Technology, TechnologyCreate, Techn
 export const RadarView: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Parse URL params for filters
-  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
-  const limitFromUrl = parseInt(searchParams.get('limit') || '20', 10);
-  const domainFromUrl = searchParams.get('domain') || undefined;
-  const statusFromUrl = searchParams.get('status') || undefined;
+  // Parse and validate URL params for filters
+  // Page validation: must be positive integer, default to 1 if invalid
+  const pageFromUrl = (() => {
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    return !isNaN(page) && page > 0 ? page : 1;
+  })();
+
+  // Limit validation: must be between 1 and 100, default to 20 if invalid
+  const limitFromUrl = (() => {
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    return !isNaN(limit) && limit >= 1 && limit <= 100 ? limit : 20;
+  })();
+
+  // Domain validation: must be valid TechnologyDomain enum value, undefined if invalid
+  const domainFromUrl = (() => {
+    const domain = searchParams.get('domain');
+    return domain && Object.values(TechnologyDomain).includes(domain as TechnologyDomain)
+      ? domain
+      : undefined;
+  })();
+
+  // Status validation: must be valid TechnologyStatus enum value, undefined if invalid
+  const statusFromUrl = (() => {
+    const status = searchParams.get('status');
+    return status && Object.values(TechnologyStatus).includes(status as TechnologyStatus)
+      ? status
+      : undefined;
+  })();
+
   const searchFromUrl = searchParams.get('search') || '';
-  const viewModeFromUrl = (searchParams.get('view') as 'card' | 'matrix') || 'card';
+
+  // View mode validation: must be 'card' or 'matrix', default to 'card'
+  const viewModeFromUrl = (() => {
+    const view = searchParams.get('view');
+    return view === 'matrix' ? 'matrix' : 'card';
+  })();
 
   // Initialize filters from URL
   const [filters, setFilters] = useState<TechnologyFilters>({
@@ -115,15 +144,29 @@ export const RadarView: React.FC = () => {
     [filters, updateUrlParams]
   );
 
-  // Debounced search handler
+  // Debounced search handler with proper cleanup to prevent race conditions
+  // Use useRef to persist timer across renders and properly clear it
+  const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Clear any pending timer before setting a new one
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    searchTimerRef.current = setTimeout(() => {
       if (searchQuery !== filters.search) {
         handleFilterChange({ search: searchQuery || undefined });
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    // Cleanup function to clear timer when component unmounts or searchQuery changes
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
+    };
   }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update view mode in URL

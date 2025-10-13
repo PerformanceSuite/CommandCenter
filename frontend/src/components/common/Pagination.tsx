@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import React, { useCallback, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react';
 
 export interface PaginationProps {
   currentPage: number;
@@ -9,9 +9,11 @@ export interface PaginationProps {
   pageSize?: number;
   showPageInfo?: boolean;
   maxVisiblePages?: number;
+  isLoading?: boolean; // Loading state for page transitions
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
+// Memoize component to prevent unnecessary re-renders when parent re-renders
+export const Pagination: React.FC<PaginationProps> = React.memo(({
   currentPage,
   totalPages,
   onPageChange,
@@ -19,14 +21,10 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSize,
   showPageInfo = true,
   maxVisiblePages = 7,
+  isLoading = false,
 }) => {
-  // Don't render if there's only one page
-  if (totalPages <= 1) {
-    return null;
-  }
-
   // Calculate page range to display
-  const getPageNumbers = (): (number | 'ellipsis')[] => {
+  const getPageNumbers = useCallback((): (number | 'ellipsis')[] => {
     const pages: (number | 'ellipsis')[] = [];
 
     // Always show first page
@@ -66,20 +64,30 @@ export const Pagination: React.FC<PaginationProps> = ({
     }
 
     return pages;
-  };
+  }, [currentPage, totalPages, maxVisiblePages]);
 
-  const pageNumbers = getPageNumbers();
+  // Memoize page numbers calculation to avoid recalculation on every render
+  const pageNumbers = useMemo(() => getPageNumbers(), [getPageNumbers]);
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
-      onPageChange(page);
+  // Memoize handlePageChange to prevent function recreation on every render
+  // This is important for child components that depend on this callback
+  const handlePageChange = useCallback((page: number) => {
+    // Prevent page change if loading or page is out of bounds or same as current
+    if (isLoading || page < 1 || page > totalPages || page === currentPage) {
+      return;
     }
-  };
+    onPageChange(page);
+  }, [currentPage, totalPages, onPageChange, isLoading]);
 
   // Calculate item range
   const startItem = totalItems && pageSize ? (currentPage - 1) * pageSize + 1 : null;
   const endItem =
     totalItems && pageSize ? Math.min(currentPage * pageSize, totalItems) : null;
+
+  // Don't render if there's only one page
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
@@ -90,12 +98,18 @@ export const Pagination: React.FC<PaginationProps> = ({
             Showing <span className="font-medium">{startItem}</span> to{' '}
             <span className="font-medium">{endItem}</span> of{' '}
             <span className="font-medium">{totalItems}</span> results
+            {isLoading && (
+              <span className="ml-2 inline-flex items-center gap-1 text-primary-600">
+                <Loader2 size={14} className="animate-spin" />
+                <span className="text-xs">Loading...</span>
+              </span>
+            )}
           </p>
         </div>
       )}
 
       {/* Pagination Controls */}
-      <div className="flex flex-1 justify-between sm:justify-end items-center gap-2">
+      <div className={`flex flex-1 justify-between sm:justify-end items-center gap-2 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Previous Page Button */}
         <button
           onClick={() => handlePageChange(1)}
@@ -194,4 +208,4 @@ export const Pagination: React.FC<PaginationProps> = ({
       </div>
     </div>
   );
-};
+});

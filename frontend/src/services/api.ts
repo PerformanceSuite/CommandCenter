@@ -110,6 +110,28 @@ class ApiClient {
     const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/', {
       params: queryParams,
     });
+
+    // Validate response structure to prevent runtime errors
+    if (!response.data || typeof response.data !== 'object') {
+      throw new Error('Invalid API response: response data is missing or not an object');
+    }
+
+    const { total, items, page, page_size } = response.data;
+
+    // Validate required fields exist and have correct types
+    if (typeof total !== 'number') {
+      throw new Error('Invalid API response: total field is missing or not a number');
+    }
+    if (!Array.isArray(items)) {
+      throw new Error('Invalid API response: items field is missing or not an array');
+    }
+    if (typeof page !== 'number') {
+      throw new Error('Invalid API response: page field is missing or not a number');
+    }
+    if (typeof page_size !== 'number') {
+      throw new Error('Invalid API response: page_size field is missing or not a number');
+    }
+
     return response.data;
   }
 
