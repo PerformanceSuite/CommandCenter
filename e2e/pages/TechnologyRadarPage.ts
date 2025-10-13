@@ -135,7 +135,7 @@ export class TechnologyRadarPage extends BasePage {
       await this.fillInput('[name="vendor"]', data.vendor);
     }
     await this.selectDropdown('[name="status"]', data.status);
-    await this.fillInput('[name="relevance"]', data.relevance.toString());
+    await this.fillInput('[name="relevance_score"]', data.relevance.toString());
     if (data.description) {
       await this.fillInput('[name="description"]', data.description);
     }
