@@ -19,36 +19,119 @@ export function useTechnologies() {
   });
 
   // Create mutation
-  const createMutation = useMutation({
+  const createMutation = useMutation<
+    Technology,
+    Error,
+    TechnologyCreate,
+    { previousTechnologies?: Technology[] }
+  >({
     mutationFn: (data: TechnologyCreate) => api.createTechnology(data),
-    onSuccess: (newTechnology) => {
-      // Optimistically update the cache
-      queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) => [...old, newTechnology]);
+    onMutate: async (newData: TechnologyCreate) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+
+      // Snapshot the previous value
+      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+
+      // Optimistically add to cache with more unique temporary ID
+      queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) => [
+        ...old,
+        {
+          ...newData,
+          id: -Math.floor(Math.random() * 1000000), // Negative ID to distinguish from real IDs
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Technology,
+      ]);
+
+      // Return context with the previous state
+      return { previousTechnologies };
+    },
+    onError: (_err: Error, _newData: TechnologyCreate, context) => {
+      // Rollback on error
+      if (context?.previousTechnologies) {
+        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      }
+    },
+    onSuccess: () => {
+      // Invalidate and refetch to get server state
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 
   // Update mutation
-  const updateMutation = useMutation({
+  const updateMutation = useMutation<
+    Technology,
+    Error,
+    { id: number; data: TechnologyUpdate },
+    { previousTechnologies?: Technology[] }
+  >({
     mutationFn: ({ id, data }: { id: number; data: TechnologyUpdate }) =>
       api.updateTechnology(id, data),
-    onSuccess: (updated) => {
+    onMutate: async ({ id, data }: { id: number; data: TechnologyUpdate }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+
+      // Snapshot the previous value
+      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+
       // Optimistically update the cache
       queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) =>
-        old.map((tech) => (tech.id === updated.id ? updated : tech))
+        old.map((tech: Technology) => (tech.id === id ? { ...tech, ...data } : tech))
       );
+
+      // Return context with the previous state
+      return { previousTechnologies };
+    },
+    onError: (_err: Error, _variables: { id: number; data: TechnologyUpdate }, context) => {
+      // Rollback on error
+      if (context?.previousTechnologies) {
+        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      }
+    },
+    onSuccess: () => {
+      // Invalidate and refetch to get server state
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
 
   // Delete mutation
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<
+    void,
+    Error,
+    number,
+    { previousTechnologies?: Technology[] }
+  >({
     mutationFn: (id: number) => api.deleteTechnology(id),
-    onSuccess: (_, deletedId) => {
-      // Optimistically update the cache
+    onMutate: async (deletedId: number) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY });
+
+      // Snapshot the previous value
+      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+
+      // Optimistically remove from cache
       queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) =>
-        old.filter((tech) => tech.id !== deletedId)
+        old.filter((tech: Technology) => tech.id !== deletedId)
       );
+
+      // Return context with the previous state
+      return { previousTechnologies };
+    },
+    onError: (_err: Error, _deletedId: number, context) => {
+      // Rollback on error
+      if (context?.previousTechnologies) {
+        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      }
+    },
+    onSuccess: () => {
+      // Invalidate and refetch to get server state
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
+
+  // Composite loading state
+  const isMutating = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return {
     technologies,
@@ -62,5 +145,10 @@ export function useTechnologies() {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isMutating, // Any mutation in progress
+    // Mutation error states for components that need them
+    createError: createMutation.error,
+    updateError: updateMutation.error,
+    deleteError: deleteMutation.error,
   };
 }
