@@ -54,6 +54,17 @@ export class TechnologyRadarPage extends BasePage {
   }
 
   /**
+   * View mode buttons
+   */
+  get cardsViewButton(): Locator {
+    return this.page.getByRole('button', { name: /Cards/i });
+  }
+
+  get matrixViewButton(): Locator {
+    return this.page.getByRole('button', { name: /Matrix/i });
+  }
+
+  /**
    * Navigation
    */
   async goto(): Promise<void> {
@@ -64,8 +75,25 @@ export class TechnologyRadarPage extends BasePage {
   async waitForLoad(): Promise<void> {
     await this.main.waitFor({ state: 'visible' });
     await this.waitForLoadingComplete();
-    // Wait for chart to render
+    // Don't wait for radar chart by default since page loads in Cards view
+  }
+
+  /**
+   * Switch to matrix view to see radar chart
+   */
+  async switchToMatrixView(): Promise<void> {
+    await this.matrixViewButton.click();
+    await this.waitForLoadingComplete();
+    // Now wait for chart to render
     await this.radarChart.waitFor({ state: 'visible', timeout: 10000 });
+  }
+
+  /**
+   * Switch to cards view
+   */
+  async switchToCardsView(): Promise<void> {
+    await this.cardsViewButton.click();
+    await this.waitForLoadingComplete();
   }
 
   /**

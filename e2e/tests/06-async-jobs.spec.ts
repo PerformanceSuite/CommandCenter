@@ -66,7 +66,7 @@ test.describe('Async Jobs System', () => {
   });
 
   test('should filter jobs by status', async ({ request }) => {
-    const response = await request.get(`${apiURL}/api/v1/jobs?status=completed`);
+    const response = await request.get(`${apiURL}/api/v1/jobs?status_filter=completed`);
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();
@@ -124,7 +124,7 @@ test.describe('Async Jobs System', () => {
   });
 
   test('should get job statistics', async ({ request }) => {
-    const response = await request.get(`${apiURL}/api/v1/jobs/stats`);
+    const response = await request.get(`${apiURL}/api/v1/jobs/statistics/summary`);
     expect(response.ok()).toBeTruthy();
 
     const stats = await response.json();
@@ -208,8 +208,8 @@ test.describe('Async Jobs System', () => {
   });
 
   test('should paginate job results', async ({ request }) => {
-    // Get first page
-    const page1Response = await request.get(`${apiURL}/api/v1/jobs?page=1&limit=5`);
+    // Get first page (skip=0, limit=5)
+    const page1Response = await request.get(`${apiURL}/api/v1/jobs?skip=0&limit=5`);
     expect(page1Response.ok()).toBeTruthy();
 
     const page1Data = await page1Response.json();
@@ -217,8 +217,8 @@ test.describe('Async Jobs System', () => {
     const page1Jobs = page1Data.jobs;
 
     if (page1Jobs.length >= 5) {
-      // Get second page
-      const page2Response = await request.get(`${apiURL}/api/v1/jobs?page=2&limit=5`);
+      // Get second page (skip=5, limit=5)
+      const page2Response = await request.get(`${apiURL}/api/v1/jobs?skip=5&limit=5`);
       expect(page2Response.ok()).toBeTruthy();
 
       const page2Data = await page2Response.json();

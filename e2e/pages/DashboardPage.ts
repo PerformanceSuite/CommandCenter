@@ -62,7 +62,7 @@ export class DashboardPage extends BasePage {
   }
 
   async navigateToTechnologyRadar(): Promise<void> {
-    await this.clickSidebarLink('Technology Radar');
+    await this.clickSidebarLink('Tech Radar');
   }
 
   async navigateToResearchHub(): Promise<void> {
