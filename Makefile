@@ -125,6 +125,29 @@ test-backend: ## Run backend tests only
 test-frontend: ## Run frontend tests only
 	docker-compose exec frontend npm test
 
+test-e2e: ## Run E2E tests with Playwright
+	@echo "Running E2E tests..."
+	@if [ ! -d e2e/node_modules ]; then \
+		echo "Installing E2E dependencies..."; \
+		cd e2e && npm install && npx playwright install --with-deps; \
+	fi
+	cd e2e && npm test
+
+test-e2e-ui: ## Run E2E tests in UI mode
+	@if [ ! -d e2e/node_modules ]; then \
+		echo "Installing E2E dependencies..."; \
+		cd e2e && npm install && npx playwright install --with-deps; \
+	fi
+	cd e2e && npm run test:ui
+
+test-e2e-headed: ## Run E2E tests in headed mode (visible browser)
+	cd e2e && npm run test:headed
+
+test-e2e-debug: ## Run E2E tests in debug mode
+	cd e2e && npm run test:debug
+
+test-all: test test-e2e ## Run all tests (unit, integration, E2E)
+
 lint: ## Run linters
 	@echo "Linting backend..."
 	docker-compose exec backend black --check app/
