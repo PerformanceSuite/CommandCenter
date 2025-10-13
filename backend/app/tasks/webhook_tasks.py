@@ -7,7 +7,7 @@ import asyncio
 from typing import Dict, Any
 
 from app.tasks import celery_app
-from app.database import get_session_context
+from app.database import AsyncSessionLocal
 from app.services.webhook_service import WebhookService
 
 
@@ -59,7 +59,7 @@ async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[
     Returns:
         Delivery result dictionary
     """
-    async with get_session_context() as db:
+    async with AsyncSessionLocal() as db:
         service = WebhookService(db)
 
         try:
