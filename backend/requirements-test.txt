@@ -1,0 +1,13 @@
+# Core dependencies for testing
+sqlalchemy==2.0.25
+alembic==1.13.1
+asyncpg
+pydantic<3.0.0,>=2.5.0
+pydantic-settings<3.0.0,>=2.1.0
+greenlet
+
+# Testing
+pytest
+pytest-cov
+pytest-asyncio
+httpx

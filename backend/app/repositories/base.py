@@ -1,191 +1,114 @@
 """
-Base repository class for common database operations
+Base repository for common CRUD operations.
 """
 
-from typing import TypeVar, Generic, Type, Optional, List, Any, Dict
-from sqlalchemy import select, func, delete
+from typing import Any, Generic, Type, TypeVar
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import DeclarativeBase
 
-from app.database import Base
-
-ModelType = TypeVar("ModelType", bound=Base)
+ModelType = TypeVar("ModelType", bound=DeclarativeBase)
 
 
 class BaseRepository(Generic[ModelType]):
-    """Base repository with common CRUD operations"""
+    """
+    Generic repository for CRUD operations on a SQLAlchemy model.
+    """
 
-    def __init__(self, model: Type[ModelType], db: AsyncSession):
+    def __init__(self, model: Type[ModelType]):
         """
-        Initialize repository
+        Initialize the repository with a SQLAlchemy model.
 
         Args:
-            model: SQLAlchemy model class
-            db: Async database session
+            model: The SQLAlchemy model class
         """
         self.model = model
-        self.db = db
 
-    async def get_by_id(self, id: int) -> Optional[ModelType]:
+    async def get(self, db: AsyncSession, id: Any) -> ModelType | None:
         """
-        Get entity by ID
+        Get a single record by ID.
 
         Args:
-            id: Entity ID
+            db: The database session
+            id: The record ID
 
         Returns:
-            Entity or None if not found
+            The model instance or None if not found
         """
-        result = await self.db.execute(select(self.model).where(self.model.id == id))
+        statement = select(self.model).where(self.model.id == id)
+        result = await db.execute(statement)
         return result.scalar_one_or_none()
 
     async def get_all(
-        self, skip: int = 0, limit: int = 100, order_by: Optional[Any] = None
-    ) -> List[ModelType]:
+        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
+    ) -> list[ModelType]:
         """
-        Get all entities with pagination
+        Get all records with optional pagination.
 
         Args:
+            db: The database session
             skip: Number of records to skip
             limit: Maximum number of records to return
-            order_by: Column to order by
 
         Returns:
-            List of entities
+            A list of model instances
         """
-        query = select(self.model).offset(skip).limit(limit)
+        statement = select(self.model).offset(skip).limit(limit)
+        result = await db.execute(statement)
+        return result.scalars().all()
 
-        if order_by is not None:
-            query = query.order_by(order_by)
-        elif hasattr(self.model, "updated_at"):
-            query = query.order_by(self.model.updated_at.desc())
-
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
-
-    async def create(self, **kwargs) -> ModelType:
+    async def create(self, db: AsyncSession, *, obj_in: dict[str, Any]) -> ModelType:
         """
-        Create new entity
+        Create a new record.
 
         Args:
-            **kwargs: Entity attributes
+            db: The database session
+            obj_in: A dictionary with the data to create
 
         Returns:
-            Created entity
+            The created model instance
         """
-        entity = self.model(**kwargs)
-        self.db.add(entity)
-        await self.db.flush()
-        await self.db.refresh(entity)
-        return entity
+        db_obj = self.model(**obj_in)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
-    async def update(self, entity: ModelType, **kwargs) -> ModelType:
+    async def update(
+        self, db: AsyncSession, *, db_obj: ModelType, obj_in: dict[str, Any]
+    ) -> ModelType:
         """
-        Update entity
+        Update an existing record.
 
         Args:
-            entity: Entity to update
-            **kwargs: Attributes to update
+            db: The database session
+            db_obj: The existing model instance to update
+            obj_in: A dictionary with the data to update
 
         Returns:
-            Updated entity
+            The updated model instance
         """
-        for key, value in kwargs.items():
-            if hasattr(entity, key):
-                setattr(entity, key, value)
+        for field, value in obj_in.items():
+            setattr(db_obj, field, value)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
-        await self.db.flush()
-        await self.db.refresh(entity)
-        return entity
-
-    async def delete(self, entity: ModelType) -> None:
+    async def remove(self, db: AsyncSession, *, id: Any) -> ModelType | None:
         """
-        Delete entity
+        Remove a record by ID.
 
         Args:
-            entity: Entity to delete
-        """
-        await self.db.delete(entity)
-        await self.db.flush()
-
-    async def delete_by_id(self, id: int) -> bool:
-        """
-        Delete entity by ID
-
-        Args:
-            id: Entity ID
+            db: The database session
+            id: The record ID
 
         Returns:
-            True if deleted, False if not found
+            The removed model instance or None if not found
         """
-        result = await self.db.execute(delete(self.model).where(self.model.id == id))
-        await self.db.flush()
-        return result.rowcount > 0
-
-    async def count(self, **filters) -> int:
-        """
-        Count entities with optional filters
-
-        Args:
-            **filters: Filter conditions
-
-        Returns:
-            Count of entities
-        """
-        query = select(func.count()).select_from(self.model)
-
-        for key, value in filters.items():
-            if hasattr(self.model, key):
-                query = query.where(getattr(self.model, key) == value)
-
-        result = await self.db.execute(query)
-        return result.scalar() or 0
-
-    async def exists(self, **filters) -> bool:
-        """
-        Check if entity exists
-
-        Args:
-            **filters: Filter conditions
-
-        Returns:
-            True if exists, False otherwise
-        """
-        return await self.count(**filters) > 0
-
-    async def find_one(self, **filters) -> Optional[ModelType]:
-        """
-        Find single entity by filters
-
-        Args:
-            **filters: Filter conditions
-
-        Returns:
-            Entity or None if not found
-        """
-        query = select(self.model)
-
-        for key, value in filters.items():
-            if hasattr(self.model, key):
-                query = query.where(getattr(self.model, key) == value)
-
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def find_many(self, **filters) -> List[ModelType]:
-        """
-        Find multiple entities by filters
-
-        Args:
-            **filters: Filter conditions
-
-        Returns:
-            List of entities
-        """
-        query = select(self.model)
-
-        for key, value in filters.items():
-            if hasattr(self.model, key):
-                query = query.where(getattr(self.model, key) == value)
-
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        obj = await self.get(db, id=id)
+        if obj:
+            await db.delete(obj)
+            await db.commit()
+        return obj
