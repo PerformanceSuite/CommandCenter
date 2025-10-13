@@ -53,7 +53,6 @@ COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 COPY --chown=appuser:appuser . .
 
 # Create necessary directories and set permissions
-# No need for chmod +x if scripts/startup.sh is checked in with correct permissions
 RUN mkdir -p /app/logs /app/data && \
     chown -R appuser:appuser /app
 
@@ -66,9 +65,9 @@ ENV PATH=/home/appuser/.local/bin:$PATH
 # Expose the application port
 EXPOSE 8000
 
-# Health check
+# Health check (verify HTTP 200 status)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+    CMD ["python", "-c", "import urllib.request; resp=urllib.request.urlopen('http://localhost:8000/health'); exit(0 if resp.status==200 else 1)"]
 
 # Make startup script executable
 RUN chmod +x /app/scripts/startup.sh
