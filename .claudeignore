@@ -71,12 +71,21 @@ backups/
 .agent-worktrees/
 .agent-coordination/
 worktrees/
+worktree/
 
 # Test data and fixtures
 test-data/
 fixtures/
 *.test.json
 *.test.csv
+
+# E2E test artifacts (Playwright)
+e2e/test-results/
+e2e/test-results.json
+e2e/playwright-report/
+e2e/.auth/
+e2e/downloads/
+playwright/.cache/
 
 # Monitoring and metrics data
 monitoring/data/
