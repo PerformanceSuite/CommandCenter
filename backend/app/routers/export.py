@@ -9,7 +9,7 @@ Provides endpoints to export analysis in multiple formats:
 - JSON (raw data)
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Response
+from fastapi import APIRouter, HTTPException, Query, Depends, Response, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -76,6 +76,7 @@ def _get_analysis_data(analysis: ProjectAnalysis) -> dict:
 @limiter.limit("10/minute")
 async def export_analysis_sarif(
     analysis_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     """
@@ -135,6 +136,7 @@ async def export_analysis_sarif(
 @limiter.limit("10/minute")
 async def export_analysis_html(
     analysis_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> HTMLResponse:
     """
@@ -192,6 +194,7 @@ async def export_analysis_html(
 @limiter.limit("10/minute")
 async def export_analysis_csv(
     analysis_id: int,
+    request: Request,
     export_type: CSVExportType = Query(CSVExportType.COMBINED, description="CSV type to generate"),
     db: Session = Depends(get_db),
 ) -> Response:
@@ -248,6 +251,7 @@ async def export_analysis_csv(
 @limiter.limit("10/minute")
 async def export_analysis_excel(
     analysis_id: int,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> Response:
     """
@@ -315,6 +319,7 @@ async def export_analysis_excel(
 @limiter.limit("10/minute")
 async def export_analysis_json(
     analysis_id: int,
+    request: Request,
     pretty: bool = Query(True, description="Pretty-print JSON"),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
@@ -436,6 +441,7 @@ async def get_available_formats() -> dict:
 @router.post("/batch")
 @limiter.limit("5/minute")
 async def export_batch_analyses(
+    request: Request,
     analysis_ids: list[int],
     format: ExportFormatEnum = Query(ExportFormatEnum.JSON, description="Export format"),
     db: Session = Depends(get_db),
