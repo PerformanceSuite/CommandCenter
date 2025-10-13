@@ -112,11 +112,6 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 
 ## 📖 Documentation
 
-### Getting Started
-- [Quick Start Guide](./docs/archived/QUICK_START_PORTS.md) - Get running in 5 minutes
-- [Security Notice](./docs/archived/SECURITY_NOTICE.md) - Data isolation requirements
-- [Configuration Guide](./docs/CONFIGURATION.md) - Environment setup
-
 ### Deployment & Operations
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Complete deployment guide
 - [Data Isolation](./docs/DATA_ISOLATION.md) - Multi-project security
