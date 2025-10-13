@@ -4,57 +4,107 @@ import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/te
 
 const QUERY_KEY = ['technologies'];
 
-export function useTechnologies() {
+export interface TechnologyFilters {
+  page?: number;
+  limit?: number;
+  domain?: string;
+  status?: string;
+  search?: string;
+}
+
+export interface TechnologyListData {
+  technologies: Technology[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export function useTechnologies(filters?: TechnologyFilters) {
   const queryClient = useQueryClient();
 
-  // Fetch all technologies
+  // Fetch technologies with pagination and filters
   const {
-    data: technologies = [],
+    data,
     isLoading: loading,
     error,
     refetch: refresh,
   } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: () => api.getTechnologies(),
+    queryKey: [...QUERY_KEY, filters],
+    queryFn: async () => {
+      const response = await api.getTechnologies(filters);
+      return {
+        technologies: response.items,
+        total: response.total,
+        page: response.page,
+        pageSize: response.page_size,
+        totalPages: Math.ceil(response.total / response.page_size),
+      } as TechnologyListData;
+    },
   });
+
+  // Backwards compatibility - when no filters, return just the array
+  const technologies = data?.technologies || [];
+  const total = data?.total || 0;
+  const page = data?.page || 1;
+  const pageSize = data?.pageSize || 20;
+  const totalPages = data?.totalPages || 0;
 
   // Create mutation
   const createMutation = useMutation<
     Technology,
     Error,
     TechnologyCreate,
-    { previousTechnologies?: Technology[] }
+    { previousQueries?: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> }
   >({
     mutationFn: (data: TechnologyCreate) => api.createTechnology(data),
     onMutate: async (newData: TechnologyCreate) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for all technology queries
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
 
-      // Snapshot the previous value
-      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+      // Snapshot all existing query caches (all filter combinations)
+      const previousQueries: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> = [];
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        previousQueries.push({
+          queryKey: query.queryKey,
+          data: queryClient.getQueryData(query.queryKey),
+        });
+      });
 
-      // Optimistically add to cache with more unique temporary ID
-      queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) => [
-        ...old,
-        {
-          ...newData,
-          id: -Math.floor(Math.random() * 1000000), // Negative ID to distinguish from real IDs
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Technology,
-      ]);
+      // Optimistically update ALL cached queries with pagination structure
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        queryClient.setQueryData<TechnologyListData>(query.queryKey, (old) => {
+          if (!old) return old;
 
-      // Return context with the previous state
-      return { previousTechnologies };
+          return {
+            ...old,
+            technologies: [
+              ...old.technologies,
+              {
+                ...newData,
+                id: -Math.floor(Math.random() * 1000000), // Negative ID to distinguish from real IDs
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              } as Technology,
+            ],
+            total: old.total + 1, // Increment total count
+          };
+        });
+      });
+
+      // Return context with all previous query states
+      return { previousQueries };
     },
     onError: (_err: Error, _newData: TechnologyCreate, context) => {
-      // Rollback on error
-      if (context?.previousTechnologies) {
-        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      // Rollback all queries on error
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Invalidate and refetch to get server state
+      // Invalidate and refetch ALL technology queries to get accurate server state
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
@@ -64,33 +114,50 @@ export function useTechnologies() {
     Technology,
     Error,
     { id: number; data: TechnologyUpdate },
-    { previousTechnologies?: Technology[] }
+    { previousQueries?: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> }
   >({
     mutationFn: ({ id, data }: { id: number; data: TechnologyUpdate }) =>
       api.updateTechnology(id, data),
     onMutate: async ({ id, data }: { id: number; data: TechnologyUpdate }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for all technology queries
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
 
-      // Snapshot the previous value
-      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+      // Snapshot all existing query caches (all filter combinations)
+      const previousQueries: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> = [];
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        previousQueries.push({
+          queryKey: query.queryKey,
+          data: queryClient.getQueryData(query.queryKey),
+        });
+      });
 
-      // Optimistically update the cache
-      queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) =>
-        old.map((tech: Technology) => (tech.id === id ? { ...tech, ...data } : tech))
-      );
+      // Optimistically update ALL cached queries with pagination structure
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        queryClient.setQueryData<TechnologyListData>(query.queryKey, (old) => {
+          if (!old) return old;
 
-      // Return context with the previous state
-      return { previousTechnologies };
+          return {
+            ...old,
+            technologies: old.technologies.map((tech: Technology) =>
+              tech.id === id ? { ...tech, ...data, updated_at: new Date().toISOString() } : tech
+            ),
+          };
+        });
+      });
+
+      // Return context with all previous query states
+      return { previousQueries };
     },
     onError: (_err: Error, _variables: { id: number; data: TechnologyUpdate }, context) => {
-      // Rollback on error
-      if (context?.previousTechnologies) {
-        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      // Rollback all queries on error
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Invalidate and refetch to get server state
+      // Invalidate and refetch ALL technology queries to get accurate server state
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
@@ -100,32 +167,48 @@ export function useTechnologies() {
     void,
     Error,
     number,
-    { previousTechnologies?: Technology[] }
+    { previousQueries?: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> }
   >({
     mutationFn: (id: number) => api.deleteTechnology(id),
     onMutate: async (deletedId: number) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for all technology queries
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
 
-      // Snapshot the previous value
-      const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
+      // Snapshot all existing query caches (all filter combinations)
+      const previousQueries: Array<{ queryKey: ReadonlyArray<unknown>; data: unknown }> = [];
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        previousQueries.push({
+          queryKey: query.queryKey,
+          data: queryClient.getQueryData(query.queryKey),
+        });
+      });
 
-      // Optimistically remove from cache
-      queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) =>
-        old.filter((tech: Technology) => tech.id !== deletedId)
-      );
+      // Optimistically update ALL cached queries with pagination structure
+      queryClient.getQueryCache().findAll({ queryKey: QUERY_KEY }).forEach(query => {
+        queryClient.setQueryData<TechnologyListData>(query.queryKey, (old) => {
+          if (!old) return old;
 
-      // Return context with the previous state
-      return { previousTechnologies };
+          return {
+            ...old,
+            technologies: old.technologies.filter((tech: Technology) => tech.id !== deletedId),
+            total: Math.max(0, old.total - 1), // Decrement total count (prevent negative)
+          };
+        });
+      });
+
+      // Return context with all previous query states
+      return { previousQueries };
     },
     onError: (_err: Error, _deletedId: number, context) => {
-      // Rollback on error
-      if (context?.previousTechnologies) {
-        queryClient.setQueryData(QUERY_KEY, context.previousTechnologies);
+      // Rollback all queries on error
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     onSuccess: () => {
-      // Invalidate and refetch to get server state
+      // Invalidate and refetch ALL technology queries to get accurate server state
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
   });
@@ -138,6 +221,12 @@ export function useTechnologies() {
     loading,
     error: error as Error | null,
     refresh,
+    // Pagination metadata
+    total,
+    page,
+    pageSize,
+    totalPages,
+    // Mutation functions
     createTechnology: createMutation.mutateAsync,
     updateTechnology: (id: number, data: TechnologyUpdate) =>
       updateMutation.mutateAsync({ id, data }),

@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { useTechnologies } from '../../hooks/useTechnologies';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useTechnologies, TechnologyFilters } from '../../hooks/useTechnologies';
 import { LoadingSpinner } from '../common/LoadingSpinner';
+import { Pagination } from '../common/Pagination';
 import { TechnologyCard } from './TechnologyCard';
 import { MatrixView } from './MatrixView';
 import { TechnologyForm } from './TechnologyForm';
@@ -8,64 +10,186 @@ import { Plus, Search, Filter, AlertCircle, Grid, List } from 'lucide-react';
 import { TechnologyDomain, TechnologyStatus, Technology, TechnologyCreate, TechnologyUpdate } from '../../types/technology';
 
 export const RadarView: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse and validate URL params for filters
+  // Page validation: must be positive integer, default to 1 if invalid
+  const pageFromUrl = (() => {
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    return !isNaN(page) && page > 0 ? page : 1;
+  })();
+
+  // Limit validation: must be between 1 and 100, default to 20 if invalid
+  const limitFromUrl = (() => {
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    return !isNaN(limit) && limit >= 1 && limit <= 100 ? limit : 20;
+  })();
+
+  // Domain validation: must be valid TechnologyDomain enum value, undefined if invalid
+  const domainFromUrl = (() => {
+    const domain = searchParams.get('domain');
+    return domain && Object.values(TechnologyDomain).includes(domain as TechnologyDomain)
+      ? domain
+      : undefined;
+  })();
+
+  // Status validation: must be valid TechnologyStatus enum value, undefined if invalid
+  const statusFromUrl = (() => {
+    const status = searchParams.get('status');
+    return status && Object.values(TechnologyStatus).includes(status as TechnologyStatus)
+      ? status
+      : undefined;
+  })();
+
+  const searchFromUrl = searchParams.get('search') || '';
+
+  // View mode validation: must be 'card' or 'matrix', default to 'card'
+  const viewModeFromUrl = (() => {
+    const view = searchParams.get('view');
+    return view === 'matrix' ? 'matrix' : 'card';
+  })();
+
+  // Initialize filters from URL
+  const [filters, setFilters] = useState<TechnologyFilters>({
+    page: pageFromUrl,
+    limit: limitFromUrl,
+    domain: domainFromUrl,
+    status: statusFromUrl,
+    search: searchFromUrl || undefined,
+  });
+
   const {
     technologies,
     loading,
     error,
+    total,
+    page,
+    totalPages,
     createTechnology,
     updateTechnology,
     deleteTechnology,
     isCreating,
     isUpdating,
-  } = useTechnologies();
+  } = useTechnologies(filters);
 
   // UI State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTechnology, setEditingTechnology] = useState<Technology | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomains, setSelectedDomains] = useState<Set<TechnologyDomain>>(new Set());
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<TechnologyStatus>>(new Set());
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
+  const [selectedDomain, setSelectedDomain] = useState<string>(domainFromUrl || '');
+  const [selectedStatus, setSelectedStatus] = useState<string>(statusFromUrl || '');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'card' | 'matrix'>('card');
+  const [viewMode, setViewMode] = useState<'card' | 'matrix'>(viewModeFromUrl);
 
-  // Filter technologies
-  const filteredTechnologies = useMemo(() => {
-    return technologies.filter((tech) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-          tech.title.toLowerCase().includes(query) ||
-          tech.vendor?.toLowerCase().includes(query) ||
-          tech.description?.toLowerCase().includes(query) ||
-          tech.tags?.toLowerCase().includes(query);
-        if (!matchesSearch) return false;
+  // Update URL when filters change
+  const updateUrlParams = useCallback(
+    (newFilters: Partial<TechnologyFilters>) => {
+      const params = new URLSearchParams(searchParams);
+
+      // Update or remove parameters
+      if (newFilters.page && newFilters.page !== 1) {
+        params.set('page', newFilters.page.toString());
+      } else {
+        params.delete('page');
       }
 
-      // Domain filter
-      if (selectedDomains.size > 0 && !selectedDomains.has(tech.domain)) {
-        return false;
+      if (newFilters.limit && newFilters.limit !== 20) {
+        params.set('limit', newFilters.limit.toString());
+      } else {
+        params.delete('limit');
       }
 
-      // Status filter
-      if (selectedStatuses.size > 0 && !selectedStatuses.has(tech.status)) {
-        return false;
+      if (newFilters.domain) {
+        params.set('domain', newFilters.domain);
+      } else {
+        params.delete('domain');
       }
 
-      return true;
-    });
-  }, [technologies, searchQuery, selectedDomains, selectedStatuses]);
+      if (newFilters.status) {
+        params.set('status', newFilters.status);
+      } else {
+        params.delete('status');
+      }
 
-  // Group by domain
+      if (newFilters.search) {
+        params.set('search', newFilters.search);
+      } else {
+        params.delete('search');
+      }
+
+      if (viewMode !== 'card') {
+        params.set('view', viewMode);
+      } else {
+        params.delete('view');
+      }
+
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams, viewMode]
+  );
+
+  // Update filters and URL
+  const handleFilterChange = useCallback(
+    (newFilters: Partial<TechnologyFilters>) => {
+      const updatedFilters = {
+        ...filters,
+        ...newFilters,
+        // Reset to page 1 when changing filters (except when changing page itself)
+        page: newFilters.page !== undefined ? newFilters.page : 1,
+      };
+
+      setFilters(updatedFilters);
+      updateUrlParams(updatedFilters);
+    },
+    [filters, updateUrlParams]
+  );
+
+  // Debounced search handler with proper cleanup to prevent race conditions
+  // Use useRef to persist timer across renders and properly clear it
+  const searchTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Clear any pending timer before setting a new one
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      if (searchQuery !== filters.search) {
+        handleFilterChange({ search: searchQuery || undefined });
+      }
+    }, 500);
+
+    // Cleanup function to clear timer when component unmounts or searchQuery changes
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = null;
+      }
+    };
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update view mode in URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (viewMode !== 'card') {
+      params.set('view', viewMode);
+    } else {
+      params.delete('view');
+    }
+    setSearchParams(params, { replace: true });
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Group by domain for card view
   const groupedByDomain = useMemo(
-    () => filteredTechnologies.reduce((acc, tech) => {
+    () => technologies.reduce((acc, tech) => {
       if (!acc[tech.domain]) {
         acc[tech.domain] = [];
       }
       acc[tech.domain].push(tech);
       return acc;
-    }, {} as Record<string, typeof filteredTechnologies>),
-    [filteredTechnologies]
+    }, {} as Record<string, typeof technologies>),
+    [technologies]
   );
 
   const domainEntries = useMemo(
@@ -107,37 +231,30 @@ export const RadarView: React.FC = () => {
     }
   };
 
-  const toggleDomain = (domain: TechnologyDomain) => {
-    setSelectedDomains(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(domain)) {
-        newSet.delete(domain);
-      } else {
-        newSet.add(domain);
-      }
-      return newSet;
-    });
+  const handleDomainChange = (domain: string) => {
+    setSelectedDomain(domain);
+    handleFilterChange({ domain: domain || undefined });
   };
 
-  const toggleStatus = (status: TechnologyStatus) => {
-    setSelectedStatuses(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(status)) {
-        newSet.delete(status);
-      } else {
-        newSet.add(status);
-      }
-      return newSet;
-    });
+  const handleStatusChange = (status: string) => {
+    setSelectedStatus(status);
+    handleFilterChange({ status: status || undefined });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    handleFilterChange({ page: newPage });
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedDomains(new Set());
-    setSelectedStatuses(new Set());
+    setSelectedDomain('');
+    setSelectedStatus('');
+    handleFilterChange({ search: undefined, domain: undefined, status: undefined, page: 1 });
   };
 
-  const hasActiveFilters = searchQuery || selectedDomains.size > 0 || selectedStatuses.size > 0;
+  const hasActiveFilters = searchQuery || selectedDomain || selectedStatus;
 
   if (loading) {
     return <LoadingSpinner size="lg" className="mt-20" />;
@@ -223,7 +340,7 @@ export const RadarView: React.FC = () => {
             Filters
             {hasActiveFilters && (
               <span className="bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
-                {(selectedDomains.size + selectedStatuses.size) || ''}
+                {(selectedDomain ? 1 : 0) + (selectedStatus ? 1 : 0)}
               </span>
             )}
           </button>
@@ -232,68 +349,54 @@ export const RadarView: React.FC = () => {
         {/* Filter Panel */}
         {showFilters && (
           <div className="border-t border-gray-200 pt-4 space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-700">Domain</h3>
-                {selectedDomains.size > 0 && (
-                  <button
-                    onClick={() => setSelectedDomains(new Set())}
-                    className="text-sm text-primary-600 hover:text-primary-700"
-                  >
-                    Clear
-                  </button>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Domain Filter */}
+              <div>
+                <label htmlFor="domain-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                  Domain
+                </label>
+                <select
+                  id="domain-filter"
+                  value={selectedDomain}
+                  onChange={(e) => handleDomainChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  aria-label="Filter by domain"
+                >
+                  <option value="">All Domains</option>
+                  {Object.values(TechnologyDomain).map((domain) => (
+                    <option key={domain} value={domain}>
+                      {domain.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {Object.values(TechnologyDomain).map((domain) => (
-                  <button
-                    key={domain}
-                    onClick={() => toggleDomain(domain)}
-                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                      selectedDomains.has(domain)
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {domain.replace(/-/g, ' ').toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-700">Status</h3>
-                {selectedStatuses.size > 0 && (
-                  <button
-                    onClick={() => setSelectedStatuses(new Set())}
-                    className="text-sm text-primary-600 hover:text-primary-700"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {Object.values(TechnologyStatus).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => toggleStatus(status)}
-                    className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                      selectedStatuses.has(status)
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </button>
-                ))}
+              {/* Status Filter */}
+              <div>
+                <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  id="status-filter"
+                  value={selectedStatus}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  aria-label="Filter by status"
+                >
+                  <option value="">All Statuses</option>
+                  {Object.values(TechnologyStatus).map((status) => (
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
             {hasActiveFilters && (
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                 <p className="text-sm text-gray-600">
-                  Showing {filteredTechnologies.length} of {technologies.length} technologies
+                  Showing {technologies.length} of {total} technologies
                 </p>
                 <button
                   onClick={clearFilters}
@@ -310,102 +413,136 @@ export const RadarView: React.FC = () => {
       {/* Technologies View */}
       {viewMode === 'matrix' ? (
         /* Matrix View */
-        filteredTechnologies.length > 0 ? (
-          <MatrixView
-            technologies={filteredTechnologies}
-            onEdit={setEditingTechnology}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <div
-            className="bg-white rounded-lg shadow p-12 text-center"
-            role="status"
-            aria-live="polite"
-          >
-            {hasActiveFilters ? (
-              <>
-                <p className="text-gray-500 text-lg">No technologies match your filters</p>
-                <button
-                  onClick={clearFilters}
-                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Clear filters
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-gray-500 text-lg">No technologies tracked yet</p>
-                <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus size={20} />
-                  Add Your First Technology
-                </button>
-              </>
-            )}
-          </div>
-        )
+        <>
+          {technologies.length > 0 ? (
+            <>
+              <MatrixView
+                technologies={technologies}
+                onEdit={setEditingTechnology}
+                onDelete={handleDelete}
+              />
+              {/* Pagination for Matrix View */}
+              {totalPages > 1 && (
+                <div className="bg-white rounded-lg shadow">
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={total}
+                    pageSize={filters.limit || 20}
+                    showPageInfo={true}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <div
+              className="bg-white rounded-lg shadow p-12 text-center"
+              role="status"
+              aria-live="polite"
+            >
+              {hasActiveFilters ? (
+                <>
+                  <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    Clear filters
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                  <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Plus size={20} />
+                    Add Your First Technology
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         /* Card Grid View */
-        domainEntries.length > 0 ? (
-          domainEntries.map(([domain, techs]) => (
-            <section
-              key={domain}
-              className="bg-white rounded-lg shadow p-6"
-              aria-labelledby={`domain-${domain}-heading`}
-            >
-              <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
-                {domain.replace(/-/g, ' ')} ({techs.length})
-              </h2>
-              <div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                role="list"
-                aria-label={`Technologies in ${domain} domain`}
-              >
-                {techs.map((tech) => (
-                  <TechnologyCard
-                    key={tech.id}
-                    technology={tech}
-                    onEdit={setEditingTechnology}
-                    onDelete={handleDelete}
+        <>
+          {domainEntries.length > 0 ? (
+            <>
+              {domainEntries.map(([domain, techs]) => (
+                <section
+                  key={domain}
+                  className="bg-white rounded-lg shadow p-6"
+                  aria-labelledby={`domain-${domain}-heading`}
+                >
+                  <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
+                    {domain.replace(/-/g, ' ')} ({techs.length})
+                  </h2>
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                    role="list"
+                    aria-label={`Technologies in ${domain} domain`}
+                  >
+                    {techs.map((tech) => (
+                      <TechnologyCard
+                        key={tech.id}
+                        technology={tech}
+                        onEdit={setEditingTechnology}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+              {/* Pagination for Card View */}
+              {totalPages > 1 && (
+                <div className="bg-white rounded-lg shadow">
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={total}
+                    pageSize={filters.limit || 20}
+                    showPageInfo={true}
                   />
-                ))}
-              </div>
-            </section>
-          ))
-        ) : (
-          <div
-            className="bg-white rounded-lg shadow p-12 text-center"
-            role="status"
-            aria-live="polite"
-          >
-            {hasActiveFilters ? (
-              <>
-                <p className="text-gray-500 text-lg">No technologies match your filters</p>
-                <button
-                  onClick={clearFilters}
-                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Clear filters
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-gray-500 text-lg">No technologies tracked yet</p>
-                <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus size={20} />
-                  Add Your First Technology
-                </button>
-              </>
-            )}
-          </div>
-        )
+                </div>
+              )}
+            </>
+          ) : (
+            <div
+              className="bg-white rounded-lg shadow p-12 text-center"
+              role="status"
+              aria-live="polite"
+            >
+              {hasActiveFilters ? (
+                <>
+                  <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    Clear filters
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                  <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Plus size={20} />
+                    Add Your First Technology
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Modal */}

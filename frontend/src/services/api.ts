@@ -81,9 +81,58 @@ class ApiClient {
   }
 
   // Technologies
-  async getTechnologies(): Promise<Technology[]> {
-    const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/');
-    return response.data.items; // Extract items array from paginated response
+  async getTechnologies(params?: {
+    page?: number;
+    limit?: number;
+    domain?: string;
+    status?: string;
+    search?: string;
+  }): Promise<{ total: number; items: Technology[]; page: number; page_size: number }> {
+    const queryParams: Record<string, string | number> = {};
+
+    if (params?.page) {
+      // Backend uses 'skip' for pagination, convert page to skip
+      queryParams.skip = (params.page - 1) * (params.limit || 20);
+    }
+    if (params?.limit) {
+      queryParams.limit = params.limit;
+    }
+    if (params?.domain) {
+      queryParams.domain = params.domain;
+    }
+    if (params?.status) {
+      queryParams.status = params.status;
+    }
+    if (params?.search) {
+      queryParams.search = params.search;
+    }
+
+    const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/', {
+      params: queryParams,
+    });
+
+    // Validate response structure to prevent runtime errors
+    if (!response.data || typeof response.data !== 'object') {
+      throw new Error('Invalid API response: response data is missing or not an object');
+    }
+
+    const { total, items, page, page_size } = response.data;
+
+    // Validate required fields exist and have correct types
+    if (typeof total !== 'number') {
+      throw new Error('Invalid API response: total field is missing or not a number');
+    }
+    if (!Array.isArray(items)) {
+      throw new Error('Invalid API response: items field is missing or not an array');
+    }
+    if (typeof page !== 'number') {
+      throw new Error('Invalid API response: page field is missing or not a number');
+    }
+    if (typeof page_size !== 'number') {
+      throw new Error('Invalid API response: page_size field is missing or not a number');
+    }
+
+    return response.data;
   }
 
   async getTechnology(id: number): Promise<Technology> {
