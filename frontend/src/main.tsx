@@ -10,18 +10,35 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        const status = (error as any)?.response?.status;
+        if (status >= 400 && status < 500) {
+          return false;
+        }
+        // Retry up to 3 times for network/server errors
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
     },
     mutations: {
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors
+        const status = (error as any)?.response?.status;
+        if (status >= 400 && status < 500) {
+          return false;
+        }
+        // Retry once for network/server errors
+        return failureCount < 1;
+      },
       onError: (error: Error) => {
         // Global error handler for all mutations
         showErrorToast(formatApiError(error));
       },
     },
   },
-  queryCache: undefined,
-  mutationCache: undefined,
 });
 
 const rootElement = document.getElementById('root');

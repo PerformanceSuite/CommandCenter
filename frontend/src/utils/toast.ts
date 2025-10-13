@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast';
+import { extractErrorMessage } from '../types/api';
 
 /**
  * Utility functions for consistent toast notifications across the app
@@ -30,13 +31,6 @@ export const dismissToast = (toastId: string) => {
 
 /**
  * Format API error messages for display
+ * @deprecated Use extractErrorMessage from types/api instead
  */
-export const formatApiError = (error: unknown): string => {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === 'string') {
-    return error;
-  }
-  return 'An unexpected error occurred';
-};
+export const formatApiError = extractErrorMessage;

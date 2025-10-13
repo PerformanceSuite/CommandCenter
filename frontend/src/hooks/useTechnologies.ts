@@ -33,10 +33,15 @@ export function useTechnologies() {
       // Snapshot the previous value
       const previousTechnologies = queryClient.getQueryData<Technology[]>(QUERY_KEY);
 
-      // Optimistically add to cache
+      // Optimistically add to cache with more unique temporary ID
       queryClient.setQueryData<Technology[]>(QUERY_KEY, (old = []) => [
         ...old,
-        { ...newData, id: Date.now() } as Technology, // Temporary ID
+        {
+          ...newData,
+          id: -Math.floor(Math.random() * 1000000), // Negative ID to distinguish from real IDs
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Technology,
       ]);
 
       // Return context with the previous state
@@ -125,6 +130,9 @@ export function useTechnologies() {
     },
   });
 
+  // Composite loading state
+  const isMutating = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+
   return {
     technologies,
     loading,
@@ -137,5 +145,10 @@ export function useTechnologies() {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isMutating, // Any mutation in progress
+    // Mutation error states for components that need them
+    createError: createMutation.error,
+    updateError: updateMutation.error,
+    deleteError: deleteMutation.error,
   };
 }
