@@ -81,9 +81,36 @@ class ApiClient {
   }
 
   // Technologies
-  async getTechnologies(): Promise<Technology[]> {
-    const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/');
-    return response.data.items; // Extract items array from paginated response
+  async getTechnologies(params?: {
+    page?: number;
+    limit?: number;
+    domain?: string;
+    status?: string;
+    search?: string;
+  }): Promise<{ total: number; items: Technology[]; page: number; page_size: number }> {
+    const queryParams: Record<string, string | number> = {};
+
+    if (params?.page) {
+      // Backend uses 'skip' for pagination, convert page to skip
+      queryParams.skip = (params.page - 1) * (params.limit || 20);
+    }
+    if (params?.limit) {
+      queryParams.limit = params.limit;
+    }
+    if (params?.domain) {
+      queryParams.domain = params.domain;
+    }
+    if (params?.status) {
+      queryParams.status = params.status;
+    }
+    if (params?.search) {
+      queryParams.search = params.search;
+    }
+
+    const response = await this.client.get<{ total: number; items: Technology[]; page: number; page_size: number }>('/api/v1/technologies/', {
+      params: queryParams,
+    });
+    return response.data;
   }
 
   async getTechnology(id: number): Promise<Technology> {

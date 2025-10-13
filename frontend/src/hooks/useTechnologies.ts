@@ -4,19 +4,51 @@ import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/te
 
 const QUERY_KEY = ['technologies'];
 
-export function useTechnologies() {
+export interface TechnologyFilters {
+  page?: number;
+  limit?: number;
+  domain?: string;
+  status?: string;
+  search?: string;
+}
+
+export interface TechnologyListData {
+  technologies: Technology[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export function useTechnologies(filters?: TechnologyFilters) {
   const queryClient = useQueryClient();
 
-  // Fetch all technologies
+  // Fetch technologies with pagination and filters
   const {
-    data: technologies = [],
+    data,
     isLoading: loading,
     error,
     refetch: refresh,
   } = useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: () => api.getTechnologies(),
+    queryKey: [...QUERY_KEY, filters],
+    queryFn: async () => {
+      const response = await api.getTechnologies(filters);
+      return {
+        technologies: response.items,
+        total: response.total,
+        page: response.page,
+        pageSize: response.page_size,
+        totalPages: Math.ceil(response.total / response.page_size),
+      } as TechnologyListData;
+    },
   });
+
+  // Backwards compatibility - when no filters, return just the array
+  const technologies = data?.technologies || [];
+  const total = data?.total || 0;
+  const page = data?.page || 1;
+  const pageSize = data?.pageSize || 20;
+  const totalPages = data?.totalPages || 0;
 
   // Create mutation
   const createMutation = useMutation<
@@ -138,6 +170,12 @@ export function useTechnologies() {
     loading,
     error: error as Error | null,
     refresh,
+    // Pagination metadata
+    total,
+    page,
+    pageSize,
+    totalPages,
+    // Mutation functions
     createTechnology: createMutation.mutateAsync,
     updateTechnology: (id: number, data: TechnologyUpdate) =>
       updateMutation.mutateAsync({ id, data }),
