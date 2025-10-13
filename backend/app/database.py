@@ -44,15 +44,23 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency for getting async database sessions
 
+    IMPORTANT: This function only provides the session and handles rollback/close.
+    The service layer is responsible for calling session.commit() explicitly
+    before returning from the endpoint handler.
+
+    This ensures commits happen BEFORE the response is sent to the client,
+    preventing silent data loss if the commit fails.
+
     Usage:
         @app.get("/items")
         async def read_items(db: AsyncSession = Depends(get_db)):
-            ...
+            # ... do work ...
+            await db.commit()  # Commit explicitly in service/endpoint
+            return result
     """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise
