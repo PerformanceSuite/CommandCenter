@@ -7,7 +7,8 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, func
+from sqlalchemy import select, and_, or_, func, Integer
+import sqlalchemy as sa
 from celery.result import AsyncResult
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -175,11 +176,11 @@ class OptimizedJobService:
         # Single query for all counts using conditional aggregation
         query = select(
             func.count(Job.id).label('total'),
-            func.sum(func.cast(Job.status == JobStatus.PENDING, sa.Integer)).label('pending'),
-            func.sum(func.cast(Job.status == JobStatus.RUNNING, sa.Integer)).label('running'),
-            func.sum(func.cast(Job.status == JobStatus.COMPLETED, sa.Integer)).label('completed'),
-            func.sum(func.cast(Job.status == JobStatus.FAILED, sa.Integer)).label('failed'),
-            func.sum(func.cast(Job.status == JobStatus.CANCELLED, sa.Integer)).label('cancelled'),
+            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label('pending'),
+            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label('running'),
+            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label('completed'),
+            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label('failed'),
+            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label('cancelled'),
             func.avg(
                 func.case(
                     (Job.status == JobStatus.COMPLETED,
@@ -331,7 +332,3 @@ class OptimizedJobService:
         jobs = result.scalars().all()
 
         return {job.celery_task_id: job for job in jobs}
-
-
-# Import for compatibility
-import sqlalchemy as sa
