@@ -81,7 +81,35 @@ Create `.env` file in `e2e/` directory:
 ```bash
 BASE_URL=http://localhost:3000
 API_URL=http://localhost:8000
+CLEANUP_TEST_DATA=false  # Set to 'true' to clean up test data after tests
 ```
+
+###Database Seeding
+
+The E2E test suite automatically seeds the database with test data during global setup:
+
+- **1 Test Project**: "E2E Test Project" for isolation
+- **5 Technologies**: FastAPI, React, PostgreSQL, Celery, TypeScript
+- **2 Repositories**: tiangolo/fastapi, facebook/react (metadata only)
+- **2 Research Tasks**: Example tasks with various statuses
+
+**Seeding Behavior**:
+- Runs automatically before tests via `global-setup.ts`
+- Skips seeding if data already exists
+- Keeps data after tests (set `CLEANUP_TEST_DATA=true` to clean)
+
+**Manual Seeding**:
+```typescript
+import { seedDatabase } from './utils/seed-data';
+
+// In your test setup
+await seedDatabase(context.request);
+```
+
+**Test Data Considerations**:
+- Export tests expect analysis data (currently skip if missing - this is expected)
+- Projects/Technologies tests use seeded data
+- Tests are designed to skip gracefully when data is unavailable
 
 ## Running Tests
 

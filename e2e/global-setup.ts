@@ -1,4 +1,5 @@
 import { chromium, FullConfig } from '@playwright/test';
+import { seedDatabase, verifyDatabaseReady } from './utils/seed-data';
 
 /**
  * Global Setup - Runs once before all tests
@@ -6,7 +7,7 @@ import { chromium, FullConfig } from '@playwright/test';
  * Responsibilities:
  * - Verify services are healthy
  * - Setup test database state
- * - Clear any stale test data
+ * - Seed database with test data
  * - Initialize authentication state
  */
 async function globalSetup(config: FullConfig) {
@@ -47,8 +48,18 @@ async function globalSetup(config: FullConfig) {
 
     console.log('✓ Frontend is accessible');
 
-    // 3. Setup test data via API (optional - can be enabled later)
-    // await setupTestDatabase(page, apiURL);
+    // 3. Setup test database with seed data
+    console.log('✓ Setting up test database...');
+
+    // Check if database already has data
+    const hasData = await verifyDatabaseReady(context.request);
+
+    if (!hasData) {
+      console.log('  Database is empty, seeding with test data...');
+      await seedDatabase(context.request);
+    } else {
+      console.log('  Database already has test data, skipping seed');
+    }
 
     console.log('✅ E2E test setup complete\n');
 
