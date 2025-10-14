@@ -74,23 +74,23 @@ class TechnologyRepository(BaseRepository[Technology]):
         )
         return list(result.scalars().all())
 
-    async def search(
+    async def list_with_filters(
         self,
-        search_term: str,
-        domain: Optional[TechnologyDomain] = None,
-        status: Optional[TechnologyStatus] = None,
         skip: int = 0,
         limit: int = 100,
+        search_term: Optional[str] = None,
+        domain: Optional[TechnologyDomain] = None,
+        status: Optional[TechnologyStatus] = None,
     ) -> tuple[List[Technology], int]:
         """
-        Search technologies with filters
+        List technologies with optional filters (consolidates all list/search methods)
 
         Args:
-            search_term: Search term for title, description, tags
-            domain: Optional domain filter
-            status: Optional status filter
             skip: Number of records to skip
             limit: Maximum number of records to return
+            search_term: Optional search term for title, description, tags
+            domain: Optional domain filter
+            status: Optional status filter
 
         Returns:
             Tuple of (list of technologies, total count)
@@ -137,6 +137,35 @@ class TechnologyRepository(BaseRepository[Technology]):
         technologies = list(result.scalars().all())
 
         return technologies, total
+
+    async def search(
+        self,
+        search_term: str,
+        domain: Optional[TechnologyDomain] = None,
+        status: Optional[TechnologyStatus] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> tuple[List[Technology], int]:
+        """
+        Search technologies with filters (delegates to list_with_filters)
+
+        Args:
+            search_term: Search term for title, description, tags
+            domain: Optional domain filter
+            status: Optional status filter
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+
+        Returns:
+            Tuple of (list of technologies, total count)
+        """
+        return await self.list_with_filters(
+            skip=skip,
+            limit=limit,
+            search_term=search_term,
+            domain=domain,
+            status=status,
+        )
 
     async def get_high_priority(
         self, min_priority: int = 4, limit: int = 10

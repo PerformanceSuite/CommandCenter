@@ -46,26 +46,14 @@ class TechnologyService:
         Returns:
             Tuple of (list of technologies, total count)
         """
-        if search:
-            return await self.repo.search(
-                search_term=search,
-                domain=domain,
-                status=status_filter,
-                skip=skip,
-                limit=limit,
-            )
-        elif domain:
-            technologies = await self.repo.list_by_domain(domain, skip, limit)
-            total = await self.repo.count(domain=domain)
-            return technologies, total
-        elif status_filter:
-            technologies = await self.repo.list_by_status(status_filter, skip, limit)
-            total = await self.repo.count(status=status_filter)
-            return technologies, total
-        else:
-            technologies = await self.repo.get_all(skip, limit)
-            total = await self.repo.count()
-            return technologies, total
+        # Use consolidated list_with_filters method (Rec 2.3: eliminates redundant queries)
+        return await self.repo.list_with_filters(
+            skip=skip,
+            limit=limit,
+            search_term=search,
+            domain=domain,
+            status=status_filter,
+        )
 
     async def get_technology(self, technology_id: int) -> Technology:
         """
@@ -108,14 +96,25 @@ class TechnologyService:
 
         Args:
             technology_data: Technology creation data
-            project_id: Project ID for isolation (default: 1)
+            project_id: Project ID for isolation
+                       TODO (Rec 2.4): Replace default with authenticated user's project_id
+                       Once auth middleware is implemented, make this required and validate
+                       against user's permissions to prevent cross-project data creation
 
         Returns:
             Created technology
 
         Raises:
-            HTTPException: If technology with same title exists
+            HTTPException: If technology with same title exists or invalid project_id
         """
+        # TODO (Rec 2.4): Validate project_id against authenticated user's permissions
+        # For now, require explicit project_id (no default)
+        if project_id <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid project_id. Must be a positive integer.",
+            )
+
         # Check if technology with same title exists
         existing = await self.repo.get_by_title(technology_data.title)
 
@@ -139,7 +138,7 @@ class TechnologyService:
         self, technology_id: int, technology_data: TechnologyUpdate
     ) -> Technology:
         """
-        Update technology
+        Update technology (optimized to reduce redundant DB calls - Rec 2.5)
 
         Args:
             technology_id: Technology ID
@@ -149,9 +148,15 @@ class TechnologyService:
             Updated technology
 
         Raises:
-            HTTPException: If technology not found
+            HTTPException: If technology not found or title conflict
         """
-        technology = await self.get_technology(technology_id)
+        # Fetch technology once
+        technology = await self.repo.get_by_id(technology_id)
+        if not technology:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Technology {technology_id} not found",
+            )
 
         # Check if title is being changed and new title already exists
         if technology_data.title and technology_data.title != technology.title:
@@ -162,9 +167,10 @@ class TechnologyService:
                     detail=f"Technology '{technology_data.title}' already exists",
                 )
 
-        # Update fields
+        # Update fields directly on the fetched object (single query)
         update_data = technology_data.model_dump(exclude_unset=True)
-        technology = await self.repo.update(technology, **update_data)
+        for key, value in update_data.items():
+            setattr(technology, key, value)
 
         await self.db.commit()
         await self.db.refresh(technology)
