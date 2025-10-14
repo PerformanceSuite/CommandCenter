@@ -89,8 +89,9 @@ export abstract class BasePage {
   /**
    * Form interaction helpers
    */
-  async fillInput(selector: string, value: string): Promise<void> {
+  async fillInput(selector: string, value: string, timeout: number = 15000): Promise<void> {
     const input = this.page.locator(selector);
+    await input.waitFor({ state: 'visible', timeout });
     await input.clear();
     await input.fill(value);
   }
@@ -99,8 +100,10 @@ export abstract class BasePage {
     await this.page.locator(selector).selectOption(value);
   }
 
-  async clickButton(text: string): Promise<void> {
-    await this.page.getByRole('button', { name: text }).click();
+  async clickButton(text: string, timeout: number = 15000): Promise<void> {
+    const button = this.page.getByRole('button', { name: new RegExp(text, 'i') });
+    await button.waitFor({ state: 'visible', timeout });
+    await button.click();
   }
 
   /**

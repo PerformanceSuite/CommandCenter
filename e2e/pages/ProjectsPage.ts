@@ -51,7 +51,12 @@ export class ProjectsPage extends BasePage {
    */
   async clickAddProject(): Promise<void> {
     await this.addProjectButton.click();
-    await this.projectForm.waitFor({ state: 'visible' });
+    // Wait for modal to appear
+    await this.projectForm.waitFor({ state: 'visible', timeout: 15000 });
+    // Wait for form inputs to be ready
+    await this.page.locator('[name="name"]').waitFor({ state: 'visible', timeout: 15000 });
+    // Small delay for any animations
+    await this.page.waitForTimeout(300);
   }
 
   async createProject(data: {
@@ -60,12 +65,22 @@ export class ProjectsPage extends BasePage {
   }): Promise<void> {
     await this.clickAddProject();
 
-    await this.fillInput('[name="name"]', data.name);
+    // Wait for inputs to be ready and fill them
+    const nameInput = this.page.locator('[name="name"]');
+    await nameInput.waitFor({ state: 'visible', timeout: 15000 });
+    await nameInput.fill(data.name);
+
     if (data.description) {
-      await this.fillInput('[name="description"]', data.description);
+      const descInput = this.page.locator('[name="description"]');
+      await descInput.waitFor({ state: 'visible', timeout: 15000 });
+      await descInput.fill(data.description);
     }
 
-    await this.clickButton('Save');
+    // Wait for submit button and click
+    const submitButton = this.page.getByRole('button', { name: /Create Project|Update Project/i });
+    await submitButton.waitFor({ state: 'visible', timeout: 15000 });
+    await submitButton.click();
+
     await this.waitForApiResponse('/api/v1/projects');
     await this.waitForLoadingComplete();
   }
