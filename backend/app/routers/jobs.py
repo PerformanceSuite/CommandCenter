@@ -10,6 +10,7 @@ import json
 
 from app.database import get_db
 from app.services.job_service import JobService
+from app.services.optimized_job_service import OptimizedJobService
 from app.schemas import (
     JobCreate,
     JobUpdate,
@@ -77,9 +78,11 @@ async def list_jobs(
     List jobs with optional filters.
 
     Returns paginated list of jobs with filters for project, status, and type.
+    Uses optimized single-query pagination to avoid N+1 pattern.
     """
-    service = JobService(db)
-    jobs = await service.list_jobs(
+    # Use optimized service to get jobs and count in single query
+    service = OptimizedJobService(db)
+    jobs, total = await service.list_jobs_with_count(
         project_id=project_id,
         status_filter=status_filter,
         job_type=job_type,
@@ -87,18 +90,9 @@ async def list_jobs(
         limit=limit,
     )
 
-    # Get total count (without pagination)
-    all_jobs = await service.list_jobs(
-        project_id=project_id,
-        status_filter=status_filter,
-        job_type=job_type,
-        skip=0,
-        limit=10000,  # Large limit to get all
-    )
-
     return JobListResponse(
         jobs=[JobResponse.model_validate(job) for job in jobs],
-        total=len(all_jobs),
+        total=total,
         skip=skip,
         limit=limit,
     )
@@ -307,9 +301,11 @@ async def get_job_statistics(
 
     Returns aggregated statistics including total jobs, jobs by status,
     success rate, and average duration.
+    Uses optimized aggregation queries instead of loading all records.
     """
-    service = JobService(db)
-    stats = await service.get_statistics(project_id=project_id)
+    # Use optimized service for statistics calculation
+    service = OptimizedJobService(db)
+    stats = await service.get_statistics_optimized(project_id=project_id)
     return JobStatisticsResponse(**stats)
 
 
