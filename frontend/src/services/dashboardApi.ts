@@ -1,6 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Use relative URL so it works with any port configuration
+// Nginx will proxy /api requests to the backend container
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export interface DashboardStats {
   repositories: {
