@@ -13,8 +13,8 @@ from app.models import Project
 class SetupService:
     """Service for setting up new CommandCenter instances"""
 
-    # Local CommandCenter source (with latest updates)
-    CC_SOURCE = "/Users/danielconnolly/Projects/CommandCenter"
+    # CommandCenter source (mounted in container at /projects)
+    CC_SOURCE = "/projects/CommandCenter"
 
     async def setup_commandcenter(self, project: Project) -> None:
         """
