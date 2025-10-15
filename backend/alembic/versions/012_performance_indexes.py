@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '012_performance_indexes'
-down_revision: Union[str, Sequence[str], None] = '011_add_webhook_deliveries_table'
+down_revision: Union[str, Sequence[str], None] = '011_add_webhook_deliveries'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -100,11 +100,11 @@ def upgrade() -> None:
             unique=False
         )
 
-    # Add index for research tasks filtering
+    # Add index for research tasks filtering (only on status, priority column doesn't exist)
     op.create_index(
-        'idx_research_tasks_status_priority',
+        'idx_research_tasks_status',
         'research_tasks',
-        ['status', 'priority'],
+        ['status'],
         unique=False
     )
 
@@ -167,7 +167,7 @@ def downgrade() -> None:
 
     # Drop cross-database indexes
     op.drop_index('idx_jobs_project_type_status', table_name='jobs')
-    op.drop_index('idx_research_tasks_status_priority', table_name='research_tasks')
+    op.drop_index('idx_research_tasks_status', table_name='research_tasks')
 
     # Drop knowledge entries index if table exists
     if op.get_bind().dialect.has_table(op.get_bind(), 'knowledge_entries'):
