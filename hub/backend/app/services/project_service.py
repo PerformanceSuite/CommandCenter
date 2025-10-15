@@ -240,7 +240,7 @@ class ProjectService:
                         )
 
                     subprocess.run(
-                        ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "down", "-v"],
+                        ["docker-compose", "-f", compose_file, "down", "-v"],
                         cwd=project.cc_path,
                         capture_output=True,
                         timeout=60,
