@@ -385,7 +385,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
           {onEdit && (
             <button
               onClick={() => onEdit(technology)}
-              className="px-3 py-1.5 text-sm text-slate-300 bg-white border border-gray-300 rounded hover:bg-slate-900 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 text-sm text-slate-300 bg-slate-800 border-gray-300 rounded hover:bg-slate-900 transition-colors flex items-center gap-1"
               aria-label="Edit technology"
             >
               <Edit2 size={14} />
@@ -395,7 +395,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
           {onDelete && !showDeleteConfirm && (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-3 py-1.5 text-sm text-red-600 bg-white border border-red-300 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 text-sm text-red-600 bg-slate-800 border-red-300 rounded hover:bg-red-50 transition-colors flex items-center gap-1"
               aria-label="Delete technology"
             >
               <Trash2 size={14} />

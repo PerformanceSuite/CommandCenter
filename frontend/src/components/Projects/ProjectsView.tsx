@@ -101,7 +101,7 @@ export const ProjectsView = () => {
       {/* Project Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold mb-4">
               {editingProject ? 'Edit Project' : 'Create New Project'}
             </h3>
@@ -133,7 +133,7 @@ export const ProjectsView = () => {
           {projects.map((project) => (
             <div
               key={project.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
+              className="bg-slate-800 border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
               onMouseEnter={() => !projectStats[project.id] && loadProjectStats(project.id)}
             >
               {/* Project Header */}

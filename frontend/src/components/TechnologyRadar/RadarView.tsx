@@ -333,7 +333,7 @@ export const RadarView: React.FC = () => {
             className={`px-4 py-2 border rounded-md transition-colors flex items-center gap-2 ${
               showFilters || hasActiveFilters
                 ? 'bg-primary-50 border-primary-300 text-primary-700'
-                : 'bg-white border-gray-300 text-slate-300 hover:bg-slate-900'
+                : 'bg-slate-800 border border-slate-700-gray-300 text-slate-300 hover:bg-slate-900'
             }`}
           >
             <Filter size={20} />

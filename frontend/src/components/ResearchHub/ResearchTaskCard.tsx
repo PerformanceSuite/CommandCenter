@@ -74,7 +74,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
+    <div className="bg-slate-800 border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
