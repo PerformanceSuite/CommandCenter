@@ -121,8 +121,8 @@ const ResearchHubView: React.FC = () => {
         }
 
         .tab-button.active {
-          color: #3b82f6;
-          border-bottom-color: #3b82f6;
+          color: #2563eb;
+          border-bottom-color: #2563eb;
         }
 
         .tab-content {

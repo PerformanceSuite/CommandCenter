@@ -24,26 +24,27 @@ const navItems: NavItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  // Get project name from environment variable (set by Hub during deployment)
-  const projectName = import.meta.env.VITE_PROJECT_NAME || 'Command Center';
-
   return (
     <aside
       className="w-64 bg-gray-900 text-white h-screen fixed left-0 top-0 flex flex-col"
       aria-label="Main navigation"
       role="complementary"
     >
-      <div className="p-6 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <Terminal size={32} className="text-primary-400" aria-hidden="true" />
-          <div>
-            <h1 className="text-xl font-bold">{projectName}</h1>
-            <p className="text-xs text-gray-400">Command Center</p>
-          </div>
-        </div>
+      {/* Logo/Hub Link - Aligns with header */}
+      <div className="px-6 py-3 flex items-center">
+        <a
+          href="http://localhost:9000"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          aria-label="Back to Command Center Hub"
+        >
+          <Terminal size={24} className="text-primary-400" aria-hidden="true" />
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent whitespace-nowrap leading-none">
+            Command Center
+          </h1>
+        </a>
       </div>
 
-      <nav className="flex-1 px-4 py-6" aria-label="Primary navigation">
+      <nav className="flex-1 px-4 pt-6 pb-6" aria-label="Primary navigation">
         <ul className="space-y-2" role="list">
           {navItems.map((item) => (
             <li key={item.to}>
@@ -75,7 +76,7 @@ export const Sidebar: React.FC = () => {
       <div className="p-4 border-t border-gray-800" role="contentinfo">
         <div className="text-xs text-gray-400">
           <p>Version 0.1.0</p>
-          <p className="mt-1">Performia &copy; 2025</p>
+          <p className="mt-1">&copy; 2025</p>
         </div>
       </div>
     </aside>

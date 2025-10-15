@@ -1,38 +1,22 @@
-import React, { useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Settings } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-
-  const pageTitle = useMemo(() => {
-    const path = location.pathname;
-    if (path === '/') return 'Dashboard';
-    if (path === '/projects') return 'Projects';
-    if (path === '/radar') return 'Technology Radar';
-    if (path === '/research') return 'Research Hub';
-    if (path === '/knowledge') return 'Knowledge Base';
-    if (path === '/settings') return 'Settings';
-    return 'Command Center';
-  }, [location.pathname]);
-
-  const currentDate = useMemo(
-    () => new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }),
-    []
-  );
+  const projectName = import.meta.env.VITE_PROJECT_NAME || '';
 
   return (
-    <header className="bg-primary-600 px-6 py-3" role="banner">
-      <div className="flex items-center justify-end">
+    <header className="bg-slate-900 py-3" role="banner">
+      <div className="flex items-center justify-between px-6">
+        {/* Project Name - Extra left padding to align with content */}
+        {projectName && (
+          <h2 className="text-3xl font-bold text-white pl-8">{projectName}</h2>
+        )}
+        <div className={projectName ? '' : 'ml-auto'}></div>
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
           <button
-            className="p-2 text-white hover:bg-primary-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
+            className="p-2 text-white hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900"
             aria-label="Notifications"
             type="button"
           >
@@ -40,7 +24,7 @@ export const Header: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/settings')}
-            className="p-2 text-white hover:bg-primary-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
+            className="p-2 text-white hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900"
             aria-label="Settings"
             type="button"
           >

@@ -203,9 +203,9 @@ const TechnologyDeepDiveForm: React.FC = () => {
         .form-group input[type="number"] {
           width: 100%;
           padding: 0.625rem;
-          background: white;
-          border: 1px solid #d1d5db;
-          color: #1f2937;
+          background: #0f172a;
+          border: 1px solid #475569;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 1rem;
           transition: border-color 0.2s;
@@ -213,14 +213,18 @@ const TechnologyDeepDiveForm: React.FC = () => {
 
         .form-group input:focus {
           outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
         .form-group input:disabled {
-          background: #f3f4f6;
+          background: #1e293b;
           cursor: not-allowed;
           opacity: 0.6;
+        }
+
+        .form-group input::placeholder {
+          color: #64748b;
         }
 
         .form-group small {

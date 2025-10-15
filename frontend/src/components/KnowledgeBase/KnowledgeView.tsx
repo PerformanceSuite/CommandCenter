@@ -152,7 +152,7 @@ export const KnowledgeView: React.FC = () => {
             id="collection"
             value={currentCollection}
             onChange={(e) => handleCollectionChange(e.target.value)}
-            className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             {collections.map((coll) => (
               <option key={coll} value={coll}>
@@ -176,7 +176,7 @@ export const KnowledgeView: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Search knowledge base using natural language..."
-              className="w-full pl-10 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-slate-900 text-white placeholder-slate-400 border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
               aria-label="Search query"
               aria-describedby="search-hint"
             />
@@ -196,7 +196,7 @@ export const KnowledgeView: React.FC = () => {
         </div>
 
         {/* Search Mode Controls */}
-        <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-gray-200">
+        <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Search Mode Selector */}
             <div>

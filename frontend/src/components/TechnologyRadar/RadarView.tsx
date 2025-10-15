@@ -276,7 +276,7 @@ export const RadarView: React.FC = () => {
     <div className="space-y-6">
       {/* Header with View Toggle and Create Button */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Technology Radar</h1>
+        <h1 className="text-3xl font-bold text-white">Technology Radar</h1>
         <div className="flex items-center gap-3">
           {/* View Mode Toggle */}
           <div className="flex items-center bg-slate-800 rounded-md p-1">
@@ -319,21 +319,21 @@ export const RadarView: React.FC = () => {
       <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
             <input
               type="text"
               placeholder="Search technologies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-slate-900 text-white placeholder-slate-400 border border-slate-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`px-4 py-2 border rounded-md transition-colors flex items-center gap-2 ${
               showFilters || hasActiveFilters
-                ? 'bg-primary-50 border-primary-300 text-primary-700'
-                : 'bg-slate-800 border border-slate-700-gray-300 text-slate-300 hover:bg-slate-900'
+                ? 'bg-primary-600 border-primary-600 text-white'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
             }`}
           >
             <Filter size={20} />
@@ -348,7 +348,7 @@ export const RadarView: React.FC = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="border-t border-gray-200 pt-4 space-y-4">
+          <div className="border-t border-slate-600 pt-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Domain Filter */}
               <div>
@@ -359,7 +359,7 @@ export const RadarView: React.FC = () => {
                   id="domain-filter"
                   value={selectedDomain}
                   onChange={(e) => handleDomainChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-slate-900 text-white border border-slate-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   aria-label="Filter by domain"
                 >
                   <option value="">All Domains</option>
@@ -380,7 +380,7 @@ export const RadarView: React.FC = () => {
                   id="status-filter"
                   value={selectedStatus}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-slate-900 text-white border border-slate-600 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   aria-label="Filter by status"
                 >
                   <option value="">All Statuses</option>
@@ -394,13 +394,13 @@ export const RadarView: React.FC = () => {
             </div>
 
             {hasActiveFilters && (
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-600">
                 <p className="text-sm text-slate-400">
                   Showing {technologies.length} of {total} technologies
                 </p>
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm text-primary-400 hover:text-primary-300 font-medium"
                 >
                   Clear all filters
                 </button>

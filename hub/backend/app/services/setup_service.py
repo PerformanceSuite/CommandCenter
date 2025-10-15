@@ -13,20 +13,20 @@ from app.models import Project
 class SetupService:
     """Service for setting up new CommandCenter instances"""
 
-    # Repository to clone
-    CC_REPO = "https://github.com/PerformanceSuite/CommandCenter.git"
+    # Local CommandCenter source (with latest updates)
+    CC_SOURCE = "/Users/danielconnolly/Projects/CommandCenter"
 
     async def setup_commandcenter(self, project: Project) -> None:
         """
         Setup CommandCenter for a project
 
         Steps:
-        1. Clone CommandCenter repository
+        1. Copy CommandCenter from local source
         2. Create .env file with unique configuration
         3. Create necessary directories
         """
-        # Clone CommandCenter
-        await self._clone_commandcenter(project.cc_path)
+        # Copy CommandCenter from local source
+        await self._copy_commandcenter(project.cc_path)
 
         # Generate .env file
         await self._generate_env_file(project)
@@ -34,29 +34,44 @@ class SetupService:
         # Create data directories
         await self._create_directories(project.cc_path)
 
-    async def _clone_commandcenter(self, cc_path: str) -> None:
-        """Clone CommandCenter repository"""
+    async def _copy_commandcenter(self, cc_path: str) -> None:
+        """Copy CommandCenter from local source"""
         if os.path.exists(cc_path):
             # Already exists, skip
             return
 
-        # Get parent directory
-        parent = str(Path(cc_path).parent)
+        # Ensure source exists
+        if not os.path.exists(self.CC_SOURCE):
+            raise RuntimeError(f"CommandCenter source not found at {self.CC_SOURCE}")
 
         try:
+            # Use rsync to copy, excluding .git, node_modules, venv, etc.
             result = subprocess.run(
-                ["git", "clone", self.CC_REPO, "commandcenter"],
-                cwd=parent,
+                [
+                    "rsync",
+                    "-av",
+                    "--exclude=.git",
+                    "--exclude=node_modules",
+                    "--exclude=venv",
+                    "--exclude=__pycache__",
+                    "--exclude=*.pyc",
+                    "--exclude=.env",
+                    "--exclude=rag_storage",
+                    "--exclude=backups",
+                    "--exclude=hub",
+                    f"{self.CC_SOURCE}/",
+                    cc_path,
+                ],
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout for clone
+                timeout=300,
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"Failed to clone CommandCenter: {result.stderr}")
+                raise RuntimeError(f"Failed to copy CommandCenter: {result.stderr}")
 
         except Exception as e:
-            raise RuntimeError(f"Failed to clone CommandCenter: {str(e)}")
+            raise RuntimeError(f"Failed to copy CommandCenter: {str(e)}")
 
     async def _generate_env_file(self, project: Project) -> None:
         """Generate .env file with project-specific configuration"""

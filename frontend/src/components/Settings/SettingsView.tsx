@@ -65,7 +65,7 @@ export const SettingsView: React.FC = () => {
           {apiKeys.map((apiKey) => (
             <div
               key={apiKey.key}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+              className="flex items-center justify-between p-4 border border-slate-700 rounded-lg"
             >
               <div className="flex items-center gap-3">
                 {apiKey.configured ? (
@@ -97,9 +97,9 @@ export const SettingsView: React.FC = () => {
             </div>
           ))}
         </div>
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> To configure API keys, update the backend <code className="bg-blue-100 px-1 rounded">.env</code> file and restart the services.
+        <div className="mt-4 p-3 bg-primary-900/30 border border-primary-700 rounded-lg">
+          <p className="text-sm text-primary-200">
+            <strong>Note:</strong> To configure API keys, update the backend <code className="bg-primary-800 px-1 rounded">.env</code> file and restart the services.
           </p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export const SettingsView: React.FC = () => {
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               readOnly
               value={import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}
             />
@@ -137,7 +137,7 @@ export const SettingsView: React.FC = () => {
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               readOnly
               value={import.meta.env.MODE || 'development'}
             />
@@ -157,11 +157,11 @@ export const SettingsView: React.FC = () => {
               Theme
             </label>
             <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              defaultValue="light"
+              className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              defaultValue="dark"
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark (Coming Soon)</option>
+              <option value="dark">Dark</option>
+              <option value="light">Light (Coming Soon)</option>
               <option value="auto">Auto (Coming Soon)</option>
             </select>
           </div>

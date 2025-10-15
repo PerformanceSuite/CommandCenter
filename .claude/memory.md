@@ -80,6 +80,60 @@
 
 ## 🏗️ Recent Sessions Summary
 
+### Session 49: UI Header/Sidebar Alignment Issues ⚠️
+
+**Date**: 2025-10-15
+**Status**: IN PROGRESS - UI alignment work attempted, incomplete
+**Time**: ~30 minutes
+
+**Context:**
+User requested alignment fixes for Command Center logo/header and navigation items across the UI. Multiple iterations attempted to align "Command Center" with "Performia" and "Dashboard" with "Research Hub" but alignment issues persisted.
+
+**Work Attempted:**
+1. **Header Component** (`Header.tsx`)
+   - Changed project name from `text-xl` to `text-3xl font-bold`
+   - Added `pl-8` left padding for alignment with content
+   - Reverted padding from `py-6` to `py-3` to avoid pushing content down
+
+2. **Sidebar Component** (`Sidebar.tsx`)
+   - Multiple iterations changing logo container padding
+   - Tried `h-[60px]` fixed height approach
+   - Tried `py-3` to match header
+   - Changed "Command Center" text size from `text-xl` to `text-3xl` then back
+   - Changed Terminal icon size from `size={28}` to `size={24}`
+   - Navigation padding changed multiple times (`pt-6 pb-6`, removed, added back)
+   - Gap between icon and text changed from `gap-3` to `gap-2`
+
+3. **Files Modified** (8 files total):
+   - `frontend/src/components/common/Header.tsx`
+   - `frontend/src/components/common/Sidebar.tsx`
+   - `frontend/src/components/KnowledgeBase/KnowledgeView.tsx`
+   - `frontend/src/components/ResearchHub/ResearchHubView.tsx`
+   - `frontend/src/components/ResearchHub/TechnologyDeepDiveForm.tsx`
+   - `frontend/src/components/Settings/SettingsView.tsx`
+   - `frontend/src/components/TechnologyRadar/RadarView.tsx`
+   - `hub/backend/app/services/setup_service.py`
+
+**Issues:**
+- Multiple deployment cycles to Performia instance (port 3010)
+- User increasingly frustrated with lack of progress
+- Alignment issues not resolved despite ~10 iterations
+- "Command Center" and "Performia" not horizontally aligned
+- "Dashboard" and "Research Hub" not horizontally aligned
+- Final state: Sidebar nav has `pt-6 pb-6` padding, logo has `py-3`, unclear if aligned
+
+**Status**: Session ended via `/end-session` command with alignment work incomplete
+
+**Next Session Priority:**
+1. **IMMEDIATE**: Review screenshot feedback and understand exact alignment requirements
+2. Calculate exact pixel/rem measurements needed for alignment
+3. Consider using fixed heights or flex alignment instead of padding approach
+4. Test alignment systematically before deploying
+
+**Achievement**: ⚠️ **UI alignment work incomplete** - Need fresh approach in next session
+
+---
+
 ### Session 48: Status Check ✅
 
 **Date**: 2025-10-15
