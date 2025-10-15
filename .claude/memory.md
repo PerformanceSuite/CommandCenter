@@ -7,22 +7,23 @@
 ## 🎯 START HERE - Next Session Quick Reference
 
 ### Immediate Priority
-**📚 MEMORY MANAGEMENT & SESSION WORKFLOW** - Infrastructure improvements
+**🐛 HUB BUG FIX** - Project creation race condition (Issue #44)
 
 **Current Status:**
-- ✅ **Session 47 Complete**: Memory management automation
-- 📚 **Memory**: Reduced from 1,312 to 1,052 lines (20% reduction)
-- 🗂️ **Archives**: Created archive for Sessions 32-36
-- 🔧 **Automation**: cleanup.sh now checks memory on every run
-- 📝 **Documentation**: Comprehensive END_SESSION_CHECKLIST.md created
+- ⚠️ **Session 50 Incomplete**: UI alignment work attempted, hub bug discovered
+- 🐛 **Active Issue**: Hub shows projects before creation completes (race condition)
+- 📝 **Branch**: fix/hub-project-creation-race-condition
+- 🔍 **Issue**: https://github.com/PerformanceSuite/CommandCenter/issues/44
 
 **Next Steps:**
-1. **CRITICAL**: Implement JWT authentication middleware (CVSS 9.8) - 3 days
-2. **CRITICAL**: Fix N+1 query patterns (use optimized_job_service.py) - 2 days
-3. **CRITICAL**: Enable connection pooling (use config_optimized.py) - 0.5 days
-4. **CRITICAL**: Rotate exposed API secrets - 1 day
-5. Review comprehensive code review reports and prioritize remediation
-6. Consider implementing Sprint 1 of 8-week improvement roadmap
+1. **IMMEDIATE**: Fix hub project creation race condition (Issue #44)
+   - Implement 'creating' status to hide incomplete projects
+   - OR filter incomplete projects in list_projects() API
+   - OR pause frontend polling during creation
+2. **UI Fix**: Sidebar/Header alignment issues (use different AI assistant)
+3. **CRITICAL**: Implement JWT authentication middleware (CVSS 9.8) - 3 days
+4. **CRITICAL**: Fix N+1 query patterns (use optimized_job_service.py) - 2 days
+5. **CRITICAL**: Enable connection pooling (use config_optimized.py) - 0.5 days
 
 ### Current Sprint Status
 **Phase 2 Progress: 100/114 hours (87.7%)** ✅ COMPLETE
@@ -79,6 +80,76 @@
 ---
 
 ## 🏗️ Recent Sessions Summary
+
+### Session 50: UI Alignment + Hub Project Creation Bug ⚠️
+
+**Date**: 2025-10-15
+**Status**: INCOMPLETE - Discovered critical hub bug during testing
+**Time**: ~2 hours
+
+**Context:**
+User requested UI alignment fixes for Command Center logo and navigation items. During testing, discovered critical race condition bug in hub project creation. UI alignment remained unresolved, focus shifted to documenting hub bug for proper fix.
+
+**Work Completed:**
+
+1. **UI Alignment Attempts** (Sidebar.tsx, Header.tsx)
+   - Changed logo container: `py-3` → `py-6` → `py-4 h-[76px]`
+   - Changed nav padding: `pt-6` → `pt-2` → removed entirely
+   - Multiple iterations across both template and Performia instance
+   - **Result**: ⚠️ Alignment still incorrect after ~10 iterations
+
+2. **Hub Delete Feature** ✅ (hub/backend/app/services/project_service.py, hub/frontend/src/components/ProjectCard.tsx)
+   - Added `delete_files` query parameter to `DELETE /api/projects/{id}`
+   - Service stops containers + removes directory if `delete_files=true`
+   - Frontend: Delete button with "Delete files too?" confirmation dialog
+   - **Commits**: `694d7a7`
+
+3. **Hub Path Fix** ✅ (hub/backend/app/services/setup_service.py)
+   - Fixed CC_SOURCE from `/Users/danielconnolly/Projects/CommandCenter` to `/projects/CommandCenter`
+   - Matches docker-compose.yml volume mount
+   - **Commits**: `727fd67`
+
+4. **Hub Bug Discovery** 🐛 (Issue #44)
+   - **Bug**: Projects appear in "Your Projects" list BEFORE clicking "Create Project"
+   - **Root Cause**: Frontend polls `/api/projects/` every 5s, project DB record created before setup completes
+   - **Error**: "Internal Server Error" flashes briefly
+   - **Impact**: Confusing UX, project appears prematurely
+
+**Bug Documentation:**
+- Created issue template: `.github/ISSUE_TEMPLATE/hub-project-creation-bug.md`
+- Created GitHub Issue: #44
+- Created fix branch: `fix/hub-project-creation-race-condition`
+- Documented 3 proposed solutions in issue template
+
+**Files Modified:**
+- `frontend/src/components/common/Sidebar.tsx` (alignment attempts)
+- `hub/backend/app/services/project_service.py` (+delete_files logic)
+- `hub/backend/app/routers/projects.py` (delete endpoint updated)
+- `hub/frontend/src/components/ProjectCard.tsx` (delete UI)
+- `hub/frontend/src/services/api.ts` (deleteProject function)
+- `hub/frontend/src/pages/Dashboard.tsx` (onDelete callback)
+- `hub/backend/app/services/setup_service.py` (CC_SOURCE path fix)
+
+**Commits:**
+- `a9bd558` - fix(frontend): Adjust sidebar alignment
+- `694d7a7` - feat(hub): Add project deletion with optional file cleanup
+- `727fd67` - fix(hub): Use container mount path for CommandCenter source
+- `c4ccf2a` - docs: Document hub project creation race condition (branch)
+
+**Status:**
+- ✅ Hub delete feature working
+- ✅ Hub CC_SOURCE path fixed
+- 🐛 Hub project creation race condition documented (Issue #44)
+- ⚠️ UI alignment unresolved - user to use different AI assistant
+
+**Next Session Priority:**
+1. Fix Issue #44 (hub project creation race condition)
+2. Test hub spawning workflow end-to-end
+3. UI alignment (with different assistant)
+
+**Achievement**: 🐛 **Critical hub bug discovered and documented** - Ready for proper fix in next session
+
+---
 
 ### Session 49: UI Header/Sidebar Alignment Issues ⚠️
 
