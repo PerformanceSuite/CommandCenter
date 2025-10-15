@@ -6,9 +6,6 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get project name from environment variable (set by Hub during deployment)
-  const projectName = import.meta.env.VITE_PROJECT_NAME || 'Command Center';
-
   const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
