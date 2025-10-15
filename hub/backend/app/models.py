@@ -26,7 +26,7 @@ class Project(Base):
     redis_port = Column(Integer, unique=True, nullable=False)
 
     # Status
-    status = Column(String, default="stopped")  # running, stopped, error, starting, stopping
+    status = Column(String, default="stopped")  # creating, running, stopped, error, starting, stopping
     health = Column(String, default="unknown")  # healthy, unhealthy, unknown
     is_configured = Column(Boolean, default=False)
 

@@ -26,8 +26,16 @@ class ProjectService:
         self.setup_service = SetupService()
 
     async def list_projects(self) -> List[Project]:
-        """List all projects"""
-        result = await self.db.execute(select(Project))
+        """
+        List all projects
+
+        Note: Excludes projects with status='creating' to prevent race condition
+        where partially created projects appear before setup completes.
+        See: Issue #44
+        """
+        result = await self.db.execute(
+            select(Project).where(Project.status != "creating")
+        )
         return list(result.scalars().all())
 
     async def get_stats(self) -> ProjectStats:
@@ -108,7 +116,8 @@ class ProjectService:
             if env_ports:
                 ports = env_ports
 
-        # Create project record
+        # Create project record with 'creating' status to prevent race condition
+        # where frontend polling shows incomplete projects (Issue #44)
         project = Project(
             name=project_data.name,
             slug=slug,
@@ -119,7 +128,7 @@ class ProjectService:
             frontend_port=ports.frontend,
             postgres_port=ports.postgres,
             redis_port=ports.redis,
-            status="stopped",
+            status="creating" if not project_data.use_existing_cc else "stopped",
             health="unknown",
             is_configured=project_data.use_existing_cc,  # Already configured if existing
         )
@@ -130,13 +139,22 @@ class ProjectService:
 
         # Setup only if not using existing CC
         if not project_data.use_existing_cc:
-            # Trigger async setup (clone CC, configure .env)
-            await self.setup_service.setup_commandcenter(project)
+            try:
+                # Trigger async setup (clone CC, configure .env)
+                await self.setup_service.setup_commandcenter(project)
 
-            # Update is_configured flag
-            project.is_configured = True
-            await self.db.commit()
-            await self.db.refresh(project)
+                # Update status and is_configured flag after successful setup
+                project.status = "stopped"
+                project.is_configured = True
+                await self.db.commit()
+                await self.db.refresh(project)
+            except Exception as e:
+                # Mark project as error state if setup fails
+                project.status = "error"
+                project.health = "unhealthy"
+                await self.db.commit()
+                await self.db.refresh(project)
+                raise
 
         return project
 
