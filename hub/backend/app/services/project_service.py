@@ -11,9 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models import Project
-from app.schemas import ProjectCreate, ProjectUpdate
+from app.schemas import ProjectCreate, ProjectUpdate, ProjectStats
 from app.services.port_service import PortService
 from app.services.setup_service import SetupService
+from sqlalchemy import func, case
 
 
 class ProjectService:
@@ -28,6 +29,24 @@ class ProjectService:
         """List all projects"""
         result = await self.db.execute(select(Project))
         return list(result.scalars().all())
+
+    async def get_stats(self) -> ProjectStats:
+        """Get project statistics"""
+        result = await self.db.execute(
+            select(
+                func.count(Project.id).label("total"),
+                func.sum(case((Project.status == "running", 1), else_=0)).label("running"),
+                func.sum(case((Project.status == "stopped", 1), else_=0)).label("stopped"),
+                func.sum(case((Project.status == "error", 1), else_=0)).label("errors"),
+            )
+        )
+        row = result.one()
+        return ProjectStats(
+            total_projects=row.total or 0,
+            running=int(row.running or 0),
+            stopped=int(row.stopped or 0),
+            errors=int(row.errors or 0),
+        )
 
     async def get_project(self, project_id: int) -> Optional[Project]:
         """Get project by ID"""

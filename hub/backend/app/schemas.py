@@ -58,11 +58,12 @@ class ProjectResponse(ProjectBase):
 
 
 class ProjectStats(BaseModel):
-    """Cached statistics from CommandCenter API"""
+    """Hub project statistics"""
 
-    repo_count: int = 0
-    tech_count: int = 0
-    task_count: int = 0
+    total_projects: int = 0
+    running: int = 0
+    stopped: int = 0
+    errors: int = 0
 
 
 class PortSet(BaseModel):

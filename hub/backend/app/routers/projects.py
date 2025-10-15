@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.models import Project
-from app.schemas import ProjectCreate, ProjectUpdate, ProjectResponse
+from app.schemas import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectStats
 from app.services.project_service import ProjectService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -18,6 +18,14 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
     """Dependency to get project service"""
     return ProjectService(db)
+
+
+@router.get("/stats", response_model=ProjectStats)
+async def get_stats(
+    service: ProjectService = Depends(get_project_service),
+):
+    """Get project statistics"""
+    return await service.get_stats()
 
 
 @router.get("/", response_model=List[ProjectResponse])
