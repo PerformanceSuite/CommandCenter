@@ -100,13 +100,8 @@ def upgrade() -> None:
             unique=False
         )
 
-    # Add index for research tasks filtering (only on status, priority column doesn't exist)
-    op.create_index(
-        'idx_research_tasks_status',
-        'research_tasks',
-        ['status'],
-        unique=False
-    )
+    # Note: idx_research_tasks_status already exists from migration a1b2c3d4e5f6
+    # No need to create it again
 
     # Add index for knowledge entries
     if op.get_bind().dialect.has_table(op.get_bind(), 'knowledge_entries'):
@@ -167,7 +162,7 @@ def downgrade() -> None:
 
     # Drop cross-database indexes
     op.drop_index('idx_jobs_project_type_status', table_name='jobs')
-    op.drop_index('idx_research_tasks_status', table_name='research_tasks')
+    # Note: idx_research_tasks_status managed by migration a1b2c3d4e5f6
 
     # Drop knowledge entries index if table exists
     if op.get_bind().dialect.has_table(op.get_bind(), 'knowledge_entries'):
