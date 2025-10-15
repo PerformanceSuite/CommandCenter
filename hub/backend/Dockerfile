@@ -4,11 +4,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for docker-compose and git
+# Install system dependencies for docker-compose, git, and rsync
 RUN apt-get update && apt-get install -y \
     git \
     docker-compose \
     curl \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

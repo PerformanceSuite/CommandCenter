@@ -47,7 +47,7 @@ function Dashboard() {
 
   const handleCreateProject = async () => {
     if (!selectedPath || !projectName.trim()) {
-      alert('Please select a folder and enter a project name');
+      setError('Please select a folder and enter a project name');
       return;
     }
 
@@ -55,19 +55,30 @@ function Dashboard() {
     setError(null);
 
     try {
-      await projectsApi.create({
+      const newProject = await projectsApi.create({
         name: projectName.trim(),
         path: selectedPath,
       });
+
+      // Show success message
+      setError(null);
 
       // Reset form
       setProjectName('');
       setSelectedPath(null);
 
-      // Reload projects
+      // Reload projects to show the new project
       await loadProjects();
+
+      // Show success notification (will appear briefly in error box with green styling)
+      setTimeout(() => {
+        setError(`✓ Project "${newProject.name}" created successfully!`);
+        setTimeout(() => setError(null), 3000);
+      }, 100);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
+      setError(`Failed to create project: ${errorMsg}`);
+      console.error('Project creation error:', err);
     } finally {
       setCreatingProject(false);
     }
@@ -110,10 +121,14 @@ function Dashboard() {
         </div>
       )}
 
-      {/* Error Display */}
+      {/* Error/Success Display */}
       {error && (
-        <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-          <p className="text-red-400">{error}</p>
+        <div className={`mb-6 p-4 rounded-lg ${
+          error.startsWith('✓')
+            ? 'bg-green-900/20 border border-green-500/30'
+            : 'bg-red-900/20 border border-red-500/30'
+        }`}>
+          <p className={error.startsWith('✓') ? 'text-green-400' : 'text-red-400'}>{error}</p>
         </div>
       )}
 
