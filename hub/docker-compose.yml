@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  hub-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: commandcenter-hub-backend
+    ports:
+      - "9001:9001"
+    volumes:
+      # Mount backend code for development
+      - ./backend/app:/app/app
+      # Persist database
+      - hub_db:/app/data
+      # Mount Docker socket for orchestration
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount projects directory (adjust to your projects root)
+      - ${PROJECTS_ROOT:-/Users/danielconnolly/Projects}:/projects
+    environment:
+      - DATABASE_URL=sqlite:///./data/hub.db
+      - PORT=9001
+      - CORS_ORIGINS=http://localhost:9000,http://127.0.0.1:9000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 9001 --reload
+    restart: unless-stopped
+    networks:
+      - hub-network
+
+  hub-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: commandcenter-hub-frontend
+    ports:
+      - "9000:9000"
+    volumes:
+      # Mount frontend code for development
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      # Avoid mounting node_modules
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=/api
+    depends_on:
+      - hub-backend
+    restart: unless-stopped
+    networks:
+      - hub-network
+
+volumes:
+  hub_db:
+    driver: local
+
+networks:
+  hub-network:
+    driver: bridge
