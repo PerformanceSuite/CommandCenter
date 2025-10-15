@@ -10,27 +10,20 @@ interface ProjectCardProps {
 function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [starting, setStarting] = useState(false);
 
   const handleOpen = async () => {
-    // If project is stopped, start it first
+    // Open immediately
+    window.open(`http://localhost:${project.frontend_port}`, '_blank');
+
+    // If project is stopped, start it in the background
     if (project.status === 'stopped') {
-      setStarting(true);
       try {
         await api.orchestration.start(project.id);
-        // Wait for services to start
-        await new Promise(resolve => setTimeout(resolve, 3000));
       } catch (error) {
         console.error('Failed to start project:', error);
-        alert('Failed to start project. Check logs for details.');
-        setStarting(false);
-        return;
+        // Silent failure - user will see loading screen in opened tab
       }
-      setStarting(false);
     }
-
-    // Open the project
-    window.open(`http://localhost:${project.frontend_port}`, '_blank');
   };
 
   const handleDelete = async (deleteFiles: boolean) => {
@@ -74,11 +67,10 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
         <>
           <button
             onClick={handleOpen}
-            disabled={starting}
             className="btn-primary px-6"
-            title={`${project.status === 'stopped' ? 'Start and open' : 'Open'} CommandCenter at localhost:${project.frontend_port}`}
+            title={`Open CommandCenter at localhost:${project.frontend_port}`}
           >
-            {starting ? 'Starting...' : (project.status === 'stopped' ? 'Start & Open' : 'Open')}
+            Open
           </button>
           <button
             onClick={() => setShowConfirm(true)}
