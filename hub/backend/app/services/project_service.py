@@ -4,6 +4,7 @@ Project service - Business logic for project management
 
 import os
 import re
+import logging
 from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
@@ -16,6 +17,8 @@ from app.services.port_service import PortService
 from app.services.setup_service import SetupService
 from sqlalchemy import func, case
 
+logger = logging.getLogger(__name__)
+
 
 class ProjectService:
     """Service for managing CommandCenter projects"""
@@ -26,19 +29,32 @@ class ProjectService:
         self.setup_service = SetupService()
 
     async def list_projects(self) -> List[Project]:
-        """List all projects"""
-        result = await self.db.execute(select(Project))
+        """
+        List all projects
+
+        Note: Excludes projects with status='creating' to prevent race condition
+        where partially created projects appear before setup completes.
+        See: Issue #44
+        """
+        result = await self.db.execute(
+            select(Project).where(Project.status != "creating")
+        )
         return list(result.scalars().all())
 
     async def get_stats(self) -> ProjectStats:
-        """Get project statistics"""
+        """
+        Get project statistics
+
+        Note: Excludes projects with status='creating' from total count
+        to match list_projects() behavior (Issue #44)
+        """
         result = await self.db.execute(
             select(
                 func.count(Project.id).label("total"),
                 func.sum(case((Project.status == "running", 1), else_=0)).label("running"),
                 func.sum(case((Project.status == "stopped", 1), else_=0)).label("stopped"),
                 func.sum(case((Project.status == "error", 1), else_=0)).label("errors"),
-            )
+            ).where(Project.status != "creating")
         )
         row = result.one()
         return ProjectStats(
@@ -108,7 +124,8 @@ class ProjectService:
             if env_ports:
                 ports = env_ports
 
-        # Create project record
+        # Create project record with 'creating' status to prevent race condition
+        # where frontend polling shows incomplete projects (Issue #44)
         project = Project(
             name=project_data.name,
             slug=slug,
@@ -119,7 +136,7 @@ class ProjectService:
             frontend_port=ports.frontend,
             postgres_port=ports.postgres,
             redis_port=ports.redis,
-            status="stopped",
+            status="creating" if not project_data.use_existing_cc else "stopped",
             health="unknown",
             is_configured=project_data.use_existing_cc,  # Already configured if existing
         )
@@ -130,13 +147,29 @@ class ProjectService:
 
         # Setup only if not using existing CC
         if not project_data.use_existing_cc:
-            # Trigger async setup (clone CC, configure .env)
-            await self.setup_service.setup_commandcenter(project)
+            try:
+                # Trigger async setup (clone CC, configure .env)
+                await self.setup_service.setup_commandcenter(project)
 
-            # Update is_configured flag
-            project.is_configured = True
-            await self.db.commit()
-            await self.db.refresh(project)
+                # Update status and is_configured flag after successful setup
+                project.status = "stopped"
+                project.is_configured = True
+                await self.db.commit()
+                await self.db.refresh(project)
+            except Exception as e:
+                # Log the error with full traceback for debugging
+                logger.error(
+                    f"Project setup failed for '{project.name}' (id={project.id}): {str(e)}",
+                    exc_info=True,
+                    extra={"project_id": project.id, "project_name": project.name}
+                )
+
+                # Mark project as error state if setup fails
+                project.status = "error"
+                project.health = "unhealthy"
+                await self.db.commit()
+                await self.db.refresh(project)
+                raise
 
         return project
 
