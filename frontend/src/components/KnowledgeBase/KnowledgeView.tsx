@@ -152,7 +152,7 @@ export const KnowledgeView: React.FC = () => {
             id="collection"
             value={currentCollection}
             onChange={(e) => handleCollectionChange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="px-3 py-2 bg-slate-950 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             {collections.map((coll) => (
               <option key={coll} value={coll}>
@@ -176,7 +176,7 @@ export const KnowledgeView: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Search knowledge base using natural language..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 text-white placeholder-slate-500 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
               aria-label="Search query"
               aria-describedby="search-hint"
             />
@@ -209,7 +209,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'vector'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'
                   }`}
                   title="Vector search uses semantic similarity for meaning-based matching"
                 >
@@ -220,7 +220,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'keyword'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'
                   }`}
                   title="Keyword search uses exact term matching (BM25)"
                 >
@@ -231,7 +231,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'hybrid'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'
                   }`}
                   title="Hybrid search combines both vector and keyword methods"
                 >

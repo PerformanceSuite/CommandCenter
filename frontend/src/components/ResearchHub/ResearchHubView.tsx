@@ -86,19 +86,19 @@ const ResearchHubView: React.FC = () => {
           font-size: 2rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
-          color: #1a202c;
+          color: #f1f5f9;
         }
 
         .subtitle {
           font-size: 1rem;
-          color: #718096;
+          color: #94a3b8;
           margin: 0;
         }
 
         .tab-navigation {
           display: flex;
           gap: 0.5rem;
-          border-bottom: 2px solid #e2e8f0;
+          border-bottom: 2px solid #334155;
           margin-bottom: 2rem;
         }
 
@@ -109,26 +109,27 @@ const ResearchHubView: React.FC = () => {
           border-bottom: 3px solid transparent;
           font-size: 1rem;
           font-weight: 500;
-          color: #718096;
+          color: #94a3b8;
           cursor: pointer;
           transition: all 0.2s;
           margin-bottom: -2px;
         }
 
         .tab-button:hover {
-          color: #4a5568;
-          background: #f7fafc;
+          color: #f1f5f9;
+          background: #334155;
         }
 
         .tab-button.active {
-          color: #3182ce;
-          border-bottom-color: #3182ce;
+          color: #3b82f6;
+          border-bottom-color: #3b82f6;
         }
 
         .tab-content {
-          background: white;
+          background: #1e293b;
+          border: 1px solid #334155;
           border-radius: 8px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
           padding: 2rem;
         }
 
