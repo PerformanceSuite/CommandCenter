@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import ProjectCard from '../components/ProjectCard';
 import FolderBrowser from '../components/FolderBrowser';
-import { projectsApi } from '../services/api';
+import { projectsApi, api } from '../services/api';
 import type { Project, ProjectStats } from '../types';
 
 function Dashboard() {
@@ -13,6 +14,7 @@ function Dashboard() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [createdProject, setCreatedProject] = useState<Project | null>(null);
 
   const loadProjects = async () => {
     try {
@@ -60,21 +62,14 @@ function Dashboard() {
         path: selectedPath,
       });
 
-      // Show success message
-      setError(null);
-
-      // Reset form
-      setProjectName('');
-      setSelectedPath(null);
-
-      // Reload projects to show the new project
+      // Reload projects to show the new project in the list
       await loadProjects();
 
-      // Show success notification (will appear briefly in error box with green styling)
-      setTimeout(() => {
-        setError(`✓ Project "${newProject.name}" created successfully!`);
-        setTimeout(() => setError(null), 3000);
-      }, 100);
+      // Store the created project after reload (prevents race condition)
+      setCreatedProject(newProject);
+
+      // Clear error/success messages
+      setError(null);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
       setError(`Failed to create project: ${errorMsg}`);
@@ -84,9 +79,39 @@ function Dashboard() {
     }
   };
 
+  const handleOpenProject = async () => {
+    if (!createdProject) return;
+
+    // Open immediately
+    window.open(`http://localhost:${createdProject.frontend_port}`, '_blank');
+
+    // Start in the background if stopped
+    if (createdProject.status === 'stopped') {
+      try {
+        await api.orchestration.start(createdProject.id);
+        // Show success notification after a short delay
+        setTimeout(() => {
+          toast.success(`Project "${createdProject.name}" is starting...`);
+        }, 1000);
+      } catch (error) {
+        console.error('Failed to start project:', error);
+        // Show error notification after a delay
+        setTimeout(() => {
+          toast.error(`Failed to start "${createdProject.name}". Check the logs for details.`);
+        }, 2000);
+      }
+    }
+
+    // Reset form after opening
+    setProjectName('');
+    setSelectedPath(null);
+    setCreatedProject(null);
+  };
+
   const handleCancelCreate = () => {
     setProjectName('');
     setSelectedPath(null);
+    setCreatedProject(null);
   };
 
   if (loading) {
@@ -156,27 +181,67 @@ function Dashboard() {
               />
             </div>
 
-            <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded">
-              <p className="text-sm text-blue-300">
-                CommandCenter will be cloned into: <span className="font-mono">{selectedPath}/commandcenter</span>
-              </p>
+            <div className="space-y-2">
+              <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded">
+                <p className="text-sm text-blue-300">
+                  CommandCenter will be cloned into: <span className="font-mono">{selectedPath}/commandcenter</span>
+                </p>
+              </div>
+
+              {createdProject && (
+                <div className="p-3 bg-green-900/20 border border-green-500/30 rounded">
+                  <p className="text-sm text-green-300">
+                    Project will be available at: <span className="font-mono font-bold">localhost:{createdProject.frontend_port}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3">
-              <button
-                onClick={handleCreateProject}
-                disabled={creatingProject || !projectName.trim()}
-                className="btn-success"
-              >
-                {creatingProject ? 'Creating...' : 'Create Project'}
-              </button>
-              <button
-                onClick={handleCancelCreate}
-                disabled={creatingProject}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
+              {!createdProject ? (
+                <>
+                  <button
+                    onClick={handleCreateProject}
+                    disabled={creatingProject || !projectName.trim()}
+                    className="btn-success relative"
+                  >
+                    {creatingProject ? (
+                      <span className="flex items-center gap-2">
+                        Creating
+                        <span className="inline-flex gap-0.5">
+                          <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                          <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                          <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                        </span>
+                      </span>
+                    ) : (
+                      'Create Project'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleCancelCreate}
+                    disabled={creatingProject}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleOpenProject}
+                    className="btn-primary px-8"
+                  >
+                    Open
+                  </button>
+                  <button
+                    onClick={handleCancelCreate}
+                    className="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (

@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import type { Project } from '../types';
-import { deleteProject } from '../services/api';
+import { deleteProject, api } from '../services/api';
 
 interface ProjectCardProps {
   project: Project;
@@ -11,8 +12,26 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleOpen = () => {
+  const handleOpen = async () => {
+    // Open immediately
     window.open(`http://localhost:${project.frontend_port}`, '_blank');
+
+    // If project is stopped, start it in the background
+    if (project.status === 'stopped') {
+      try {
+        await api.orchestration.start(project.id);
+        // Show success notification after a short delay
+        setTimeout(() => {
+          toast.success(`Project "${project.name}" is starting...`);
+        }, 1000);
+      } catch (error) {
+        console.error('Failed to start project:', error);
+        // Show error notification after a delay
+        setTimeout(() => {
+          toast.error(`Failed to start "${project.name}". Check the logs for details.`);
+        }, 2000);
+      }
+    }
   };
 
   const handleDelete = async (deleteFiles: boolean) => {

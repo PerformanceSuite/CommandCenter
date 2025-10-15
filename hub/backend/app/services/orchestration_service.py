@@ -14,8 +14,31 @@ from app.models import Project
 class OrchestrationService:
     """Service for orchestrating docker-compose operations"""
 
+    # Path mapping: container path -> host path
+    CONTAINER_PROJECTS_PATH = "/projects"
+    HOST_PROJECTS_PATH = os.getenv("PROJECTS_ROOT", os.path.expanduser("~/Projects"))
+
+    # Docker Compose service configuration
+    # Essential services that must be started for project functionality
+    ESSENTIAL_SERVICES = ["backend", "frontend", "postgres", "redis"]
+    # Optional services that may conflict with ports or not be required
+    # Flower: Port 5555 (Celery monitoring UI)
+    # Prometheus: Port 9090 (Metrics collection)
+    # Celery worker: Can be started separately if needed
+    EXCLUDED_SERVICES = ["flower", "prometheus", "celery"]
+
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    def _get_host_path(self, container_path: str) -> str:
+        """Convert container path to host path for Docker volume mounts"""
+        if container_path.startswith(self.CONTAINER_PROJECTS_PATH):
+            return container_path.replace(
+                self.CONTAINER_PROJECTS_PATH,
+                self.HOST_PROJECTS_PATH,
+                1
+            )
+        return container_path
 
     async def start_project(self, project_id: int) -> dict:
         """Start CommandCenter instance"""
@@ -34,13 +57,21 @@ class OrchestrationService:
         await self.db.commit()
 
         try:
-            # Run docker-compose up -d
+            # Convert container path to host path for Docker volumes
+            host_cc_path = self._get_host_path(project.cc_path)
+
+            # Set COMPOSE_PROJECT_DIR to override volume paths
+            env = os.environ.copy()
+            env["COMPOSE_PROJECT_DIR"] = host_cc_path
+
+            # Run docker-compose up -d (only start essential services)
             result = subprocess.run(
-                ["docker-compose", "up", "-d"],
+                ["docker-compose", "up", "-d"] + self.ESSENTIAL_SERVICES,
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,
                 timeout=120,  # 2 minute timeout
+                env=env,
             )
 
             if result.returncode != 0:
