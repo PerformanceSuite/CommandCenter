@@ -7,13 +7,14 @@
 ## 🎯 START HERE - Next Session Quick Reference
 
 ### Immediate Priority
-**🎨 THEME CONSISTENCY IMPROVEMENTS** - UI styling refinements
+**📚 MEMORY MANAGEMENT & SESSION WORKFLOW** - Infrastructure improvements
 
 **Current Status:**
-- ✅ **Session 46 Complete**: Dark theme UI cleanup
-- 🎨 **UI Polish**: Reverted select inputs and header to light/VIZTRTR theme
-- 🔧 **Forms**: Fixed Knowledge Base and Research Hub form styling
-- ✨ **Header**: Simplified header to match VIZTRTR primary color scheme
+- ✅ **Session 47 Complete**: Memory management automation
+- 📚 **Memory**: Reduced from 1,312 to 1,052 lines (20% reduction)
+- 🗂️ **Archives**: Created archive for Sessions 32-36
+- 🔧 **Automation**: cleanup.sh now checks memory on every run
+- 📝 **Documentation**: Comprehensive END_SESSION_CHECKLIST.md created
 
 **Next Steps:**
 1. **CRITICAL**: Implement JWT authentication middleware (CVSS 9.8) - 3 days
@@ -78,6 +79,83 @@
 ---
 
 ## 🏗️ Recent Sessions Summary
+
+### Session 47: Memory Management & End-Session Automation ✅
+
+**Date**: 2025-10-15
+**Status**: COMPLETE - Memory management infrastructure
+**Time**: ~1.5 hours
+
+**Context:**
+User requested memory management improvements and integration with /end-session command. Implemented comprehensive memory archiving, automated checks, and created complete end-session workflow documentation following VIZTRTR patterns.
+
+**Deliverables:**
+
+1. **Memory Archiving** - Reduced memory.md from 1,312 to 1,052 lines (20%)
+   - Archived Sessions 32-36 (260 lines) to `.claude/archives/2025-10-sessions-32-36.md`
+   - Kept last 10 sessions (37-47) for recent context
+   - Memory now within 800-1200 line recommended range
+   - Archive includes session summaries and commit history
+
+2. **Automated Memory Checks** - Enhanced cleanup.sh (+37 lines)
+   - Automatic memory.md size checking on every cleanup
+   - Session count tracking
+   - Archive file counting
+   - Warning thresholds: 800 (notice), 1200 (warning), 2000 (critical)
+   - Real-time feedback with status indicators
+
+3. **END_SESSION_CHECKLIST.md** - Comprehensive 9-step workflow (200+ lines)
+   - Document session in memory.md
+   - Check memory management (with archiving guidelines)
+   - Commit session documentation
+   - Run cleanup script
+   - Commit cleanup changes
+   - Kill background processes
+   - Push to origin
+   - Create PR (feature branches only)
+   - Final verification with session summary
+
+4. **/end-session Command** - Quick reference integration
+   - Created `.claude/commands/end-session.md`
+   - References comprehensive checklist
+   - 6-step quick overview
+   - Integration with memory management workflow
+
+**Files Created/Modified:**
+- `.claude/archives/2025-10-sessions-32-36.md` (new, 260 lines)
+- `.claude/cleanup.sh` (+37 lines for memory checks)
+- `.claude/END_SESSION_CHECKLIST.md` (new, 200+ lines)
+- `.claude/commands/end-session.md` (new)
+- `.claude/memory.md` (reduced from 1,312 to 1,052 lines)
+
+**Commits:**
+- `2e11516` - docs: Archive sessions 32-36, reduce memory.md by 20%
+- `d17395b` - feat: Add comprehensive end-session workflow with memory management
+- `abb1d5a` - chore: cleanup test artifacts
+
+**Key Features:**
+- **Automatic monitoring**: cleanup.sh now checks memory on every run
+- **Clear thresholds**: 800/1200/2000 line warnings
+- **Archive workflow**: Step-by-step guidelines for when/how to archive
+- **Session checklist**: Complete 9-step process for proper session closure
+- **Integration**: /end-session command references comprehensive checklist
+
+**Verification:**
+- ✅ Memory reduced by 20% (1,312 → 1,052 lines)
+- ✅ cleanup.sh correctly reports memory status
+- ✅ All commits pushed to origin
+- ✅ Working tree clean
+
+**Impact:**
+- Faster session startup (less context to load)
+- Automated memory monitoring prevents bloat
+- Consistent session closure process
+- Historical sessions preserved in archives
+- Clear guidelines for future memory management
+
+**Achievement**: 🎯 **Memory management automated** - Every session now checks memory health automatically
+
+---
 
 ### Session 46: UI Theme Consistency Cleanup ✅
 
@@ -1010,15 +1088,17 @@ make shell-backend  # Backend shell
 
 ## 🔗 Historical Sessions
 
-**For detailed history of Sessions 1-30**, see:
+**Archived Sessions:**
 - `.claude/archives/2025-10-early-sessions.md` (Sessions 1-25)
-- Sessions 26-30 details archived (available in git history)
+- `.claude/archives/2025-10-sessions-32-36.md` (Sessions 32-36) - NEW
+- Sessions 26-31 details archived (available in git history)
 
 **Key Milestones**:
 - Sessions 1-18: Phase 0 & Phase 1 implementation
 - Sessions 24-27: Sprint 1 (Foundation) COMPLETE
 - Sessions 28-31: Sprint 2 (Integration) COMPLETE
-- Sessions 32-33: Security audit & fixes COMPLETE
+- Sessions 32-36: Security audit, MCP integration, Enhanced Export, Testing, Docs - COMPLETE
+- Session 47: Memory management automation - COMPLETE
 
 ---
 
