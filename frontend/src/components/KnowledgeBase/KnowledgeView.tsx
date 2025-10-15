@@ -114,7 +114,7 @@ export const KnowledgeView: React.FC = () => {
     <div className="space-y-6">
       {/* Header with Controls */}
       <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <Database className="text-primary-600" size={28} />
             <div>
@@ -125,7 +125,7 @@ export const KnowledgeView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
               onClick={() => setShowStats(!showStats)}
               className="px-4 py-2 text-slate-300 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
@@ -152,10 +152,10 @@ export const KnowledgeView: React.FC = () => {
             id="collection"
             value={currentCollection}
             onChange={(e) => handleCollectionChange(e.target.value)}
-            className="px-3 py-2 bg-slate-950 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             {collections.map((coll) => (
-              <option key={coll} value={coll}>
+              <option key={coll} value={coll} className="bg-slate-950 text-white">
                 {coll}
               </option>
             ))}
