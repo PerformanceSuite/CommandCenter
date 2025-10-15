@@ -14,8 +14,22 @@ from app.models import Project
 class OrchestrationService:
     """Service for orchestrating docker-compose operations"""
 
+    # Path mapping: container path -> host path
+    CONTAINER_PROJECTS_PATH = "/projects"
+    HOST_PROJECTS_PATH = os.getenv("PROJECTS_ROOT", "/Users/danielconnolly/Projects")
+
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    def _get_host_path(self, container_path: str) -> str:
+        """Convert container path to host path for Docker volume mounts"""
+        if container_path.startswith(self.CONTAINER_PROJECTS_PATH):
+            return container_path.replace(
+                self.CONTAINER_PROJECTS_PATH,
+                self.HOST_PROJECTS_PATH,
+                1
+            )
+        return container_path
 
     async def start_project(self, project_id: int) -> dict:
         """Start CommandCenter instance"""
@@ -34,13 +48,21 @@ class OrchestrationService:
         await self.db.commit()
 
         try:
-            # Run docker-compose up -d
+            # Convert container path to host path for Docker volumes
+            host_cc_path = self._get_host_path(project.cc_path)
+
+            # Set COMPOSE_PROJECT_DIR to override volume paths
+            env = os.environ.copy()
+            env["COMPOSE_PROJECT_DIR"] = host_cc_path
+
+            # Run docker-compose up -d (exclude conflicting services)
             result = subprocess.run(
-                ["docker-compose", "up", "-d"],
+                ["docker-compose", "up", "-d", "backend", "frontend", "postgres", "redis"],
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,
                 timeout=120,  # 2 minute timeout
+                env=env,
             )
 
             if result.returncode != 0:

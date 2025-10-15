@@ -99,13 +99,13 @@ SECRET_KEY={secret_key}
 DB_PASSWORD={db_password}
 ENCRYPT_TOKENS=true
 
-# Database
-DATABASE_URL=postgresql://commandcenter:${{DB_PASSWORD}}@postgres:{project.postgres_port}/commandcenter
+# Database (internal port - 5432 inside Docker network)
+DATABASE_URL=postgresql://commandcenter:${{DB_PASSWORD}}@postgres:5432/commandcenter
 
-# Redis & Celery
-REDIS_URL=redis://redis:{project.redis_port}
-CELERY_BROKER_URL=redis://redis:{project.redis_port}/0
-CELERY_RESULT_BACKEND=redis://redis:{project.redis_port}/0
+# Redis & Celery (internal port - 6379 inside Docker network)
+REDIS_URL=redis://redis:6379
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
 
 # Optional: Add your API keys here
 # GITHUB_TOKEN=ghp_...
