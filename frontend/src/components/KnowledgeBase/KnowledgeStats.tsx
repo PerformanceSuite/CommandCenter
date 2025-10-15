@@ -10,7 +10,7 @@ interface KnowledgeStatsProps {
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, loading }) => {
   if (loading) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-slate-700 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -33,7 +33,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, load
   );
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-2 mb-1">
           <Database className="text-primary-600" size={24} />

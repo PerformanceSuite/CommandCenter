@@ -24,7 +24,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <div className="flex h-screen bg-slate-950">
+        <div className="flex h-screen bg-slate-900">
           <Sidebar />
 
           <div className="flex-1 ml-64 flex flex-col overflow-hidden">

@@ -113,7 +113,7 @@ export const KnowledgeView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header with Controls */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Database className="text-primary-600" size={28} />
@@ -320,7 +320,7 @@ export const KnowledgeView: React.FC = () => {
       )}
 
       {/* Search Results */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         {searchResults.length > 0 ? (
           <div role="region" aria-label="Search results">
             <div className="flex items-center justify-between mb-4">

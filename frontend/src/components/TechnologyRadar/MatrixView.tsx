@@ -136,7 +136,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({ technologies, onEdit, on
   };
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow overflow-hidden">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow overflow-hidden">
       {/* Table Controls */}
       <div className="px-4 py-3 border-b border-gray-200 bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-4">

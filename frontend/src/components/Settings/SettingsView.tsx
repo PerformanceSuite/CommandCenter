@@ -53,7 +53,7 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* API Key Management */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Key className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">API Key Management</h2>
@@ -105,7 +105,7 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Repository Management */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Server className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">Repository Management</h2>
@@ -114,7 +114,7 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* System Configuration */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Server className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">System Configuration</h2>
@@ -146,7 +146,7 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* User Preferences */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <User className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">User Preferences</h2>

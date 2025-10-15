@@ -92,7 +92,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
         <div className="h-64 flex items-center justify-center">
           <div className="animate-pulse flex flex-col items-center space-y-4">
@@ -112,7 +112,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
   if (!hasData) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
         <div className="h-64 flex items-center justify-center text-slate-400">
           <div className="text-center">
@@ -125,7 +125,7 @@ export const StatusChart: React.FC<StatusChartProps> = ({
   }
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6">
       <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
       <div className="h-64">
         <Pie data={chartData} options={options} />

@@ -316,7 +316,7 @@ export const RadarView: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-4 space-y-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -423,7 +423,7 @@ export const RadarView: React.FC = () => {
               />
               {/* Pagination for Matrix View */}
               {totalPages > 1 && (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
+                <div className="bg-slate-800 border border-slate-700 rounded-lg shadow">
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}
@@ -437,7 +437,7 @@ export const RadarView: React.FC = () => {
             </>
           ) : (
             <div
-              className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-12 text-center"
+              className="bg-slate-800 border border-slate-700 rounded-lg shadow p-12 text-center"
               role="status"
               aria-live="polite"
             >
@@ -475,7 +475,7 @@ export const RadarView: React.FC = () => {
               {domainEntries.map(([domain, techs]) => (
                 <section
                   key={domain}
-                  className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6"
+                  className="bg-slate-800 border border-slate-700 rounded-lg shadow p-6"
                   aria-labelledby={`domain-${domain}-heading`}
                 >
                   <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
@@ -499,7 +499,7 @@ export const RadarView: React.FC = () => {
               ))}
               {/* Pagination for Card View */}
               {totalPages > 1 && (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
+                <div className="bg-slate-800 border border-slate-700 rounded-lg shadow">
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}
@@ -513,7 +513,7 @@ export const RadarView: React.FC = () => {
             </>
           ) : (
             <div
-              className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-12 text-center"
+              className="bg-slate-800 border border-slate-700 rounded-lg shadow p-12 text-center"
               role="status"
               aria-live="polite"
             >

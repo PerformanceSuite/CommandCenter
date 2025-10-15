@@ -25,7 +25,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onClick,
   isLoading = false,
 }) => {
-  const baseClasses = 'bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6 transition-all duration-200';
+  const baseClasses = 'bg-slate-800 border border-slate-700 rounded-lg shadow p-6 transition-all duration-200';
   const clickableClasses = onClick ? 'cursor-pointer hover:shadow-lg hover:scale-105 hover:bg-slate-800/70' : '';
 
   if (isLoading) {
