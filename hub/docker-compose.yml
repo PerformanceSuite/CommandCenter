@@ -18,7 +18,7 @@ services:
       # Mount projects directory (adjust to your projects root)
       - ${PROJECTS_ROOT:-/Users/danielconnolly/Projects}:/projects
     environment:
-      - DATABASE_URL=sqlite:///./data/hub.db
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/hub.db
       - PORT=9001
       - CORS_ORIGINS=http://localhost:9000,http://127.0.0.1:9000
     command: uvicorn app.main:app --host 0.0.0.0 --port 9001 --reload

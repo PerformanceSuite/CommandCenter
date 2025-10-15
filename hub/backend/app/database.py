@@ -2,15 +2,16 @@
 Database configuration for Hub
 """
 
+import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
 # SQLite database for project registry
-DATABASE_URL = "sqlite+aiosqlite:///./hub_data/projects.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:////app/data/hub.db")
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,  # Disable SQL echo for cleaner logs
     future=True,
 )
 
