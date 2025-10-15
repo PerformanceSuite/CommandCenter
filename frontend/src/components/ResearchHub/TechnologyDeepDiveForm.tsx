@@ -155,20 +155,20 @@ const TechnologyDeepDiveForm: React.FC = () => {
           font-size: 1.5rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
-          color: #1a202c;
+          color: #f1f5f9;
         }
 
         .description {
           font-size: 0.95rem;
-          color: #718096;
+          color: #94a3b8;
           margin-bottom: 1.5rem;
           line-height: 1.5;
         }
 
         .success-message {
-          background: #c6f6d5;
-          border: 1px solid #9ae6b4;
-          color: #22543d;
+          background: #064e3b;
+          border: 1px solid #059669;
+          color: #d1fae5;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1.5rem;
@@ -176,9 +176,9 @@ const TechnologyDeepDiveForm: React.FC = () => {
         }
 
         .error-message {
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1.5rem;
@@ -192,18 +192,20 @@ const TechnologyDeepDiveForm: React.FC = () => {
           display: block;
           font-weight: 500;
           margin-bottom: 0.5rem;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .required {
-          color: #e53e3e;
+          color: #ef4444;
         }
 
         .form-group input[type="text"],
         .form-group input[type="number"] {
           width: 100%;
           padding: 0.625rem;
-          border: 1px solid #cbd5e0;
+          background: #0f172a;
+          border: 1px solid #334155;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 1rem;
           transition: border-color 0.2s;
@@ -211,20 +213,21 @@ const TechnologyDeepDiveForm: React.FC = () => {
 
         .form-group input:focus {
           outline: none;
-          border-color: #3182ce;
-          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
         .form-group input:disabled {
-          background: #f7fafc;
+          background: #1e293b;
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
         .form-group small {
           display: block;
           margin-top: 0.25rem;
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .question-input-group {
@@ -239,9 +242,9 @@ const TechnologyDeepDiveForm: React.FC = () => {
 
         .btn-remove {
           padding: 0.625rem 1rem;
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           border-radius: 6px;
           font-size: 0.875rem;
           cursor: pointer;
@@ -250,7 +253,7 @@ const TechnologyDeepDiveForm: React.FC = () => {
         }
 
         .btn-remove:hover:not(:disabled) {
-          background: #fc8181;
+          background: #991b1b;
           color: white;
         }
 
@@ -261,9 +264,9 @@ const TechnologyDeepDiveForm: React.FC = () => {
 
         .btn-secondary {
           padding: 0.625rem 1rem;
-          background: #edf2f7;
-          border: 1px solid #cbd5e0;
-          color: #2d3748;
+          background: #1e293b;
+          border: 1px solid #334155;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 0.875rem;
           cursor: pointer;
@@ -272,7 +275,7 @@ const TechnologyDeepDiveForm: React.FC = () => {
         }
 
         .btn-secondary:hover:not(:disabled) {
-          background: #e2e8f0;
+          background: #334155;
         }
 
         .btn-secondary:disabled {
@@ -283,12 +286,12 @@ const TechnologyDeepDiveForm: React.FC = () => {
         .form-actions {
           margin-top: 2rem;
           padding-top: 1.5rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #334155;
         }
 
         .btn-primary {
           padding: 0.75rem 2rem;
-          background: #3182ce;
+          background: #3b82f6;
           border: none;
           color: white;
           border-radius: 6px;
@@ -299,12 +302,13 @@ const TechnologyDeepDiveForm: React.FC = () => {
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: #2c5282;
+          background: #2563eb;
         }
 
         .btn-primary:disabled {
-          background: #cbd5e0;
+          background: #334155;
           cursor: not-allowed;
+          opacity: 0.5;
         }
       `}</style>
     </div>
