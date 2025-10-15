@@ -99,6 +99,9 @@ CELERY_RESULT_BACKEND=redis://redis:{project.redis_port}/0
 
 # CORS
 CORS_ORIGINS=["http://localhost:{project.frontend_port}"]
+
+# Frontend Configuration
+VITE_PROJECT_NAME={project.name}
 """
 
         try:

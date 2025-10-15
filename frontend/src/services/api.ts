@@ -3,7 +3,9 @@ import type { Repository } from '../types/repository';
 import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/technology';
 import type { ResearchEntry } from '../types/research';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Use relative URL so it works with any port configuration
+// Nginx will proxy /api requests to the backend container
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 class ApiClient {
   private client: AxiosInstance;

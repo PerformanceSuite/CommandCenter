@@ -7,6 +7,9 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Get project name from environment variable (set by Hub during deployment)
+  const projectName = import.meta.env.VITE_PROJECT_NAME || 'Command Center';
+
   const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
@@ -46,6 +49,11 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
+          {/* Project Name Badge */}
+          <div className="px-4 py-2 bg-slate-800 text-white rounded-lg font-semibold text-sm">
+            {projectName}
+          </div>
+
           <button
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             aria-label="Notifications"
