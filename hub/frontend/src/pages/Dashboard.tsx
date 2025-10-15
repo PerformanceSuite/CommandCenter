@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ProjectCard from '../components/ProjectCard';
 import FolderBrowser from '../components/FolderBrowser';
-import { projectsApi } from '../services/api';
+import { projectsApi, api } from '../services/api';
 import type { Project, ProjectStats } from '../types';
 
 function Dashboard() {
@@ -60,21 +60,34 @@ function Dashboard() {
         path: selectedPath,
       });
 
-      // Show success message
-      setError(null);
-
       // Reset form
       setProjectName('');
       setSelectedPath(null);
 
-      // Reload projects to show the new project
-      await loadProjects();
+      // Show success notification
+      setError(`✓ Project "${newProject.name}" created successfully! Starting services...`);
 
-      // Show success notification (will appear briefly in error box with green styling)
-      setTimeout(() => {
-        setError(`✓ Project "${newProject.name}" created successfully!`);
+      // Start the project
+      try {
+        await api.orchestration.start(newProject.id);
+
+        // Wait a moment for services to start
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // Open the project in a new tab
+        window.open(`http://localhost:${newProject.frontend_port}`, '_blank');
+
+        // Final success message
+        setError(`✓ Project "${newProject.name}" is starting! Opening in new tab...`);
         setTimeout(() => setError(null), 3000);
-      }, 100);
+      } catch (startErr) {
+        console.error('Failed to start project:', startErr);
+        setError(`✓ Project created, but failed to start. Click "Open" to try manually.`);
+        setTimeout(() => setError(null), 5000);
+      }
+
+      // Reload projects to show the new project with updated status
+      await loadProjects();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
       setError(`Failed to create project: ${errorMsg}`);

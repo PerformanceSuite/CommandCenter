@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Project } from '../types';
-import { deleteProject } from '../services/api';
+import { deleteProject, api } from '../services/api';
 
 interface ProjectCardProps {
   project: Project;
@@ -10,8 +10,26 @@ interface ProjectCardProps {
 function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [starting, setStarting] = useState(false);
 
-  const handleOpen = () => {
+  const handleOpen = async () => {
+    // If project is stopped, start it first
+    if (project.status === 'stopped') {
+      setStarting(true);
+      try {
+        await api.orchestration.start(project.id);
+        // Wait for services to start
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      } catch (error) {
+        console.error('Failed to start project:', error);
+        alert('Failed to start project. Check logs for details.');
+        setStarting(false);
+        return;
+      }
+      setStarting(false);
+    }
+
+    // Open the project
     window.open(`http://localhost:${project.frontend_port}`, '_blank');
   };
 
@@ -56,10 +74,11 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
         <>
           <button
             onClick={handleOpen}
+            disabled={starting}
             className="btn-primary px-6"
-            title={`Open CommandCenter at localhost:${project.frontend_port}`}
+            title={`${project.status === 'stopped' ? 'Start and open' : 'Open'} CommandCenter at localhost:${project.frontend_port}`}
           >
-            Open
+            {starting ? 'Starting...' : (project.status === 'stopped' ? 'Start & Open' : 'Open')}
           </button>
           <button
             onClick={() => setShowConfirm(true)}
