@@ -92,15 +92,15 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
         <div className="h-64 flex items-center justify-center">
           <div className="animate-pulse flex flex-col items-center space-y-4">
-            <div className="w-48 h-48 bg-gray-200 rounded-full" />
+            <div className="w-48 h-48 bg-slate-700 rounded-full" />
             <div className="space-y-2">
-              <div className="h-3 bg-gray-200 rounded w-32" />
-              <div className="h-3 bg-gray-200 rounded w-24" />
-              <div className="h-3 bg-gray-200 rounded w-28" />
+              <div className="h-3 bg-slate-700 rounded w-32" />
+              <div className="h-3 bg-slate-700 rounded w-24" />
+              <div className="h-3 bg-slate-700 rounded w-28" />
             </div>
           </div>
         </div>
@@ -112,9 +112,9 @@ export const StatusChart: React.FC<StatusChartProps> = ({
 
   if (!hasData) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4">{title}</h3>
-        <div className="h-64 flex items-center justify-center text-gray-500">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+        <div className="h-64 flex items-center justify-center text-slate-400">
           <div className="text-center">
             <p className="mb-2">No data available</p>
             <p className="text-sm">Start adding items to see the distribution</p>
@@ -125,13 +125,13 @@ export const StatusChart: React.FC<StatusChartProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
       <div className="h-64">
         <Pie data={chartData} options={options} />
       </div>
       {onStatusClick && (
-        <p className="text-xs text-gray-500 mt-4 text-center">
+        <p className="text-xs text-slate-500 mt-4 text-center">
           Click on a segment to filter by status
         </p>
       )}

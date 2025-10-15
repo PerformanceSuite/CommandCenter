@@ -79,8 +79,8 @@ export const DashboardView: React.FC = () => {
 
       {/* Quick Actions */}
       <section aria-label="Quick actions">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => navigate('/technologies/new')}
@@ -117,8 +117,8 @@ export const DashboardView: React.FC = () => {
         />
 
         {/* Recent Activity */}
-        <section className="bg-white rounded-lg shadow p-6" aria-labelledby="recent-activity-heading">
-          <h2 id="recent-activity-heading" className="text-xl font-bold mb-4">
+        <section className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6" aria-labelledby="recent-activity-heading">
+          <h2 id="recent-activity-heading" className="text-xl font-bold text-white mb-4">
             Recent Activity
           </h2>
           <ActivityFeed activities={activity || []} isLoading={loading} />

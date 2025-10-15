@@ -43,11 +43,6 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
-          {/* Project Name Badge */}
-          <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
-            {projectName}
-          </div>
-
           <button
             className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
             aria-label="Notifications"
