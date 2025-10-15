@@ -31,24 +31,24 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
 // Projects API
 export const projectsApi = {
   list: (): Promise<Project[]> =>
-    fetchJSON(`${API_BASE}/projects/`),
+    fetchJSON(`${API_BASE}/projects`),
 
   get: (id: number): Promise<Project> =>
-    fetchJSON(`${API_BASE}/projects/${id}/`),
+    fetchJSON(`${API_BASE}/projects/${id}`),
 
   create: (data: ProjectCreate): Promise<Project> =>
-    fetchJSON(`${API_BASE}/projects/`, {
+    fetchJSON(`${API_BASE}/projects`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   delete: (id: number): Promise<void> =>
-    fetchJSON(`${API_BASE}/projects/${id}/`, {
+    fetchJSON(`${API_BASE}/projects/${id}`, {
       method: 'DELETE',
     }),
 
   stats: (): Promise<ProjectStats> =>
-    fetchJSON(`${API_BASE}/projects/stats/`),
+    fetchJSON(`${API_BASE}/projects/stats`),
 };
 
 // Orchestration API

@@ -19,8 +19,8 @@ export default function FolderBrowser({ onSelect, onClose }: FolderBrowserProps)
     setError('');
 
     try {
-      // If no path provided, start at Projects directory
-      const targetPath = path || '/Users/danielconnolly/Projects';
+      // If no path provided, start at Projects directory (mounted in container at /projects)
+      const targetPath = path || '/projects';
       const data = await filesystemApi.browse(targetPath);
 
       setCurrentPath(data.currentPath);
