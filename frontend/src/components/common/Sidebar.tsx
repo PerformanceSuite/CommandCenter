@@ -31,7 +31,7 @@ export const Sidebar: React.FC = () => {
       role="complementary"
     >
       {/* Logo/Hub Link - Aligns with header */}
-      <div className="px-6 py-3 flex items-center">
+      <div className="px-6 py-6 flex items-center">
         <a
           href="http://localhost:9000"
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -44,7 +44,7 @@ export const Sidebar: React.FC = () => {
         </a>
       </div>
 
-      <nav className="flex-1 px-4 pt-6 pb-6" aria-label="Primary navigation">
+      <nav className="flex-1 px-4 pt-2 pb-6" aria-label="Primary navigation">
         <ul className="space-y-2" role="list">
           {navItems.map((item) => (
             <li key={item.to}>
