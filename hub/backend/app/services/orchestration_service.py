@@ -16,7 +16,16 @@ class OrchestrationService:
 
     # Path mapping: container path -> host path
     CONTAINER_PROJECTS_PATH = "/projects"
-    HOST_PROJECTS_PATH = os.getenv("PROJECTS_ROOT", "/Users/danielconnolly/Projects")
+    HOST_PROJECTS_PATH = os.getenv("PROJECTS_ROOT", os.path.expanduser("~/Projects"))
+
+    # Docker Compose service configuration
+    # Essential services that must be started for project functionality
+    ESSENTIAL_SERVICES = ["backend", "frontend", "postgres", "redis"]
+    # Optional services that may conflict with ports or not be required
+    # Flower: Port 5555 (Celery monitoring UI)
+    # Prometheus: Port 9090 (Metrics collection)
+    # Celery worker: Can be started separately if needed
+    EXCLUDED_SERVICES = ["flower", "prometheus", "celery"]
 
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -55,9 +64,9 @@ class OrchestrationService:
             env = os.environ.copy()
             env["COMPOSE_PROJECT_DIR"] = host_cc_path
 
-            # Run docker-compose up -d (exclude conflicting services)
+            # Run docker-compose up -d (only start essential services)
             result = subprocess.run(
-                ["docker-compose", "up", "-d", "backend", "frontend", "postgres", "redis"],
+                ["docker-compose", "up", "-d"] + self.ESSENTIAL_SERVICES,
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,

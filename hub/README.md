@@ -47,6 +47,41 @@ Managed CommandCenter Instances:
 - ✅ **Port Management** - Auto-assigns non-conflicting ports
 - ✅ **VIZTRTR Design** - Beautiful dark slate UI
 
+## Configuration
+
+### Environment Variables
+
+Hub backend can be configured with the following environment variables:
+
+**PROJECTS_ROOT** (optional)
+- Default: `~/Projects` (expands to user's home directory)
+- Purpose: Root directory where projects are located
+- Example: `PROJECTS_ROOT=/Users/yourname/workspace`
+- Used for Docker volume mount path translation
+
+**Database Configuration**
+- `DATABASE_URL` - SQLite database path (default: `sqlite:///./hub.db`)
+
+**Port Configuration**
+- Backend runs on port `9001` (configurable in `docker-compose.yml`)
+- Frontend runs on port `9000` (configurable in `docker-compose.yml`)
+- Managed projects auto-assign ports starting from `8000/3000` incrementing by 10
+
+### Docker Compose Services
+
+Hub starts only essential services for managed projects to avoid port conflicts:
+- `backend` - FastAPI server
+- `frontend` - React app
+- `postgres` - Database
+- `redis` - Cache/queue
+
+Optional services (excluded by default):
+- `flower` - Celery monitoring (port 5555)
+- `prometheus` - Metrics collection (port 9090)
+- `celery` - Background worker
+
+To include optional services, modify `ESSENTIAL_SERVICES` in `hub/backend/app/services/orchestration_service.py`.
+
 ## Development
 
 ### Backend (FastAPI)

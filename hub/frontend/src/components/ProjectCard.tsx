@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import type { Project } from '../types';
 import { deleteProject, api } from '../services/api';
 
@@ -19,9 +20,16 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
     if (project.status === 'stopped') {
       try {
         await api.orchestration.start(project.id);
+        // Show success notification after a short delay
+        setTimeout(() => {
+          toast.success(`Project "${project.name}" is starting...`);
+        }, 1000);
       } catch (error) {
         console.error('Failed to start project:', error);
-        // Silent failure - user will see loading screen in opened tab
+        // Show error notification after a delay
+        setTimeout(() => {
+          toast.error(`Failed to start "${project.name}". Check the logs for details.`);
+        }, 2000);
       }
     }
   };

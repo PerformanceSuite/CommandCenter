@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import ProjectCard from '../components/ProjectCard';
 import FolderBrowser from '../components/FolderBrowser';
 import { projectsApi, api } from '../services/api';
@@ -61,11 +62,11 @@ function Dashboard() {
         path: selectedPath,
       });
 
-      // Store the created project (don't reset form)
-      setCreatedProject(newProject);
-
       // Reload projects to show the new project in the list
       await loadProjects();
+
+      // Store the created project after reload (prevents race condition)
+      setCreatedProject(newProject);
 
       // Clear error/success messages
       setError(null);
@@ -88,9 +89,16 @@ function Dashboard() {
     if (createdProject.status === 'stopped') {
       try {
         await api.orchestration.start(createdProject.id);
+        // Show success notification after a short delay
+        setTimeout(() => {
+          toast.success(`Project "${createdProject.name}" is starting...`);
+        }, 1000);
       } catch (error) {
         console.error('Failed to start project:', error);
-        // Silent failure - user will see loading screen in opened tab
+        // Show error notification after a delay
+        setTimeout(() => {
+          toast.error(`Failed to start "${createdProject.name}". Check the logs for details.`);
+        }, 2000);
       }
     }
 

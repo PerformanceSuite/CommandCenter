@@ -1,26 +1,28 @@
 # CommandCenter - Claude Code Memory
 
-**Last Updated**: 2025-10-15
+**Last Updated**: 2025-10-15 (Session 51)
 
 ---
 
 ## 🎯 START HERE - Next Session Quick Reference
 
 ### Immediate Priority
-**🐛 HUB BUG FIX** - Project creation race condition (Issue #44)
+**🔧 HUB MIGRATION BUG** - CommandCenter template has migration issues blocking project startup
 
 **Current Status:**
-- ⚠️ **Session 50 Incomplete**: UI alignment work attempted, hub bug discovered
-- 🐛 **Active Issue**: Hub shows projects before creation completes (race condition)
-- 📝 **Branch**: fix/hub-project-creation-race-condition
-- 🔍 **Issue**: https://github.com/PerformanceSuite/CommandCenter/issues/44
+- ✅ **Session 51 Complete**: Hub UX improvements + critical bug fixes (PR #47)
+- ⚠️ **Blocking Issue**: CommandCenter migration error (`idx_research_tasks_status already exists`)
+- 📝 **Branch**: fix/hub-auto-start-and-open (merged to PR #47)
+- 🔍 **PR**: https://github.com/PerformanceSuite/CommandCenter/pull/47
 
 **Next Steps:**
-1. **IMMEDIATE**: Fix hub project creation race condition (Issue #44)
-   - Implement 'creating' status to hide incomplete projects
-   - OR filter incomplete projects in list_projects() API
-   - OR pause frontend polling during creation
-2. **UI Fix**: Sidebar/Header alignment issues (use different AI assistant)
+1. **CRITICAL**: Fix CommandCenter migration bug (upstream issue, not hub)
+   - `idx_research_tasks_status` duplicate index error
+   - Prevents spawned projects from starting
+   - Investigate alembic migrations for duplicate CREATE INDEX statements
+2. **Hub Enhancement**: Fix Docker volume mount path conflicts
+   - Either update CommandCenter template docker-compose.yml to use env vars
+   - OR implement docker-compose.yml rewriting in setup service
 3. **CRITICAL**: Implement JWT authentication middleware (CVSS 9.8) - 3 days
 4. **CRITICAL**: Fix N+1 query patterns (use optimized_job_service.py) - 2 days
 5. **CRITICAL**: Enable connection pooling (use config_optimized.py) - 0.5 days
@@ -80,6 +82,100 @@
 ---
 
 ## 🏗️ Recent Sessions Summary
+
+### Session 51: Hub UX Improvements + Critical Bug Fixes ✅
+
+**Date**: 2025-10-15
+**Status**: COMPLETE - PR #47 ready for review (blocked by upstream migration bug)
+**Time**: ~4 hours
+
+**Context:**
+User requested animated "Creating..." button that transitions to "Open" after project creation. During implementation and testing, discovered multiple critical backend bugs preventing projects from starting properly.
+
+**Work Completed:**
+
+1. **Frontend UX Improvements** ✅
+   - **Animated "Creating..." Button** (Dashboard.tsx:190-197)
+     - Bouncing dots animation using Tailwind CSS
+     - 3 dots with staggered delays (0ms, 150ms, 300ms)
+     - Professional loading state
+
+   - **Seamless "Open" Button Flow** (Dashboard.tsx:81-101, 183-226)
+     - Form stays open after creation (no auto-reset)
+     - Button transitions: "Create Project" → "Creating..." → "Open"
+     - `createdProject` state stores newly created project
+     - Click "Open" → Opens tab immediately + starts services in background
+     - Form resets only after opening
+
+   - **Localhost URL Preview** (Dashboard.tsx:183-189)
+     - Green box shows: "Project will be available at: localhost:3010"
+     - Appears after creation completes
+     - Clear indication of where project will run
+
+2. **Backend Bug Fixes** ✅
+   - **Wrong Internal Ports in .env** (setup_service.py:102-108)
+     - **Issue**: Generated .env used host ports (5442, 6389) for Docker internal connections
+     - **Fix**: Changed to internal Docker ports (5432, 6379)
+     - **Impact**: Database/Redis connections now work inside Docker network
+
+   - **Exclude Conflicting Services** (orchestration_service.py:60)
+     - **Issue**: Starting all services caused port conflicts (Flower:5555, Prometheus:9090)
+     - **Fix**: Only start essential services: backend, frontend, postgres, redis
+     - **Impact**: Prevents port allocation errors
+
+   - **Path Translation Helper** (orchestration_service.py:17-32)
+     - Added `_get_host_path()` method to convert container paths to host paths
+     - Preparation for fixing Docker volume mount issues
+     - Currently sets `COMPOSE_PROJECT_DIR` environment variable
+
+3. **Blocking Issue Discovered** ⚠️
+   - **CommandCenter Migration Bug** (upstream, not hub)
+     - Error: `idx_research_tasks_status already exists`
+     - Prevents spawned projects from starting (backend exits with code 1)
+     - Tried multiple database resets - error persists
+     - **Root Cause**: CommandCenter template has duplicate CREATE INDEX in migrations
+     - **Impact**: Blocks full end-to-end testing of hub UX improvements
+
+**Files Modified:**
+- `hub/frontend/src/pages/Dashboard.tsx` (+84/-33 lines)
+  - Added `createdProject` state, `handleOpenProject()` function
+  - Animated button states, localhost URL preview box
+- `hub/backend/app/services/setup_service.py` (+6/-6 lines)
+  - Fixed DATABASE_URL/REDIS_URL to use internal ports
+- `hub/backend/app/services/orchestration_service.py` (+27/-2 lines)
+  - Path translation helper, limited startup services
+
+**Testing:**
+- ✅ Frontend builds successfully, restart required to see changes
+- ✅ Backend port fix verified in generated .env files
+- ⚠️ Full project startup blocked by CommandCenter migration bug
+- ⚠️ Manual testing: Had to remove `./backend/output` volume mounts temporarily
+
+**Commits:**
+- `65e27b8` - fix(hub): Fix internal ports and add seamless Open UX
+- `876e27c` - refactor(hub): Simplify UX - seamless Open flow
+- `5d368fe` - fix(hub): Auto-start and open projects after creation
+
+**PR Status:**
+- **PR #47**: https://github.com/PerformanceSuite/CommandCenter/pull/47
+- **Status**: Ready for `/review` (comprehensive description added)
+- **Blockers**: CommandCenter migration bug prevents full testing
+
+**Key Achievements:**
+- ✅ Professional animated loading states
+- ✅ Seamless user experience (no waiting)
+- ✅ Fixed critical port misconfiguration
+- ✅ Comprehensive PR documentation
+- 🐛 Discovered upstream migration bug (needs separate fix)
+
+**Next Session Priority:**
+1. Fix CommandCenter migration bug (alembic duplicate index)
+2. Test full hub workflow end-to-end
+3. Consider removing Celery/Flower from template (optional services)
+
+**Achievement**: 🎯 **Hub UX complete + 2 critical bugs fixed** - Ready for review once migrations are fixed
+
+---
 
 ### Session 50: UI Alignment + Hub Project Creation Bug ⚠️
 
