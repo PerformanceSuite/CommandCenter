@@ -7,7 +7,6 @@ import {
   Database,
   Settings,
   Terminal,
-  FolderOpen,
 } from 'lucide-react';
 
 interface NavItem {
@@ -18,7 +17,6 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-  { to: '/projects', icon: <FolderOpen size={20} />, label: 'Projects' },
   { to: '/radar', icon: <Radar size={20} />, label: 'Tech Radar' },
   { to: '/research', icon: <BookOpen size={20} />, label: 'Research Hub' },
   { to: '/knowledge', icon: <Database size={20} />, label: 'Knowledge Base' },
@@ -26,6 +24,9 @@ const navItems: NavItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
+  // Get project name from environment variable (set by Hub during deployment)
+  const projectName = import.meta.env.VITE_PROJECT_NAME || 'Command Center';
+
   return (
     <aside
       className="w-64 bg-gray-900 text-white h-screen fixed left-0 top-0 flex flex-col"
@@ -36,8 +37,8 @@ export const Sidebar: React.FC = () => {
         <div className="flex items-center gap-3">
           <Terminal size={32} className="text-primary-400" aria-hidden="true" />
           <div>
-            <h1 className="text-xl font-bold">Command Center</h1>
-            <p className="text-xs text-gray-400">Development Hub</p>
+            <h1 className="text-xl font-bold">{projectName}</h1>
+            <p className="text-xs text-gray-400">Command Center</p>
           </div>
         </div>
       </div>

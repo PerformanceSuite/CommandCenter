@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Bell, Settings } from 'lucide-react';
-import { ProjectSelector } from './ProjectSelector';
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -32,30 +31,25 @@ export const Header: React.FC = () => {
   );
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4" role="banner">
+    <header className="bg-slate-800/50 border-b border-slate-700/50 px-6 py-4" role="banner">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1>
-            <p className="text-sm text-gray-500 mt-1" aria-label={`Current date: ${currentDate}`}>
-              <time dateTime={new Date().toISOString()}>
-                {currentDate}
-              </time>
-            </p>
-          </div>
-
-          {/* Project Selector */}
-          <ProjectSelector />
+        <div>
+          <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
+          <p className="text-sm text-slate-400 mt-1" aria-label={`Current date: ${currentDate}`}>
+            <time dateTime={new Date().toISOString()}>
+              {currentDate}
+            </time>
+          </p>
         </div>
 
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
           {/* Project Name Badge */}
-          <div className="px-4 py-2 bg-slate-800 text-white rounded-lg font-semibold text-sm">
+          <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
             {projectName}
           </div>
 
           <button
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
             aria-label="Notifications"
             type="button"
           >
@@ -63,7 +57,7 @@ export const Header: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/settings')}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
             aria-label="Settings"
             type="button"
           >

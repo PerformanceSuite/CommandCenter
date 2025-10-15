@@ -25,7 +25,7 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-slate-950">
           <Sidebar />
 
           <div className="flex-1 ml-64 flex flex-col overflow-hidden">
@@ -38,7 +38,6 @@ function App() {
                   <Route path="/radar" element={<RadarView />} />
                   <Route path="/research" element={<ResearchView />} />
                   <Route path="/knowledge" element={<KnowledgeView />} />
-                  <Route path="/projects" element={<ProjectsView />} />
                   <Route path="/settings" element={<SettingsView />} />
                 </Routes>
               </Suspense>
