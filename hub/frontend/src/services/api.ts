@@ -42,9 +42,13 @@ export const projectsApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (id: number): Promise<void> =>
-    fetchJSON(`${API_BASE}/projects/${id}`, {
+  delete: (id: number, deleteFiles: boolean = false): Promise<void> =>
+    fetch(`${API_BASE}/projects/${id}?delete_files=${deleteFiles}`, {
       method: 'DELETE',
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
     }),
 
   stats: (): Promise<ProjectStats> =>
@@ -79,6 +83,10 @@ export const filesystemApi = {
     return fetchJSON(`${API_BASE}/filesystem/browse?${params}`);
   },
 };
+
+// Convenience exports
+export const deleteProject = (id: number, deleteFiles: boolean = false) =>
+  projectsApi.delete(id, deleteFiles);
 
 // Export combined API
 export const api = {

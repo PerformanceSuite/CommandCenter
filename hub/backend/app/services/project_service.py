@@ -173,12 +173,40 @@ class ProjectService:
 
         return project
 
-    async def delete_project(self, project_id: int) -> bool:
-        """Delete project (does not delete files)"""
+    async def delete_project(self, project_id: int, delete_files: bool = False) -> bool:
+        """
+        Delete project
+
+        Args:
+            project_id: Project ID to delete
+            delete_files: If True, also delete the CommandCenter directory and stop containers
+        """
+        import subprocess
+        import shutil
+
         project = await self.get_project(project_id)
         if not project:
             return False
 
+        # Stop and remove containers if requested
+        if delete_files and os.path.exists(project.cc_path):
+            try:
+                # Stop and remove containers with volumes
+                compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+                if os.path.exists(compose_file):
+                    subprocess.run(
+                        ["docker-compose", "down", "-v"],
+                        cwd=project.cc_path,
+                        capture_output=True,
+                        timeout=60,
+                    )
+
+                # Delete the directory
+                shutil.rmtree(project.cc_path)
+            except Exception as e:
+                print(f"Warning: Failed to delete files for project {project.name}: {e}")
+
+        # Delete from database
         await self.db.delete(project)
         await self.db.commit()
 

@@ -1,12 +1,32 @@
+import { useState } from 'react';
 import type { Project } from '../types';
+import { deleteProject } from '../services/api';
 
 interface ProjectCardProps {
   project: Project;
+  onDelete: () => void;
 }
 
-function ProjectCard({ project }: ProjectCardProps) {
+function ProjectCard({ project, onDelete }: ProjectCardProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const handleOpen = () => {
     window.open(`http://localhost:${project.frontend_port}`, '_blank');
+  };
+
+  const handleDelete = async (deleteFiles: boolean) => {
+    setDeleting(true);
+    try {
+      await deleteProject(project.id, deleteFiles);
+      onDelete();
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      alert('Failed to delete project');
+    } finally {
+      setDeleting(false);
+      setShowConfirm(false);
+    }
   };
 
   return (
@@ -31,14 +51,52 @@ function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </div>
 
-      {/* Open Button */}
-      <button
-        onClick={handleOpen}
-        className="btn-primary px-6"
-        title={`Open CommandCenter at localhost:${project.frontend_port}`}
-      >
-        Open
-      </button>
+      {/* Actions */}
+      {!showConfirm ? (
+        <>
+          <button
+            onClick={handleOpen}
+            className="btn-primary px-6"
+            title={`Open CommandCenter at localhost:${project.frontend_port}`}
+          >
+            Open
+          </button>
+          <button
+            onClick={() => setShowConfirm(true)}
+            className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 hover:border-red-600/50 transition-all"
+            title="Delete project"
+          >
+            Delete
+          </button>
+        </>
+      ) : (
+        <div className="flex gap-2 items-center">
+          <span className="text-sm text-slate-400">Delete files too?</span>
+          <button
+            onClick={() => handleDelete(false)}
+            disabled={deleting}
+            className="px-3 py-1 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 disabled:opacity-50"
+            title="Remove from registry only"
+          >
+            No
+          </button>
+          <button
+            onClick={() => handleDelete(true)}
+            disabled={deleting}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+            title="Remove from registry AND delete all files"
+          >
+            Yes
+          </button>
+          <button
+            onClick={() => setShowConfirm(false)}
+            disabled={deleting}
+            className="px-3 py-1 bg-slate-700 text-slate-300 rounded hover:bg-slate-600 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }

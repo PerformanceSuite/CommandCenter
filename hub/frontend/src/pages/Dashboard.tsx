@@ -183,6 +183,7 @@ function Dashboard() {
               <ProjectCard
                 key={project.id}
                 project={project}
+                onDelete={loadProjects}
               />
             ))}
           </div>

@@ -87,15 +87,20 @@ async def update_project(
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
     project_id: int,
+    delete_files: bool = False,
     service: ProjectService = Depends(get_project_service),
 ):
     """
-    Delete project
+    Delete project from registry
 
-    WARNING: This will stop the CommandCenter instance but NOT delete
-    the commandcenter directory. Manual cleanup required.
+    Query Parameters:
+    - delete_files: If true, also stops containers and deletes CommandCenter directory
+
+    Examples:
+    - DELETE /api/projects/1 - Only remove from registry
+    - DELETE /api/projects/1?delete_files=true - Remove from registry AND delete files
     """
-    success = await service.delete_project(project_id)
+    success = await service.delete_project(project_id, delete_files=delete_files)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
