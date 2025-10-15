@@ -28,20 +28,11 @@ export const Header: React.FC = () => {
   );
 
   return (
-    <header className="bg-slate-800 border-b border-slate-700 px-6 py-4" role="banner">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
-          <p className="text-sm text-slate-400 mt-1" aria-label={`Current date: ${currentDate}`}>
-            <time dateTime={new Date().toISOString()}>
-              {currentDate}
-            </time>
-          </p>
-        </div>
-
+    <header className="bg-primary-600 px-6 py-3" role="banner">
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-4" role="toolbar" aria-label="Header actions">
           <button
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+            className="p-2 text-white hover:bg-primary-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
             aria-label="Notifications"
             type="button"
           >
@@ -49,7 +40,7 @@ export const Header: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/settings')}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+            className="p-2 text-white hover:bg-primary-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-600"
             aria-label="Settings"
             type="button"
           >

@@ -152,10 +152,10 @@ export const KnowledgeView: React.FC = () => {
             id="collection"
             value={currentCollection}
             onChange={(e) => handleCollectionChange(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             {collections.map((coll) => (
-              <option key={coll} value={coll} className="bg-slate-950 text-white">
+              <option key={coll} value={coll}>
                 {coll}
               </option>
             ))}
@@ -176,7 +176,7 @@ export const KnowledgeView: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Search knowledge base using natural language..."
-              className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 text-white placeholder-slate-500 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none"
               aria-label="Search query"
               aria-describedby="search-hint"
             />
