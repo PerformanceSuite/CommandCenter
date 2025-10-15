@@ -39,4 +39,40 @@ find . -type f -name "Thumbs.db" -delete 2>/dev/null
 echo "  Removing empty directories..."
 find . -type d -empty -not -path "*/node_modules/*" -not -path "*/.git/*" -delete 2>/dev/null
 
+# Memory management check
+echo ""
+echo "📊 Memory Management Status:"
+if [ -f ".claude/memory.md" ]; then
+  MEMORY_LINES=$(wc -l < .claude/memory.md)
+  SESSION_COUNT=$(grep -c "^### Session [0-9]\+:" .claude/memory.md 2>/dev/null || echo "0")
+  ARCHIVE_COUNT=$(ls -1 .claude/archives/*.md 2>/dev/null | wc -l | tr -d ' ')
+
+  echo "  • memory.md: $MEMORY_LINES lines"
+  echo "  • Sessions in memory: $SESSION_COUNT"
+  echo "  • Archive files: $ARCHIVE_COUNT"
+
+  # Check thresholds and provide feedback
+  if [ "$MEMORY_LINES" -gt 2000 ]; then
+    echo "  🚨 CRITICAL: memory.md exceeds 2000 lines"
+    echo "     Archive needed immediately!"
+  elif [ "$MEMORY_LINES" -gt 1200 ]; then
+    echo "  ⚠️  WARNING: memory.md exceeds 1200 lines"
+    echo "     Archive recommended at next session"
+  elif [ "$MEMORY_LINES" -gt 800 ]; then
+    echo "  ⚠️  NOTICE: memory.md approaching limit ($MEMORY_LINES/800)"
+    echo "     Consider archiving older sessions soon"
+  else
+    echo "  ✅ Memory file size OK ($MEMORY_LINES/800 lines)"
+  fi
+
+  if [ "$SESSION_COUNT" -gt 15 ]; then
+    echo "  ⚠️  Too many sessions: $SESSION_COUNT (recommended: ≤10)"
+  elif [ "$SESSION_COUNT" -gt 10 ]; then
+    echo "  ⚠️  Session count high: $SESSION_COUNT (optimal: 5-10)"
+  fi
+else
+  echo "  ⚠️  memory.md not found"
+fi
+
+echo ""
 echo "✅ Cleanup complete!"
