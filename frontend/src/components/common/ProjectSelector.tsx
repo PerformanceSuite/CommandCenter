@@ -44,7 +44,7 @@ export const ProjectSelector = () => {
   if (loading) {
     return (
       <div className="relative">
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse">
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 dark:bg-gray-700 rounded-lg animate-pulse">
           <FolderOpen className="w-5 h-5 text-gray-400" />
           <span className="text-sm text-gray-400">Loading...</span>
         </div>
@@ -71,21 +71,21 @@ export const ProjectSelector = () => {
       {/* Selector Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors min-w-[200px]"
+        className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-slate-900 dark:hover:bg-gray-700 transition-colors min-w-[200px]"
       >
         <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         <div className="flex-1 text-left">
-          <div className="text-sm font-medium text-gray-900 dark:text-white">
+          <div className="text-sm font-medium text-white dark:text-white">
             {selectedProject?.name || 'Select Project'}
           </div>
           {selectedProject?.description && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <div className="text-xs text-slate-500 dark:text-gray-400 truncate">
               {selectedProject.description}
             </div>
           )}
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-gray-500 transition-transform ${
+          className={`w-4 h-4 text-slate-500 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -108,7 +108,7 @@ export const ProjectSelector = () => {
                 <button
                   key={project.id}
                   onClick={() => handleProjectSelect(project)}
-                  className={`w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                  className={`w-full px-4 py-3 text-left hover:bg-slate-800 dark:hover:bg-gray-700 transition-colors ${
                     selectedProject?.id === project.id
                       ? 'bg-blue-50 dark:bg-blue-900/20'
                       : ''
@@ -123,15 +123,15 @@ export const ProjectSelector = () => {
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium text-white dark:text-white">
                         {project.name}
                       </div>
                       {project.description && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
+                        <div className="text-sm text-slate-500 dark:text-gray-400 truncate mt-1">
                           {project.description}
                         </div>
                       )}
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      <div className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                         Owner: {project.owner}
                       </div>
                     </div>
@@ -161,7 +161,7 @@ export const ProjectSelector = () => {
             {/* Create New Project Button */}
             <button
               onClick={handleCreateProject}
-              className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-blue-600 dark:text-blue-400 font-medium"
+              className="w-full px-4 py-3 text-left hover:bg-slate-800 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-blue-600 dark:text-blue-400 font-medium"
             >
               <Plus className="w-5 h-5" />
               <span>Create New Project</span>

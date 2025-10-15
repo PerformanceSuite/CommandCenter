@@ -28,13 +28,16 @@ class PortService:
         Allocate next available port set
 
         Returns PortSet with non-conflicting ports
+        Note: Starts at +10 offset to avoid Hub ports (9000/9001)
         """
         # Get count of existing projects
         result = await self.db.execute(select(func.count(Project.id)))
         project_count = result.scalar() or 0
 
-        # Calculate next port set
-        offset = project_count * self.INCREMENT
+        # Calculate next port set (start at offset 10 to avoid Hub)
+        # First project: 8010, 3010, 5442, 6389
+        # Second project: 8020, 3020, 5452, 6399
+        offset = (project_count + 1) * self.INCREMENT
 
         return PortSet(
             backend=self.BASE_BACKEND + offset,

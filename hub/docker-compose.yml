@@ -41,6 +41,7 @@ services:
       - /app/node_modules
     environment:
       - VITE_API_BASE_URL=/api
+      - VITE_API_URL=http://hub-backend:9001
     depends_on:
       - hub-backend
     restart: unless-stopped

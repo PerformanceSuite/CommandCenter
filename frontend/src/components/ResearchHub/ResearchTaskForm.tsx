@@ -90,7 +90,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="title"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Title <span className="text-red-500">*</span>
         </label>
@@ -114,7 +114,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Description
         </label>
@@ -133,7 +133,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="status"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Status
         </label>
@@ -158,7 +158,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="technology_id"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Technology ID (Optional)
         </label>
@@ -176,7 +176,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
           placeholder="Enter technology ID"
           disabled={isLoading}
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-slate-500">
           Link this task to a specific technology
         </p>
       </div>
@@ -185,7 +185,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="repository_id"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Repository ID (Optional)
         </label>
@@ -203,7 +203,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
           placeholder="Enter repository ID"
           disabled={isLoading}
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-slate-500">
           Link this task to a specific repository
         </p>
       </div>
@@ -212,7 +212,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="assigned_to"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Assign To
         </label>
@@ -231,7 +231,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="due_date"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Due Date
         </label>
@@ -249,7 +249,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
       <div>
         <label
           htmlFor="estimated_hours"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-slate-300 mb-1"
         >
           Estimated Hours
         </label>
@@ -288,7 +288,7 @@ export const ResearchTaskForm: React.FC<ResearchTaskFormProps> = ({
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Cancel
         </button>

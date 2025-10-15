@@ -28,9 +28,9 @@ const getActivityIcon = (type: string, action: string) => {
     case 'task':
       return { Icon: AlertCircle, color: 'text-orange-600 bg-orange-100' };
     case 'document':
-      return { Icon: FileText, color: 'text-gray-600 bg-gray-100' };
+      return { Icon: FileText, color: 'text-slate-400 bg-slate-800' };
     default:
-      return { Icon: Clock, color: 'text-gray-600 bg-gray-100' };
+      return { Icon: Clock, color: 'text-slate-400 bg-slate-800' };
   }
 };
 
@@ -95,10 +95,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoadin
       <div className="space-y-4">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex items-start space-x-4 animate-pulse">
-            <div className="w-10 h-10 bg-gray-200 rounded-full" />
+            <div className="w-10 h-10 bg-slate-700 rounded-full" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
-              <div className="h-3 bg-gray-200 rounded w-1/4" />
+              <div className="h-4 bg-slate-700 rounded w-3/4" />
+              <div className="h-3 bg-slate-700 rounded w-1/4" />
             </div>
           </div>
         ))}
@@ -108,7 +108,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoadin
 
   if (!activities || activities.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-slate-500">
         <Clock size={48} className="mx-auto mb-2 opacity-50" />
         <p>No recent activity</p>
       </div>
@@ -124,7 +124,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoadin
         return (
           <div
             key={`${activity.type}-${activity.id}-${activity.timestamp}`}
-            className="flex items-start space-x-4 pb-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2 transition-colors"
+            className="flex items-start space-x-4 pb-4 border-b last:border-b-0 cursor-pointer hover:bg-slate-900 rounded p-2 -m-2 transition-colors"
             role="listitem"
             onClick={() => navigate(navigationPath)}
             onKeyDown={(e) => {
@@ -139,10 +139,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoadin
               <Icon size={20} aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{activity.title}</p>
-              <p className="text-sm text-gray-600">{getActivityText(activity)}</p>
+              <p className="text-sm font-medium text-white truncate">{activity.title}</p>
+              <p className="text-sm text-slate-400">{getActivityText(activity)}</p>
               {activity.status && (
-                <span className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-700">
+                <span className="inline-block mt-1 px-2 py-1 text-xs font-medium rounded bg-slate-800 text-slate-300">
                   {activity.status}
                 </span>
               )}

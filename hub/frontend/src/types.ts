@@ -30,6 +30,8 @@ export type HealthStatus = 'healthy' | 'unhealthy' | 'unknown';
 export interface ProjectCreate {
   name: string;
   path: string;
+  use_existing_cc?: boolean;
+  existing_cc_path?: string;
 }
 
 export interface ProjectStats {

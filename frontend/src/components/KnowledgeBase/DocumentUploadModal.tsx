@@ -130,12 +130,12 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Upload Document</h2>
+          <h2 className="text-xl font-semibold text-white">Upload Document</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-slate-400 transition-colors"
             disabled={status === 'uploading'}
           >
             <X size={24} />
@@ -145,7 +145,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* File Upload Area */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Document File
             </label>
             <div
@@ -162,8 +162,8 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
                 <div className="flex items-center justify-center gap-3">
                   <File className="text-primary-600" size={32} />
                   <div className="text-left">
-                    <p className="font-medium text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-white">{file.name}</p>
+                    <p className="text-sm text-slate-500">
                       {(file.size / 1024).toFixed(2)} KB
                     </p>
                   </div>
@@ -178,10 +178,10 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               ) : (
                 <div>
                   <Upload className="mx-auto text-gray-400 mb-3" size={48} />
-                  <p className="text-gray-600 mb-2">
+                  <p className="text-slate-400 mb-2">
                     Drag and drop your file here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500">
                     Supported formats: PDF, Markdown (.md), Text (.txt)
                   </p>
                   <input
@@ -205,7 +205,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
           {/* Category Selection */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="category" className="block text-sm font-medium text-slate-300 mb-2">
               Category
             </label>
             <select
@@ -238,7 +238,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
           {/* Technology Association (Optional) */}
           <div>
-            <label htmlFor="technology" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="technology" className="block text-sm font-medium text-slate-300 mb-2">
               Associated Technology (Optional)
             </label>
             <select
@@ -258,7 +258,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
           {/* Collection Selection */}
           <div>
-            <label htmlFor="collection" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="collection" className="block text-sm font-medium text-slate-300 mb-2">
               Collection
             </label>
             <select
@@ -305,7 +305,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
               type="button"
               onClick={handleClose}
               disabled={status === 'uploading'}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-slate-300 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

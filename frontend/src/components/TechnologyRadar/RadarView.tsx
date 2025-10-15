@@ -279,13 +279,13 @@ export const RadarView: React.FC = () => {
         <h1 className="text-3xl font-bold">Technology Radar</h1>
         <div className="flex items-center gap-3">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-md p-1">
+          <div className="flex items-center bg-slate-800 rounded-md p-1">
             <button
               onClick={() => setViewMode('card')}
               className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${
                 viewMode === 'card'
                   ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-slate-400 hover:text-white'
               }`}
               title="Card View"
             >
@@ -297,7 +297,7 @@ export const RadarView: React.FC = () => {
               className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${
                 viewMode === 'matrix'
                   ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-slate-400 hover:text-white'
               }`}
               title="Matrix View"
             >
@@ -316,7 +316,7 @@ export const RadarView: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-4 space-y-4">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-4 space-y-4">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -333,7 +333,7 @@ export const RadarView: React.FC = () => {
             className={`px-4 py-2 border rounded-md transition-colors flex items-center gap-2 ${
               showFilters || hasActiveFilters
                 ? 'bg-primary-50 border-primary-300 text-primary-700'
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                : 'bg-white border-gray-300 text-slate-300 hover:bg-slate-900'
             }`}
           >
             <Filter size={20} />
@@ -352,7 +352,7 @@ export const RadarView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Domain Filter */}
               <div>
-                <label htmlFor="domain-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="domain-filter" className="block text-sm font-medium text-slate-300 mb-2">
                   Domain
                 </label>
                 <select
@@ -373,7 +373,7 @@ export const RadarView: React.FC = () => {
 
               {/* Status Filter */}
               <div>
-                <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="status-filter" className="block text-sm font-medium text-slate-300 mb-2">
                   Status
                 </label>
                 <select
@@ -395,7 +395,7 @@ export const RadarView: React.FC = () => {
 
             {hasActiveFilters && (
               <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-400">
                   Showing {technologies.length} of {total} technologies
                 </p>
                 <button
@@ -423,7 +423,7 @@ export const RadarView: React.FC = () => {
               />
               {/* Pagination for Matrix View */}
               {totalPages > 1 && (
-                <div className="bg-white rounded-lg shadow">
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}
@@ -437,13 +437,13 @@ export const RadarView: React.FC = () => {
             </>
           ) : (
             <div
-              className="bg-white rounded-lg shadow p-12 text-center"
+              className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-12 text-center"
               role="status"
               aria-live="polite"
             >
               {hasActiveFilters ? (
                 <>
-                  <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                  <p className="text-slate-500 text-lg">No technologies match your filters</p>
                   <button
                     onClick={clearFilters}
                     className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
@@ -453,7 +453,7 @@ export const RadarView: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                  <p className="text-slate-500 text-lg">No technologies tracked yet</p>
                   <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
                   <button
                     onClick={() => setShowCreateModal(true)}
@@ -475,7 +475,7 @@ export const RadarView: React.FC = () => {
               {domainEntries.map(([domain, techs]) => (
                 <section
                   key={domain}
-                  className="bg-white rounded-lg shadow p-6"
+                  className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6"
                   aria-labelledby={`domain-${domain}-heading`}
                 >
                   <h2 id={`domain-${domain}-heading`} className="text-2xl font-bold mb-4 capitalize">
@@ -499,7 +499,7 @@ export const RadarView: React.FC = () => {
               ))}
               {/* Pagination for Card View */}
               {totalPages > 1 && (
-                <div className="bg-white rounded-lg shadow">
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}
@@ -513,13 +513,13 @@ export const RadarView: React.FC = () => {
             </>
           ) : (
             <div
-              className="bg-white rounded-lg shadow p-12 text-center"
+              className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-12 text-center"
               role="status"
               aria-live="polite"
             >
               {hasActiveFilters ? (
                 <>
-                  <p className="text-gray-500 text-lg">No technologies match your filters</p>
+                  <p className="text-slate-500 text-lg">No technologies match your filters</p>
                   <button
                     onClick={clearFilters}
                     className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
@@ -529,7 +529,7 @@ export const RadarView: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <p className="text-gray-500 text-lg">No technologies tracked yet</p>
+                  <p className="text-slate-500 text-lg">No technologies tracked yet</p>
                   <p className="text-gray-400 text-sm mt-2">Add technologies to see them on the radar</p>
                   <button
                     onClick={() => setShowCreateModal(true)}

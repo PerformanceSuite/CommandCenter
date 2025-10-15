@@ -9,7 +9,7 @@ export default defineConfig({
     port: 9000,
     proxy: {
       '/api': {
-        target: 'http://hub-backend:9001',
+        target: process.env.VITE_API_URL || 'http://localhost:9001',
         changeOrigin: true,
       },
     },

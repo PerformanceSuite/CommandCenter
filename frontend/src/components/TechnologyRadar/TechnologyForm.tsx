@@ -120,14 +120,14 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">
             {technology ? 'Edit Technology' : 'Create Technology'}
           </h2>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-slate-400 transition-colors"
             aria-label="Close"
           >
             <X size={24} />
@@ -140,7 +140,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-1">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -158,7 +158,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="vendor" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="vendor" className="block text-sm font-medium text-slate-300 mb-1">
                   Vendor
                 </label>
                 <input
@@ -172,7 +172,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="domain" className="block text-sm font-medium text-slate-300 mb-1">
                   Domain
                 </label>
                 <select
@@ -191,7 +191,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="status" className="block text-sm font-medium text-slate-300 mb-1">
                   Status
                 </label>
                 <select
@@ -216,7 +216,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <h3 className="text-lg font-semibold mb-4">Priority & Relevance</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-slate-300 mb-1">
                   Priority (1-5)
                 </label>
                 <div className="flex items-center gap-4">
@@ -248,7 +248,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               <div>
                 <label
                   htmlFor="relevance_score"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-slate-300 mb-1"
                 >
                   Relevance Score (0-100)
                 </label>
@@ -276,7 +276,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <h3 className="text-lg font-semibold mb-4">Details</h3>
             <div className="space-y-4">
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-1">
                   Description
                 </label>
                 <textarea
@@ -291,7 +291,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="use_cases" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="use_cases" className="block text-sm font-medium text-slate-300 mb-1">
                   Use Cases
                 </label>
                 <textarea
@@ -306,7 +306,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="notes" className="block text-sm font-medium text-slate-300 mb-1">
                   Notes
                 </label>
                 <textarea
@@ -321,7 +321,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="tags" className="block text-sm font-medium text-slate-300 mb-1">
                   Tags
                 </label>
                 <input
@@ -342,7 +342,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <h3 className="text-lg font-semibold mb-4">External Links</h3>
             <div className="space-y-4">
               <div>
-                <label htmlFor="website_url" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="website_url" className="block text-sm font-medium text-slate-300 mb-1">
                   Website URL
                 </label>
                 <input
@@ -359,7 +359,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               <div>
                 <label
                   htmlFor="documentation_url"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-slate-300 mb-1"
                 >
                   Documentation URL
                 </label>
@@ -377,7 +377,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
               <div>
                 <label
                   htmlFor="repository_url"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-slate-300 mb-1"
                 >
                   Repository URL
                 </label>
@@ -400,10 +400,10 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
             {/* Performance Characteristics */}
             <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-700 mb-3">Performance</h4>
+              <h4 className="text-md font-medium text-slate-300 mb-3">Performance</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="latency_ms" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="latency_ms" className="block text-sm font-medium text-slate-300 mb-1">
                     Latency (ms) - P99
                   </label>
                   <input
@@ -421,7 +421,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="throughput_qps" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="throughput_qps" className="block text-sm font-medium text-slate-300 mb-1">
                     Throughput (QPS)
                   </label>
                   <input
@@ -441,10 +441,10 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
             {/* Integration Assessment */}
             <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-700 mb-3">Integration</h4>
+              <h4 className="text-md font-medium text-slate-300 mb-3">Integration</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="integration_difficulty" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="integration_difficulty" className="block text-sm font-medium text-slate-300 mb-1">
                     Integration Difficulty
                   </label>
                   <select
@@ -465,7 +465,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="integration_time_estimate_days" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="integration_time_estimate_days" className="block text-sm font-medium text-slate-300 mb-1">
                     Integration Time (days)
                   </label>
                   <input
@@ -485,10 +485,10 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
             {/* Maturity and Stability */}
             <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-700 mb-3">Maturity & Stability</h4>
+              <h4 className="text-md font-medium text-slate-300 mb-3">Maturity & Stability</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="maturity_level" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="maturity_level" className="block text-sm font-medium text-slate-300 mb-1">
                     Maturity Level
                   </label>
                   <select
@@ -508,7 +508,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="stability_score" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="stability_score" className="block text-sm font-medium text-slate-300 mb-1">
                     Stability Score (0-100)
                   </label>
                   <div className="flex items-center gap-4">
@@ -532,10 +532,10 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
             {/* Cost Analysis */}
             <div className="mb-6">
-              <h4 className="text-md font-medium text-gray-700 mb-3">Cost Analysis</h4>
+              <h4 className="text-md font-medium text-slate-300 mb-3">Cost Analysis</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="cost_tier" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="cost_tier" className="block text-sm font-medium text-slate-300 mb-1">
                     Cost Tier
                   </label>
                   <select
@@ -555,7 +555,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="cost_monthly_usd" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="cost_monthly_usd" className="block text-sm font-medium text-slate-300 mb-1">
                     Monthly Cost (USD)
                   </label>
                   <input
@@ -576,14 +576,14 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
 
             {/* Dependencies and Alternatives */}
             <div>
-              <h4 className="text-md font-medium text-gray-700 mb-3">Relationships</h4>
+              <h4 className="text-md font-medium text-slate-300 mb-3">Relationships</h4>
               <div className="space-y-4">
                 {/* TODO: Add UI for 'dependencies' field (JSON object: Record<string, string>)
                     This field stores technology dependencies as key-value pairs.
                     Future enhancement: Add a key-value pair editor or JSON editor component.
                     For now, dependencies can be managed via API directly. */}
                 <div>
-                  <label htmlFor="alternatives" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="alternatives" className="block text-sm font-medium text-slate-300 mb-1">
                     Alternative Technologies
                   </label>
                   <input
@@ -596,7 +596,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
                     placeholder="Comma-separated technology names"
                     title="List alternative or competing technologies"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-slate-500 mt-1">
                     List alternative technologies (e.g., "React, Vue, Angular")
                   </p>
                 </div>
@@ -609,7 +609,7 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-slate-300 bg-white border border-gray-300 rounded-md hover:bg-slate-900 transition-colors"
               disabled={isLoading}
             >
               Cancel

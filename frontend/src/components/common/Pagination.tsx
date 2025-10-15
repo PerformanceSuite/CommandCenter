@@ -94,7 +94,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
       {/* Info Section */}
       {showPageInfo && totalItems !== undefined && startItem && endItem && (
         <div className="hidden sm:block">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-slate-300">
             Showing <span className="font-medium">{startItem}</span> to{' '}
             <span className="font-medium">{endItem}</span> of{' '}
             <span className="font-medium">{totalItems}</span> results
@@ -117,7 +117,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
           className={`inline-flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
             currentPage === 1
               ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              : 'text-slate-300 bg-white border border-gray-300 hover:bg-slate-900'
           }`}
           aria-label="Go to first page"
           title="First page"
@@ -131,7 +131,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
           className={`inline-flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
             currentPage === 1
               ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              : 'text-slate-300 bg-white border border-gray-300 hover:bg-slate-900'
           }`}
           aria-label="Go to previous page"
           title="Previous page"
@@ -146,7 +146,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-3 py-2 text-gray-700 select-none"
+                  className="px-3 py-2 text-slate-300 select-none"
                   aria-hidden="true"
                 >
                   ...
@@ -161,7 +161,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentPage === page
                     ? 'bg-primary-600 text-white'
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    : 'text-slate-300 bg-white border border-gray-300 hover:bg-slate-900'
                 }`}
                 aria-label={`Go to page ${page}`}
                 aria-current={currentPage === page ? 'page' : undefined}
@@ -173,7 +173,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
         </div>
 
         {/* Mobile page indicator */}
-        <div className="md:hidden px-3 py-2 text-sm text-gray-700">
+        <div className="md:hidden px-3 py-2 text-sm text-slate-300">
           Page {currentPage} of {totalPages}
         </div>
 
@@ -184,7 +184,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
           className={`inline-flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
             currentPage === totalPages
               ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              : 'text-slate-300 bg-white border border-gray-300 hover:bg-slate-900'
           }`}
           aria-label="Go to next page"
           title="Next page"
@@ -198,7 +198,7 @@ export const Pagination: React.FC<PaginationProps> = React.memo(({
           className={`inline-flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
             currentPage === totalPages
               ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              : 'text-slate-300 bg-white border border-gray-300 hover:bg-slate-900'
           }`}
           aria-label="Go to last page"
           title="Last page"

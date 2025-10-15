@@ -53,12 +53,12 @@ export const SettingsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* API Key Management */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Key className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">API Key Management</h2>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-slate-400 mb-4">
           API keys are configured via environment variables for security. Keys are managed in the backend .env file.
         </p>
         <div className="space-y-3">
@@ -74,8 +74,8 @@ export const SettingsView: React.FC = () => {
                   <XCircle className="text-red-500" size={20} />
                 )}
                 <div>
-                  <div className="font-medium text-gray-900">{apiKey.name}</div>
-                  <div className="text-xs text-gray-500">{apiKey.key}</div>
+                  <div className="font-medium text-white">{apiKey.name}</div>
+                  <div className="text-xs text-slate-500">{apiKey.key}</div>
                 </div>
               </div>
               <div className="text-right">
@@ -84,7 +84,7 @@ export const SettingsView: React.FC = () => {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Configured
                     </span>
-                    <div className="text-xs text-gray-500 mt-1 font-mono">
+                    <div className="text-xs text-slate-500 mt-1 font-mono">
                       {apiKey.maskedValue}
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Repository Management */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Server className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">Repository Management</h2>
@@ -114,30 +114,30 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* System Configuration */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <Server className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">System Configuration</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Backend API Endpoint
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               readOnly
               value={import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Environment
             </label>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               readOnly
               value={import.meta.env.MODE || 'development'}
             />
@@ -146,14 +146,14 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* User Preferences */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="flex items-center gap-2 mb-4">
           <User className="text-primary-600" size={24} />
           <h2 className="text-xl font-bold">User Preferences</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Theme
             </label>
             <select
@@ -166,7 +166,7 @@ export const SettingsView: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-2">
               Notifications
             </label>
             <div className="space-y-2">
@@ -176,7 +176,7 @@ export const SettingsView: React.FC = () => {
                   className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   defaultChecked
                 />
-                <span className="ml-2 text-sm text-gray-700">
+                <span className="ml-2 text-sm text-slate-300">
                   Repository sync notifications
                 </span>
               </label>
@@ -186,7 +186,7 @@ export const SettingsView: React.FC = () => {
                   className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   defaultChecked
                 />
-                <span className="ml-2 text-sm text-gray-700">
+                <span className="ml-2 text-sm text-slate-300">
                   Research task updates
                 </span>
               </label>
@@ -195,7 +195,7 @@ export const SettingsView: React.FC = () => {
                   type="checkbox"
                   className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
-                <span className="ml-2 text-sm text-gray-700">
+                <span className="ml-2 text-sm text-slate-300">
                   Technology radar changes
                 </span>
               </label>

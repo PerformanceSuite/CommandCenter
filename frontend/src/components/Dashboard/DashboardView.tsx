@@ -19,7 +19,7 @@ export const DashboardView: React.FC = () => {
     return (
       <div className="text-center py-20">
         <p className="text-red-600 text-lg">Failed to load dashboard data</p>
-        <p className="text-gray-600 mt-2">{error.message}</p>
+        <p className="text-slate-400 mt-2">{error.message}</p>
       </div>
     );
   }

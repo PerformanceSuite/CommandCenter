@@ -17,7 +17,12 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     """Schema for creating a project"""
 
-    pass
+    use_existing_cc: bool = Field(
+        False, description="Use existing CommandCenter installation instead of cloning"
+    )
+    existing_cc_path: Optional[str] = Field(
+        None, description="Path to existing CommandCenter (required if use_existing_cc=True)"
+    )
 
 
 class ProjectUpdate(BaseModel):

@@ -66,8 +66,8 @@ class ProjectService:
         1. Generate slug from name
         2. Allocate ports
         3. Create database entry
-        4. Clone CommandCenter (async via SetupService)
-        5. Generate .env file
+        4. Clone CommandCenter (async via SetupService) OR use existing
+        5. Generate .env file (only if not using existing)
         """
         # Generate slug
         slug = self._generate_slug(project_data.name)
@@ -81,11 +81,32 @@ class ProjectService:
         if not os.path.exists(project_data.path):
             raise ValueError(f"Path does not exist: {project_data.path}")
 
-        # Allocate ports
+        # Determine CC path
+        if project_data.use_existing_cc:
+            if not project_data.existing_cc_path:
+                raise ValueError("existing_cc_path is required when use_existing_cc=True")
+
+            cc_path = project_data.existing_cc_path
+
+            # Validate existing CC path
+            if not os.path.exists(cc_path):
+                raise ValueError(f"CommandCenter path does not exist: {cc_path}")
+
+            # Check for docker-compose.yml
+            compose_file = os.path.join(cc_path, "docker-compose.yml")
+            if not os.path.exists(compose_file):
+                raise ValueError(f"No docker-compose.yml found at {cc_path}")
+        else:
+            cc_path = os.path.join(project_data.path, "commandcenter")
+
+        # Allocate ports (only if not using existing, for display purposes)
         ports = await self.port_service.allocate_ports()
 
-        # Determine CC path
-        cc_path = os.path.join(project_data.path, "commandcenter")
+        # If using existing, try to read ports from .env
+        if project_data.use_existing_cc:
+            env_ports = self._read_ports_from_env(cc_path)
+            if env_ports:
+                ports = env_ports
 
         # Create project record
         project = Project(
@@ -100,21 +121,22 @@ class ProjectService:
             redis_port=ports.redis,
             status="stopped",
             health="unknown",
-            is_configured=False,
+            is_configured=project_data.use_existing_cc,  # Already configured if existing
         )
 
         self.db.add(project)
         await self.db.commit()
         await self.db.refresh(project)
 
-        # Trigger async setup (clone CC, configure .env)
-        # This happens in the background
-        await self.setup_service.setup_commandcenter(project)
+        # Setup only if not using existing CC
+        if not project_data.use_existing_cc:
+            # Trigger async setup (clone CC, configure .env)
+            await self.setup_service.setup_commandcenter(project)
 
-        # Update is_configured flag
-        project.is_configured = True
-        await self.db.commit()
-        await self.db.refresh(project)
+            # Update is_configured flag
+            project.is_configured = True
+            await self.db.commit()
+            await self.db.refresh(project)
 
         return project
 
@@ -171,3 +193,46 @@ class ProjectService:
         # Remove leading/trailing hyphens
         slug = slug.strip("-")
         return slug
+
+    def _read_ports_from_env(self, cc_path: str) -> Optional["PortSet"]:
+        """Read ports from existing .env file"""
+        from app.schemas import PortSet
+
+        env_file = os.path.join(cc_path, ".env")
+        if not os.path.exists(env_file):
+            return None
+
+        try:
+            with open(env_file, "r") as f:
+                env_content = f.read()
+
+            # Parse port values
+            backend_port = None
+            frontend_port = None
+            postgres_port = None
+            redis_port = None
+
+            for line in env_content.split("\n"):
+                line = line.strip()
+                if line.startswith("BACKEND_PORT="):
+                    backend_port = int(line.split("=")[1])
+                elif line.startswith("FRONTEND_PORT="):
+                    frontend_port = int(line.split("=")[1])
+                elif line.startswith("POSTGRES_PORT="):
+                    postgres_port = int(line.split("=")[1])
+                elif line.startswith("REDIS_PORT="):
+                    redis_port = int(line.split("=")[1])
+
+            if all([backend_port, frontend_port, postgres_port, redis_port]):
+                return PortSet(
+                    backend=backend_port,
+                    frontend=frontend_port,
+                    postgres=postgres_port,
+                    redis=redis_port,
+                )
+
+            return None
+
+        except Exception as e:
+            print(f"Warning: Failed to read ports from {env_file}: {e}")
+            return None

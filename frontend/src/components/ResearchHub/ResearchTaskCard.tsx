@@ -26,7 +26,7 @@ const statusConfig: Record<
   { color: string; icon: React.ReactNode; label: string }
 > = {
   pending: {
-    color: 'bg-gray-100 text-gray-700 border-gray-300',
+    color: 'bg-slate-800 text-slate-300 border-gray-300',
     icon: <Clock size={14} />,
     label: 'Pending',
   },
@@ -46,7 +46,7 @@ const statusConfig: Record<
     label: 'Completed',
   },
   cancelled: {
-    color: 'bg-gray-100 text-gray-500 border-gray-300',
+    color: 'bg-slate-800 text-slate-500 border-gray-300',
     icon: <XCircle size={14} />,
     label: 'Cancelled',
   },
@@ -78,11 +78,11 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="font-semibold text-lg text-gray-900 mb-1">
+          <h3 className="font-semibold text-lg text-white mb-1">
             {task.title}
           </h3>
           {task.description && (
-            <p className="text-sm text-gray-600 line-clamp-2">
+            <p className="text-sm text-slate-400 line-clamp-2">
               {task.description}
             </p>
           )}
@@ -91,7 +91,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
           {onView && (
             <button
               onClick={() => onView(task)}
-              className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 text-slate-500 hover:text-primary-600 hover:bg-slate-800 rounded transition-colors"
               title="View Details"
             >
               <Eye size={18} />
@@ -100,7 +100,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
           {onEdit && (
             <button
               onClick={() => onEdit(task)}
-              className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded transition-colors"
+              className="p-1.5 text-slate-500 hover:text-primary-600 hover:bg-slate-800 rounded transition-colors"
               title="Edit"
             >
               <Edit size={18} />
@@ -109,7 +109,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
           {onDelete && (
             <button
               onClick={() => onDelete(task.id)}
-              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Delete"
             >
               <Trash2 size={18} />
@@ -130,11 +130,11 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
 
       {/* Progress Bar */}
       <div className="mb-3">
-        <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
           <span>Progress</span>
           <span className="font-medium">{task.progress_percentage}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-slate-700 rounded-full h-2">
           <div
             className="bg-primary-600 h-2 rounded-full transition-all"
             style={{ width: `${task.progress_percentage}%` }}
@@ -143,7 +143,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
       </div>
 
       {/* Metadata */}
-      <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+      <div className="flex flex-wrap gap-3 text-sm text-slate-400">
         {task.assigned_to && (
           <div className="flex items-center gap-1.5">
             <User size={14} />
@@ -171,7 +171,7 @@ export const ResearchTaskCard: React.FC<ResearchTaskCardProps> = ({
 
       {/* Hours */}
       {(task.estimated_hours || task.actual_hours) && (
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-600">
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-4 text-xs text-slate-400">
           {task.estimated_hours && (
             <div>
               <span className="font-medium">Estimated:</span>{' '}

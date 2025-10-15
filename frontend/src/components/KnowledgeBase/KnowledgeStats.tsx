@@ -10,13 +10,13 @@ interface KnowledgeStatsProps {
 export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, loading }) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-slate-700 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-20 bg-slate-700 rounded"></div>
+            <div className="h-20 bg-slate-700 rounded"></div>
+            <div className="h-20 bg-slate-700 rounded"></div>
           </div>
         </div>
       </div>
@@ -33,13 +33,13 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, load
   );
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-2 mb-1">
           <Database className="text-primary-600" size={24} />
-          <h2 className="text-xl font-semibold text-gray-900">Knowledge Base Statistics</h2>
+          <h2 className="text-xl font-semibold text-white">Knowledge Base Statistics</h2>
         </div>
-        <p className="text-sm text-gray-600">Collection: {statistics.collection}</p>
+        <p className="text-sm text-slate-400">Collection: {statistics.collection}</p>
       </div>
 
       <div className="p-6">
@@ -82,7 +82,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, load
         {/* Category Breakdown */}
         {categoryBreakdown.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
               <Tag size={16} />
               Category Breakdown
             </h3>
@@ -92,12 +92,12 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, load
                 return (
                   <div key={category}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700">{category}</span>
-                      <span className="text-gray-600">
+                      <span className="font-medium text-slate-300">{category}</span>
+                      <span className="text-slate-400">
                         {count} chunks ({percentage.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-slate-700 rounded-full h-2">
                       <div
                         className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
@@ -111,13 +111,13 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ statistics, load
         )}
 
         {/* Embedding Model Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-slate-900 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Cpu className="text-gray-600" size={18} />
-            <h3 className="text-sm font-semibold text-gray-700">Embedding Model</h3>
+            <Cpu className="text-slate-400" size={18} />
+            <h3 className="text-sm font-semibold text-slate-300">Embedding Model</h3>
           </div>
           <p className="text-sm text-gray-800 font-mono">{statistics.embedding_model}</p>
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Local model for semantic search (no API costs)
           </p>
         </div>

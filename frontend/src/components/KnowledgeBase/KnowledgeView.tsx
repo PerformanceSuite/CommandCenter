@@ -113,13 +113,13 @@ export const KnowledgeView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header with Controls */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Database className="text-primary-600" size={28} />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Knowledge Base</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-2xl font-bold text-white">Knowledge Base</h1>
+              <p className="text-sm text-slate-400">
                 Semantic search powered by RAG (Retrieval-Augmented Generation)
               </p>
             </div>
@@ -128,7 +128,7 @@ export const KnowledgeView: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowStats(!showStats)}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-slate-300 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
             >
               <Database size={18} />
               <span>{showStats ? 'Hide' : 'Show'} Statistics</span>
@@ -145,7 +145,7 @@ export const KnowledgeView: React.FC = () => {
 
         {/* Collection Selector */}
         <div className="mb-4">
-          <label htmlFor="collection" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="collection" className="block text-sm font-medium text-slate-300 mb-2">
             Collection
           </label>
           <select
@@ -196,11 +196,11 @@ export const KnowledgeView: React.FC = () => {
         </div>
 
         {/* Search Mode Controls */}
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Search Mode Selector */}
             <div>
-              <label htmlFor="searchMode" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="searchMode" className="block text-sm font-medium text-slate-300 mb-2">
                 Search Mode
               </label>
               <div className="flex gap-2">
@@ -209,7 +209,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'vector'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
                   }`}
                   title="Vector search uses semantic similarity for meaning-based matching"
                 >
@@ -220,7 +220,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'keyword'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
                   }`}
                   title="Keyword search uses exact term matching (BM25)"
                 >
@@ -231,14 +231,14 @@ export const KnowledgeView: React.FC = () => {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     searchMode === 'hybrid'
                       ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                      : 'bg-white text-slate-300 border border-gray-300 hover:bg-slate-900'
                   }`}
                   title="Hybrid search combines both vector and keyword methods"
                 >
                   🎯 Hybrid
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-slate-500">
                 {searchMode === 'vector' && '🔍 Semantic similarity - finds meaning, not just words'}
                 {searchMode === 'keyword' && '📝 Exact matching - finds specific terms'}
                 {searchMode === 'hybrid' && '🎯 Best of both - balances semantic + keyword'}
@@ -248,7 +248,7 @@ export const KnowledgeView: React.FC = () => {
             {/* Alpha Slider (only for hybrid mode) */}
             {searchMode === 'hybrid' && (
               <div>
-                <label htmlFor="alpha" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="alpha" className="block text-sm font-medium text-slate-300 mb-2">
                   Search Weight: {alpha.toFixed(1)} ({alpha === 0 ? 'Keyword Only' : alpha === 1 ? 'Vector Only' : `${Math.round(alpha * 100)}% Vector`})
                 </label>
                 <input
@@ -259,10 +259,10 @@ export const KnowledgeView: React.FC = () => {
                   step="0.1"
                   value={alpha}
                   onChange={(e) => setAlpha(parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary-600"
                   title="Adjust the balance between vector (semantic) and keyword (exact) search"
                 />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-slate-500 mt-1">
                   <span>← Keyword</span>
                   <span>Balanced</span>
                   <span>Vector →</span>
@@ -276,8 +276,8 @@ export const KnowledgeView: React.FC = () => {
         {categories.length > 0 && (
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <Filter size={16} className="text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Filter by category:</span>
+              <Filter size={16} className="text-slate-400" />
+              <span className="text-sm font-medium text-slate-300">Filter by category:</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
@@ -287,7 +287,7 @@ export const KnowledgeView: React.FC = () => {
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
                       ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                   }`}
                 >
                   {category}
@@ -320,15 +320,15 @@ export const KnowledgeView: React.FC = () => {
       )}
 
       {/* Search Results */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow p-6">
         {searchResults.length > 0 ? (
           <div role="region" aria-label="Search results">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-white">
                 Search Results ({searchResults.length})
               </h2>
               {selectedCategory && (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-slate-400">
                   Filtered by: <span className="font-medium">{selectedCategory}</span>
                 </span>
               )}
@@ -350,7 +350,7 @@ export const KnowledgeView: React.FC = () => {
         ) : (
           <div className="text-center py-12">
             <Database size={48} className="mx-auto text-gray-300 mb-4" aria-hidden="true" />
-            <p className="text-gray-500 text-lg">Knowledge base search</p>
+            <p className="text-slate-500 text-lg">Knowledge base search</p>
             <p className="text-gray-400 text-sm mt-2">
               {query
                 ? 'No results found. Try different search terms or filters.'

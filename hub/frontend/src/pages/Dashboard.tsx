@@ -124,7 +124,7 @@ function Dashboard() {
         {selectedPath ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-slate-400 mb-2">Selected Folder:</label>
+              <label className="block text-sm text-slate-400 mb-2">Project Folder:</label>
               <div className="font-mono text-sm bg-slate-950 border border-slate-700 rounded px-4 py-2 text-white">
                 {selectedPath}
               </div>
@@ -139,6 +139,12 @@ function Dashboard() {
                 className="input-field"
                 placeholder="e.g., Performia"
               />
+            </div>
+
+            <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded">
+              <p className="text-sm text-blue-300">
+                CommandCenter will be cloned into: <span className="font-mono">{selectedPath}/commandcenter</span>
+              </p>
             </div>
 
             <div className="flex gap-3">
@@ -163,21 +169,20 @@ function Dashboard() {
             onClick={() => setShowBrowser(true)}
             className="btn-primary"
           >
-            + Select Project Folder
+            + Add New Project
           </button>
         )}
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects List */}
       {projects.length > 0 ? (
         <div>
           <h2 className="text-xl font-bold text-white mb-4">Your Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-3">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
-                onUpdate={loadProjects}
               />
             ))}
           </div>

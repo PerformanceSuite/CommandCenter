@@ -21,7 +21,7 @@ export const RepoSelector: React.FC<RepoSelectorProps> = ({ repositories }) => {
   return (
     <div className="space-y-2" role="group" aria-label="Repository selector">
       {activeRepos.length === 0 ? (
-        <p className="text-gray-500 text-center py-8" role="status">
+        <p className="text-slate-500 text-center py-8" role="status">
           No active repositories
         </p>
       ) : (
@@ -48,7 +48,7 @@ export const RepoSelector: React.FC<RepoSelectorProps> = ({ repositories }) => {
                   <GitBranch size={16} className="text-gray-400 mt-1" aria-hidden="true" />
                   <div>
                     <p className="font-medium">{repo.name}</p>
-                    <p className="text-sm text-gray-500">{repo.owner}</p>
+                    <p className="text-sm text-slate-500">{repo.owner}</p>
                   </div>
                 </div>
                 {selectedRepo === repo.id && (
@@ -56,7 +56,7 @@ export const RepoSelector: React.FC<RepoSelectorProps> = ({ repositories }) => {
                 )}
               </div>
               {repo.description && (
-                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{repo.description}</p>
+                <p className="text-sm text-slate-400 mt-2 line-clamp-2">{repo.description}</p>
               )}
             </button>
           ))}

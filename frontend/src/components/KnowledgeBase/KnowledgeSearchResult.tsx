@@ -46,9 +46,9 @@ export const KnowledgeSearchResult: React.FC<KnowledgeSearchResultProps> = ({
         <div className="flex items-start gap-2 flex-1">
           <FileText className="text-gray-400 mt-1 flex-shrink-0" size={18} />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate">{result.title}</h3>
+            <h3 className="font-semibold text-white truncate">{result.title}</h3>
             {result.source_file && (
-              <p className="text-sm text-gray-500 truncate">{result.source_file}</p>
+              <p className="text-sm text-slate-500 truncate">{result.source_file}</p>
             )}
           </div>
         </div>
@@ -67,7 +67,7 @@ export const KnowledgeSearchResult: React.FC<KnowledgeSearchResultProps> = ({
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 text-sm">
           <Tag className="text-gray-400" size={14} />
-          <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+          <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-xs font-medium">
             {result.category}
           </span>
         </div>
@@ -85,7 +85,7 @@ export const KnowledgeSearchResult: React.FC<KnowledgeSearchResultProps> = ({
         {result.metadata && Object.keys(result.metadata).length > 0 && (
           <button
             onClick={() => setShowContext(!showContext)}
-            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 ml-auto"
+            className="flex items-center gap-1 text-sm text-slate-400 hover:text-gray-800 ml-auto"
           >
             {showContext ? (
               <>
@@ -104,11 +104,11 @@ export const KnowledgeSearchResult: React.FC<KnowledgeSearchResultProps> = ({
 
       {showContext && result.metadata && (
         <div className="mt-3 pt-3 border-t border-gray-200">
-          <h4 className="text-xs font-semibold text-gray-700 mb-2">Metadata</h4>
+          <h4 className="text-xs font-semibold text-slate-300 mb-2">Metadata</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {Object.entries(result.metadata).map(([key, value]) => (
               <div key={key} className="flex flex-col">
-                <span className="text-gray-500 capitalize">
+                <span className="text-slate-500 capitalize">
                   {key.replace(/_/g, ' ')}:
                 </span>
                 <span className="text-gray-800 font-medium">

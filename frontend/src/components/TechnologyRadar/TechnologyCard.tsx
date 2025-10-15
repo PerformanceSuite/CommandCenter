@@ -14,7 +14,7 @@ const statusConfig: Record<string, { label: string; icon: any; color: string }> 
   evaluation: { label: 'Evaluation', icon: TrendingUp, color: 'bg-yellow-100 text-yellow-700' },
   implementation: { label: 'Implementation', icon: Rocket, color: 'bg-orange-100 text-orange-700' },
   integrated: { label: 'Integrated', icon: Rocket, color: 'bg-green-100 text-green-700' },
-  archived: { label: 'Archived', icon: Beaker, color: 'bg-gray-100 text-gray-700' },
+  archived: { label: 'Archived', icon: Beaker, color: 'bg-slate-800 text-slate-300' },
 };
 
 const costTierColors: Record<string, string> = {
@@ -31,7 +31,7 @@ const maturityLevelColors: Record<string, string> = {
   beta: 'bg-orange-100 text-orange-700',
   stable: 'bg-green-100 text-green-700',
   mature: 'bg-blue-100 text-blue-700',
-  legacy: 'bg-gray-100 text-gray-700',
+  legacy: 'bg-slate-800 text-slate-300',
 };
 
 const integrationDifficultyLabels: Record<string, string> = {
@@ -98,7 +98,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
         <div className="flex-1">
           <h3 className="font-semibold text-lg">{technology.title}</h3>
           {technology.vendor && (
-            <p className="text-sm text-gray-500">{technology.vendor}</p>
+            <p className="text-sm text-slate-500">{technology.vendor}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
 
       {/* Priority */}
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-sm text-gray-600">Priority:</span>
+        <span className="text-sm text-slate-400">Priority:</span>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
@@ -133,13 +133,13 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
       {/* Relevance Score */}
       <div className="mb-3">
         <div className="flex items-center justify-between text-sm mb-1">
-          <span className="text-gray-600">Relevance</span>
+          <span className="text-slate-400">Relevance</span>
           <span className="font-medium" aria-label={`Relevance score: ${technology.relevance_score} out of 100`}>
             {technology.relevance_score}/100
           </span>
         </div>
         <div
-          className="w-full bg-gray-200 rounded-full h-2"
+          className="w-full bg-slate-700 rounded-full h-2"
           role="progressbar"
           aria-valuenow={technology.relevance_score}
           aria-valuemin={0}
@@ -155,7 +155,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
 
       {/* Description */}
       {technology.description && (
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{technology.description}</p>
+        <p className="text-sm text-slate-400 mb-3 line-clamp-2">{technology.description}</p>
       )}
 
       {/* Tags */}
@@ -164,7 +164,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
           {tags.map((tag, index) => (
             <span
               key={index}
-              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
+              className="px-2 py-1 bg-slate-800 text-slate-300 text-xs rounded"
             >
               {tag}
             </span>
@@ -176,13 +176,13 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
       {hasV2Fields && (
         <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-gray-100">
           {technology.github_stars !== null && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+            <div className="flex items-center gap-1 px-2 py-1 bg-slate-900 rounded text-xs">
               <Star size={12} className="text-yellow-500" />
               <span className="font-medium">{technology.github_stars.toLocaleString()}</span>
             </div>
           )}
           {technology.hn_score_avg !== null && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded text-xs">
+            <div className="flex items-center gap-1 px-2 py-1 bg-slate-900 rounded text-xs">
               <MessageCircle size={12} className="text-orange-500" />
               <span className="font-medium">HN {technology.hn_score_avg.toFixed(1)}</span>
             </div>
@@ -259,25 +259,25 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
                   <div className="space-y-1">
                     {technology.latency_ms !== null && (
                       <div className="flex items-center gap-2">
-                        <Timer size={12} className="text-gray-500" />
-                        <span className="text-gray-600">P99 Latency:</span>
+                        <Timer size={12} className="text-slate-500" />
+                        <span className="text-slate-400">P99 Latency:</span>
                         <span className="font-medium">{technology.latency_ms}ms</span>
                       </div>
                     )}
                     {technology.throughput_qps !== null && (
                       <div className="flex items-center gap-2">
-                        <Activity size={12} className="text-gray-500" />
-                        <span className="text-gray-600">Throughput:</span>
+                        <Activity size={12} className="text-slate-500" />
+                        <span className="text-slate-400">Throughput:</span>
                         <span className="font-medium">{technology.throughput_qps} QPS</span>
                       </div>
                     )}
                     {technology.stability_score !== null && (
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-gray-600">Stability Score:</span>
+                          <span className="text-slate-400">Stability Score:</span>
                           <span className="font-medium">{technology.stability_score}/100</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-slate-700 rounded-full h-2">
                           <div
                             className="bg-blue-500 h-2 rounded-full transition-all"
                             style={{ width: `${technology.stability_score}%` }}
@@ -299,13 +299,13 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
                   <div className="space-y-1">
                     {technology.integration_difficulty && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600">Difficulty:</span>
+                        <span className="text-slate-400">Difficulty:</span>
                         <span className="font-medium">{integrationDifficultyLabels[technology.integration_difficulty]}</span>
                       </div>
                     )}
                     {technology.integration_time_estimate_days !== null && (
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600">Estimated Time:</span>
+                        <span className="text-slate-400">Estimated Time:</span>
                         <span className="font-medium">{technology.integration_time_estimate_days} days</span>
                       </div>
                     )}
@@ -321,7 +321,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
                     Cost Analysis
                   </p>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">Monthly Cost:</span>
+                    <span className="text-slate-400">Monthly Cost:</span>
                     <span className="font-medium">${technology.cost_monthly_usd.toLocaleString()}</span>
                   </div>
                 </div>
@@ -337,15 +337,15 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
                   <div className="space-y-1">
                     {technology.last_hn_mention && (
                       <div className="flex items-center gap-2">
-                        <MessageCircle size={12} className="text-gray-500" />
-                        <span className="text-gray-600">Last HN Mention:</span>
+                        <MessageCircle size={12} className="text-slate-500" />
+                        <span className="text-slate-400">Last HN Mention:</span>
                         <span className="font-medium">{new Date(technology.last_hn_mention).toLocaleDateString()}</span>
                       </div>
                     )}
                     {technology.github_last_commit && (
                       <div className="flex items-center gap-2">
-                        <GitBranch size={12} className="text-gray-500" />
-                        <span className="text-gray-600">Last Commit:</span>
+                        <GitBranch size={12} className="text-slate-500" />
+                        <span className="text-slate-400">Last Commit:</span>
                         <span className="font-medium">{new Date(technology.github_last_commit).toLocaleDateString()}</span>
                       </div>
                     )}
@@ -355,23 +355,23 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
 
               {/* Alternatives */}
               {technology.alternatives && (
-                <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="bg-slate-900 p-3 rounded-lg">
                   <p className="font-semibold text-gray-800 mb-2">Alternatives</p>
-                  <p className="text-gray-600">{technology.alternatives}</p>
+                  <p className="text-slate-400">{technology.alternatives}</p>
                 </div>
               )}
 
               {/* Use Cases & Notes (existing fields) */}
               {technology.use_cases && (
                 <div>
-                  <p className="font-medium text-gray-700">Use Cases:</p>
-                  <p className="text-gray-600">{technology.use_cases}</p>
+                  <p className="font-medium text-slate-300">Use Cases:</p>
+                  <p className="text-slate-400">{technology.use_cases}</p>
                 </div>
               )}
               {technology.notes && (
                 <div>
-                  <p className="font-medium text-gray-700">Notes:</p>
-                  <p className="text-gray-600">{technology.notes}</p>
+                  <p className="font-medium text-slate-300">Notes:</p>
+                  <p className="text-slate-400">{technology.notes}</p>
                 </div>
               )}
             </div>
@@ -385,7 +385,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
           {onEdit && (
             <button
               onClick={() => onEdit(technology)}
-              className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 text-sm text-slate-300 bg-white border border-gray-300 rounded hover:bg-slate-900 transition-colors flex items-center gap-1"
               aria-label="Edit technology"
             >
               <Edit2 size={14} />
@@ -404,7 +404,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
           )}
           {showDeleteConfirm && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Delete?</span>
+              <span className="text-sm text-slate-400">Delete?</span>
               <button
                 onClick={handleDelete}
                 className="px-2 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700"
@@ -413,7 +413,7 @@ export const TechnologyCard: React.FC<TechnologyCardProps> = memo(({ technology,
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-2 py-1 text-xs text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                className="px-2 py-1 text-xs text-slate-300 bg-slate-700 rounded hover:bg-gray-300"
               >
                 No
               </button>

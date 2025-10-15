@@ -49,17 +49,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       }
 
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-lg p-8">
             <div className="flex items-center gap-4 mb-6">
               <div className="bg-red-100 p-3 rounded-full">
                 <AlertTriangle className="text-red-600" size={32} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-white">
                   Oops! Something went wrong
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-slate-400 mt-1">
                   We encountered an unexpected error. Please try refreshing the page.
                 </p>
               </div>
@@ -76,10 +76,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
                 {import.meta.env.DEV && this.state.errorInfo && (
                   <details className="mt-4">
-                    <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                    <summary className="cursor-pointer text-sm font-medium text-slate-300 hover:text-white">
                       Stack Trace (Development Only)
                     </summary>
-                    <pre className="mt-2 text-xs bg-gray-50 p-4 rounded overflow-auto max-h-64 border">
+                    <pre className="mt-2 text-xs bg-slate-900 p-4 rounded overflow-auto max-h-64 border">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   </details>
@@ -98,7 +98,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-6 py-3 bg-slate-700 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
                 aria-label="Go to homepage"
               >
                 Go to Homepage

@@ -71,13 +71,13 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">{task.title}</h2>
+          <h2 className="text-2xl font-bold text-white">{task.title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-full transition-colors"
           >
             <X size={24} />
           </button>
@@ -93,7 +93,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                 className={`py-3 px-2 border-b-2 font-medium transition-colors ${
                   activeTab === tab.id
                     ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
                 }`}
               >
                 {tab.label}
@@ -109,7 +109,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
             <div className="space-y-4">
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Description
                 </label>
                 <textarea
@@ -123,7 +123,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Status
                 </label>
                 <select
@@ -141,7 +141,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
               {/* Progress */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Progress: {editData.progress_percentage ?? task.progress_percentage}%
                 </label>
                 <input
@@ -158,7 +158,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
               {/* Assignee */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Assigned To
                 </label>
                 <input
@@ -172,7 +172,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
               {/* Due Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Due Date
                 </label>
                 <input
@@ -188,7 +188,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
               {/* Actual Hours */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Actual Hours
                 </label>
                 <input
@@ -209,21 +209,21 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
               {/* Metadata Display */}
               <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div>
-                  <span className="text-sm text-gray-500">Estimated Hours:</span>
+                  <span className="text-sm text-slate-500">Estimated Hours:</span>
                   <p className="font-medium">{task.estimated_hours ?? 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-500">Created:</span>
+                  <span className="text-sm text-slate-500">Created:</span>
                   <p className="font-medium">
                     {new Date(task.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-500">Technology ID:</span>
+                  <span className="text-sm text-slate-500">Technology ID:</span>
                   <p className="font-medium">{task.technology_id ?? 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-500">Repository ID:</span>
+                  <span className="text-sm text-slate-500">Repository ID:</span>
                   <p className="font-medium">{task.repository_id ?? 'N/A'}</p>
                 </div>
               </div>
@@ -256,13 +256,13 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                   {task.uploaded_documents.map((doc, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-slate-900"
                     >
                       <div className="flex items-center gap-3">
                         <FileText size={20} className="text-gray-400" />
                         <div>
                           <p className="font-medium">{doc.filename}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-slate-500">
                             {(doc.size / 1024).toFixed(2)} KB •{' '}
                             {new Date(doc.uploaded_at).toLocaleDateString()}
                           </p>
@@ -278,7 +278,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-slate-500">
                   <FileText size={48} className="mx-auto mb-3 opacity-30" />
                   <p>No documents uploaded yet</p>
                 </div>
@@ -289,7 +289,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
           {/* Notes Tab */}
           {activeTab === 'notes' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 User Notes
               </label>
               <textarea
@@ -305,7 +305,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
           {/* Findings Tab */}
           {activeTab === 'findings' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Research Findings
               </label>
               <textarea
@@ -325,7 +325,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium">Created</span>
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">
                       {new Date(task.created_at).toLocaleString()}
                     </span>
                   </div>
@@ -333,7 +333,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium">Last Updated</span>
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">
                       {new Date(task.updated_at).toLocaleString()}
                     </span>
                   </div>
@@ -342,7 +342,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                   <div>
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium">Completed</span>
-                      <span className="text-gray-500">
+                      <span className="text-slate-500">
                         {new Date(task.completed_at).toLocaleString()}
                       </span>
                     </div>
@@ -354,10 +354,10 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-end gap-3 p-6 border-t bg-slate-900">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
           >
             Close
           </button>

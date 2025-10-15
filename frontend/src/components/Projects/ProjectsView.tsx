@@ -86,8 +86,8 @@ export const ProjectsView = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-          <p className="text-gray-500 mt-1">Manage your research and development projects</p>
+          <h2 className="text-2xl font-bold text-white">Projects</h2>
+          <p className="text-slate-500 mt-1">Manage your research and development projects</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
@@ -116,10 +116,10 @@ export const ProjectsView = () => {
 
       {/* Project List */}
       {projects.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <div className="text-center py-12 bg-slate-900 rounded-lg border-2 border-dashed border-gray-300">
           <FolderOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-          <p className="text-gray-500 mb-4">Create your first project to get started</p>
+          <h3 className="text-lg font-medium text-white mb-2">No projects yet</h3>
+          <p className="text-slate-500 mb-4">Create your first project to get started</p>
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -143,8 +143,8 @@ export const ProjectsView = () => {
                     <FolderOpen className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{project.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">Owner: {project.owner}</p>
+                    <h3 className="font-semibold text-white truncate">{project.name}</h3>
+                    <p className="text-sm text-slate-500 mt-1">Owner: {project.owner}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export const ProjectsView = () => {
 
               {/* Description */}
               {project.description && (
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{project.description}</p>
+                <p className="text-sm text-slate-400 mb-4 line-clamp-2">{project.description}</p>
               )}
 
               {/* Stats */}
@@ -176,8 +176,8 @@ export const ProjectsView = () => {
                   <div className="flex items-center gap-2">
                     <Database className="w-4 h-4 text-gray-400" />
                     <div>
-                      <div className="text-xs text-gray-500">Repositories</div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-xs text-slate-500">Repositories</div>
+                      <div className="text-sm font-semibold text-white">
                         {projectStats[project.id].total_repositories || 0}
                       </div>
                     </div>
@@ -185,8 +185,8 @@ export const ProjectsView = () => {
                   <div className="flex items-center gap-2">
                     <Beaker className="w-4 h-4 text-gray-400" />
                     <div>
-                      <div className="text-xs text-gray-500">Technologies</div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-xs text-slate-500">Technologies</div>
+                      <div className="text-sm font-semibold text-white">
                         {projectStats[project.id].total_technologies || 0}
                       </div>
                     </div>
@@ -194,8 +194,8 @@ export const ProjectsView = () => {
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-gray-400" />
                     <div>
-                      <div className="text-xs text-gray-500">Research</div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-xs text-slate-500">Research</div>
+                      <div className="text-sm font-semibold text-white">
                         {projectStats[project.id].total_research_tasks || 0}
                       </div>
                     </div>
@@ -203,8 +203,8 @@ export const ProjectsView = () => {
                   <div className="flex items-center gap-2">
                     <Database className="w-4 h-4 text-gray-400" />
                     <div>
-                      <div className="text-xs text-gray-500">Knowledge</div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-xs text-slate-500">Knowledge</div>
+                      <div className="text-sm font-semibold text-white">
                         {projectStats[project.id].total_knowledge_entries || 0}
                       </div>
                     </div>

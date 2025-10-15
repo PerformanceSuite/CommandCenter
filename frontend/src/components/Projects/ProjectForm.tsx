@@ -39,7 +39,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, onSubmit,
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">
           Project Name *
         </label>
         <input
@@ -55,7 +55,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, onSubmit,
       </div>
 
       <div>
-        <label htmlFor="owner" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="owner" className="block text-sm font-medium text-slate-300 mb-1">
           Owner *
         </label>
         <input
@@ -71,7 +71,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, onSubmit,
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-1">
           Description
         </label>
         <textarea
@@ -96,7 +96,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, onSubmit,
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-700 rounded-lg transition-colors"
+          className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 text-slate-300 rounded-lg transition-colors"
         >
           Cancel
         </button>
