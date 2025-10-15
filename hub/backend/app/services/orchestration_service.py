@@ -59,14 +59,18 @@ class OrchestrationService:
         try:
             # Convert container path to host path for Docker volumes
             host_cc_path = self._get_host_path(project.cc_path)
+            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
 
-            # Set COMPOSE_PROJECT_DIR to override volume paths
+            # Set environment for docker-compose
+            # COMPOSE_PROJECT_DIR tells docker-compose where to resolve relative paths
             env = os.environ.copy()
             env["COMPOSE_PROJECT_DIR"] = host_cc_path
 
-            # Run docker-compose up -d (only start essential services)
+            # Run docker-compose with explicit file path and project directory
+            # Use --project-directory to tell docker-compose where to resolve relative volume paths
+            # This allows us to use the host path for volume resolution while running from container
             result = subprocess.run(
-                ["docker-compose", "up", "-d"] + self.ESSENTIAL_SERVICES,
+                ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "up", "-d"] + self.ESSENTIAL_SERVICES,
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,
@@ -113,9 +117,13 @@ class OrchestrationService:
         await self.db.commit()
 
         try:
-            # Run docker-compose down
+            # Convert container path to host path for Docker volumes
+            host_cc_path = self._get_host_path(project.cc_path)
+            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+
+            # Run docker-compose down with explicit file path and project directory
             result = subprocess.run(
-                ["docker-compose", "down"],
+                ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "down"],
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,
@@ -155,8 +163,12 @@ class OrchestrationService:
         project = await self._get_project(project_id)
 
         try:
+            # Convert container path to host path for Docker volumes
+            host_cc_path = self._get_host_path(project.cc_path)
+            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+
             result = subprocess.run(
-                ["docker-compose", "ps", "--format", "json"],
+                ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "ps", "--format", "json"],
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,
@@ -214,8 +226,12 @@ class OrchestrationService:
         project = await self._get_project(project_id)
 
         try:
+            # Convert container path to host path for Docker volumes
+            host_cc_path = self._get_host_path(project.cc_path)
+            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+
             result = subprocess.run(
-                ["docker-compose", "logs", "--tail", str(tail)],
+                ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "logs", "--tail", str(tail)],
                 cwd=project.cc_path,
                 capture_output=True,
                 text=True,

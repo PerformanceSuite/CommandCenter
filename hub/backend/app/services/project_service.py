@@ -227,8 +227,20 @@ class ProjectService:
                 # Stop and remove containers with volumes
                 compose_file = os.path.join(project.cc_path, "docker-compose.yml")
                 if os.path.exists(compose_file):
+                    # Import here to avoid circular dependency
+                    from app.services.orchestration_service import OrchestrationService
+
+                    # Get host path for proper volume resolution
+                    host_cc_path = OrchestrationService.HOST_PROJECTS_PATH
+                    if project.cc_path.startswith("/projects"):
+                        host_cc_path = project.cc_path.replace(
+                            "/projects",
+                            OrchestrationService.HOST_PROJECTS_PATH,
+                            1
+                        )
+
                     subprocess.run(
-                        ["docker-compose", "down", "-v"],
+                        ["docker-compose", "-f", compose_file, "--project-directory", host_cc_path, "down", "-v"],
                         cwd=project.cc_path,
                         capture_output=True,
                         timeout=60,
