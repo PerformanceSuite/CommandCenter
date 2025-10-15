@@ -86,13 +86,13 @@ create_default_user() {
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.database import get_session, async_session_maker
+from app.database import AsyncSessionLocal
 from app.models import User
 from app.auth.jwt import get_password_hash
 import os
 
 async def create_user():
-    async with async_session_maker() as session:
+    async with AsyncSessionLocal() as session:
         # Check if any user exists
         result = await session.execute(select(User).limit(1))
         existing_user = result.scalars().first()
