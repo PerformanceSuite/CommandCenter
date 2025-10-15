@@ -11,7 +11,6 @@ const DashboardView = lazy(() => import('./components/Dashboard/DashboardView').
 const RadarView = lazy(() => import('./components/TechnologyRadar/RadarView').then(m => ({ default: m.RadarView })));
 const ResearchView = lazy(() => import('./components/ResearchHub/ResearchView').then(m => ({ default: m.ResearchView })));
 const KnowledgeView = lazy(() => import('./components/KnowledgeBase/KnowledgeView').then(m => ({ default: m.KnowledgeView })));
-const ProjectsView = lazy(() => import('./components/Projects/ProjectsView').then(m => ({ default: m.ProjectsView })));
 const SettingsView = lazy(() => import('./components/Settings/SettingsView').then(m => ({ default: m.SettingsView })));
 
 // Loading fallback component
