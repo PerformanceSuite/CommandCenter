@@ -57,12 +57,44 @@ function Dashboard() {
     setError(null);
 
     try {
+      // Step 1: Create the project
+      toast.loading(`Creating ${projectName}...`, { id: 'create-project' });
       const newProject = await projectsApi.create({
         name: projectName.trim(),
         path: selectedPath,
       });
+      toast.success(`Project created!`, { id: 'create-project' });
 
-      // Reload projects to show the new project in the list
+      // Step 2: Automatically start the containers
+      toast.loading(`Starting containers...`, { id: 'start-containers' });
+      try {
+        await api.orchestration.start(newProject.id);
+
+        // Step 3: Wait for containers to be healthy
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds max
+
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const status = await api.orchestration.status(newProject.id);
+
+          if (status.status === 'running' && status.health === 'healthy') {
+            toast.success(`${projectName} is ready!`, { id: 'start-containers' });
+            break;
+          }
+
+          attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+          toast.error(`Containers started but health check timed out. Check manually.`, { id: 'start-containers' });
+        }
+      } catch (startErr) {
+        toast.error(`Failed to start containers: ${startErr instanceof Error ? startErr.message : 'Unknown error'}`, { id: 'start-containers' });
+        console.error('Container start error:', startErr);
+      }
+
+      // Reload projects to show updated status
       await loadProjects();
 
       // Store the created project after reload (prevents race condition)
@@ -73,6 +105,7 @@ function Dashboard() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
       setError(`Failed to create project: ${errorMsg}`);
+      toast.error(errorMsg, { id: 'create-project' });
       console.error('Project creation error:', err);
     } finally {
       setCreatingProject(false);
@@ -82,8 +115,9 @@ function Dashboard() {
   const handleOpenProject = () => {
     if (!createdProject) return;
 
-    // Just open the URL directly - let the project handle "not started" state
-    window.open(`http://localhost:${createdProject.frontend_port}`, '_blank');
+    // Add cache-busting query parameter to prevent browser from serving stale cached content
+    const cacheBreaker = Date.now();
+    window.open(`http://localhost:${createdProject.frontend_port}/?v=${cacheBreaker}`, '_blank');
 
     // Reset form
     setProjectName('');
