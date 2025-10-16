@@ -57,64 +57,109 @@ function Dashboard() {
 
     try {
       // Step 1: Create the project
-      toast.loading(`Creating ${projectName}...`, { id: 'create-project' });
+      toast.loading(`Creating ${projectName}...`, {
+        id: 'create-flow',
+        duration: Infinity,
+        position: 'bottom-center',
+      });
+
       const newProject = await projectsApi.create({
         name: projectName.trim(),
         path: selectedPath,
       });
-      toast.success(`Project created!`, { id: 'create-project' });
 
       // Step 2: Automatically start the containers
-      toast.loading(`Starting containers...`, { id: 'start-containers' });
-      try {
-        await api.orchestration.start(newProject.id);
+      toast.loading(`Starting containers for ${projectName}...`, {
+        id: 'create-flow',
+        duration: Infinity,
+        position: 'bottom-center',
+      });
 
-        // Step 3: Wait for containers to be healthy
-        let attempts = 0;
-        const maxAttempts = 60; // 60 seconds max
-        let isReady = false;
+      await api.orchestration.start(newProject.id);
 
-        while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+      // Step 3: Wait for containers to be healthy
+      toast.loading(`Waiting for ${projectName} to be ready...`, {
+        id: 'create-flow',
+        duration: Infinity,
+        position: 'bottom-center',
+      });
+
+      let attempts = 0;
+      const maxAttempts = 90; // 90 seconds max
+      let isReady = false;
+
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        try {
           const status = await api.orchestration.status(newProject.id);
 
           if (status.status === 'running' && status.health === 'healthy') {
-            toast.success(`${projectName} is ready! Opening...`, { id: 'start-containers' });
             isReady = true;
 
-            // Step 4: Automatically open the project
+            // Step 4: Open in new tab
+            toast.loading(`Opening ${projectName} in new tab...`, {
+              id: 'create-flow',
+              duration: Infinity,
+              position: 'bottom-center',
+            });
+
             const cacheBreaker = Date.now();
-            window.open(`http://localhost:${newProject.frontend_port}/?v=${cacheBreaker}`, '_blank');
+            const url = `http://localhost:${newProject.frontend_port}/?v=${cacheBreaker}`;
+
+            // Force open in new tab
+            const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+
+            if (newTab) {
+              newTab.focus();
+              toast.success(`${projectName} opened successfully!`, {
+                id: 'create-flow',
+                duration: 3000,
+                position: 'bottom-center',
+              });
+            } else {
+              toast.error(`Pop-up blocked! Please allow pop-ups and try clicking: localhost:${newProject.frontend_port}`, {
+                id: 'create-flow',
+                duration: 10000,
+                position: 'bottom-center',
+              });
+            }
 
             // Reset form after short delay
             setTimeout(() => {
               setProjectName('');
               setSelectedPath(null);
-            }, 1000);
+            }, 1500);
 
             break;
           }
-
-          attempts++;
+        } catch (statusErr) {
+          console.log('Status check attempt', attempts, statusErr);
         }
 
-        if (!isReady) {
-          toast.error(`Containers started but health check timed out. Try opening manually.`, { id: 'start-containers' });
-        }
-      } catch (startErr) {
-        toast.error(`Failed to start containers: ${startErr instanceof Error ? startErr.message : 'Unknown error'}`, { id: 'start-containers' });
-        console.error('Container start error:', startErr);
+        attempts++;
+      }
+
+      if (!isReady) {
+        toast.error(`Timeout waiting for ${projectName}. Check manually at localhost:${newProject.frontend_port}`, {
+          id: 'create-flow',
+          duration: 10000,
+          position: 'bottom-center',
+        });
       }
 
       // Reload projects to show updated status
       await loadProjects();
 
-      // Clear error/success messages
       setError(null);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
       setError(`Failed to create project: ${errorMsg}`);
-      toast.error(errorMsg, { id: 'create-project' });
+      toast.error(errorMsg, {
+        id: 'create-flow',
+        duration: 5000,
+        position: 'bottom-center',
+      });
       console.error('Project creation error:', err);
     } finally {
       setCreatingProject(false);
@@ -202,32 +247,24 @@ function Dashboard() {
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={handleCreateProject}
-                disabled={creatingProject || !projectName.trim()}
-                className="btn-success relative"
-              >
-                {creatingProject ? (
-                  <span className="flex items-center gap-2">
-                    Creating
-                    <span className="inline-flex gap-0.5">
-                      <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-                      <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
-                      <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
-                    </span>
-                  </span>
-                ) : (
-                  'Create Project'
-                )}
-              </button>
-              <button
-                onClick={handleCancelCreate}
-                disabled={creatingProject}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
+            <div className="relative">
+              <div id="toast-container" className="mb-4"></div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCreateProject}
+                  disabled={creatingProject || !projectName.trim()}
+                  className="btn-success relative"
+                >
+                  {creatingProject ? 'Creating Project...' : 'Create Project'}
+                </button>
+                <button
+                  onClick={handleCancelCreate}
+                  disabled={creatingProject}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         ) : (
