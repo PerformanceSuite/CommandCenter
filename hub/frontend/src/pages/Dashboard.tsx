@@ -14,7 +14,6 @@ function Dashboard() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [createdProject, setCreatedProject] = useState<Project | null>(null);
 
   const loadProjects = async () => {
     try {
@@ -73,21 +72,34 @@ function Dashboard() {
         // Step 3: Wait for containers to be healthy
         let attempts = 0;
         const maxAttempts = 60; // 60 seconds max
+        let isReady = false;
 
         while (attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 1000));
           const status = await api.orchestration.status(newProject.id);
 
           if (status.status === 'running' && status.health === 'healthy') {
-            toast.success(`${projectName} is ready!`, { id: 'start-containers' });
+            toast.success(`${projectName} is ready! Opening...`, { id: 'start-containers' });
+            isReady = true;
+
+            // Step 4: Automatically open the project
+            const cacheBreaker = Date.now();
+            window.open(`http://localhost:${newProject.frontend_port}/?v=${cacheBreaker}`, '_blank');
+
+            // Reset form after short delay
+            setTimeout(() => {
+              setProjectName('');
+              setSelectedPath(null);
+            }, 1000);
+
             break;
           }
 
           attempts++;
         }
 
-        if (attempts >= maxAttempts) {
-          toast.error(`Containers started but health check timed out. Check manually.`, { id: 'start-containers' });
+        if (!isReady) {
+          toast.error(`Containers started but health check timed out. Try opening manually.`, { id: 'start-containers' });
         }
       } catch (startErr) {
         toast.error(`Failed to start containers: ${startErr instanceof Error ? startErr.message : 'Unknown error'}`, { id: 'start-containers' });
@@ -96,9 +108,6 @@ function Dashboard() {
 
       // Reload projects to show updated status
       await loadProjects();
-
-      // Store the created project after reload (prevents race condition)
-      setCreatedProject(newProject);
 
       // Clear error/success messages
       setError(null);
@@ -112,23 +121,9 @@ function Dashboard() {
     }
   };
 
-  const handleOpenProject = () => {
-    if (!createdProject) return;
-
-    // Add cache-busting query parameter to prevent browser from serving stale cached content
-    const cacheBreaker = Date.now();
-    window.open(`http://localhost:${createdProject.frontend_port}/?v=${cacheBreaker}`, '_blank');
-
-    // Reset form
-    setProjectName('');
-    setSelectedPath(null);
-    setCreatedProject(null);
-  };
-
   const handleCancelCreate = () => {
     setProjectName('');
     setSelectedPath(null);
-    setCreatedProject(null);
   };
 
   if (loading) {
@@ -198,67 +193,41 @@ function Dashboard() {
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded">
-                <p className="text-sm text-blue-300">
-                  CommandCenter will be cloned into: <span className="font-mono">{selectedPath}/commandcenter</span>
-                </p>
-              </div>
-
-              {createdProject && (
-                <div className="p-3 bg-green-900/20 border border-green-500/30 rounded">
-                  <p className="text-sm text-green-300">
-                    Project will be available at: <span className="font-mono font-bold">localhost:{createdProject.frontend_port}</span>
-                  </p>
-                </div>
-              )}
+            <div className="p-3 bg-blue-900/20 border border-blue-500/30 rounded">
+              <p className="text-sm text-blue-300">
+                CommandCenter will be cloned into: <span className="font-mono">{selectedPath}/commandcenter</span>
+              </p>
+              <p className="text-sm text-blue-300 mt-2">
+                Project will automatically open when ready
+              </p>
             </div>
 
             <div className="flex gap-3">
-              {!createdProject ? (
-                <>
-                  <button
-                    onClick={handleCreateProject}
-                    disabled={creatingProject || !projectName.trim()}
-                    className="btn-success relative"
-                  >
-                    {creatingProject ? (
-                      <span className="flex items-center gap-2">
-                        Creating
-                        <span className="inline-flex gap-0.5">
-                          <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
-                          <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
-                          <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
-                        </span>
-                      </span>
-                    ) : (
-                      'Create Project'
-                    )}
-                  </button>
-                  <button
-                    onClick={handleCancelCreate}
-                    disabled={creatingProject}
-                    className="btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleOpenProject}
-                    className="btn-primary px-8"
-                  >
-                    Open
-                  </button>
-                  <button
-                    onClick={handleCancelCreate}
-                    className="btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                </>
-              )}
+              <button
+                onClick={handleCreateProject}
+                disabled={creatingProject || !projectName.trim()}
+                className="btn-success relative"
+              >
+                {creatingProject ? (
+                  <span className="flex items-center gap-2">
+                    Creating
+                    <span className="inline-flex gap-0.5">
+                      <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                      <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                      <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+                    </span>
+                  </span>
+                ) : (
+                  'Create Project'
+                )}
+              </button>
+              <button
+                onClick={handleCancelCreate}
+                disabled={creatingProject}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         ) : (
