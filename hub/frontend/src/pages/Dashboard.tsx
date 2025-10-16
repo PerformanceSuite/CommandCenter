@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import ProjectCard from '../components/ProjectCard';
 import FolderBrowser from '../components/FolderBrowser';
+import ProgressBar from '../components/ProgressBar';
 import { projectsApi, api } from '../services/api';
 import type { Project, ProjectStats } from '../types';
-
-// Constants for container startup
-const CONTAINER_STARTUP_TIMEOUT_SECONDS = 90;
-const HEALTH_CHECK_INTERVAL_MS = 1000;
-const BACKEND_HEALTH_CHECK_TIMEOUT_MS = 5000;
+import config from '../config';
 
 // Toast messages
 const TOAST_MESSAGES = {
@@ -36,6 +33,8 @@ function Dashboard() {
   const [projectName, setProjectName] = useState('');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [failedProject, setFailedProject] = useState<Project | null>(null);
+  const [creationProgress, setCreationProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState('');
 
   const loadProjects = async () => {
     try {
@@ -74,7 +73,7 @@ function Dashboard() {
   const verifyBackendHealth = async (port: number): Promise<boolean> => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), BACKEND_HEALTH_CHECK_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), config.backendHealthCheckTimeoutMs);
 
       await fetch(`http://localhost:${port}/health`, {
         signal: controller.signal,
@@ -100,12 +99,17 @@ function Dashboard() {
     setCreatingProject(true);
     setError(null);
     setFailedProject(null);
+    setCreationProgress(0);
+    setProgressLabel('Initializing...');
 
     // Open blank tab immediately (before async operations) to avoid pop-up blocker
     const newTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
 
     try {
-      // Step 1: Create the project
+      // Step 1: Create the project (0-20%)
+      setProgressLabel('Creating project files...');
+      setCreationProgress(5);
+
       toast.loading(TOAST_MESSAGES.CREATING(projectName), {
         id: 'create-flow',
         duration: Infinity,
@@ -117,7 +121,12 @@ function Dashboard() {
         path: selectedPath,
       });
 
-      // Step 2: Automatically start the containers
+      setCreationProgress(20);
+
+      // Step 2: Automatically start the containers (20-40%)
+      setProgressLabel('Starting Docker containers...');
+      setCreationProgress(25);
+
       toast.loading(TOAST_MESSAGES.STARTING(projectName), {
         id: 'create-flow',
         duration: Infinity,
@@ -126,7 +135,11 @@ function Dashboard() {
 
       await api.orchestration.start(newProject.id);
 
-      // Step 3: Wait for containers to be healthy
+      setCreationProgress(40);
+
+      // Step 3: Wait for containers to be healthy (40-70%)
+      setProgressLabel('Waiting for containers to be ready...');
+
       toast.loading(TOAST_MESSAGES.WAITING(projectName), {
         id: 'create-flow',
         duration: Infinity,
@@ -134,17 +147,24 @@ function Dashboard() {
       });
 
       let attempts = 0;
-      const maxAttempts = CONTAINER_STARTUP_TIMEOUT_SECONDS;
+      const maxAttempts = config.containerStartupTimeoutSeconds;
       let isReady = false;
 
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, HEALTH_CHECK_INTERVAL_MS));
+        await new Promise(resolve => setTimeout(resolve, config.healthCheckIntervalMs));
+
+        // Update progress incrementally (40% to 70% over the polling period)
+        const pollingProgress = 40 + Math.min(30, (attempts / maxAttempts) * 30);
+        setCreationProgress(Math.round(pollingProgress));
 
         try {
           const status = await api.orchestration.status(newProject.id);
 
           if (status.status === 'running' && status.health === 'healthy') {
-            // Step 3.5: Verify backend is actually responding
+            // Step 3.5: Verify backend is actually responding (70-90%)
+            setProgressLabel('Verifying backend health...');
+            setCreationProgress(70);
+
             toast.loading(TOAST_MESSAGES.VERIFYING(projectName), {
               id: 'create-flow',
               duration: Infinity,
@@ -155,8 +175,12 @@ function Dashboard() {
 
             if (backendHealthy) {
               isReady = true;
+              setCreationProgress(90);
 
-              // Step 4: Update the tab we opened earlier
+              // Step 4: Update the tab we opened earlier (90-100%)
+              setProgressLabel('Opening project...');
+              setCreationProgress(95);
+
               toast.loading(TOAST_MESSAGES.OPENING(projectName), {
                 id: 'create-flow',
                 duration: Infinity,
@@ -169,6 +193,9 @@ function Dashboard() {
               if (newTab && !newTab.closed) {
                 newTab.location.href = url;
                 newTab.focus();
+                setCreationProgress(100);
+                setProgressLabel('Complete!');
+
                 toast.success(TOAST_MESSAGES.SUCCESS(projectName), {
                   id: 'create-flow',
                   duration: 3000,
@@ -184,11 +211,13 @@ function Dashboard() {
                 setFailedProject(newProject);
               }
 
-              // Reset form after short delay
+              // Reset form and progress after short delay
               setTimeout(() => {
                 setProjectName('');
                 setSelectedPath(null);
-              }, 1500);
+                setCreationProgress(0);
+                setProgressLabel('');
+              }, 2000);
 
               break;
             } else {
@@ -217,6 +246,8 @@ function Dashboard() {
           position: 'bottom-center',
         });
         setFailedProject(newProject);
+        setCreationProgress(0);
+        setProgressLabel('');
       }
 
       // Reload projects to show updated status
@@ -237,6 +268,8 @@ function Dashboard() {
         position: 'bottom-center',
       });
       console.error('Project creation error:', err);
+      setCreationProgress(0);
+      setProgressLabel('');
     } finally {
       setCreatingProject(false);
     }
@@ -305,6 +338,8 @@ function Dashboard() {
     setProjectName('');
     setSelectedPath(null);
     setFailedProject(null);
+    setCreationProgress(0);
+    setProgressLabel('');
     toast.dismiss();
   };
 
@@ -385,6 +420,17 @@ function Dashboard() {
             </div>
 
             <div className="relative">
+              {/* Progress bar during creation */}
+              {creatingProject && creationProgress > 0 && (
+                <div className="mb-4">
+                  <ProgressBar
+                    progress={creationProgress}
+                    label={progressLabel}
+                    showPercentage={true}
+                  />
+                </div>
+              )}
+
               <div id="toast-container" className="mb-4"></div>
 
               {/* Recovery options if project creation timed out */}
