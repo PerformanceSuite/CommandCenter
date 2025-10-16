@@ -13,8 +13,9 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [deleting, setDeleting] = useState(false);
 
   const handleOpen = () => {
-    // Just open the URL directly - let the project handle "not started" state
-    window.open(`http://localhost:${project.frontend_port}`, '_blank');
+    // Add cache-busting query parameter to prevent browser from serving stale cached content
+    const cacheBreaker = Date.now();
+    window.open(`http://localhost:${project.frontend_port}/?v=${cacheBreaker}`, '_blank');
   };
 
   const handleDelete = async (deleteFiles: boolean) => {

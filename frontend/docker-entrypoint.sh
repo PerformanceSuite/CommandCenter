@@ -4,7 +4,11 @@
 
 set -e
 
-# Default values
+# Validate and set default values
+if [ -z "$VITE_PROJECT_NAME" ]; then
+  echo "WARNING: VITE_PROJECT_NAME not set, using default: 'Command Center'"
+fi
+
 PROJECT_NAME="${VITE_PROJECT_NAME:-Command Center}"
 API_URL="${VITE_API_URL:-http://localhost:8000}"
 

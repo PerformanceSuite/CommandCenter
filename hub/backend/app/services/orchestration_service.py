@@ -5,6 +5,7 @@ Orchestration service - Start/stop CommandCenter instances via docker-compose
 import json
 import logging
 import os
+import socket
 import subprocess
 import tempfile
 from datetime import datetime
@@ -47,6 +48,26 @@ class OrchestrationService:
             )
         return container_path
 
+    def _check_port_available(self, port: int) -> tuple[bool, str]:
+        """
+        Check if a port is available for use.
+
+        Returns:
+            tuple: (is_available, error_message)
+        """
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex(('localhost', port))
+                if result == 0:
+                    # Port is in use
+                    return False, f"Port {port} is already in use"
+                return True, ""
+        except Exception as e:
+            logger.warning(f"Error checking port {port}: {e}")
+            # If we can't check, assume it's available
+            return True, ""
+
     async def start_project(self, project_id: int) -> dict:
         """Start CommandCenter instance"""
         project = await self._get_project(project_id)
@@ -58,6 +79,30 @@ class OrchestrationService:
                 "project_id": project_id,
                 "status": "running",
             }
+
+        # Check for port conflicts before starting
+        ports_to_check = [
+            ("Frontend", project.frontend_port),
+            ("Backend", project.backend_port),
+            ("PostgreSQL", project.postgres_port),
+            ("Redis", project.redis_port),
+        ]
+
+        port_conflicts = []
+        for service_name, port in ports_to_check:
+            is_available, error = self._check_port_available(port)
+            if not is_available:
+                port_conflicts.append(f"{service_name} port {port}")
+                logger.warning(f"Port conflict detected: {error}")
+
+        if port_conflicts:
+            error_msg = (
+                f"Cannot start project: The following ports are already in use: "
+                f"{', '.join(port_conflicts)}. "
+                f"Please stop the conflicting services or change the project's port configuration."
+            )
+            logger.error(f"Failed to start project {project_id}: {error_msg}")
+            raise RuntimeError(error_msg)
 
         # Update status to starting
         project.status = "starting"

@@ -33,14 +33,19 @@ function App() {
   useEffect(() => {
     // Check if backend is available
     const checkBackend = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
       try {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
         const response = await fetch(`${baseUrl}/health`, {
           method: 'GET',
-          signal: AbortSignal.timeout(3000), // 3 second timeout
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         setBackendAvailable(response.ok);
       } catch (error) {
+        clearTimeout(timeoutId);
         setBackendAvailable(false);
       }
     };
