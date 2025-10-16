@@ -79,30 +79,13 @@ function Dashboard() {
     }
   };
 
-  const handleOpenProject = async () => {
+  const handleOpenProject = () => {
     if (!createdProject) return;
 
-    // Open immediately
+    // Just open the URL directly - let the project handle "not started" state
     window.open(`http://localhost:${createdProject.frontend_port}`, '_blank');
 
-    // Start in the background if stopped
-    if (createdProject.status === 'stopped') {
-      try {
-        await api.orchestration.start(createdProject.id);
-        // Show success notification after a short delay
-        setTimeout(() => {
-          toast.success(`Project "${createdProject.name}" is starting...`);
-        }, 1000);
-      } catch (error) {
-        console.error('Failed to start project:', error);
-        // Show error notification after a delay
-        setTimeout(() => {
-          toast.error(`Failed to start "${createdProject.name}". Check the logs for details.`);
-        }, 2000);
-      }
-    }
-
-    // Reset form after opening
+    // Reset form
     setProjectName('');
     setSelectedPath(null);
     setCreatedProject(null);

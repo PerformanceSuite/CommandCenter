@@ -12,26 +12,9 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleOpen = async () => {
-    // Open immediately
+  const handleOpen = () => {
+    // Just open the URL directly - let the project handle "not started" state
     window.open(`http://localhost:${project.frontend_port}`, '_blank');
-
-    // If project is stopped, start it in the background
-    if (project.status === 'stopped') {
-      try {
-        await api.orchestration.start(project.id);
-        // Show success notification after a short delay
-        setTimeout(() => {
-          toast.success(`Project "${project.name}" is starting...`);
-        }, 1000);
-      } catch (error) {
-        console.error('Failed to start project:', error);
-        // Show error notification after a delay
-        setTimeout(() => {
-          toast.error(`Failed to start "${project.name}". Check the logs for details.`);
-        }, 2000);
-      }
-    }
   };
 
   const handleDelete = async (deleteFiles: boolean) => {
@@ -48,8 +31,40 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
     }
   };
 
+  const getStatusColor = () => {
+    switch (project.status) {
+      case 'running':
+        return project.health === 'healthy' ? 'bg-green-500' : 'bg-yellow-500';
+      case 'stopped':
+        return 'bg-gray-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (project.status) {
+      case 'running':
+        return project.health === 'healthy' ? 'Running' : 'Starting...';
+      case 'stopped':
+        return 'Stopped';
+      case 'error':
+        return 'Error';
+      default:
+        return 'Unknown';
+    }
+  };
+
   return (
     <div className="flex items-center gap-4 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg hover:bg-slate-800/50 hover:border-slate-600 transition-all">
+      {/* Status Indicator */}
+      <div className="flex items-center gap-2">
+        <div className={`w-3 h-3 rounded-full ${getStatusColor()} ${project.status === 'running' && project.health === 'healthy' ? 'animate-pulse' : ''}`} />
+        <span className="text-xs text-slate-400 min-w-[60px]">{getStatusText()}</span>
+      </div>
+
       {/* Project Info */}
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-semibold text-white">{project.name}</h3>

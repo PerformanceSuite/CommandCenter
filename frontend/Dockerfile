@@ -37,8 +37,13 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # This config is crucial for routing all requests to index.html for a React SPA
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy entrypoint script for runtime configuration
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose the port Nginx listens on
 EXPOSE 80
 
-# Start Nginx in the foreground
+# Use entrypoint to inject runtime config
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

@@ -87,7 +87,10 @@ class OrchestrationService:
                             source, target_part = volume.split(':', 1)
                             # Only convert relative bind mounts, skip named volumes and absolute paths
                             if source.startswith('./'):
-                                source = os.path.join(host_cc_path, source[2:])
+                                # Convert to absolute path in container space first
+                                container_abs_path = os.path.join(project.cc_path, source[2:])
+                                # Then convert container path to host path
+                                source = self._get_host_path(container_abs_path)
                                 volumes_converted += 1
                                 logger.debug(f"Converted relative volume path for {service_name}: {volume} -> {source}:{target_part}")
                                 new_volumes.append(f"{source}:{target_part}")
@@ -123,15 +126,23 @@ class OrchestrationService:
                 env = os.environ.copy()
 
                 # Run docker-compose with temporary file
-                env_file = os.path.join(project.cc_path, ".env.docker")
+                env_file = os.path.join(project.cc_path, ".env")
+                cmd = ["docker-compose", "-f", temp_compose_path, "--env-file", env_file, "up", "-d"] + self.ESSENTIAL_SERVICES
+                logger.info(f"Starting project {project_id}: {' '.join(cmd)}")
+                logger.info(f"Working directory: {project.cc_path}")
+
                 result = subprocess.run(
-                    ["docker-compose", "-f", temp_compose_path, "--env-file", env_file, "up", "-d"] + self.ESSENTIAL_SERVICES,
+                    cmd,
                     cwd=project.cc_path,
                     capture_output=True,
                     text=True,
                     timeout=120,  # 2 minute timeout
                     env=env,
                 )
+
+                logger.info(f"Docker-compose stdout: {result.stdout}")
+                if result.stderr:
+                    logger.warning(f"Docker-compose stderr: {result.stderr}")
 
             finally:
                 # Clean up temporary file
@@ -145,6 +156,7 @@ class OrchestrationService:
             if result.returncode != 0:
                 project.status = "error"
                 await self.db.commit()
+                logger.error(f"Failed to start project {project_id}: {result.stderr}")
                 raise RuntimeError(f"Failed to start: {result.stderr}")
 
             # Update status
