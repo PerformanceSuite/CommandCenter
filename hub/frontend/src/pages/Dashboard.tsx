@@ -5,6 +5,27 @@ import FolderBrowser from '../components/FolderBrowser';
 import { projectsApi, api } from '../services/api';
 import type { Project, ProjectStats } from '../types';
 
+// Constants for container startup
+const CONTAINER_STARTUP_TIMEOUT_SECONDS = 90;
+const HEALTH_CHECK_INTERVAL_MS = 1000;
+const BACKEND_HEALTH_CHECK_TIMEOUT_MS = 5000;
+
+// Toast messages
+const TOAST_MESSAGES = {
+  CREATING: (name: string) => `Creating ${name}...`,
+  STARTING: (name: string) => `Starting containers for ${name}...`,
+  WAITING: (name: string) => `Waiting for ${name} to be ready...`,
+  VERIFYING: (name: string) => `Verifying ${name} backend is ready...`,
+  OPENING: (name: string) => `Opening ${name} in new tab...`,
+  SUCCESS: (name: string) => `${name} opened successfully!`,
+  TIMEOUT: (name: string, port: number) =>
+    `Timeout waiting for ${name}. It may still be starting. Try opening manually at localhost:${port}`,
+  POPUP_BLOCKED: (port: number) =>
+    `Pop-up blocked! Please allow pop-ups or click the "Open Manually" button to access localhost:${port}`,
+  BACKEND_NOT_READY: (name: string) =>
+    `Containers started but ${name} backend is not responding yet. Continuing to wait...`,
+};
+
 function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState<ProjectStats | null>(null);
@@ -14,6 +35,7 @@ function Dashboard() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [failedProject, setFailedProject] = useState<Project | null>(null);
 
   const loadProjects = async () => {
     try {
@@ -46,6 +68,29 @@ function Dashboard() {
     setProjectName(folderName.charAt(0).toUpperCase() + folderName.slice(1));
   };
 
+  /**
+   * Verify backend is actually responding by polling the /health endpoint
+   */
+  const verifyBackendHealth = async (port: number): Promise<boolean> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), BACKEND_HEALTH_CHECK_TIMEOUT_MS);
+
+      await fetch(`http://localhost:${port}/health`, {
+        signal: controller.signal,
+        mode: 'no-cors', // Allow cross-origin for localhost
+      });
+
+      clearTimeout(timeoutId);
+
+      // In no-cors mode, we can't read response, but if fetch succeeds, backend is responding
+      return true;
+    } catch (err) {
+      // Network error or timeout means backend not ready
+      return false;
+    }
+  };
+
   const handleCreateProject = async () => {
     if (!selectedPath || !projectName.trim()) {
       setError('Please select a folder and enter a project name');
@@ -54,10 +99,14 @@ function Dashboard() {
 
     setCreatingProject(true);
     setError(null);
+    setFailedProject(null);
+
+    // Open blank tab immediately (before async operations) to avoid pop-up blocker
+    const newTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
 
     try {
       // Step 1: Create the project
-      toast.loading(`Creating ${projectName}...`, {
+      toast.loading(TOAST_MESSAGES.CREATING(projectName), {
         id: 'create-flow',
         duration: Infinity,
         position: 'bottom-center',
@@ -69,7 +118,7 @@ function Dashboard() {
       });
 
       // Step 2: Automatically start the containers
-      toast.loading(`Starting containers for ${projectName}...`, {
+      toast.loading(TOAST_MESSAGES.STARTING(projectName), {
         id: 'create-flow',
         duration: Infinity,
         position: 'bottom-center',
@@ -78,60 +127,76 @@ function Dashboard() {
       await api.orchestration.start(newProject.id);
 
       // Step 3: Wait for containers to be healthy
-      toast.loading(`Waiting for ${projectName} to be ready...`, {
+      toast.loading(TOAST_MESSAGES.WAITING(projectName), {
         id: 'create-flow',
         duration: Infinity,
         position: 'bottom-center',
       });
 
       let attempts = 0;
-      const maxAttempts = 90; // 90 seconds max
+      const maxAttempts = CONTAINER_STARTUP_TIMEOUT_SECONDS;
       let isReady = false;
 
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, HEALTH_CHECK_INTERVAL_MS));
 
         try {
           const status = await api.orchestration.status(newProject.id);
 
           if (status.status === 'running' && status.health === 'healthy') {
-            isReady = true;
-
-            // Step 4: Open in new tab
-            toast.loading(`Opening ${projectName} in new tab...`, {
+            // Step 3.5: Verify backend is actually responding
+            toast.loading(TOAST_MESSAGES.VERIFYING(projectName), {
               id: 'create-flow',
               duration: Infinity,
               position: 'bottom-center',
             });
 
-            const cacheBreaker = Date.now();
-            const url = `http://localhost:${newProject.frontend_port}/?v=${cacheBreaker}`;
+            const backendHealthy = await verifyBackendHealth(newProject.backend_port);
 
-            // Force open in new tab
-            const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+            if (backendHealthy) {
+              isReady = true;
 
-            if (newTab) {
-              newTab.focus();
-              toast.success(`${projectName} opened successfully!`, {
+              // Step 4: Update the tab we opened earlier
+              toast.loading(TOAST_MESSAGES.OPENING(projectName), {
                 id: 'create-flow',
-                duration: 3000,
+                duration: Infinity,
                 position: 'bottom-center',
               });
+
+              const cacheBreaker = Date.now();
+              const url = `http://localhost:${newProject.frontend_port}/?v=${cacheBreaker}`;
+
+              if (newTab && !newTab.closed) {
+                newTab.location.href = url;
+                newTab.focus();
+                toast.success(TOAST_MESSAGES.SUCCESS(projectName), {
+                  id: 'create-flow',
+                  duration: 3000,
+                  position: 'bottom-center',
+                });
+              } else {
+                // Tab was closed or blocked
+                toast.error(TOAST_MESSAGES.POPUP_BLOCKED(newProject.frontend_port), {
+                  id: 'create-flow',
+                  duration: 10000,
+                  position: 'bottom-center',
+                });
+                setFailedProject(newProject);
+              }
+
+              // Reset form after short delay
+              setTimeout(() => {
+                setProjectName('');
+                setSelectedPath(null);
+              }, 1500);
+
+              break;
             } else {
-              toast.error(`Pop-up blocked! Please allow pop-ups and try clicking: localhost:${newProject.frontend_port}`, {
-                id: 'create-flow',
-                duration: 10000,
-                position: 'bottom-center',
-              });
+              // Containers healthy but backend not responding yet
+              if (attempts % 10 === 0) {
+                console.log(TOAST_MESSAGES.BACKEND_NOT_READY(projectName));
+              }
             }
-
-            // Reset form after short delay
-            setTimeout(() => {
-              setProjectName('');
-              setSelectedPath(null);
-            }, 1500);
-
-            break;
           }
         } catch (statusErr) {
           console.log('Status check attempt', attempts, statusErr);
@@ -141,11 +206,17 @@ function Dashboard() {
       }
 
       if (!isReady) {
-        toast.error(`Timeout waiting for ${projectName}. Check manually at localhost:${newProject.frontend_port}`, {
+        // Close the blank tab if still open
+        if (newTab && !newTab.closed) {
+          newTab.close();
+        }
+
+        toast.error(TOAST_MESSAGES.TIMEOUT(projectName, newProject.frontend_port), {
           id: 'create-flow',
-          duration: 10000,
+          duration: Infinity,
           position: 'bottom-center',
         });
+        setFailedProject(newProject);
       }
 
       // Reload projects to show updated status
@@ -153,6 +224,11 @@ function Dashboard() {
 
       setError(null);
     } catch (err) {
+      // Close the blank tab if still open
+      if (newTab && !newTab.closed) {
+        newTab.close();
+      }
+
       const errorMsg = err instanceof Error ? err.message : 'Failed to create project';
       setError(`Failed to create project: ${errorMsg}`);
       toast.error(errorMsg, {
@@ -166,9 +242,70 @@ function Dashboard() {
     }
   };
 
+  const handleOpenManually = () => {
+    if (!failedProject) return;
+
+    const cacheBreaker = Date.now();
+    const url = `http://localhost:${failedProject.frontend_port}/?v=${cacheBreaker}`;
+    const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (newTab) {
+      newTab.focus();
+      toast.success(TOAST_MESSAGES.SUCCESS(failedProject.name), {
+        duration: 3000,
+        position: 'bottom-center',
+      });
+      setFailedProject(null);
+      setProjectName('');
+      setSelectedPath(null);
+    } else {
+      toast.error(TOAST_MESSAGES.POPUP_BLOCKED(failedProject.frontend_port), {
+        duration: 5000,
+        position: 'bottom-center',
+      });
+    }
+  };
+
+  const handleRetryStartup = async () => {
+    if (!failedProject) return;
+
+    setCreatingProject(true);
+    toast.dismiss();
+
+    try {
+      // Restart containers
+      toast.loading(TOAST_MESSAGES.STARTING(failedProject.name), {
+        id: 'retry-flow',
+        duration: Infinity,
+        position: 'bottom-center',
+      });
+
+      await api.orchestration.start(failedProject.id);
+
+      toast.success(`${failedProject.name} restarted. Try opening it now.`, {
+        id: 'retry-flow',
+        duration: 5000,
+        position: 'bottom-center',
+      });
+
+      await loadProjects();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to restart';
+      toast.error(errorMsg, {
+        id: 'retry-flow',
+        duration: 5000,
+        position: 'bottom-center',
+      });
+    } finally {
+      setCreatingProject(false);
+    }
+  };
+
   const handleCancelCreate = () => {
     setProjectName('');
     setSelectedPath(null);
+    setFailedProject(null);
+    toast.dismiss();
   };
 
   if (loading) {
@@ -249,6 +386,37 @@ function Dashboard() {
 
             <div className="relative">
               <div id="toast-container" className="mb-4"></div>
+
+              {/* Recovery options if project creation timed out */}
+              {failedProject && (
+                <div className="mb-4 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                  <p className="text-sm text-yellow-300 mb-3">
+                    <strong>{failedProject.name}</strong> may still be starting up. You can:
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleOpenManually}
+                      className="btn-primary text-sm px-4 py-2"
+                    >
+                      Open Manually
+                    </button>
+                    <button
+                      onClick={handleRetryStartup}
+                      disabled={creatingProject}
+                      className="btn-secondary text-sm px-4 py-2"
+                    >
+                      Retry Startup
+                    </button>
+                    <button
+                      onClick={() => setFailedProject(null)}
+                      className="btn-secondary text-sm px-4 py-2"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={handleCreateProject}
