@@ -88,13 +88,58 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
       {/* Actions */}
       {!showConfirm ? (
         <>
-          <button
-            onClick={handleOpen}
-            className="btn-primary px-6"
-            title={`Open CommandCenter at localhost:${project.frontend_port}`}
-          >
-            Open
-          </button>
+          {project.status === 'stopped' ? (
+            <button
+              onClick={async () => {
+                try {
+                  toast.loading(`Starting ${project.name}...`, { id: `start-${project.id}` });
+                  await api.orchestration.start(project.id);
+                  toast.success(`${project.name} started!`, { id: `start-${project.id}` });
+                  setTimeout(() => window.location.reload(), 1000);
+                } catch (error) {
+                  toast.error(`Failed to start ${project.name}`, { id: `start-${project.id}` });
+                }
+              }}
+              className="px-6 py-2 bg-green-600 text-white border border-green-500 rounded-lg hover:bg-green-700 hover:border-green-600 transition-all font-semibold"
+              title="Start containers"
+            >
+              Start
+            </button>
+          ) : project.status === 'running' ? (
+            <>
+              <button
+                onClick={handleOpen}
+                className="btn-primary px-6"
+                title={`Open CommandCenter at localhost:${project.frontend_port}`}
+              >
+                Open
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    toast.loading(`Stopping ${project.name}...`, { id: `stop-${project.id}` });
+                    await api.orchestration.stop(project.id);
+                    toast.success(`${project.name} stopped`, { id: `stop-${project.id}` });
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error) {
+                    toast.error(`Failed to stop ${project.name}`, { id: `stop-${project.id}` });
+                  }
+                }}
+                className="px-4 py-2 bg-yellow-600/20 text-yellow-400 border border-yellow-600/30 rounded-lg hover:bg-yellow-600/30 hover:border-yellow-600/50 transition-all"
+                title="Stop containers"
+              >
+                Stop
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleOpen}
+              className="btn-primary px-6"
+              title={`Open CommandCenter at localhost:${project.frontend_port}`}
+            >
+              Open
+            </button>
+          )}
           <button
             onClick={() => setShowConfirm(true)}
             className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 hover:border-red-600/50 transition-all"
