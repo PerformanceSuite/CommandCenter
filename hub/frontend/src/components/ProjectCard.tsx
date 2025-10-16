@@ -12,26 +12,10 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const handleOpen = async () => {
-    // Open immediately
-    window.open(`http://localhost:${project.frontend_port}`, '_blank');
-
-    // If project is stopped, start it in the background
-    if (project.status === 'stopped') {
-      try {
-        await api.orchestration.start(project.id);
-        // Show success notification after a short delay
-        setTimeout(() => {
-          toast.success(`Project "${project.name}" is starting...`);
-        }, 1000);
-      } catch (error) {
-        console.error('Failed to start project:', error);
-        // Show error notification after a delay
-        setTimeout(() => {
-          toast.error(`Failed to start "${project.name}". Check the logs for details.`);
-        }, 2000);
-      }
-    }
+  const handleOpen = () => {
+    // Add cache-busting query parameter to prevent browser from serving stale cached content
+    const cacheBreaker = Date.now();
+    window.open(`http://localhost:${project.frontend_port}/?v=${cacheBreaker}`, '_blank');
   };
 
   const handleDelete = async (deleteFiles: boolean) => {
@@ -48,8 +32,40 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
     }
   };
 
+  const getStatusColor = () => {
+    switch (project.status) {
+      case 'running':
+        return project.health === 'healthy' ? 'bg-green-500' : 'bg-yellow-500';
+      case 'stopped':
+        return 'bg-gray-500';
+      case 'error':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (project.status) {
+      case 'running':
+        return project.health === 'healthy' ? 'Running' : 'Starting...';
+      case 'stopped':
+        return 'Stopped';
+      case 'error':
+        return 'Error';
+      default:
+        return 'Unknown';
+    }
+  };
+
   return (
     <div className="flex items-center gap-4 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg hover:bg-slate-800/50 hover:border-slate-600 transition-all">
+      {/* Status Indicator */}
+      <div className="flex items-center gap-2">
+        <div className={`w-3 h-3 rounded-full ${getStatusColor()} ${project.status === 'running' && project.health === 'healthy' ? 'animate-pulse' : ''}`} />
+        <span className="text-xs text-slate-400 min-w-[60px]">{getStatusText()}</span>
+      </div>
+
       {/* Project Info */}
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-semibold text-white">{project.name}</h3>
@@ -73,13 +89,58 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
       {/* Actions */}
       {!showConfirm ? (
         <>
-          <button
-            onClick={handleOpen}
-            className="btn-primary px-6"
-            title={`Open CommandCenter at localhost:${project.frontend_port}`}
-          >
-            Open
-          </button>
+          {project.status === 'stopped' ? (
+            <button
+              onClick={async () => {
+                try {
+                  toast.loading(`Starting ${project.name}...`, { id: `start-${project.id}` });
+                  await api.orchestration.start(project.id);
+                  toast.success(`${project.name} started!`, { id: `start-${project.id}` });
+                  setTimeout(() => window.location.reload(), 1000);
+                } catch (error) {
+                  toast.error(`Failed to start ${project.name}`, { id: `start-${project.id}` });
+                }
+              }}
+              className="px-6 py-2 bg-green-600 text-white border border-green-500 rounded-lg hover:bg-green-700 hover:border-green-600 transition-all font-semibold"
+              title="Start containers"
+            >
+              Start
+            </button>
+          ) : project.status === 'running' ? (
+            <>
+              <button
+                onClick={handleOpen}
+                className="btn-primary px-6"
+                title={`Open CommandCenter at localhost:${project.frontend_port}`}
+              >
+                Open
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    toast.loading(`Stopping ${project.name}...`, { id: `stop-${project.id}` });
+                    await api.orchestration.stop(project.id);
+                    toast.success(`${project.name} stopped`, { id: `stop-${project.id}` });
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error) {
+                    toast.error(`Failed to stop ${project.name}`, { id: `stop-${project.id}` });
+                  }
+                }}
+                className="px-4 py-2 bg-yellow-600/20 text-yellow-400 border border-yellow-600/30 rounded-lg hover:bg-yellow-600/30 hover:border-yellow-600/50 transition-all"
+                title="Stop containers"
+              >
+                Stop
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleOpen}
+              className="btn-primary px-6"
+              title={`Open CommandCenter at localhost:${project.frontend_port}`}
+            >
+              Open
+            </button>
+          )}
           <button
             onClick={() => setShowConfirm(true)}
             className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg hover:bg-red-600/30 hover:border-red-600/50 transition-all"

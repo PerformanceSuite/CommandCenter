@@ -11,6 +11,7 @@ from app.database import get_db
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectStats
 from app.services.project_service import ProjectService
+from app.services.setup_service import SetupService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -106,3 +107,14 @@ async def delete_project(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
+
+
+@router.get("/template/version")
+async def get_template_version():
+    """
+    Get CommandCenter template version information
+
+    Returns git commit, branch, and last commit message
+    This helps verify the template is up-to-date before creating projects
+    """
+    return SetupService.get_template_version()

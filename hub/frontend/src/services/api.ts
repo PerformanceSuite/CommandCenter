@@ -72,6 +72,9 @@ export const orchestrationApi = {
       method: 'POST',
     }),
 
+  status: (id: number): Promise<any> =>
+    fetchJSON(`${API_BASE}/orchestration/${id}/status`),
+
   health: (id: number): Promise<OperationResponse> =>
     fetchJSON(`${API_BASE}/orchestration/${id}/health`),
 };

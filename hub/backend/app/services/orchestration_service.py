@@ -5,6 +5,7 @@ Orchestration service - Start/stop CommandCenter instances via docker-compose
 import json
 import logging
 import os
+import socket
 import subprocess
 import tempfile
 from datetime import datetime
@@ -47,6 +48,26 @@ class OrchestrationService:
             )
         return container_path
 
+    def _check_port_available(self, port: int) -> tuple[bool, str]:
+        """
+        Check if a port is available for use.
+
+        Returns:
+            tuple: (is_available, error_message)
+        """
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1)
+                result = sock.connect_ex(('localhost', port))
+                if result == 0:
+                    # Port is in use
+                    return False, f"Port {port} is already in use"
+                return True, ""
+        except Exception as e:
+            logger.warning(f"Error checking port {port}: {e}")
+            # If we can't check, assume it's available
+            return True, ""
+
     async def start_project(self, project_id: int) -> dict:
         """Start CommandCenter instance"""
         project = await self._get_project(project_id)
@@ -58,6 +79,30 @@ class OrchestrationService:
                 "project_id": project_id,
                 "status": "running",
             }
+
+        # Check for port conflicts before starting
+        ports_to_check = [
+            ("Frontend", project.frontend_port),
+            ("Backend", project.backend_port),
+            ("PostgreSQL", project.postgres_port),
+            ("Redis", project.redis_port),
+        ]
+
+        port_conflicts = []
+        for service_name, port in ports_to_check:
+            is_available, error = self._check_port_available(port)
+            if not is_available:
+                port_conflicts.append(f"{service_name} port {port}")
+                logger.warning(f"Port conflict detected: {error}")
+
+        if port_conflicts:
+            error_msg = (
+                f"Cannot start project: The following ports are already in use: "
+                f"{', '.join(port_conflicts)}. "
+                f"Please stop the conflicting services or change the project's port configuration."
+            )
+            logger.error(f"Failed to start project {project_id}: {error_msg}")
+            raise RuntimeError(error_msg)
 
         # Update status to starting
         project.status = "starting"
@@ -87,7 +132,10 @@ class OrchestrationService:
                             source, target_part = volume.split(':', 1)
                             # Only convert relative bind mounts, skip named volumes and absolute paths
                             if source.startswith('./'):
-                                source = os.path.join(host_cc_path, source[2:])
+                                # Convert to absolute path in container space first
+                                container_abs_path = os.path.join(project.cc_path, source[2:])
+                                # Then convert container path to host path
+                                source = self._get_host_path(container_abs_path)
                                 volumes_converted += 1
                                 logger.debug(f"Converted relative volume path for {service_name}: {volume} -> {source}:{target_part}")
                                 new_volumes.append(f"{source}:{target_part}")
@@ -123,15 +171,23 @@ class OrchestrationService:
                 env = os.environ.copy()
 
                 # Run docker-compose with temporary file
-                env_file = os.path.join(project.cc_path, ".env.docker")
+                env_file = os.path.join(project.cc_path, ".env")
+                cmd = ["docker-compose", "-f", temp_compose_path, "--env-file", env_file, "up", "-d"] + self.ESSENTIAL_SERVICES
+                logger.info(f"Starting project {project_id}: {' '.join(cmd)}")
+                logger.info(f"Working directory: {project.cc_path}")
+
                 result = subprocess.run(
-                    ["docker-compose", "-f", temp_compose_path, "--env-file", env_file, "up", "-d"] + self.ESSENTIAL_SERVICES,
+                    cmd,
                     cwd=project.cc_path,
                     capture_output=True,
                     text=True,
                     timeout=120,  # 2 minute timeout
                     env=env,
                 )
+
+                logger.info(f"Docker-compose stdout: {result.stdout}")
+                if result.stderr:
+                    logger.warning(f"Docker-compose stderr: {result.stderr}")
 
             finally:
                 # Clean up temporary file
@@ -145,6 +201,7 @@ class OrchestrationService:
             if result.returncode != 0:
                 project.status = "error"
                 await self.db.commit()
+                logger.error(f"Failed to start project {project_id}: {result.stderr}")
                 raise RuntimeError(f"Failed to start: {result.stderr}")
 
             # Update status

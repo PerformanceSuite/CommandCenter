@@ -1,10 +1,11 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Sidebar } from './components/common/Sidebar';
 import { Header } from './components/common/Header';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
+import ProjectNotStarted from './components/ProjectNotStarted';
 
 // Lazy load route components for code splitting
 const DashboardView = lazy(() => import('./components/Dashboard/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -21,6 +22,52 @@ const PageLoadingFallback = () => (
 );
 
 function App() {
+  const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
+  // Read project name from runtime config (injected by docker-entrypoint.sh) or fall back to build-time env
+  const [projectName] = useState(
+    (window as any).RUNTIME_CONFIG?.PROJECT_NAME ||
+    import.meta.env.VITE_PROJECT_NAME ||
+    'Command Center'
+  );
+
+  useEffect(() => {
+    // Check if backend is available
+    const checkBackend = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      try {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+        const response = await fetch(`${baseUrl}/health`, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        setBackendAvailable(response.ok);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        setBackendAvailable(false);
+      }
+    };
+
+    checkBackend();
+  }, []);
+
+  // Show loading while checking backend
+  if (backendAvailable === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Show "Project Not Started" if backend is unavailable
+  if (!backendAvailable) {
+    return <ProjectNotStarted projectName={projectName} backendPort={8000} />;
+  }
+
+  // Backend is available, show normal app
   return (
     <ErrorBoundary>
       <BrowserRouter>

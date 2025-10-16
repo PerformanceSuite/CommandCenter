@@ -66,11 +66,15 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        VITE_PROJECT_NAME: ${VITE_PROJECT_NAME:-Command Center}
+        # Build-time default (used during npm build, overridden at runtime by entrypoint)
+        VITE_PROJECT_NAME: "Command Center Template"
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_frontend
     environment:
       VITE_API_URL: http://localhost:${BACKEND_PORT:-8000}
+      # Runtime value (dynamically injected into /config.js by docker-entrypoint.sh)
+      # This allows each project instance to display its own name without rebuilding
+      VITE_PROJECT_NAME: ${VITE_PROJECT_NAME:-Command Center}
     ports:
       - "${FRONTEND_PORT:-3000}:80"
     depends_on:

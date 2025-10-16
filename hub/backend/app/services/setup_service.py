@@ -16,6 +16,54 @@ class SetupService:
     # CommandCenter source (mounted in container at /projects)
     CC_SOURCE = "/projects/CommandCenter"
 
+    @classmethod
+    def get_template_version(cls) -> dict:
+        """
+        Get template version info to verify freshness
+
+        Returns commit hash, branch, and last modified time
+        """
+        try:
+            # Get current commit hash
+            result = subprocess.run(
+                ["git", "-C", cls.CC_SOURCE, "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            commit_hash = result.stdout.strip() if result.returncode == 0 else "unknown"
+
+            # Get current branch
+            result = subprocess.run(
+                ["git", "-C", cls.CC_SOURCE, "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            branch = result.stdout.strip() if result.returncode == 0 else "unknown"
+
+            # Get last commit message
+            result = subprocess.run(
+                ["git", "-C", cls.CC_SOURCE, "log", "-1", "--pretty=%B"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            last_commit = result.stdout.strip() if result.returncode == 0 else "unknown"
+
+            return {
+                "commit": commit_hash[:8],  # Short hash
+                "full_commit": commit_hash,
+                "branch": branch,
+                "last_commit_message": last_commit,
+                "source_path": cls.CC_SOURCE,
+            }
+        except Exception as e:
+            return {
+                "error": str(e),
+                "source_path": cls.CC_SOURCE,
+            }
+
     async def setup_commandcenter(self, project: Project) -> None:
         """
         Setup CommandCenter for a project
@@ -35,31 +83,34 @@ class SetupService:
         await self._create_directories(project.cc_path)
 
     async def _copy_commandcenter(self, cc_path: str) -> None:
-        """Copy CommandCenter from local source"""
+        """
+        Copy CommandCenter from local source using git clone
+
+        This ensures we ALWAYS get the latest committed state from the template,
+        preventing old/stale code from being copied to new projects.
+        """
         if os.path.exists(cc_path):
             # Already exists, skip
             return
 
-        # Ensure source exists
+        # Ensure source exists and is a git repository
         if not os.path.exists(self.CC_SOURCE):
             raise RuntimeError(f"CommandCenter source not found at {self.CC_SOURCE}")
 
+        git_dir = os.path.join(self.CC_SOURCE, ".git")
+        if not os.path.exists(git_dir):
+            raise RuntimeError(f"CommandCenter source is not a git repository: {self.CC_SOURCE}")
+
         try:
-            # Use rsync to copy, excluding .git, node_modules, venv, etc.
+            # Use git clone with depth 1 for faster copying
+            # This gets the exact committed state of the template
             result = subprocess.run(
                 [
-                    "rsync",
-                    "-av",
-                    "--exclude=.git",
-                    "--exclude=node_modules",
-                    "--exclude=venv",
-                    "--exclude=__pycache__",
-                    "--exclude=*.pyc",
-                    "--exclude=.env",
-                    "--exclude=rag_storage",
-                    "--exclude=backups",
-                    "--exclude=hub",
-                    f"{self.CC_SOURCE}/",
+                    "git",
+                    "clone",
+                    "--depth", "1",  # Single commit (faster)
+                    "--single-branch",  # Only current branch
+                    self.CC_SOURCE,
                     cc_path,
                 ],
                 capture_output=True,
@@ -68,8 +119,30 @@ class SetupService:
             )
 
             if result.returncode != 0:
-                raise RuntimeError(f"Failed to copy CommandCenter: {result.stderr}")
+                raise RuntimeError(f"Failed to clone CommandCenter: {result.stderr}")
 
+            # Remove .git directory from the copy (project doesn't need git history)
+            cloned_git_dir = os.path.join(cc_path, ".git")
+            if os.path.exists(cloned_git_dir):
+                subprocess.run(
+                    ["rm", "-rf", cloned_git_dir],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+
+            # Remove hub directory from the copy (projects don't need hub)
+            hub_dir = os.path.join(cc_path, "hub")
+            if os.path.exists(hub_dir):
+                subprocess.run(
+                    ["rm", "-rf", hub_dir],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("Timeout while cloning CommandCenter template")
         except Exception as e:
             raise RuntimeError(f"Failed to copy CommandCenter: {str(e)}")
 
@@ -117,6 +190,7 @@ CORS_ORIGINS=["http://localhost:{project.frontend_port}"]
 
 # Frontend Configuration
 VITE_PROJECT_NAME={project.name}
+VITE_API_BASE_URL=http://localhost:{project.backend_port}
 """
 
         try:
