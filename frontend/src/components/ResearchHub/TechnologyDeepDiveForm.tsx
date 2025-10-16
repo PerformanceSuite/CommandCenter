@@ -4,7 +4,7 @@ import type { TechnologyDeepDiveRequest } from '../../types/research';
 
 const TechnologyDeepDiveForm: React.FC = () => {
   const [technologyName, setTechnologyName] = useState('');
-  const [projectId, setProjectId] = useState(1);
+  const [projectId] = useState(1); // Hardcoded for single-project instances
   const [researchQuestions, setResearchQuestions] = useState<string[]>(['']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,22 +87,6 @@ const TechnologyDeepDiveForm: React.FC = () => {
             disabled={loading}
           />
           <small>The technology you want to research in depth</small>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="project-id">
-            Project ID <span className="required">*</span>
-          </label>
-          <input
-            id="project-id"
-            type="number"
-            value={projectId}
-            onChange={(e) => setProjectId(parseInt(e.target.value))}
-            min={1}
-            required
-            disabled={loading}
-          />
-          <small>The project this research belongs to</small>
         </div>
 
         <div className="form-group">

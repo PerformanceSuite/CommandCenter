@@ -73,9 +73,9 @@ const ResearchHubView: React.FC = () => {
 
       <style>{`
         .research-hub-container {
-          padding: 2rem;
+          padding: 2rem 2rem 2rem 2rem;
           max-width: 1400px;
-          margin: 0 auto;
+          margin: 0;
         }
 
         .research-hub-header {

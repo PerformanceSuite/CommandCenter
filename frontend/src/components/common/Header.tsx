@@ -7,7 +7,7 @@ export const Header: React.FC = () => {
   const projectName = import.meta.env.VITE_PROJECT_NAME || '';
 
   return (
-    <header className="bg-slate-900 py-3" role="banner">
+    <header className="bg-gray-900 py-3" role="banner">
       <div className="flex items-center justify-between px-6">
         {/* Project Name - Extra left padding to align with content */}
         {projectName && (

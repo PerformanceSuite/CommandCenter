@@ -195,12 +195,12 @@ const ResearchSummary: React.FC = () => {
           font-size: 1.5rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
-          color: #1a202c;
+          color: #f1f5f9;
         }
 
         .description {
           font-size: 0.95rem;
-          color: #718096;
+          color: #94a3b8;
           margin-bottom: 2rem;
           line-height: 1.5;
         }
@@ -208,13 +208,13 @@ const ResearchSummary: React.FC = () => {
         .loading-state {
           text-align: center;
           padding: 3rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .error-message {
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1rem;
@@ -222,7 +222,7 @@ const ResearchSummary: React.FC = () => {
 
         .btn-retry {
           padding: 0.75rem 1.5rem;
-          background: #3182ce;
+          background: #3b82f6;
           border: none;
           color: white;
           border-radius: 6px;
@@ -232,7 +232,7 @@ const ResearchSummary: React.FC = () => {
         }
 
         .btn-retry:hover {
-          background: #2c5282;
+          background: #2563eb;
         }
 
         .stats-grid {
@@ -243,8 +243,8 @@ const ResearchSummary: React.FC = () => {
         }
 
         .stat-card {
-          background: white;
-          border: 2px solid #e2e8f0;
+          background: #0f172a;
+          border: 2px solid #334155;
           border-radius: 8px;
           padding: 1.5rem;
           display: flex;
@@ -255,17 +255,17 @@ const ResearchSummary: React.FC = () => {
 
         .stat-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
 
         .stat-card.success {
-          border-color: #9ae6b4;
-          background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+          border-color: #059669;
+          background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
         }
 
         .stat-card.error {
-          border-color: #fc8181;
-          background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+          border-color: #dc2626;
+          background: linear-gradient(135deg, #0f172a 0%, #7f1d1d 100%);
         }
 
         .stat-icon {
@@ -280,14 +280,14 @@ const ResearchSummary: React.FC = () => {
         .stat-value {
           font-size: 2rem;
           font-weight: 700;
-          color: #1a202c;
+          color: #f1f5f9;
           line-height: 1;
           margin-bottom: 0.25rem;
         }
 
         .stat-label {
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -295,7 +295,7 @@ const ResearchSummary: React.FC = () => {
 
         .stat-percentage {
           font-size: 0.875rem;
-          color: #4a5568;
+          color: #cbd5e1;
           margin-top: 0.25rem;
           font-weight: 600;
         }
@@ -303,26 +303,26 @@ const ResearchSummary: React.FC = () => {
         .progress-section {
           margin-top: 2rem;
           padding-top: 2rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #334155;
         }
 
         .progress-section h3 {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #2d3748;
+          color: #f1f5f9;
           margin-bottom: 1rem;
         }
 
         .progress-bar-container {
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: #0f172a;
+          border: 1px solid #334155;
           border-radius: 8px;
           padding: 1.5rem;
         }
 
         .progress-bar {
           height: 40px;
-          background: #edf2f7;
+          background: #1e293b;
           border-radius: 8px;
           overflow: hidden;
           display: flex;
@@ -335,11 +335,11 @@ const ResearchSummary: React.FC = () => {
         }
 
         .progress-fill.completed {
-          background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+          background: linear-gradient(90deg, #10b981 0%, #059669 100%);
         }
 
         .progress-fill.failed {
-          background: linear-gradient(90deg, #f56565 0%, #e53e3e 100%);
+          background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
         }
 
         .progress-legend {
@@ -354,7 +354,7 @@ const ResearchSummary: React.FC = () => {
           align-items: center;
           gap: 0.5rem;
           font-size: 0.875rem;
-          color: #4a5568;
+          color: #94a3b8;
         }
 
         .legend-color {
@@ -364,23 +364,23 @@ const ResearchSummary: React.FC = () => {
         }
 
         .legend-color.completed {
-          background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+          background: linear-gradient(90deg, #10b981 0%, #059669 100%);
         }
 
         .legend-color.failed {
-          background: linear-gradient(90deg, #f56565 0%, #e53e3e 100%);
+          background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
         }
 
         .legend-color.pending {
-          background: #edf2f7;
-          border: 2px solid #cbd5e0;
+          background: #1e293b;
+          border: 2px solid #475569;
         }
 
         .empty-state {
           text-align: center;
           padding: 3rem 1rem;
-          color: #718096;
-          background: #f7fafc;
+          color: #94a3b8;
+          background: #1e293b;
           border-radius: 8px;
           margin-top: 2rem;
         }
@@ -395,7 +395,7 @@ const ResearchSummary: React.FC = () => {
           text-align: center;
           margin-top: 2rem;
           font-size: 0.875rem;
-          color: #a0aec0;
+          color: #64748b;
         }
 
         @media (max-width: 768px) {

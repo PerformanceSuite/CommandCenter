@@ -261,15 +261,15 @@ const ResearchTaskList: React.FC = () => {
         .research-task-list h2 {
           font-size: 1.5rem;
           font-weight: 600;
-          color: #1a202c;
+          color: #f1f5f9;
           margin: 0;
         }
 
         .btn-refresh {
           padding: 0.5rem 1rem;
-          background: #edf2f7;
-          border: 1px solid #cbd5e0;
-          color: #2d3748;
+          background: #1e293b;
+          border: 1px solid #334155;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 0.875rem;
           cursor: pointer;
@@ -277,7 +277,7 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .btn-refresh:hover:not(:disabled) {
-          background: #e2e8f0;
+          background: #334155;
         }
 
         .btn-refresh:disabled {
@@ -287,15 +287,15 @@ const ResearchTaskList: React.FC = () => {
 
         .description {
           font-size: 0.95rem;
-          color: #718096;
+          color: #94a3b8;
           margin-bottom: 1.5rem;
           line-height: 1.5;
         }
 
         .error-message {
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1rem;
@@ -310,20 +310,26 @@ const ResearchTaskList: React.FC = () => {
         .add-task-section input {
           flex: 1;
           padding: 0.625rem;
-          border: 1px solid #cbd5e0;
+          background: #0f172a;
+          border: 1px solid #475569;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 1rem;
         }
 
+        .add-task-section input::placeholder {
+          color: #64748b;
+        }
+
         .add-task-section input:focus {
           outline: none;
-          border-color: #3182ce;
-          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
         .btn-add {
           padding: 0.625rem 1.5rem;
-          background: #3182ce;
+          background: #3b82f6;
           border: none;
           color: white;
           border-radius: 6px;
@@ -333,18 +339,19 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .btn-add:hover:not(:disabled) {
-          background: #2c5282;
+          background: #2563eb;
         }
 
         .btn-add:disabled {
-          background: #cbd5e0;
+          background: #334155;
           cursor: not-allowed;
+          opacity: 0.5;
         }
 
         .empty-state {
           text-align: center;
           padding: 3rem 1rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .empty-state p:first-child {
@@ -360,8 +367,8 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .task-card {
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: #0f172a;
+          border: 1px solid #334155;
           border-radius: 8px;
           overflow: hidden;
         }
@@ -376,7 +383,7 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .task-header:hover {
-          background: #f7fafc;
+          background: #1e293b;
         }
 
         .task-header-left {
@@ -399,24 +406,24 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .status-pending {
-          background: #fef5e7;
-          color: #8b7923;
+          background: #713f12;
+          color: #fef3c7;
         }
 
         .status-running {
-          background: #e3f2fd;
-          color: #1565c0;
+          background: #1e40af;
+          color: #dbeafe;
           animation: pulse 2s infinite;
         }
 
         .status-completed {
-          background: #c6f6d5;
-          color: #22543d;
+          background: #064e3b;
+          color: #d1fae5;
         }
 
         .status-failed {
-          background: #fed7d7;
-          color: #742a2a;
+          background: #7f1d1d;
+          color: #fecaca;
         }
 
         @keyframes pulse {
@@ -426,27 +433,27 @@ const ResearchTaskList: React.FC = () => {
 
         .technology-badge {
           padding: 0.25rem 0.75rem;
-          background: #edf2f7;
+          background: #1e293b;
           border-radius: 4px;
           font-size: 0.875rem;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .task-id {
           font-family: monospace;
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .expand-icon {
-          color: #a0aec0;
+          color: #64748b;
           font-size: 0.75rem;
         }
 
         .task-details {
           padding: 1rem;
-          background: #f7fafc;
-          border-top: 1px solid #e2e8f0;
+          background: #1e293b;
+          border-top: 1px solid #334155;
         }
 
         .detail-row {
@@ -457,16 +464,16 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .detail-row strong {
-          color: #2d3748;
+          color: #f1f5f9;
           min-width: 100px;
         }
 
         .detail-row code {
-          background: #edf2f7;
+          background: #0f172a;
           padding: 0.125rem 0.375rem;
           border-radius: 3px;
           font-size: 0.875rem;
-          color: #2d3748;
+          color: #94a3b8;
         }
 
         .summary-section,
@@ -477,14 +484,15 @@ const ResearchTaskList: React.FC = () => {
         }
 
         .summary-section {
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: #0f172a;
+          border: 1px solid #334155;
+          color: #f1f5f9;
         }
 
         .error-section {
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
         }
 
         .summary-section strong,
@@ -500,12 +508,12 @@ const ResearchTaskList: React.FC = () => {
         .results-section > strong {
           display: block;
           margin-bottom: 0.75rem;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .result-card {
-          background: white;
-          border: 1px solid #e2e8f0;
+          background: #0f172a;
+          border: 1px solid #334155;
           border-radius: 6px;
           padding: 1rem;
           margin-bottom: 0.75rem;
@@ -517,34 +525,35 @@ const ResearchTaskList: React.FC = () => {
           align-items: center;
           margin-bottom: 0.75rem;
           padding-bottom: 0.75rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #334155;
         }
 
         .agent-role {
           font-weight: 600;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .model-info {
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .result-error {
           padding: 0.75rem;
-          background: #fed7d7;
+          background: #7f1d1d;
           border-radius: 4px;
-          color: #742a2a;
+          color: #fecaca;
         }
 
         .result-data pre {
-          background: #f7fafc;
+          background: #0f172a;
           padding: 0.75rem;
           border-radius: 4px;
           overflow-x: auto;
           font-size: 0.875rem;
           line-height: 1.5;
           margin: 0;
+          color: #94a3b8;
         }
 
         .result-metadata {
@@ -552,9 +561,9 @@ const ResearchTaskList: React.FC = () => {
           gap: 1.5rem;
           margin-top: 0.75rem;
           padding-top: 0.75rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #334155;
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
         }
       `}</style>
     </div>

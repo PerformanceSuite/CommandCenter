@@ -29,7 +29,6 @@ export const KnowledgeView: React.FC = () => {
     fetchCollections,
     fetchCategories,
     clearSearchResults,
-    switchCollection,
   } = useKnowledge();
 
   const { technologies } = useTechnologies();
@@ -74,15 +73,6 @@ export const KnowledgeView: React.FC = () => {
       }
     },
     [handleSearch]
-  );
-
-  const handleCollectionChange = useCallback(
-    (collection: string) => {
-      switchCollection(collection);
-      clearSearchResults();
-      setSelectedCategory('');
-    },
-    [switchCollection, clearSearchResults]
   );
 
   const handleUpload = useCallback(
@@ -141,25 +131,6 @@ export const KnowledgeView: React.FC = () => {
               <span>Upload Document</span>
             </button>
           </div>
-        </div>
-
-        {/* Collection Selector */}
-        <div className="mb-4">
-          <label htmlFor="collection" className="block text-sm font-medium text-slate-300 mb-2">
-            Collection
-          </label>
-          <select
-            id="collection"
-            value={currentCollection}
-            onChange={(e) => handleCollectionChange(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-900 text-white border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          >
-            {collections.map((coll) => (
-              <option key={coll} value={coll}>
-                {coll}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Search Bar */}

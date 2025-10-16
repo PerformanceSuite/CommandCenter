@@ -18,7 +18,7 @@ const CustomAgentLauncher: React.FC = () => {
   const [agents, setAgents] = useState<AgentTaskRequest[]>([
     { role: 'deep_researcher', prompt: '' },
   ]);
-  const [projectId, setProjectId] = useState(1);
+  const [projectId] = useState(1); // Hardcoded for single-project instances
   const [maxConcurrent, setMaxConcurrent] = useState(3);
   const [availableModels, setAvailableModels] = useState<AvailableModelsResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -99,21 +99,6 @@ const CustomAgentLauncher: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="project-id">
-            Project ID <span className="required">*</span>
-          </label>
-          <input
-            id="project-id"
-            type="number"
-            value={projectId}
-            onChange={(e) => setProjectId(parseInt(e.target.value))}
-            min={1}
-            required
-            disabled={loading}
-          />
-        </div>
-
         <div className="form-group">
           <label htmlFor="max-concurrent">
             Max Concurrent Agents
@@ -257,20 +242,20 @@ const CustomAgentLauncher: React.FC = () => {
           font-size: 1.5rem;
           font-weight: 600;
           margin-bottom: 0.5rem;
-          color: #1a202c;
+          color: #f1f5f9;
         }
 
         .description {
           font-size: 0.95rem;
-          color: #718096;
+          color: #94a3b8;
           margin-bottom: 1.5rem;
           line-height: 1.5;
         }
 
         .success-message {
-          background: #c6f6d5;
-          border: 1px solid #9ae6b4;
-          color: #22543d;
+          background: #064e3b;
+          border: 1px solid #059669;
+          color: #d1fae5;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1.5rem;
@@ -278,9 +263,9 @@ const CustomAgentLauncher: React.FC = () => {
         }
 
         .error-message {
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           padding: 1rem;
           border-radius: 6px;
           margin-bottom: 1.5rem;
@@ -294,11 +279,11 @@ const CustomAgentLauncher: React.FC = () => {
           display: block;
           font-weight: 500;
           margin-bottom: 0.5rem;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .required {
-          color: #e53e3e;
+          color: #ef4444;
         }
 
         .form-group input[type="text"],
@@ -307,7 +292,9 @@ const CustomAgentLauncher: React.FC = () => {
         .form-group textarea {
           width: 100%;
           padding: 0.625rem;
-          border: 1px solid #cbd5e0;
+          background: #0f172a;
+          border: 1px solid #475569;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 1rem;
           transition: border-color 0.2s;
@@ -322,22 +309,28 @@ const CustomAgentLauncher: React.FC = () => {
         .form-group select:focus,
         .form-group textarea:focus {
           outline: none;
-          border-color: #3182ce;
-          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
         .form-group input:disabled,
         .form-group select:disabled,
         .form-group textarea:disabled {
-          background: #f7fafc;
+          background: #1e293b;
           cursor: not-allowed;
+          opacity: 0.6;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+          color: #64748b;
         }
 
         .form-group small {
           display: block;
           margin-top: 0.25rem;
           font-size: 0.875rem;
-          color: #718096;
+          color: #94a3b8;
         }
 
         .agents-section {
@@ -348,12 +341,12 @@ const CustomAgentLauncher: React.FC = () => {
           font-size: 1.25rem;
           font-weight: 600;
           margin-bottom: 1rem;
-          color: #2d3748;
+          color: #f1f5f9;
         }
 
         .agent-card {
-          background: #f7fafc;
-          border: 1px solid #e2e8f0;
+          background: #0f172a;
+          border: 1px solid #334155;
           border-radius: 8px;
           padding: 1.5rem;
           margin-bottom: 1rem;
@@ -365,21 +358,21 @@ const CustomAgentLauncher: React.FC = () => {
           align-items: center;
           margin-bottom: 1rem;
           padding-bottom: 1rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #334155;
         }
 
         .agent-header h4 {
           font-size: 1.1rem;
           font-weight: 600;
-          color: #2d3748;
+          color: #f1f5f9;
           margin: 0;
         }
 
         .btn-remove-agent {
           padding: 0.5rem 1rem;
-          background: #fed7d7;
-          border: 1px solid #fc8181;
-          color: #742a2a;
+          background: #7f1d1d;
+          border: 1px solid #dc2626;
+          color: #fecaca;
           border-radius: 6px;
           font-size: 0.875rem;
           cursor: pointer;
@@ -387,7 +380,7 @@ const CustomAgentLauncher: React.FC = () => {
         }
 
         .btn-remove-agent:hover:not(:disabled) {
-          background: #fc8181;
+          background: #991b1b;
           color: white;
         }
 
@@ -406,9 +399,9 @@ const CustomAgentLauncher: React.FC = () => {
         .btn-add-agent {
           width: 100%;
           padding: 0.75rem;
-          background: #edf2f7;
-          border: 2px dashed #cbd5e0;
-          color: #2d3748;
+          background: #1e293b;
+          border: 2px dashed #334155;
+          color: #f1f5f9;
           border-radius: 6px;
           font-size: 1rem;
           cursor: pointer;
@@ -417,8 +410,8 @@ const CustomAgentLauncher: React.FC = () => {
         }
 
         .btn-add-agent:hover:not(:disabled) {
-          background: #e2e8f0;
-          border-color: #a0aec0;
+          background: #334155;
+          border-color: #475569;
         }
 
         .btn-add-agent:disabled {
@@ -429,12 +422,12 @@ const CustomAgentLauncher: React.FC = () => {
         .form-actions {
           margin-top: 2rem;
           padding-top: 1.5rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #334155;
         }
 
         .btn-primary {
           padding: 0.75rem 2rem;
-          background: #3182ce;
+          background: #3b82f6;
           border: none;
           color: white;
           border-radius: 6px;
@@ -445,12 +438,13 @@ const CustomAgentLauncher: React.FC = () => {
         }
 
         .btn-primary:hover:not(:disabled) {
-          background: #2c5282;
+          background: #2563eb;
         }
 
         .btn-primary:disabled {
-          background: #cbd5e0;
+          background: #334155;
           cursor: not-allowed;
+          opacity: 0.5;
         }
 
         @media (max-width: 768px) {
