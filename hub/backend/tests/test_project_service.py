@@ -80,7 +80,6 @@ async def test_create_project_sets_stopped_status(project_service, mock_db):
         project_data = ProjectCreate(
             name="TestProject",
             path="/test/path",
-            use_existing_cc=False,
         )
 
         # Call create_project
@@ -91,35 +90,6 @@ async def test_create_project_sets_stopped_status(project_service, mock_db):
         assert added_project.status == "stopped"
 
         # Verify project is configured (Dagger handles everything)
-        assert project.is_configured is True
-
-
-@pytest.mark.asyncio
-async def test_create_project_existing_cc_skips_creating_status(project_service, mock_db):
-    """
-    Test that projects using existing CC don't use 'creating' status
-    """
-    with patch('os.path.exists', return_value=True):
-        mock_db.add = MagicMock()
-        mock_db.commit = AsyncMock()
-        mock_db.refresh = AsyncMock()
-
-        project_service.get_project_by_slug = AsyncMock(return_value=None)
-        project_service._read_ports_from_env = MagicMock(return_value=None)
-
-        # Create project with existing CC
-        project_data = ProjectCreate(
-            name="ExistingProject",
-            path="/test/path",
-            use_existing_cc=True,
-            existing_cc_path="/existing/cc",
-        )
-
-        project = await project_service.create_project(project_data)
-
-        # Verify status is 'stopped', not 'creating'
-        added_project = mock_db.add.call_args[0][0]
-        assert added_project.status == "stopped"
         assert project.is_configured is True
 
 
@@ -135,7 +105,6 @@ async def test_create_project_validates_path(project_service, mock_db):
         project_data = ProjectCreate(
             name="FailProject",
             path="/invalid/path",
-            use_existing_cc=False,
         )
 
         # Should raise exception for invalid path
@@ -189,7 +158,6 @@ async def test_create_project_successful(project_service, mock_db):
         project_data = ProjectCreate(
             name="SuccessProject",
             path="/test/path",
-            use_existing_cc=False,
         )
 
         # Should succeed and return project
