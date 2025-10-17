@@ -41,8 +41,6 @@ class ProjectResponse(ProjectBase):
 
     id: int
     slug: str
-    cc_path: str
-    compose_project_name: str
     backend_port: int
     frontend_port: int
     postgres_port: int
