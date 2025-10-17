@@ -34,7 +34,7 @@ A lightweight web application that:
 │     Hub Backend (FastAPI)               │
 │     Port: 9001                          │
 │  - Project CRUD operations              │
-│  - Docker Compose orchestration         │
+│  - Dagger SDK orchestration             │
 │  - Health checks for CC instances       │
 │  - Port allocation management           │
 └──────────────┬──────────────────────────┘
@@ -49,15 +49,18 @@ A lightweight web application that:
 └─────────────────────────────────────────┘
 ```
 
-### CommandCenter Instances (Managed)
+### CommandCenter Instances (Managed via Dagger)
 
 ```
-Hub manages multiple CC instances:
+Hub manages multiple CC instances (no cloning required):
 
-├── ~/performia/commandcenter/          (Port 8000, 3000)
-├── ~/ai-research/commandcenter/        (Port 8010, 3010)
-├── ~/ecommerce/commandcenter/          (Port 8020, 3020)
-└── ~/new-project/commandcenter/        (Port 8030, 3030)
+├── ~/performia/                        (Port 8000, 3000)
+├── ~/ai-research/                      (Port 8010, 3010)
+├── ~/ecommerce/                        (Port 8020, 3020)
+└── ~/new-project/                      (Port 8030, 3030)
+
+CommandCenter stack defined once in hub/backend/app/dagger_modules/commandcenter.py
+Projects mount their folders into containers - no template cloning needed
 ```
 
 ---
@@ -76,9 +79,8 @@ Hub manages multiple CC instances:
   - Project name input
   - Project directory selection
   - Auto-generate unique ports
-  - Clone CommandCenter template
-  - Configure `.env` automatically
-  - Run initial setup (`make setup`)
+  - No cloning needed (Dagger mounts project folder)
+  - Configuration stored in Hub database
 - [ ] Start project immediately after creation
 
 ### Phase 3: Advanced Management
@@ -106,8 +108,7 @@ class Project(BaseModel):
     id: int
     name: str                    # "Performia", "AI Research"
     slug: str                    # "performia", "ai-research"
-    path: str                    # "/Users/you/performia/commandcenter"
-    compose_project_name: str    # "performia-commandcenter"
+    path: str                    # "/Users/you/performia" (project folder, not CC path)
 
     # Ports
     backend_port: int            # 8000, 8010, 8020...
@@ -147,10 +148,12 @@ hub/
 │   │   ├── routers/
 │   │   │   ├── projects.py      # CRUD for projects
 │   │   │   └── orchestration.py # Start/stop operations
-│   │   └── services/
-│   │       ├── docker_service.py # Docker Compose wrapper
-│   │       ├── port_service.py   # Port allocation
-│   │       └── health_service.py # Health checks
+│   │   ├── services/
+│   │   │   ├── orchestration_service.py # Dagger orchestration
+│   │   │   ├── port_service.py   # Port allocation
+│   │   │   └── health_service.py # Health checks
+│   │   └── dagger_modules/
+│   │       └── commandcenter.py  # Dagger stack definition
 │   ├── database.py
 │   ├── requirements.txt
 │   └── Dockerfile
@@ -326,7 +329,7 @@ Hub is successful when:
 ## 📝 Next Steps
 
 1. **Create Hub skeleton** (FastAPI + React scaffolding)
-2. **Implement Docker Compose orchestration** (start/stop logic)
+2. **Implement Dagger SDK orchestration** (start/stop logic)
 3. **Build project registry** (SQLite database)
 4. **Create wizard UI** (new project creation)
 5. **Add health checks** (poll CC instances)

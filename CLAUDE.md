@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Command Center** is a multi-project R&D management and knowledge base system. It tracks technologies, manages research tasks, and provides RAG-powered search across GitHub repositories. Built with FastAPI (Python 3.11) backend and React 18 + TypeScript frontend, deployed via Docker Compose.
 
+**Command Center Hub** is a companion application for managing multiple CommandCenter instances across different projects. Built with FastAPI backend and React frontend, it uses **Dagger SDK** for type-safe container orchestration instead of docker-compose subprocess calls.
+
 **CRITICAL SECURITY REQUIREMENT**: Each project MUST have its own isolated CommandCenter instance. Never share instances across projects due to sensitive data (GitHub tokens, proprietary research, RAG embeddings). See `docs/DATA_ISOLATION.md` for complete isolation architecture.
 
 ## Development Commands
@@ -293,14 +295,94 @@ make logs-db                  # PostgreSQL logs
 docker-compose logs backend | grep -i error
 ```
 
+## CommandCenter Hub (Multi-Project Management)
+
+### Architecture
+
+The Hub uses **Dagger SDK** for container orchestration, eliminating the need to clone CommandCenter into each project folder. Key benefits:
+
+- **No template cloning**: Projects stay clean, CommandCenter stack defined once
+- **Type-safe orchestration**: Python SDK with full type hints and IDE support
+- **Better error handling**: SDK exceptions instead of subprocess stderr parsing
+- **Programmatic control**: Async/await API for container lifecycle management
+- **Intelligent caching**: Dagger automatically caches builds and dependencies
+
+### Hub Structure
+
+```
+hub/
+├── backend/
+│   ├── app/
+│   │   ├── dagger_modules/
+│   │   │   └── commandcenter.py    # Dagger stack definition
+│   │   ├── services/
+│   │   │   └── orchestration_service.py  # Dagger orchestration logic
+│   │   └── models/
+│   │       └── project.py          # Project model (path, ports, status)
+│   └── requirements.txt            # Includes dagger-io SDK
+└── frontend/
+    └── src/
+        └── components/
+            └── ProjectCard.tsx     # Start/stop projects
+```
+
+### Key Concepts
+
+**CommandCenterStack** (`hub/backend/app/dagger_modules/commandcenter.py`):
+- Defines complete CommandCenter infrastructure as Python code
+- Builds postgres, redis, backend, frontend containers
+- Mounts project folder as `/workspace` in containers
+- No docker-compose.yml files needed
+
+**CommandCenterConfig**:
+- Configuration dataclass: project_name, project_path, ports, secrets
+- Passed to CommandCenterStack for per-project instantiation
+- Secrets auto-generated at runtime (not stored in database)
+
+**OrchestrationService** (`hub/backend/app/services/orchestration_service.py`):
+- Bridges Hub database with Dagger stack management
+- Maintains `_active_stacks` registry (project_id → CommandCenterStack)
+- Handles port conflict detection, lifecycle management
+
+### Dagger vs docker-compose
+
+| Aspect | docker-compose | Dagger SDK |
+|--------|----------------|------------|
+| Configuration | YAML files | Python code |
+| Type Safety | None | Full type hints |
+| Error Handling | Parse stderr | Python exceptions |
+| Template Mgmt | Clone files | No templates needed |
+| IDE Support | YAML linting | Full autocomplete |
+
+### Hub Commands
+
+```bash
+# Start Hub backend
+cd hub/backend
+pip install -r requirements.txt
+export DATABASE_URL="sqlite+aiosqlite:///./data/hub.db"
+uvicorn app.main:app --reload --port 9001
+
+# Start Hub frontend
+cd hub/frontend
+npm install
+npm run dev  # Port 9000
+
+# Run Hub tests
+cd hub/backend
+pytest tests/ -v
+```
+
 ## Additional Resources
 
 - **Makefile**: Run `make help` to see all available commands
 - **Documentation**:
   - `docs/DATA_ISOLATION.md` - Multi-instance security (READ FIRST)
+  - `docs/DAGGER_ARCHITECTURE.md` - How Dagger orchestration works (Hub-specific)
   - `docs/DOCLING_SETUP.md` - RAG document processing
   - `docs/CONFIGURATION.md` - Environment configuration
   - `docs/PORT_MANAGEMENT.md` - Handling port conflicts
   - `docs/TRAEFIK_SETUP.md` - Zero-conflict deployment
+  - `HUB_DESIGN.md` - Hub architecture and design
 - **Backend README**: `backend/README.md`
 - **Frontend README**: `frontend/README.md`
