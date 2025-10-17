@@ -96,40 +96,15 @@ class ProjectService:
         if not os.path.exists(project_data.path):
             raise ValueError(f"Path does not exist: {project_data.path}")
 
-        # Determine CC path
-        if project_data.use_existing_cc:
-            if not project_data.existing_cc_path:
-                raise ValueError("existing_cc_path is required when use_existing_cc=True")
-
-            cc_path = project_data.existing_cc_path
-
-            # Validate existing CC path
-            if not os.path.exists(cc_path):
-                raise ValueError(f"CommandCenter path does not exist: {cc_path}")
-
-            # Check for docker-compose.yml
-            compose_file = os.path.join(cc_path, "docker-compose.yml")
-            if not os.path.exists(compose_file):
-                raise ValueError(f"No docker-compose.yml found at {cc_path}")
-        else:
-            cc_path = os.path.join(project_data.path, "commandcenter")
-
         # Allocate ports
         ports = await self.port_service.allocate_ports()
 
-        # If using existing, try to read ports from .env
-        if project_data.use_existing_cc:
-            env_ports = self._read_ports_from_env(cc_path)
-            if env_ports:
-                ports = env_ports
-
         # Create project record - ready to use immediately (no setup needed)
+        # Dagger will mount the project path and orchestrate containers directly
         project = Project(
             name=project_data.name,
             slug=slug,
             path=project_data.path,
-            cc_path=cc_path,
-            compose_project_name=f"{slug}-commandcenter",
             backend_port=ports.backend,
             frontend_port=ports.frontend,
             postgres_port=ports.postgres,

@@ -45,8 +45,6 @@ async def sample_project(db_session):
         name="TestProject",
         slug="test-project",
         path="/tmp/test-project",
-        cc_path="/tmp/test-project/commandcenter",
-        compose_project_name="test-project-cc",
         status="stopped",
         backend_port=8000,
         frontend_port=3000,
