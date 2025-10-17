@@ -159,44 +159,22 @@ class ProjectService:
 
         Args:
             project_id: Project ID to delete
-            delete_files: If True, also delete the CommandCenter directory and stop containers
+            delete_files: If True, also stop the running project (if any)
         """
-        import subprocess
-        import shutil
-
         project = await self.get_project(project_id)
         if not project:
             return False
 
-        # Stop and remove containers if requested
-        if delete_files and os.path.exists(project.cc_path):
+        # Stop project if running (via Dagger)
+        if delete_files and project.status == "running":
             try:
-                # Stop and remove containers with volumes
-                compose_file = os.path.join(project.cc_path, "docker-compose.yml")
-                if os.path.exists(compose_file):
-                    # Import here to avoid circular dependency
-                    from app.services.orchestration_service import OrchestrationService
+                # Import here to avoid circular dependency
+                from app.services.orchestration_service import OrchestrationService
 
-                    # Get host path for proper volume resolution
-                    host_cc_path = OrchestrationService.HOST_PROJECTS_PATH
-                    if project.cc_path.startswith("/projects"):
-                        host_cc_path = project.cc_path.replace(
-                            "/projects",
-                            OrchestrationService.HOST_PROJECTS_PATH,
-                            1
-                        )
-
-                    subprocess.run(
-                        ["docker-compose", "-f", compose_file, "down", "-v"],
-                        cwd=project.cc_path,
-                        capture_output=True,
-                        timeout=60,
-                    )
-
-                # Delete the directory
-                shutil.rmtree(project.cc_path)
+                orchestration_service = OrchestrationService(self.db)
+                await orchestration_service.stop_project(project_id)
             except Exception as e:
-                print(f"Warning: Failed to delete files for project {project.name}: {e}")
+                logger.warning(f"Failed to stop project {project.name} during deletion: {e}")
 
         # Delete from database
         await self.db.delete(project)

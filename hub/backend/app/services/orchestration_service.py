@@ -86,10 +86,16 @@ class OrchestrationService:
                 secret_key=secrets.token_hex(32),
             )
 
-            # Start Dagger stack
-            async with CommandCenterStack(config) as stack:
+            # Start Dagger stack - manage lifecycle manually to keep stack alive
+            stack = CommandCenterStack(config)
+            await stack.__aenter__()
+            try:
                 result = await stack.start()
                 self._active_stacks[project_id] = stack
+                # Keep stack alive - don't call __aexit__ yet
+            except Exception as e:
+                await stack.__aexit__(type(e), e, e.__traceback__)
+                raise
 
             # Update status
             project.status = "running"
@@ -128,6 +134,7 @@ class OrchestrationService:
             if project_id in self._active_stacks:
                 stack = self._active_stacks[project_id]
                 await stack.stop()
+                await stack.__aexit__(None, None, None)  # Properly close stack
                 del self._active_stacks[project_id]
 
             project.status = "stopped"
