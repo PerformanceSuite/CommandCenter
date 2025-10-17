@@ -55,3 +55,4 @@ playwright/.cache/
 .agent-coordination/
 worktrees/
 worktree/
+.worktrees/

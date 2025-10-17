@@ -16,10 +16,8 @@ class Project(Base):
     name = Column(String, unique=True, nullable=False, index=True)
     slug = Column(String, unique=True, nullable=False, index=True)
     path = Column(String, nullable=False)  # Full path to project folder
-    cc_path = Column(String, nullable=False)  # Path to commandcenter subdirectory
 
-    # Configuration
-    compose_project_name = Column(String, unique=True, nullable=False)
+    # Configuration (Dagger handles orchestration, no compose_project_name needed)
     backend_port = Column(Integer, unique=True, nullable=False)
     frontend_port = Column(Integer, unique=True, nullable=False)
     postgres_port = Column(Integer, unique=True, nullable=False)
