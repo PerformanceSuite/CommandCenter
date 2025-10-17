@@ -14,7 +14,6 @@ from sqlalchemy import select
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectStats
 from app.services.port_service import PortService
-from app.services.setup_service import SetupService
 from sqlalchemy import func, case
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,6 @@ class ProjectService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.port_service = PortService(db)
-        self.setup_service = SetupService()
 
     async def list_projects(self) -> List[Project]:
         """
@@ -82,8 +80,9 @@ class ProjectService:
         1. Generate slug from name
         2. Allocate ports
         3. Create database entry
-        4. Clone CommandCenter (async via SetupService) OR use existing
-        5. Generate .env file (only if not using existing)
+
+        Note: Projects now just need a path - no CommandCenter cloning needed.
+        Dagger will mount the project path and orchestrate containers directly.
         """
         # Generate slug
         slug = self._generate_slug(project_data.name)
@@ -115,7 +114,7 @@ class ProjectService:
         else:
             cc_path = os.path.join(project_data.path, "commandcenter")
 
-        # Allocate ports (only if not using existing, for display purposes)
+        # Allocate ports
         ports = await self.port_service.allocate_ports()
 
         # If using existing, try to read ports from .env
@@ -124,8 +123,7 @@ class ProjectService:
             if env_ports:
                 ports = env_ports
 
-        # Create project record with 'creating' status to prevent race condition
-        # where frontend polling shows incomplete projects (Issue #44)
+        # Create project record - ready to use immediately (no setup needed)
         project = Project(
             name=project_data.name,
             slug=slug,
@@ -136,40 +134,14 @@ class ProjectService:
             frontend_port=ports.frontend,
             postgres_port=ports.postgres,
             redis_port=ports.redis,
-            status="creating" if not project_data.use_existing_cc else "stopped",
+            status="stopped",
             health="unknown",
-            is_configured=project_data.use_existing_cc,  # Already configured if existing
+            is_configured=True,  # Always configured - Dagger handles everything
         )
 
         self.db.add(project)
         await self.db.commit()
         await self.db.refresh(project)
-
-        # Setup only if not using existing CC
-        if not project_data.use_existing_cc:
-            try:
-                # Trigger async setup (clone CC, configure .env)
-                await self.setup_service.setup_commandcenter(project)
-
-                # Update status and is_configured flag after successful setup
-                project.status = "stopped"
-                project.is_configured = True
-                await self.db.commit()
-                await self.db.refresh(project)
-            except Exception as e:
-                # Log the error with full traceback for debugging
-                logger.error(
-                    f"Project setup failed for '{project.name}' (id={project.id}): {str(e)}",
-                    exc_info=True,
-                    extra={"project_id": project.id, "project_name": project.name}
-                )
-
-                # Mark project as error state if setup fails
-                project.status = "error"
-                project.health = "unhealthy"
-                await self.db.commit()
-                await self.db.refresh(project)
-                raise
 
         return project
 

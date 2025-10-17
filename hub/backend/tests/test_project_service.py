@@ -21,8 +21,7 @@ def mock_db():
 @pytest.fixture
 def project_service(mock_db):
     """Create project service with mocked dependencies"""
-    with patch('app.services.project_service.PortService'), \
-         patch('app.services.project_service.SetupService'):
+    with patch('app.services.project_service.PortService'):
         service = ProjectService(mock_db)
         # Mock port allocation
         service.port_service.allocate_ports = AsyncMock(
@@ -62,9 +61,10 @@ async def test_list_projects_excludes_creating_status(project_service, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_create_project_uses_creating_status(project_service, mock_db):
+async def test_create_project_sets_stopped_status(project_service, mock_db):
     """
-    Test that create_project() sets status='creating' during setup
+    Test that create_project() sets status='stopped' immediately
+    (no setup needed - Dagger handles everything)
     """
     # Mock file system checks
     with patch('os.path.exists', return_value=True):
@@ -72,9 +72,6 @@ async def test_create_project_uses_creating_status(project_service, mock_db):
         mock_db.add = MagicMock()
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
-
-        # Mock setup service to succeed
-        project_service.setup_service.setup_commandcenter = AsyncMock()
 
         # Mock get_project_by_slug to return None (no existing project)
         project_service.get_project_by_slug = AsyncMock(return_value=None)
@@ -89,15 +86,11 @@ async def test_create_project_uses_creating_status(project_service, mock_db):
         # Call create_project
         project = await project_service.create_project(project_data)
 
-        # Verify project was added with 'creating' status initially
+        # Verify project was added with 'stopped' status (ready to use)
         added_project = mock_db.add.call_args[0][0]
-        assert added_project.status == "creating"
+        assert added_project.status == "stopped"
 
-        # Verify setup was called
-        assert project_service.setup_service.setup_commandcenter.called
-
-        # Verify status was updated to 'stopped' after success
-        assert project.status == "stopped"
+        # Verify project is configured (Dagger handles everything)
         assert project.is_configured is True
 
 
@@ -131,39 +124,23 @@ async def test_create_project_existing_cc_skips_creating_status(project_service,
 
 
 @pytest.mark.asyncio
-async def test_failed_setup_marks_project_as_error(project_service, mock_db):
+async def test_create_project_validates_path(project_service, mock_db):
     """
-    Test that setup failure updates status to 'error' (Issue #44)
+    Test that create_project() validates path exists
     """
-    with patch('os.path.exists', return_value=True):
-        mock_db.add = MagicMock()
-        mock_db.commit = AsyncMock()
-        mock_db.refresh = AsyncMock()
-
-        # Mock setup to fail
-        project_service.setup_service.setup_commandcenter = AsyncMock(
-            side_effect=Exception("Git clone failed")
-        )
+    # Mock path to not exist
+    with patch('os.path.exists', return_value=False):
         project_service.get_project_by_slug = AsyncMock(return_value=None)
 
         project_data = ProjectCreate(
             name="FailProject",
-            path="/test/path",
+            path="/invalid/path",
             use_existing_cc=False,
         )
 
-        # Should raise exception
-        with pytest.raises(Exception, match="Git clone failed"):
+        # Should raise exception for invalid path
+        with pytest.raises(ValueError, match="Path does not exist"):
             await project_service.create_project(project_data)
-
-        # Verify project status was updated to 'error'
-        # The project object was created and should have been updated
-        added_project = mock_db.add.call_args[0][0]
-
-        # After exception, project should be marked as error
-        # This is verified by checking the status attribute was set
-        assert added_project.status == "error"
-        assert added_project.health == "unhealthy"
 
 
 @pytest.mark.asyncio
@@ -198,47 +175,31 @@ async def test_get_stats_excludes_creating_projects(project_service, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_exception_logging_on_setup_failure(project_service, mock_db):
+async def test_create_project_successful(project_service, mock_db):
     """
-    Test that exceptions are properly logged with context
+    Test that project creation succeeds with valid inputs
     """
-    with patch('os.path.exists', return_value=True), \
-         patch('app.services.project_service.logger') as mock_logger:
-
+    with patch('os.path.exists', return_value=True):
         mock_db.add = MagicMock()
         mock_db.commit = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        # Mock setup to fail
-        error_msg = "Setup failed: Permission denied"
-        project_service.setup_service.setup_commandcenter = AsyncMock(
-            side_effect=Exception(error_msg)
-        )
         project_service.get_project_by_slug = AsyncMock(return_value=None)
 
         project_data = ProjectCreate(
-            name="LogTestProject",
+            name="SuccessProject",
             path="/test/path",
             use_existing_cc=False,
         )
 
-        # Should raise and log exception
-        with pytest.raises(Exception):
-            await project_service.create_project(project_data)
+        # Should succeed and return project
+        project = await project_service.create_project(project_data)
 
-        # Verify logger.error was called with correct parameters
-        assert mock_logger.error.called
-        call_args = mock_logger.error.call_args
-
-        # Check error message contains project info
-        assert "LogTestProject" in call_args[0][0] or "LogTestProject" in str(call_args)
-
-        # Check exc_info=True for full traceback
-        assert call_args[1].get('exc_info') is True
-
-        # Check extra context
-        extra = call_args[1].get('extra', {})
-        assert 'project_name' in extra or 'project_id' in extra
+        # Verify project was created successfully
+        assert project is not None
+        assert project.name == "SuccessProject"
+        assert project.status == "stopped"
+        assert project.is_configured is True
 
 
 if __name__ == "__main__":
