@@ -32,17 +32,18 @@ class CommandCenterStack:
 
     def __init__(self, config: CommandCenterConfig):
         self.config = config
-        self.client: Optional[dagger.Client] = None
+        self.client: Optional[dagger.Connection] = None
 
     async def __aenter__(self):
         """Initialize Dagger client"""
-        self.client = dagger.Connection(dagger.Config()).client()
+        self.client = dagger.Connection(dagger.Config())
+        await self.client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Cleanup Dagger client"""
         if self.client:
-            await self.client.close()
+            await self.client.__aexit__(exc_type, exc_val, exc_tb)
 
     async def build_postgres(self) -> dagger.Container:
         """Build PostgreSQL container"""
