@@ -5,16 +5,13 @@ Project service - Business logic for project management
 import os
 import re
 import logging
-from pathlib import Path
 from typing import List, Optional
-from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, case
 
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectStats
 from app.services.port_service import PortService
-from sqlalchemy import func, case
 
 logger = logging.getLogger(__name__)
 
@@ -191,46 +188,3 @@ class ProjectService:
         # Remove leading/trailing hyphens
         slug = slug.strip("-")
         return slug
-
-    def _read_ports_from_env(self, cc_path: str) -> Optional["PortSet"]:
-        """Read ports from existing .env file"""
-        from app.schemas import PortSet
-
-        env_file = os.path.join(cc_path, ".env")
-        if not os.path.exists(env_file):
-            return None
-
-        try:
-            with open(env_file, "r") as f:
-                env_content = f.read()
-
-            # Parse port values
-            backend_port = None
-            frontend_port = None
-            postgres_port = None
-            redis_port = None
-
-            for line in env_content.split("\n"):
-                line = line.strip()
-                if line.startswith("BACKEND_PORT="):
-                    backend_port = int(line.split("=")[1])
-                elif line.startswith("FRONTEND_PORT="):
-                    frontend_port = int(line.split("=")[1])
-                elif line.startswith("POSTGRES_PORT="):
-                    postgres_port = int(line.split("=")[1])
-                elif line.startswith("REDIS_PORT="):
-                    redis_port = int(line.split("=")[1])
-
-            if all([backend_port, frontend_port, postgres_port, redis_port]):
-                return PortSet(
-                    backend=backend_port,
-                    frontend=frontend_port,
-                    postgres=postgres_port,
-                    redis=redis_port,
-                )
-
-            return None
-
-        except Exception as e:
-            print(f"Warning: Failed to read ports from {env_file}: {e}")
-            return None
