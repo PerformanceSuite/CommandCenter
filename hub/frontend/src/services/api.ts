@@ -81,6 +81,9 @@ export const orchestrationApi = {
 
 // Filesystem API
 export const filesystemApi = {
+  getHome: (): Promise<{ path: string }> =>
+    fetchJSON(`${API_BASE}/filesystem/home`),
+
   browse: (path: string): Promise<FilesystemBrowseResponse> => {
     const params = new URLSearchParams({ path });
     return fetchJSON(`${API_BASE}/filesystem/browse?${params}`);

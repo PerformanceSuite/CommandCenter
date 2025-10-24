@@ -9,12 +9,20 @@ env/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Node
 node_modules/
 dist/
 .next/
 .cache/
+.turbo/
+.parcel-cache/
+coverage/
 
 # Environment
 .env
@@ -56,3 +64,10 @@ playwright/.cache/
 worktrees/
 worktree/
 .worktrees/
+
+# USS session files (runtime state)
+session-start
+session-end
+session-memory
+session-last
+session-status

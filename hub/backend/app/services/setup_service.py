@@ -13,8 +13,8 @@ from app.models import Project
 class SetupService:
     """Service for setting up new CommandCenter instances"""
 
-    # CommandCenter source (mounted in container at /projects)
-    CC_SOURCE = "/projects/CommandCenter"
+    # CommandCenter source (configurable via env, defaults to Docker mount path)
+    CC_SOURCE = os.environ.get("CC_SOURCE_PATH", "/projects/CommandCenter")
 
     @classmethod
     def get_template_version(cls) -> dict:
