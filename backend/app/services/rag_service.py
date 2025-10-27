@@ -18,13 +18,12 @@ from app.config import settings
 # Lazy imports - only import when RAGService is instantiated
 try:
     from knowledgebeast.backends.postgres import PostgresBackend
-    from knowledgebeast import embed_text, embed_texts
+    from sentence_transformers import SentenceTransformer
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
     PostgresBackend = None
-    embed_text = None
-    embed_texts = None
+    SentenceTransformer = None
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,10 @@ class RAGService:
 
         self.repository_id = repository_id
         self.collection_name = f"{settings.KNOWLEDGE_COLLECTION_PREFIX}_{repository_id}"
+
+        # Initialize embedding model (sentence-transformers)
+        # This is used to generate embeddings for queries and documents
+        self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
 
         # Build connection string from settings
         connection_string = settings.get_postgres_url()
@@ -115,11 +118,8 @@ class RAGService:
         # Build metadata filter
         where = {"category": category} if category else None
 
-        # Generate query embedding
-        query_embedding = await embed_text(
-            question,
-            model_name=settings.EMBEDDING_MODEL
-        )
+        # Generate query embedding using sentence-transformers
+        query_embedding = self.embedding_model.encode(question).tolist()
 
         # Use hybrid search (vector + keyword) for best results
         # alpha=0.7 means 70% vector, 30% keyword
@@ -176,8 +176,10 @@ class RAGService:
         )
         chunks = text_splitter.split_text(content)
 
-        # Generate embeddings for all chunks
-        embeddings = await embed_texts(chunks, model_name=settings.EMBEDDING_MODEL)
+        # Generate embeddings for all chunks using sentence-transformers
+        # encode returns numpy array, convert to list of lists
+        embeddings_array = self.embedding_model.encode(chunks)
+        embeddings = embeddings_array.tolist()
 
         # Prepare IDs and metadata for each chunk
         source = metadata.get('source', 'unknown')
