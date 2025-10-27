@@ -25,6 +25,8 @@ rag_storage/
 # Testing
 .pytest_cache/
 .coverage
+coverage.xml
+htmlcov/
 
 # Logs
 *.log
