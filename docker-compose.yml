@@ -2,7 +2,7 @@ name: ${COMPOSE_PROJECT_NAME:-commandcenter}
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: commandcenter-postgres:16-pgvector
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_db
     environment:
       POSTGRES_DB: commandcenter
