@@ -129,8 +129,10 @@ When the user types /end, perform these actions:
 
 10. **Cleanup Complete**:
    - Report: "✅ Session ended successfully! USS changes committed."
-   - If user work uncommitted: "Your work changes remain uncommitted for review. Run `git status` to see details."
+   - If non-USS files uncommitted: "Note: [count] files remain uncommitted (may be from previous sessions). Run `git status` to review."
    - If repository fully clean: "Repository is clean. Ready for next session."
    - Suggest: "Next session: Use /start to begin"
+
+   **Important**: Do NOT say "Your work changes remain uncommitted" - that implies work from THIS session is uncommitted. Be accurate about whether changes are from this session or pre-existing.
 
 Note: This command consolidates ALL cleanup functionality into one place. No need for separate bash scripts or multiple cleanup systems.
