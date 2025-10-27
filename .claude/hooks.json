@@ -1,10 +1,7 @@
 {
-  "hooks": {
-    "SessionEnd": {
-      "scripts": [
-        ".claude/cleanup.sh",
-        ".claude/rotate-memory.sh"
-      ]
-    }
+  "SessionEnd": {
+    "command": "./.claude/cleanup.sh",
+    "description": "Automatic repository cleanup and organization",
+    "matchers": ["clear", "logout", "other"]
   }
 }
