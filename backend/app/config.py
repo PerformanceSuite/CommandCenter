@@ -30,6 +30,16 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: Optional[str] = None
 
+    # Knowledge base settings (KnowledgeBeast v0.1.0)
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
+    KNOWLEDGE_COLLECTION_PREFIX: str = "commandcenter"
+
+    # Connection pool settings for KnowledgeBeast PostgresBackend
+    KB_POOL_MIN_SIZE: int = 2
+    KB_POOL_MAX_SIZE: int = 10
+    KB_POOL_TIMEOUT: int = 30
+
     # GitHub Integration
     github_token: Optional[str] = None
     github_default_org: Optional[str] = None
