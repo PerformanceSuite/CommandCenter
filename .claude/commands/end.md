@@ -5,6 +5,11 @@ description: End work session with complete cleanup and documentation
 
 When the user types /end, perform these actions:
 
+**FIRST: Invoke Repository Hygiene Skill** (MANDATORY)
+- Use Skill tool to invoke: `repository-hygiene`
+- This ensures proper cleanup practices are followed
+- WAIT for skill to load before proceeding
+
 1. **Session Timestamp**:
    - Say "🏁 Ending development session at [timestamp]..."
    - Note session duration if /start was used
@@ -45,16 +50,16 @@ When the user types /end, perform these actions:
      ## Session: [date and time]
      **Duration**: [if available]
      **Branch**: [current git branch]
-     
+
      ### Work Completed:
      - [bullet points]
-     
+
      ### Key Decisions:
      - [if any]
-     
+
      ### Blockers/Issues:
      - [if any]
-     
+
      ### Next Steps:
      - [priorities for next session]
      ```
@@ -83,15 +88,15 @@ When the user types /end, perform these actions:
    Duration: [time]
    Files Modified: [count]
    Lines Added/Removed: +[added] -[removed]
-   
+
    Hygiene Score: [✅ Clean | ⚠️ Warnings | ❌ Critical]
    - Debug statements: [count or ✓]
    - Potential secrets: [count or ✓]
    - TODOs without issues: [count or ✓]
-   
+
    Token Usage: [estimate] / 200k
    Memory Size: [lines] lines
-   
+
    Next Priorities:
    1. [from memory/notes]
    2. [from memory/notes]
