@@ -50,6 +50,36 @@ make db-backup                # Backup to backups/ directory
 make db-restore               # Restore from latest backup
 ```
 
+### PostgreSQL + pgvector Setup
+
+**Required for RAG/Knowledge Base functionality**
+
+The RAG service uses PostgreSQL with the pgvector extension for vector similarity search. A custom Postgres image is required.
+
+```bash
+# Option 1: Build with Dagger (recommended)
+cd backend
+python scripts/build-postgres.py
+
+# Option 2: Build with Docker Compose (automatic on first run)
+docker-compose build postgres
+
+# Option 3: Use docker build directly
+docker build -f backend/Dockerfile.postgres -t commandcenter-postgres:latest backend/
+
+# Verify pgvector is installed
+docker-compose exec postgres psql -U commandcenter -d commandcenter -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
+```
+
+**Migration**: The pgvector extension is automatically enabled via Alembic migration `e5bd4ea700b0_enable_pgvector_extension.py`
+
+**Image Details**:
+- Base: `postgres:16-alpine`
+- Extension: `pgvector` (0.7.0 or latest)
+- Build context: `backend/` directory
+- Dockerfile: `backend/Dockerfile.postgres`
+```
+
 ### Testing
 
 ```bash
@@ -129,11 +159,14 @@ Example flow for repository sync:
 - Methods: `sync_repository()`, `list_user_repos()`, `get_repository_info()`
 
 **RAGService** (`app/services/rag_service.py`):
-- ChromaDB + LangChain for knowledge base
-- HuggingFaceEmbeddings (local, no API costs) for vector search
+- **KnowledgeBeast** with PostgreSQL + pgvector backend for knowledge base
+- HuggingFaceEmbeddings (sentence-transformers, local, no API costs) for vector search
+- Hybrid search: Vector similarity + keyword search with Reciprocal Rank Fusion
+- Multi-tenant: Collection prefixes (project_{id}) for data isolation
 - Document processing via Docling
 - Methods: `query()`, `add_document()`, `get_statistics()`
-- **Optional dependencies**: Install with `pip install langchain langchain-community langchain-chroma chromadb sentence-transformers`
+- **Dependencies**: `knowledgebeast`, `sentence-transformers`, `psycopg2-binary`, `asyncpg`
+- **Requires**: PostgreSQL with pgvector extension (see setup below)
 
 ### Database Models
 
@@ -264,11 +297,26 @@ make clean  # Removes volumes
 make start  # Fresh start
 ```
 
+**pgvector extension missing**:
+```bash
+# Rebuild the custom Postgres image with pgvector
+docker-compose stop postgres
+docker-compose build postgres
+docker-compose up -d postgres
+
+# Verify extension is installed
+docker-compose exec postgres psql -U commandcenter -d commandcenter -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
+
+# If extension exists but not enabled, run migration
+docker-compose exec backend alembic upgrade head
+```
+
 **RAG dependencies missing**:
 ```bash
-# Install optional dependencies
-docker-compose exec backend pip install langchain langchain-community langchain-chroma chromadb sentence-transformers
-# Or rebuild container with updated requirements.txt
+# Dependencies are in requirements.txt (knowledgebeast, sentence-transformers)
+# Rebuild backend if needed
+docker-compose build backend
+docker-compose up -d backend
 ```
 
 **Frontend build errors**:
