@@ -190,4 +190,25 @@ This file tracks project history, decisions, and context across sessions.
 3. Run full integration test suite
 
 ---
-*Auto-rotates when > 500 lines (currently 193 lines)*
+
+## Session: 2025-10-27 14:45 PST (10 min)
+**Branch**: main
+
+### Work Completed:
+- ✅ **Fixed /end command misleading messaging**
+  - **Problem**: Said "Your work changes remain uncommitted" even when no work was done in session
+  - **Fix**: Changed to "Note: [count] files remain uncommitted (may be from previous sessions)"
+  - Updated all three templates (project, local, USS repo)
+  - More accurate about pre-existing uncommitted changes vs session work
+
+### Key Decisions:
+- Messaging should distinguish between session work and pre-existing changes
+- Avoid confusion about whether /end completed successfully
+
+### Next Steps:
+1. Use `/re-init` on other projects to propagate the fix
+2. Merge feature/knowledgebeast-integration → main
+3. Update CLAUDE.md with pgvector deployment notes
+
+---
+*Auto-rotates when > 500 lines (currently 213 lines)*
