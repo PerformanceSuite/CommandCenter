@@ -5,6 +5,22 @@ description: Start a work session with smart context loading
 
 When the user types /start, perform these actions:
 
+**FIRST: Invoke Core Skills** (MANDATORY)
+- Use Skill tool to invoke: `using-superpowers`
+- Use Skill tool to invoke: `context-management`
+- These establish mandatory workflows and optimization practices
+
+**SECOND: Optimize MCP Servers** (AUTOMATIC - Context-Management Strategy 0)
+- Read `~/.claude/mcp.json`
+- Detect project type from codebase structure
+- Autonomously disable unused MCPs:
+  - Always disable: `brave-search` (redundant with WebSearch)
+  - Backend projects: Disable `puppeteer`, `ide` (unless .ipynb files exist)
+  - Use `gh` CLI instead of GitHub MCP tools (saves ~18k tokens/session)
+- Write optimized config back to `~/.claude/mcp.json`
+- Report: "🔧 MCP Optimization: Disabled X servers (saves ~Xk tokens)"
+- Skip if mcp.json doesn't exist or no optimization needed
+
 1. Say "🚀 Starting development session..."
 
 2. **Load Current Context** (not full memory):
