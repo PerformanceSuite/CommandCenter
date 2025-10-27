@@ -2,7 +2,13 @@ name: ${COMPOSE_PROJECT_NAME:-commandcenter}
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # Custom Postgres with pgvector extension
+    # Build with: python backend/scripts/build-postgres.py
+    # Or use pre-built image: commandcenter-postgres:latest
+    image: commandcenter-postgres:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.postgres
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_db
     environment:
       POSTGRES_DB: commandcenter
