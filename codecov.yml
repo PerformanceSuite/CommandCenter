@@ -1,0 +1,71 @@
+# Codecov Configuration
+# Manages code coverage reporting and PR comments
+# Documentation: https://docs.codecov.com/docs/codecov-yaml
+
+# Coverage thresholds
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    # Overall project coverage
+    project:
+      default:
+        target: 70%  # Minimum acceptable coverage
+        threshold: 2%  # Allow 2% drop before failing
+        if_ci_failed: error
+
+    # Coverage on changes in PR
+    patch:
+      default:
+        target: 80%  # New code should have higher coverage
+        threshold: 5%
+        if_ci_failed: error
+
+# Component-specific coverage targets
+flag_management:
+  default_rules:
+    carryforward: true  # Use previous coverage if component not changed
+
+# Backend coverage flags
+  backend:
+    statuses:
+      - type: project
+        target: 80%  # Backend should have high coverage
+        threshold: 2%
+      - type: patch
+        target: 85%  # New backend code should be well-tested
+        threshold: 3%
+
+# Frontend coverage flags
+  frontend:
+    statuses:
+      - type: project
+        target: 60%  # Frontend target (lower initially, increase over time)
+        threshold: 3%
+      - type: patch
+        target: 70%  # New frontend code should improve coverage
+        threshold: 5%
+
+# Comment settings for PRs
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false  # Always comment on PRs
+  require_base: no
+  require_head: yes
+
+# Files to ignore in coverage calculations
+ignore:
+  - "backend/app/migrations/**/*"  # Database migrations
+  - "backend/tests/**/*"  # Test files themselves
+  - "frontend/src/**/*.test.ts"  # Frontend test files
+  - "frontend/src/**/*.test.tsx"
+  - "frontend/src/test-utils/**/*"  # Test utilities
+  - "**/__pycache__/**"
+  - "**/node_modules/**"
+  - "**/*.config.js"
+  - "**/*.config.ts"
+  - "**/vite.config.ts"
+  - "**/vitest.config.ts"
