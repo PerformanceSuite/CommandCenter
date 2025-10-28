@@ -32,7 +32,7 @@ numpy>=1.26.0,<2.0.0  # Pin to <2.0 for ChromaDB compatibility (KnowledgeBeast d
 langchain>=0.1.0,<0.2.0
 langchain-community>=0.0.10,<0.1.0
 sentence-transformers>=2.3.0,<3.0.0
-docling>=1.0.0,<2.0.0
+docling>=2.5.5
 
 # KnowledgeBeast v0.1.0 (local project) for RAG
 -e ../libs/knowledgebeast  # Editable install from monorepo libs/
@@ -78,4 +78,4 @@ flower==2.0.1
 celery-redbeat==2.2.0  # Redis-backed beat scheduler
 
 # Export formats (Sprint 3.1)
-openpyxl==3.1.2  # Excel export support
+openpyxl>=3.1.5,<4.0.0  # Excel export support (docling requires >=3.1.5)
