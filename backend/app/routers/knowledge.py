@@ -203,6 +203,7 @@ async def add_document(
 
         # Create knowledge entry in database
         knowledge_entry = KnowledgeEntry(
+            project_id=repository_id,  # Use repository_id as project_id for multi-tenant isolation
             title=filename,
             content=processed_content[:1000],  # Store preview
             category=category,
