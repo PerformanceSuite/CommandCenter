@@ -160,12 +160,13 @@ Example flow for repository sync:
 
 **RAGService** (`app/services/rag_service.py`):
 - **KnowledgeBeast** with PostgreSQL + pgvector backend for knowledge base
+- **Monorepo Package**: KnowledgeBeast is vendored in `libs/knowledgebeast/` (installed via `-e ../libs/knowledgebeast`)
 - HuggingFaceEmbeddings (sentence-transformers, local, no API costs) for vector search
 - Hybrid search: Vector similarity + keyword search with Reciprocal Rank Fusion
 - Multi-tenant: Collection prefixes (project_{id}) for data isolation
 - Document processing via Docling
 - Methods: `query()`, `add_document()`, `get_statistics()`
-- **Dependencies**: `knowledgebeast`, `sentence-transformers`, `psycopg2-binary`, `asyncpg`
+- **Dependencies**: `knowledgebeast`, `sentence-transformers`, `psycopg2-binary`, `asyncpg`, `docling>=2.5.5`
 - **Requires**: PostgreSQL with pgvector extension (see setup below)
 
 ### Database Models
