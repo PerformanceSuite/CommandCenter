@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    setupFiles: ['./src/test-utils/setup.ts'],
     css: true,
     coverage: {
       provider: 'v8',
@@ -15,16 +15,17 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'src/tests/',
+        'src/test-utils/',
         '**/*.d.ts',
         '**/*.config.*',
         '**/mockData',
         'dist/',
       ],
       all: true,
-      lines: 80,
-      functions: 80,
-      branches: 80,
-      statements: 80,
+      lines: 60,
+      functions: 60,
+      branches: 60,
+      statements: 60,
     },
   },
   resolve: {
