@@ -2,6 +2,27 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../MRKTZR"
+		},
+		{
+			"path": "../universal-session-system"
+		},
+		{
+			"path": "../KnowledgeBeast"
+		},
+		{
+			"path": "../Rollizr"
+		},
+		{
+			"path": "../Performia"
+		},
+		{
+			"path": "../Veria"
+		},
+		{
+			"path": "../Fractlzr"
 		}
 	],
 	"settings": {}
