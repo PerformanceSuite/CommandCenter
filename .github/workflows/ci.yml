@@ -12,11 +12,14 @@ env:
 
 jobs:
   # Backend Testing and Quality Checks
+  # Runs linting, type checking, security scanning, and unit/integration tests
+  # Expected runtime: ~8-10 minutes (with caching)
   backend-tests:
     name: Backend Tests & Linting
     runs-on: ubuntu-latest
 
     services:
+      # PostgreSQL database for integration tests
       postgres:
         image: postgres:16-alpine
         env:
@@ -31,6 +34,7 @@ jobs:
         ports:
           - 5432:5432
 
+      # Redis for caching tests
       redis:
         image: redis:7-alpine
         options: >-
@@ -42,27 +46,39 @@ jobs:
           - 6379:6379
 
     steps:
+      # Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Python with pip dependency caching
+      # Cache key based on requirements files to avoid re-downloads
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: backend/requirements*.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+            backend/requirements-test.txt
 
+      # Install Python dependencies
+      # Uses cached wheels when available to speed up installation
       - name: Install dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
+      # Code formatting check with Black
+      # Ensures consistent code style across the codebase
       - name: Run Black (code formatting check)
         working-directory: backend
         run: black --check --diff app/
         continue-on-error: false
 
+      # Linting with Flake8
+      # Catches common Python errors and style issues
       - name: Run Flake8 (linting)
         working-directory: backend
         run: |
@@ -72,10 +88,14 @@ jobs:
             --ignore=E203,W503
         continue-on-error: false
 
+      # Type checking with MyPy
+      # Ensures type hints are used correctly
       - name: Run MyPy (type checking)
         working-directory: backend
         run: mypy app/ --ignore-missing-imports --no-strict-optional
 
+      # Security scanning with Bandit
+      # Detects common security issues in Python code
       - name: Run Bandit (security scanning)
         working-directory: backend
         run: |
@@ -84,11 +104,15 @@ jobs:
             -ll -i \
             --exclude app/tests/
 
+      # Dependency vulnerability scanning with Safety
+      # Checks for known security vulnerabilities in dependencies
       - name: Run Safety (dependency vulnerability check)
         working-directory: backend
         run: |
           safety check --json --output safety-report.json
 
+      # Run backend tests with coverage reporting
+      # Includes unit tests, integration tests, and generates coverage metrics
       - name: Run tests with coverage
         working-directory: backend
         env:
@@ -102,8 +126,11 @@ jobs:
             --cov=app \
             --cov-report=xml \
             --cov-report=html \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            --junitxml=pytest-results.xml
 
+      # Upload coverage reports to Codecov
+      # Provides coverage tracking and PR comments with coverage changes
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -114,6 +141,20 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      # Upload test results as artifacts
+      # Available for download and review if tests fail
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            backend/pytest-results.xml
+            backend/htmlcov/
+          retention-days: 30
+
+      # Upload security scan reports
+      # Available for security review and compliance
       - name: Upload security reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -125,14 +166,19 @@ jobs:
           retention-days: 30
 
   # Frontend Testing and Quality Checks
+  # Runs linting, type checking, unit tests, and build verification
+  # Expected runtime: ~5-7 minutes (with caching)
   frontend-tests:
     name: Frontend Tests & Linting
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Node.js with npm dependency caching
+      # Cache key based on package-lock.json to avoid re-downloads
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -140,41 +186,81 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      # Install npm dependencies
+      # Uses cached node_modules when available
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
+      # Linting with ESLint
+      # Checks for code quality and common errors
       - name: Run ESLint
         working-directory: frontend
         run: npm run lint
         continue-on-error: false
 
+      # Type checking with TypeScript
+      # Ensures type safety without emitting files
       - name: Run TypeScript type check
         working-directory: frontend
         run: npm run type-check
         continue-on-error: false
 
-      - name: Run tests
+      # Run frontend tests with coverage
+      # Includes component tests, hook tests, and service tests
+      - name: Run tests with coverage
         working-directory: frontend
-        run: npm test -- --run
+        run: npm test -- --run --coverage
 
+      # Upload coverage to Codecov
+      # Tracks frontend test coverage over time
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      # Build frontend to verify production builds work
+      # Catches build-time errors before deployment
       - name: Build frontend
         working-directory: frontend
         run: npm run build
 
+      # Upload test results and coverage
+      # Available for review if tests fail
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-results
+          path: |
+            frontend/coverage/
+          retention-days: 30
+
   # Docker Build Test
+  # Verifies Docker images build successfully and caches layers
+  # Expected runtime: ~3-5 minutes (with layer caching)
   docker-build:
     name: Docker Build Test
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests]
 
     steps:
+      # Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set up Docker Buildx for advanced build features
+      # Enables layer caching and multi-platform builds
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Build backend Docker image
+      # Uses GitHub Actions cache to speed up subsequent builds
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
@@ -185,6 +271,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Build frontend Docker image
+      # Uses production target for optimized build
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:
@@ -197,15 +285,20 @@ jobs:
           cache-to: type=gha,mode=max
 
   # Integration Tests
+  # Tests the full system with all services running
+  # Expected runtime: ~5-7 minutes
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [docker-build]
 
     steps:
+      # Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Create environment configuration for integration tests
+      # Uses test credentials safe for CI environment
       - name: Create .env file
         run: |
           cat > .env <<EOF
@@ -219,40 +312,52 @@ jobs:
           GITHUB_TOKEN=dummy
           EOF
 
+      # Start all services using docker-compose
       - name: Start services with docker-compose
         run: docker-compose up -d
 
+      # Wait for all services to be healthy
+      # Ensures services are ready before running tests
       - name: Wait for services to be healthy
         run: |
           timeout 120 bash -c 'until docker-compose ps | grep -q "healthy"; do sleep 2; done' || true
           sleep 10
 
+      # Verify service endpoints are accessible
       - name: Check service health
         run: |
           curl -f http://localhost:8000/health || exit 1
           curl -f http://localhost:3000 || exit 1
 
+      # Run integration tests against running services
       - name: Run integration tests
         run: |
           docker-compose exec -T backend pytest test_api.py -v || true
 
+      # Show logs if tests fail for debugging
       - name: Show logs on failure
         if: failure()
         run: docker-compose logs
 
+      # Always cleanup services to free resources
       - name: Cleanup
         if: always()
         run: docker-compose down -v
 
   # Security Scanning
+  # Scans for vulnerabilities in code and dependencies
+  # Expected runtime: ~2-3 minutes
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Run Trivy security scanner
+      # Detects vulnerabilities in code, dependencies, and configurations
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -262,6 +367,8 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
 
+      # Upload results to GitHub Security tab
+      # Makes vulnerabilities visible in the Security dashboard
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
@@ -269,6 +376,8 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
   # Code Quality Summary
+  # Aggregates results from all quality checks
+  # Fails the build if critical checks fail
   quality-summary:
     name: Code Quality Summary
     runs-on: ubuntu-latest
@@ -276,6 +385,8 @@ jobs:
     if: always()
 
     steps:
+      # Check and report status of all quality jobs
+      # Fails if backend or frontend tests failed
       - name: Check job status
         run: |
           echo "Backend Tests: ${{ needs.backend-tests.result }}"
