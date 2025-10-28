@@ -441,3 +441,57 @@ This file tracks project history, decisions, and context across sessions.
 
 ---
 *Auto-rotates when > 500 lines (currently 273 lines)*
+
+## Session: 2025-10-28 09:30-09:51
+**Duration**: ~21 minutes
+**Branch**: main
+
+### Work Completed:
+- ✅ **Full Service Startup Test - COMPLETE**
+  - Fixed CORS_ORIGINS configuration parsing (str | list[str] type)
+  - Added asyncpg-compatible database URL generation
+  - Rebuilt pgvector with ARM-compatible flags for Apple Silicon
+  - Implemented smart SQL parser respecting dollar-quoted strings
+  - Fixed exception handling for idempotent schema creation
+  - Removed transaction wrapper for better error recovery
+  - All services running successfully
+
+### Technical Fixes:
+1. **CORS Configuration** (backend/app/config.py:89-94)
+   - Changed field type to `str | list[str]` for pydantic compatibility
+   - Updated `.env.docker` to use comma-separated format
+
+2. **Database URL Format** (backend/app/config.py:156-177)
+   - Added `get_postgres_url(for_asyncpg=True)` parameter
+   - Strips `+asyncpg` from URL for asyncpg driver compatibility
+
+3. **pgvector ARM Build** (backend/Dockerfile.postgres:8-11)
+   - Added `OPTFLAGS="-O3 -march=armv8-a"` for ARM64 compatibility
+   - Prevents "Illegal instruction" crashes on Apple Silicon
+
+4. **SQL Parser** (libs/knowledgebeast/knowledgebeast/backends/postgres.py:131-164)
+   - Smart statement splitting respecting `$$` dollar-quoted strings
+   - Properly handles CREATE FUNCTION with embedded semicolons
+
+5. **Error Handling** (libs/knowledgebeast/knowledgebeast/backends/postgres.py:165-180)
+   - Ignores "already exists" for CREATE statements (idempotency)
+   - Ignores "does not exist" ONLY for DROP statements
+   - Properly raises errors for legitimate failures
+
+### Test Results:
+- ✅ RAG Statistics Endpoint: Working
+- ✅ RAG Query Endpoint: Working
+- ✅ All Services Healthy: Backend, PostgreSQL, Redis, Frontend
+
+### Service Status:
+- **Backend**: Healthy (http://localhost:8000)
+- **PostgreSQL**: Healthy with ARM-compatible pgvector 0.8.1
+- **Redis**: Healthy
+- **Frontend**: Running
+
+### Next Steps:
+- Test RAG service with actual document ingestion
+- Verify GitHub repository syncing
+- Test technology radar functionality
+
+---
