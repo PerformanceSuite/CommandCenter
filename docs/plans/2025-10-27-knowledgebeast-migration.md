@@ -364,7 +364,25 @@ Run:
 test -d backend/venv && echo "✓ Backend venv exists" || echo "✗ No backend venv"
 ```
 
-**Step 2: Install KnowledgeBeast in editable mode**
+**Step 2: Create backend venv if needed**
+
+Run:
+```bash
+if [ ! -d backend/venv ]; then cd backend && python -m venv venv && cd ..; fi
+```
+
+Expected: venv directory created
+
+**Step 3: Install backend requirements**
+
+Run:
+```bash
+cd backend && source venv/bin/activate && pip install -r requirements.txt && cd ..
+```
+
+Expected: All requirements install successfully (note: KnowledgeBeast will fail since path doesn't exist yet)
+
+**Step 4: Install KnowledgeBeast in editable mode**
 
 Run:
 ```bash
@@ -373,7 +391,7 @@ cd backend && source venv/bin/activate && pip install -e ../libs/knowledgebeast 
 
 Expected: Installation succeeds, shows "Successfully installed knowledgebeast"
 
-**Step 3: Verify import works**
+**Step 5: Verify import works**
 
 Run:
 ```bash
@@ -382,7 +400,7 @@ cd backend && source venv/bin/activate && python -c "from knowledgebeast import 
 
 Expected: Prints "✓ Imports successful"
 
-**Step 4: Verify backend-specific imports**
+**Step 6: Verify backend-specific imports**
 
 Run:
 ```bash
@@ -391,7 +409,7 @@ cd backend && source venv/bin/activate && python -c "from knowledgebeast.backend
 
 Expected: Prints "✓ PostgresBackend import successful"
 
-**Step 5: Check installed package location**
+**Step 7: Check installed package location**
 
 Run:
 ```bash
