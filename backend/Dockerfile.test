@@ -1,0 +1,45 @@
+# Backend Test Dockerfile
+# Multi-stage build for optimized test execution
+# Build context: project root (to access libs/knowledgebeast)
+
+FROM python:3.11-slim AS base
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy KnowledgeBeast library (monorepo dependency)
+COPY libs/knowledgebeast /libs/knowledgebeast
+
+# Install Python dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install test dependencies
+RUN pip install --no-cache-dir \
+    pytest==7.4.3 \
+    pytest-asyncio==0.21.1 \
+    pytest-cov==4.1.0 \
+    pytest-xdist==3.5.0 \
+    pytest-timeout==2.2.0
+
+# Copy application code
+COPY backend/ .
+
+# Create directories for test results and coverage
+RUN mkdir -p /app/test-results /app/coverage
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Default command: run all tests with coverage
+CMD ["pytest", "-v", \
+     "--cov=app", \
+     "--cov-report=xml:/app/coverage/coverage.xml", \
+     "--cov-report=html:/app/coverage/htmlcov", \
+     "--cov-report=term-missing", \
+     "--junitxml=/app/test-results/junit.xml"]

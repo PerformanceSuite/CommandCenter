@@ -4,55 +4,28 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+env/
 *.egg-info/
-.installed.cfg
-*.egg
+
+# Testing
+.pytest_cache/
+test-results/
+coverage/
+htmlcov/
+.coverage
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-commandcenter.db
-
-# Alembic
-alembic/versions/*.pyc
-
-# Environment
-.env
-.env.local
-
-# Logs
-*.log
-logs/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Data
+data/
+*.db
+*.sqlite
