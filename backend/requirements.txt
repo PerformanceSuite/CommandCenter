@@ -35,7 +35,7 @@ sentence-transformers>=2.3.0,<3.0.0
 docling>=1.0.0,<2.0.0
 
 # KnowledgeBeast v0.1.0 (local project) for RAG
--e /Users/danielconnolly/Projects/KnowledgeBeast  # Editable install of local project
+-e ../libs/knowledgebeast  # Editable install from monorepo libs/
 dagger-io>=0.9.0  # For building custom Postgres image
 
 # GitHub integration
