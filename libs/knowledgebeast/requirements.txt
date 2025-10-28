@@ -1,0 +1,42 @@
+# Core dependencies
+docling>=2.5.5
+fastapi>=0.109.0
+click>=8.1.0
+rich>=13.0.0
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+tiktoken>=0.5.0  # Token counting for chunking
+pydantic>=2.0.0
+uvicorn[standard]>=0.27.0
+tenacity>=8.2.0  # Retry logic for robust I/O operations
+circuitbreaker>=1.4.0  # Circuit breaker pattern for fault tolerance
+mcp>=1.0.0  # Model Context Protocol SDK for MCP server
+asyncpg>=0.29.0  # Async PostgreSQL driver
+
+# API dependencies
+slowapi>=0.1.9  # Rate limiting for FastAPI
+
+# Observability dependencies
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.41b0
+prometheus-client>=0.19.0
+prometheus-fastapi-instrumentator>=6.1.0
+structlog>=23.2.0
+
+# Multi-modal dependencies
+PyPDF2>=3.0.0  # PDF text extraction
+pdfplumber>=0.10.0  # Advanced PDF parsing with layout awareness
+pytesseract>=0.3.10  # OCR for scanned PDFs and images
+pillow>=10.0.0  # Image processing and manipulation
+transformers>=4.30.0  # CLIP and BLIP models
+torch>=2.0.0  # PyTorch for ML models
+torchvision>=0.15.0  # Vision models and transforms
+
+# Query expansion dependencies
+nltk>=3.8.0  # WordNet for synonym expansion
+numpy>=1.24.0  # Embedding similarity calculations
+
+# Optional dependencies (install with pip install knowledgebeast[ner])
+# spacy>=3.5.0  # Named Entity Recognition
+# en-core-web-sm  # spaCy English model (python -m spacy download en_core_web_sm)

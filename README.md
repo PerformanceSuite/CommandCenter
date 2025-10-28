@@ -37,7 +37,7 @@ Command Center helps R&D teams:
 - Natural language search across all research
 - AI-powered insights using your own data
 - Document processing with Docling
-- Vector search with ChromaDB
+- Vector search with KnowledgeBeast (PostgreSQL + pgvector)
 
 ### GitHub Integration
 - Track unlimited repositories
@@ -147,18 +147,19 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
                      │
 ┌────────────────────▼────────────────────────────────┐
 │                  Data Layer                          │
-│  ┌──────────┬──────────┬──────────────────────┐    │
-│  │PostgreSQL│  Redis   │  ChromaDB (Vectors)  │    │
-│  └──────────┴──────────┴──────────────────────┘    │
+│  ┌──────────────────────────┬──────────┐           │
+│  │PostgreSQL (+ pgvector)   │  Redis   │           │
+│  └──────────────────────────┴──────────┘           │
 └─────────────────────────────────────────────────────┘
 ```
 
 **Tech Stack:**
 - **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0, Alembic
 - **Frontend:** React 18, TypeScript 5, Vite 5, Tailwind CSS 3
-- **Database:** PostgreSQL 16, Redis 7
-- **AI/ML:** ChromaDB, Docling, OpenAI/Anthropic APIs
+- **Database:** PostgreSQL 16 (+ pgvector), Redis 7
+- **AI/ML:** KnowledgeBeast, Docling, sentence-transformers, OpenAI/Anthropic APIs
 - **Infrastructure:** Docker, Docker Compose
+- **Monorepo:** KnowledgeBeast library in `libs/knowledgebeast/`
 
 ---
 

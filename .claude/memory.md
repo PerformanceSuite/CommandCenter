@@ -1,172 +1,273 @@
-# CommandCenter Memory
+# CommandCenter Development Memory
 
-## Session: 2025-10-24 15:42 (LATEST)
-
-**Duration:** ~30 minutes
-**Branch:** main (CommandCenter)
-
-### Work Completed:
-
-**KnowledgeBeast v3.0 - Week 2 Planning:**
-- ✅ Created comprehensive PostgresBackend implementation plan
-- ✅ 14 tasks with complete TDD workflow (test → fail → implement → pass → commit)
-- ✅ Plan saved to: `KnowledgeBeast/.worktrees/postgres-backend/docs/plans/2025-10-24-postgres-backend.md`
-- ✅ Includes database schema, asyncpg setup, all 8 VectorBackend methods
-- ✅ Mocked unit tests (no external dependencies)
-- ✅ Docker Compose setup for optional integration testing
-- ✅ Complete documentation updates
-
-**Plan Details:**
-- Lines of code estimate: ~500 (similar to Week 1)
-- Test coverage: ~15 tests, 100% coverage target
-- Technologies: asyncpg, pgvector, PostgreSQL 15+
-- Pattern: Same as Week 1 (atomic commits, TDD, backward compatible)
-
-### Key Decisions:
-
-1. **Planning Approach:** Used writing-plans skill for comprehensive plan
-2. **Database Strategy:** Mocked tests for Week 2, optional Docker Compose for integration
-3. **Execution Handoff:** User will open new session in KnowledgeBeast worktree
-4. **Workflow:** Use `/superpowers:execute-plan` in new session for batch execution
-
-### Next Steps:
-
-**Immediate (Next Session in KnowledgeBeast):**
-1. Open session: `cd /Users/danielconnolly/Projects/KnowledgeBeast/.worktrees/postgres-backend`
-2. Run: `/superpowers:execute-plan docs/plans/2025-10-24-postgres-backend.md`
-3. Execute 14 tasks in batches with review checkpoints
-
-**CommandCenter Work (Future):**
-- Commit new USS documentation (untracked files)
-- Test automatic project startup
-- Multi-project integration
-
-### Blockers/Issues:
-
-- None - plan is complete and ready for execution
+This file tracks project history, decisions, and context across sessions.
 
 ---
 
-## Session: 2025-10-23 17:24
-
-**Duration:** ~1.5 hours
-**Branch:** main (CommandCenter), feature/postgres-backend (KnowledgeBeast)
+## Session: 2025-10-27 12:33 PST (15 min)
+**Branch**: feature/knowledgebeast-integration
+**Context Usage**: 122k/200k tokens (61%)
 
 ### Work Completed:
+- ✅ **Fixed KnowledgeBeast PostgresBackend query unpacking error**
+  - **Root Cause 1**: Query methods not SELECTing `document` column
+  - **Root Cause 2**: Metadata returned as JSON string instead of dict
+  - **Root Cause 3**: Expected 4-tuple `(id, score, metadata, document)` but got 3-tuple
 
-**KnowledgeBeast v3.0 Backend Abstraction - Week 1 COMPLETE:**
-- ✅ Executed full implementation plan via Subagent-Driven Development
-- ✅ Created backend abstraction layer (`knowledgebeast/backends/`)
-- ✅ Implemented VectorBackend ABC (8 methods, full type hints)
-- ✅ Implemented ChromaDBBackend wrapper (259 lines, wraps VectorStore)
-- ✅ Created PostgresBackend stub for Week 2
-- ✅ Updated HybridQueryEngine with optional backend parameter
-- ✅ Added 13 new tests (10 backend + 3 integration), all passing
-- ✅ Complete documentation: README.md, BACKENDS.md, completion report
-- ✅ Clean git history: 9 atomic commits on feature/postgres-backend
+- ✅ **Applied comprehensive fixes to KnowledgeBeast**:
+  - Added `document` to SELECT in `query_vector()` and `query_keyword()`
+  - Updated `query_hybrid()` to handle 4-tuple results from sub-queries
+  - Added JSON deserialization for metadata in both query methods
+  - Updated type hints in `base.py` to reflect 4-tuple returns
+  - Updated all docstrings to document new format
 
-**Metrics:**
-- Lines added: ~800 code + ~278 docs
-- Breaking changes: 0 (100% backward compatible)
-- Test results: 1556 passed, 116 failed (all pre-existing)
-- Code review: 1 (fixed 5 issues in ChromaDBBackend)
+- ✅ **Verified end-to-end functionality**
+  - Manual query test PASSED with document content + metadata
+  - Query endpoint returns proper JSON response
+  - Metadata correctly deserialized as dict (not string)
 
 ### Key Decisions:
-
-1. **Subagent-Driven Development:** Fresh subagent per task + code review
-2. **Backward Compatibility:** Legacy mode (backend=None) still works
-3. **Test Coverage:** Added hybrid, keyword, delete tests after review
-4. **Performance:** Optimized RRF metadata extraction (O(n²) → O(n))
-
-### Git Commits (feature/postgres-backend):
-
-1. `16ecd08` - feat(backends): module structure
-2. `e6b2101` - feat(backends): VectorBackend ABC
-3. `e53d371` - feat(backends): ChromaDBBackend wrapper
-4. `fe3d05d` - fix(backends): code review fixes
-5. `9a46015` - feat(backends): PostgresBackend stub
-6. `c38cca5` - feat(core): backend parameter to HybridQueryEngine
-7. `1f746a3` - test(integration): integration tests
-8. `576a98e` - docs: backend documentation
-9. `682641c` - chore: Week 1 completion report
+- Fixed KnowledgeBeast source at `/Users/danielconnolly/Projects/KnowledgeBeast/`
+- Changed API contract: 3-tuple → 4-tuple to include document text
+- asyncpg JSONB deserialization handled manually (not automatic in this context)
 
 ### Next Steps:
+1. ✅ READY: Merge knowledgebeast-integration to main
+2. Update CLAUDE.md with pgvector requirement documentation
+3. Run full integration test suite once pytest is configured
+4. Consider updating ChromaDBBackend to match 4-tuple format for consistency
 
-**Week 2 (Ready to Start):**
-1. Implement PostgresBackend with asyncpg
-2. Add pgvector integration
-3. Stub ParadeDB for Week 3
-4. Unit tests (mocked database)
-
-**Location:** `/Users/danielconnolly/Projects/KnowledgeBeast/.worktrees/postgres-backend`
+### Technical Notes:
+- Files modified: `KnowledgeBeast/knowledgebeast/backends/{postgres.py,base.py}`
+- API change: All query methods now return `(id, score, metadata, document)`
+- Docker build context: `/Users/danielconnolly/Projects/` (accesses both repos)
 
 ---
 
-## Session: 2025-10-23 16:45 (Planning)
+## Previous Context
 
-**Branch**: main
-**Duration**: ~2 hours
+### KnowledgeBeast v3.0 Integration Design (2025-10-26)
+- Architecture complete: PostgresBackend replaces ChromaDB
+- Database schema with pgvector + full-text search (GIN indexes)
+- Hybrid search using Reciprocal Rank Fusion
+- Multi-tenant via collection prefixes (project_{id})
+- Dagger modules created for Postgres custom builds
 
-### Work Completed:
-
-- ✅ Explored TigerData "Postgres for Agents" article
-- ✅ Researched open source alternatives (ParadeDB, pgvector, VectorChord-BM25)
-- ✅ Strategic decision: Upgrade KnowledgeBeast itself (not just CommandCenter)
-- ✅ Discovered and analyzed CommandCenter's existing Dagger implementation
-- ✅ Created universal Dagger pattern for all projects
-- ✅ Created reusable Dagger skill for superpowers
-- ✅ Designed complete KnowledgeBeast v3.0 architecture
-
-### Key Decisions:
-
-1. **Architecture**: Backend abstraction (runtime) + Dagger (testing/CI)
-2. **Postgres Stack**: pgvector + ParadeDB (open source, no vendor lock-in)
-3. **Distribution**: Dagger builds custom Postgres images
-4. **Embedding**: 384 dimensions (default), 768 configurable
-5. **Multi-tenancy**: Prefixed tables (`kb_{project}_{collection}_docs`)
-6. **Rollout**: 4-week plan (abstraction → postgres → dagger → production)
-
-### Documents Created:
-
-- `docs/KNOWLEDGEBEAST_POSTGRES_UPGRADE.md` - Complete architecture & 4-week plan
-- `docs/UNIVERSAL_DAGGER_PATTERN.md` - Reusable Dagger pattern for all projects
-- `docs/NEXT_SESSION_PLAN.md` - Week 1 implementation roadmap
-- `~/.config/superpowers/skills/skills/development/using-dagger-for-infrastructure/SKILL.md`
-
-### Next Steps:
-
-**Week 1 (Next Session):**
-1. Navigate to KnowledgeBeast repository
-2. Create worktree: `feature/postgres-backend`
-3. Implement backend abstraction layer
-4. Use `/superpowers:write-plan` and `/superpowers:execute-plan`
-
-**Future Weeks:**
-- Week 2: PostgresBackend implementation
-- Week 3: Dagger testing infrastructure + ParadeDB
-- Week 4: CommandCenter integration, release v3.0.0
-
-### Blockers/Issues:
-
-- None - all decisions made, ready to execute
-
-### Notes:
-
-- KnowledgeBeast has 15+ worktrees already configured
-- CommandCenter has proven Dagger implementation to reference
-- ParadeDB is open source, actively maintained (2025)
-- All projects (CC, KB, Performia, Veria) will benefit from this upgrade
-
----
-
-## Project initialized with USS v2.1
-*Date: October 23, 2025*
-
-### Configuration
-- 5-document structure
+### Universal Session System v2.1 (2025-10-23)
+- /start, /end, /init-project commands
 - Auto-rotation at 500 lines
-- Smart cleanup installed
-- Just 3 commands: /init-project, /start, /end
+- 5-document structure
+- MCP optimization for context management
 
 ---
-*Older entries auto-archive when exceeding 500 lines*
+
+## Session: 2025-10-27 13:18 PST (30 min)
+**Branch**: main
+**Context Usage**: 82k/200k tokens (41%)
+
+### Work Completed:
+- ✅ **Fixed repository-hygiene skill using TDD methodology**
+  - RED: Documented production failure (12 .md files + 5 session-* scripts missed during /end)
+  - GREEN: Added explicit verification commands and allowed file lists
+  - REFACTOR: Documented baseline failure, added rationalization counters
+  - Updated skill globally at `~/.claude/skills/repository-hygiene/SKILL.md`
+
+- ✅ **Created /re-init command for selective USS updates**
+  - Terminal: `re-init` (alias in ~/.zshrc)
+  - Claude: `/re-init`
+  - Preserves docs/* and .claude/memory.md
+  - Updates only USS infrastructure (commands, scripts, cleanup)
+  - Added to USS template for future projects
+
+- ✅ **Repository hygiene cleanup**
+  - Moved 12 documentation files from root to docs/
+  - Moved 5 session-* scripts from root to scripts/
+  - Root directory now clean (only allowed files)
+
+### Key Decisions:
+- `/init-project` = Full reset (overwrites docs)
+- `/re-init` = Selective update (preserves content)
+- repository-hygiene skill now has mandatory verification checklist
+- Blocked rationalization: "Cleanup script will handle it"
+
+### Next Steps:
+1. Use `/re-init` on other projects to get updated USS features
+2. Consider merging feature/knowledgebeast-integration branch
+3. Update CLAUDE.md with pgvector deployment notes
+
+### Files Modified:
+- `~/.claude/skills/repository-hygiene/SKILL.md`
+- `~/.claude/templates/USS_v2.1/commands/re-init.md`
+- `/Users/danielconnolly/Projects/universal-session-system/init.sh`
+- `/Users/danielconnolly/Projects/universal-session-system/re-init.sh`
+- Moved 17 files to proper locations (docs/, scripts/)
+
+---
+
+## Session: 2025-10-27 14:30 PST (Brief)
+**Branch**: main
+**Context Usage**: ~60k/200k tokens (30%)
+
+### Work Completed:
+- ✅ **Executed /end command with full repository hygiene**
+  - Ran cleanup.sh successfully
+  - Moved 5 session-* scripts from root to scripts/
+  - Verified no documentation files in root
+  - Verified no test scripts in root
+  - Scanned for debug statements (703 occurrences, mostly in dependencies/docs/examples)
+  - Scanned for secrets (2153 occurrences, all in config templates/examples - no actual secrets)
+  - Verified .env is properly gitignored
+  - All TODOs have proper format
+
+### Repository Status:
+- **Staged Changes**: 12 file moves (documentation to docs/)
+- **Unstaged Changes**: 6 files (.claude config, docker-compose, session docs)
+- **Hygiene Score**: ✅ Clean (no violations found)
+- **Root Directory**: Clean (only allowed files)
+
+### Next Steps:
+1. Use `/re-init` on other projects to propagate USS updates
+2. Consider merging feature/knowledgebeast-integration → main
+3. Update CLAUDE.md with pgvector deployment notes
+4. Run full integration test suite (configure pytest in container)
+
+---
+
+## Session: 2025-10-27 14:35 PST (5 min)
+**Branch**: main
+**Context Usage**: ~75k/200k tokens (38%)
+
+### Work Completed:
+- ✅ **Fixed USS /end command - auto-commit functionality**
+  - **Problem Found**: /end was leaving USS changes uncommitted (memory.md, docs, moved scripts)
+  - **Root Cause**: Missing step to commit USS maintenance changes
+  - **Fix Applied**: Added Step 7 "Commit USS Changes" to /end command
+  - Auto-commits USS changes with standard message
+  - Separates USS commits from user work commits
+
+- ✅ **Updated USS templates**
+  - Current project: `.claude/commands/end.md`
+  - Local template: `~/.claude/templates/USS_v2.1/commands/end.md`
+  - USS repo: `~/Projects/universal-session-system/templates/commands/end.md`
+
+### Key Decisions:
+- /end will auto-commit USS-related changes (memory, logs, hygiene moves)
+- User work changes remain uncommitted for manual review
+- Clear separation and reporting of what was committed vs needs attention
+
+### Next Steps:
+1. Test the fixed /end command (this session)
+2. Use /re-init on other projects to get the fix
+3. Merge feature/knowledgebeast-integration → main
+4. Update CLAUDE.md with pgvector deployment notes
+
+### Technical Notes:
+- USS maintenance should be invisible/automatic
+- User work should always require explicit review/commit
+- /end now completes the full cleanup workflow
+
+---
+
+## Session: 2025-10-27 14:23 PST (Brief)
+**Branch**: main
+
+### Work Completed:
+- ✅ **Tested improved /end command with repository-hygiene skill**
+  - Skill automatically invoked by /end command
+  - Found and moved 5 session-* scripts from root to scripts/
+  - Verified no documentation files in root
+  - Verified no test scripts in root
+  - Repository hygiene audit completed successfully
+
+### Repository Status:
+- **Hygiene Score**: ✅ Clean
+- **Root Directory**: Clean (only allowed files)
+- **USS Changes**: Ready to commit (moved scripts, updated memory)
+
+### Next Steps:
+1. Continue merging feature/knowledgebeast-integration → main
+2. Update CLAUDE.md with pgvector deployment notes
+3. Run full integration test suite
+
+---
+
+## Session: 2025-10-27 14:45 PST (10 min)
+**Branch**: main
+
+### Work Completed:
+- ✅ **Fixed /end command misleading messaging**
+  - **Problem**: Said "Your work changes remain uncommitted" even when no work was done in session
+  - **Fix**: Changed to "Note: [count] files remain uncommitted (may be from previous sessions)"
+  - Updated all three templates (project, local, USS repo)
+  - More accurate about pre-existing uncommitted changes vs session work
+
+### Key Decisions:
+- Messaging should distinguish between session work and pre-existing changes
+- Avoid confusion about whether /end completed successfully
+
+### Next Steps:
+1. Use `/re-init` on other projects to propagate the fix
+2. Merge feature/knowledgebeast-integration → main
+3. Update CLAUDE.md with pgvector deployment notes
+
+---
+
+## Session: 2025-10-27 18:58 PST (53 min)
+**Branch**: feature/knowledgebeast-migration
+**Context Usage**: 67k/200k tokens (34%)
+
+### Work Completed:
+- ✅ **Planned KnowledgeBeast migration to CommandCenter monorepo**
+  - Used brainstorming skill to refine migration approach
+  - Decided on Clean Room migration with opportunistic cleanup
+  - Target location: `libs/knowledgebeast/` in CommandCenter
+  - Preserves all imports (no code changes needed in backend)
+
+- ✅ **Created comprehensive design document**
+  - File: `docs/plans/2025-10-27-knowledgebeast-migration-design.md`
+  - Migration approach: Clean room (copy essential files, leave cruft)
+  - Rollback plan documented
+  - Success criteria defined
+
+- ✅ **Created detailed implementation plan**
+  - File: `docs/plans/2025-10-27-knowledgebeast-migration.md`
+  - 14 tasks with step-by-step instructions
+  - Validation checkpoints at Task 8 and Task 12
+  - Post-migration cleanup instructions
+  - Estimated time: 1.5-2 hours
+
+- ✅ **Set up isolated worktree**
+  - Created worktree at `.worktrees/knowledgebeast-migration`
+  - Branch: `feature/knowledgebeast-migration`
+  - Verified clean baseline
+
+### Key Decisions:
+- Migration location: `libs/knowledgebeast/` (standard monorepo pattern)
+- No git history preservation (well-documented final state sufficient)
+- Retire standalone repo after migration
+- Commit postgres backend changes before migration
+- Tag standalone repo as `v3.0-final-standalone`
+- Update requirements.txt: `-e ../libs/knowledgebeast`
+- No import changes needed (package name stays `knowledgebeast`)
+
+### Next Steps:
+1. Open new Claude session in worktree: `.worktrees/knowledgebeast-migration`
+2. Use executing-plans skill to implement the migration plan
+3. Execute 14 tasks with validation checkpoints
+4. Merge to main after all tests pass
+5. Archive standalone KnowledgeBeast repository
+6. Remove local KB directory after validation
+
+### Files Created:
+- `docs/plans/2025-10-27-knowledgebeast-migration-design.md` (design)
+- `docs/plans/2025-10-27-knowledgebeast-migration.md` (implementation plan)
+
+### Technical Notes:
+- KnowledgeBeast currently at: `/Users/danielconnolly/Projects/KnowledgeBeast`
+- Has uncommitted postgres backend changes to commit first
+- Standalone repo: `github.com/PerformanceSuite/KnowledgeBeast` (to be archived)
+- Current CommandCenter requirement: `-e /Users/danielconnolly/Projects/KnowledgeBeast`
+- Will become: `-e ../libs/knowledgebeast`
+
+---
+*Auto-rotates when > 500 lines (currently 267 lines)*

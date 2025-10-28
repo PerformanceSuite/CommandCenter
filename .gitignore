@@ -71,3 +71,11 @@ session-end
 session-memory
 session-last
 session-status
+
+# KnowledgeBeast in libs/
+libs/knowledgebeast/.venv
+libs/knowledgebeast/__pycache__
+libs/knowledgebeast/*.egg-info
+libs/knowledgebeast/.pytest_cache
+libs/knowledgebeast/.coverage
+libs/knowledgebeast/chroma
