@@ -88,7 +88,7 @@ class Settings(BaseSettings):
     )
 
     # CORS
-    cors_origins: list[str] = Field(
+    cors_origins: str | list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"],
         description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)",
     )
@@ -153,8 +153,14 @@ class Settings(BaseSettings):
                 return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    def get_postgres_url(self) -> str:
-        """Construct PostgreSQL URL from components"""
+    def get_postgres_url(self, for_asyncpg: bool = False) -> str:
+        """
+        Construct PostgreSQL URL from components
+
+        Args:
+            for_asyncpg: If True, return asyncpg format (postgresql://),
+                        otherwise return SQLAlchemy format (postgresql+asyncpg://)
+        """
         if all(
             [
                 self.postgres_user,
@@ -163,11 +169,16 @@ class Settings(BaseSettings):
                 self.postgres_db,
             ]
         ):
+            scheme = "postgresql" if for_asyncpg else "postgresql+asyncpg"
             return (
-                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+                f"{scheme}://{self.postgres_user}:{self.postgres_password}"
                 f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
             )
-        return self.database_url
+        # Strip +asyncpg if for_asyncpg and database_url contains it
+        url = self.database_url
+        if for_asyncpg and "+asyncpg" in url:
+            url = url.replace("postgresql+asyncpg://", "postgresql://")
+        return url
 
 
 # Global settings instance

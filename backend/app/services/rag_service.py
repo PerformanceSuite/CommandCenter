@@ -55,8 +55,8 @@ class RAGService:
         # This is used to generate embeddings for queries and documents
         self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
 
-        # Build connection string from settings
-        connection_string = settings.get_postgres_url()
+        # Build connection string from settings (asyncpg format without +asyncpg)
+        connection_string = settings.get_postgres_url(for_asyncpg=True)
 
         # Initialize KnowledgeBeast PostgresBackend
         self.backend = PostgresBackend(

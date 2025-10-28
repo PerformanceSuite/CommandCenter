@@ -39,6 +39,7 @@ END;
 $$ language 'plpgsql';
 
 DROP TRIGGER IF EXISTS update_{collection_name}_updated_at ON {collection_name}_documents;
+
 CREATE TRIGGER update_{collection_name}_updated_at
     BEFORE UPDATE ON {collection_name}_documents
     FOR EACH ROW

@@ -124,21 +124,64 @@ class PostgresBackend(VectorBackend):
         schema_sql = schema_sql.replace("{embedding_dimension}", str(self.embedding_dimension))
 
         # Execute schema creation with idempotency handling
-        # Use a transaction to execute all statements together
+        # Execute statements individually without transaction for better error recovery
         async with self.pool.acquire() as conn:
             try:
-                async with conn.transaction():
-                    # Split statements and execute individually (asyncpg limitation)
-                    statements = [s.strip() for s in schema_sql.split(';') if s.strip()]
-                    for statement in statements:
-                        await conn.execute(statement)
+                # Smart SQL statement splitting that respects dollar-quoted strings
+                statements = []
+                current_statement = []
+                in_dollar_quote = False
+                dollar_quote_tag = None
+
+                lines = schema_sql.split('\n')
+                for line in lines:
+                    # Check for dollar-quote delimiters
+                    if '$$' in line:
+                        if not in_dollar_quote:
+                            # Starting a dollar-quoted string
+                            in_dollar_quote = True
+                            dollar_quote_tag = '$$'
+                        elif dollar_quote_tag and dollar_quote_tag in line:
+                            # Ending a dollar-quoted string
+                            in_dollar_quote = False
+                            dollar_quote_tag = None
+
+                    current_statement.append(line)
+
+                    # If we're not in a dollar-quoted string and line ends with semicolon,
+                    # this is a statement boundary
+                    if not in_dollar_quote and line.rstrip().endswith(';'):
+                        stmt = '\n'.join(current_statement).strip()
+                        if stmt:
+                            statements.append(stmt)
+                        current_statement = []
+
+                # Add any remaining statement
+                if current_statement:
+                    stmt = '\n'.join(current_statement).strip()
+                    if stmt and not stmt.startswith('--'):
+                        statements.append(stmt)
+
+                # Execute each statement with individual error handling
+                for statement in statements:
+                    if statement and not statement.startswith('--'):
+                        try:
+                            await conn.execute(statement)
+                        except Exception as e:
+                            error_msg = str(e).lower()
+                            # Ignore "already exists" for CREATE statements (idempotency)
+                            if any(x in error_msg for x in ["already exists", "duplicate"]):
+                                logger.debug(f"Ignoring idempotent CREATE error: {error_msg}")
+                            # Ignore "does not exist" ONLY for DROP statements (idempotency)
+                            elif "does not exist" in error_msg and statement.strip().upper().startswith("DROP"):
+                                logger.debug(f"Ignoring idempotent DROP error: {error_msg}")
+                            else:
+                                logger.error(f"Failed to execute statement: {statement[:100]}... Error: {error_msg}")
+                                raise
             except Exception as e:
-                # Ignore "already exists" errors for idempotency
-                error_msg = str(e).lower()
-                if any(x in error_msg for x in ["already exists", "duplicate"]):
-                    logger.debug(f"Schema objects already exist for '{self.collection_name}', continuing...")
-                else:
-                    raise
+                # Final catch for any non-idempotent errors
+                logger.error(f"Failed to create schema: {e}")
+                raise
 
         logger.info(f"Schema ready for collection '{self.collection_name}'")
 
