@@ -16,7 +16,7 @@ python-dotenv==1.0.0
 email-validator>=2.0.0
 
 # HTTP client
-httpx==0.26.0
+httpx>=0.27.0,<1.0.0  # Upgraded for MCP dependency compatibility
 
 # Authentication & Encryption
 python-jose[cryptography]==3.3.0

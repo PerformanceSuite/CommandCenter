@@ -20,10 +20,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy only requirements to leverage Docker cache
-COPY requirements.txt .
+# Copy libs directory first (needed for editable installs in requirements.txt)
+COPY libs/ /app/libs/
 
-# Install dependencies
+# Copy only requirements to leverage Docker cache
+COPY backend/requirements.txt .
+
+# Fix the knowledgebeast path for Docker context (../libs -> ./libs)
+RUN sed -i 's|../libs/knowledgebeast|./libs/knowledgebeast|g' requirements.txt
+
+# Install dependencies (including editable knowledgebeast from libs/)
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # -----------------------------------------------------------------------------
@@ -49,8 +55,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed Python packages from the builder stage
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-# Copy the application code
-COPY --chown=appuser:appuser . .
+# Copy libs directory (needed for editable knowledgebeast package)
+COPY --chown=appuser:appuser libs/ /app/libs/
+
+# Copy the application code from backend directory
+COPY --chown=appuser:appuser backend/ .
 
 # Create necessary directories and set permissions
 RUN mkdir -p /app/logs /app/data && \
