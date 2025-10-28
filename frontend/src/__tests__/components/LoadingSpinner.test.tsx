@@ -1,41 +1,60 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '../../tests/utils';
+import { screen, render } from '@testing-library/react';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 
 describe('LoadingSpinner', () => {
-  it('renders with default size', () => {
-    const { container } = render(<LoadingSpinner />);
-    const spinner = container.querySelector('div[class*="animate-spin"]');
+  it('renders with default props', () => {
+    render(<LoadingSpinner />);
 
-    expect(spinner).toBeInTheDocument();
-    expect(spinner).toHaveClass('h-8', 'w-8');
+    const status = screen.getByRole('status');
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveAttribute('aria-live', 'polite');
+    expect(status).toHaveAttribute('aria-busy', 'true');
+
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  it('renders with small size', () => {
-    const { container } = render(<LoadingSpinner size="sm" />);
-    const spinner = container.querySelector('div[class*="animate-spin"]');
+  it('renders with custom label', () => {
+    render(<LoadingSpinner label="Please wait..." />);
 
-    expect(spinner).toHaveClass('h-4', 'w-4');
+    expect(screen.getByText('Please wait...')).toBeInTheDocument();
   });
 
-  it('renders with large size', () => {
-    const { container } = render(<LoadingSpinner size="lg" />);
-    const spinner = container.querySelector('div[class*="animate-spin"]');
+  it('applies small size classes', () => {
+    render(<LoadingSpinner size="sm" />);
 
-    expect(spinner).toHaveClass('h-12', 'w-12');
+    const status = screen.getByRole('status');
+    const spinner = status.querySelector('div[aria-hidden="true"]');
+    expect(spinner).toHaveClass('h-4', 'w-4', 'border-2');
+  });
+
+  it('applies medium size classes (default)', () => {
+    render(<LoadingSpinner size="md" />);
+
+    const status = screen.getByRole('status');
+    const spinner = status.querySelector('div[aria-hidden="true"]');
+    expect(spinner).toHaveClass('h-8', 'w-8', 'border-3');
+  });
+
+  it('applies large size classes', () => {
+    render(<LoadingSpinner size="lg" />);
+
+    const status = screen.getByRole('status');
+    const spinner = status.querySelector('div[aria-hidden="true"]');
+    expect(spinner).toHaveClass('h-12', 'w-12', 'border-4');
   });
 
   it('applies custom className', () => {
-    const { container } = render(<LoadingSpinner className="my-custom-class" />);
-    const wrapper = container.firstChild;
+    render(<LoadingSpinner className="mt-20 custom-class" />);
 
-    expect(wrapper).toHaveClass('my-custom-class');
+    const status = screen.getByRole('status');
+    expect(status).toHaveClass('mt-20', 'custom-class');
   });
 
-  it('has spinner animation class', () => {
-    const { container } = render(<LoadingSpinner />);
-    const spinner = container.querySelector('div[class*="animate-spin"]');
+  it('screen reader text is visually hidden but accessible', () => {
+    render(<LoadingSpinner />);
 
-    expect(spinner).toHaveClass('animate-spin');
+    const srText = screen.getByText('Loading...');
+    expect(srText).toHaveClass('sr-only');
   });
 });

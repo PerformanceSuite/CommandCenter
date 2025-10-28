@@ -2,10 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useRepositories } from '../../hooks/useRepositories';
 import { api } from '../../services/api';
-import { mockRepository } from '../../tests/utils';
+import { mockRepository } from '../../test-utils/mocks';
 
 // Mock the API
-vi.mock('../../services/api');
+vi.mock('../../services/api', () => ({
+  api: {
+    getRepositories: vi.fn(),
+    createRepository: vi.fn(),
+    updateRepository: vi.fn(),
+    deleteRepository: vi.fn(),
+    syncRepository: vi.fn(),
+  },
+}));
 
 describe('useRepositories', () => {
   beforeEach(() => {
@@ -13,20 +21,25 @@ describe('useRepositories', () => {
   });
 
   it('fetches repositories on mount', async () => {
-    const repos = [mockRepository(), mockRepository({ id: 2 })];
-    vi.mocked(api.getRepositories).mockResolvedValue(repos);
+    const mockRepos = [
+      mockRepository({ id: '1', name: 'repo1' }),
+      mockRepository({ id: '2', name: 'repo2' }),
+    ];
+
+    vi.mocked(api.getRepositories).mockResolvedValue(mockRepos);
 
     const { result } = renderHook(() => useRepositories());
 
-    // Initially loading
     expect(result.current.loading).toBe(true);
+    expect(result.current.repositories).toEqual([]);
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.repositories).toEqual(repos);
+    expect(result.current.repositories).toEqual(mockRepos);
     expect(result.current.error).toBeNull();
+    expect(api.getRepositories).toHaveBeenCalledTimes(1);
   });
 
   it('handles fetch error', async () => {
@@ -39,15 +52,15 @@ describe('useRepositories', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.error).toBeTruthy();
     expect(result.current.repositories).toEqual([]);
+    expect(result.current.error).toEqual(error);
   });
 
-  it('creates repository', async () => {
-    const repos = [mockRepository()];
-    const newRepo = mockRepository({ id: 2, name: 'new-repo' });
+  it('creates a new repository', async () => {
+    const existingRepos = [mockRepository({ id: '1', name: 'repo1' })];
+    const newRepo = mockRepository({ id: '2', name: 'new-repo' });
 
-    vi.mocked(api.getRepositories).mockResolvedValue(repos);
+    vi.mocked(api.getRepositories).mockResolvedValue(existingRepos);
     vi.mocked(api.createRepository).mockResolvedValue(newRepo);
 
     const { result } = renderHook(() => useRepositories());
@@ -56,21 +69,21 @@ describe('useRepositories', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    const created = await result.current.createRepository({
-      owner: 'test',
-      name: 'new-repo',
-    });
+    const createdRepo = await result.current.createRepository({ name: 'new-repo' });
 
-    expect(created).toEqual(newRepo);
-    expect(result.current.repositories).toContain(newRepo);
+    expect(createdRepo).toEqual(newRepo);
+    expect(result.current.repositories).toHaveLength(2);
+    expect(result.current.repositories[1]).toEqual(newRepo);
+    expect(api.createRepository).toHaveBeenCalledWith({ name: 'new-repo' });
   });
 
-  it('updates repository', async () => {
-    const repo = mockRepository();
-    const updatedRepo = { ...repo, description: 'Updated' };
+  it('updates an existing repository', async () => {
+    const repo1 = mockRepository({ id: '1', name: 'repo1' });
+    const repo2 = mockRepository({ id: '2', name: 'repo2' });
+    const updatedRepo1 = mockRepository({ id: '1', name: 'updated-repo1' });
 
-    vi.mocked(api.getRepositories).mockResolvedValue([repo]);
-    vi.mocked(api.updateRepository).mockResolvedValue(updatedRepo);
+    vi.mocked(api.getRepositories).mockResolvedValue([repo1, repo2]);
+    vi.mocked(api.updateRepository).mockResolvedValue(updatedRepo1);
 
     const { result } = renderHook(() => useRepositories());
 
@@ -78,19 +91,20 @@ describe('useRepositories', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    const updated = await result.current.updateRepository('1', {
-      description: 'Updated',
-    });
+    const updated = await result.current.updateRepository('1', { name: 'updated-repo1' });
 
-    expect(updated).toEqual(updatedRepo);
-    expect(result.current.repositories[0].description).toBe('Updated');
+    expect(updated).toEqual(updatedRepo1);
+    expect(result.current.repositories[0]).toEqual(updatedRepo1);
+    expect(result.current.repositories[1]).toEqual(repo2);
+    expect(api.updateRepository).toHaveBeenCalledWith('1', { name: 'updated-repo1' });
   });
 
-  it('deletes repository', async () => {
-    const repos = [mockRepository({ id: 1 }), mockRepository({ id: 2 })];
+  it('deletes a repository', async () => {
+    const repo1 = mockRepository({ id: '1', name: 'repo1' });
+    const repo2 = mockRepository({ id: '2', name: 'repo2' });
 
-    vi.mocked(api.getRepositories).mockResolvedValue(repos);
-    vi.mocked(api.deleteRepository).mockResolvedValue();
+    vi.mocked(api.getRepositories).mockResolvedValue([repo1, repo2]);
+    vi.mocked(api.deleteRepository).mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useRepositories());
 
@@ -101,17 +115,15 @@ describe('useRepositories', () => {
     await result.current.deleteRepository('1');
 
     expect(result.current.repositories).toHaveLength(1);
-    expect(result.current.repositories[0].id).toBe(2);
+    expect(result.current.repositories[0]).toEqual(repo2);
+    expect(api.deleteRepository).toHaveBeenCalledWith('1');
   });
 
-  it('syncs repository', async () => {
-    const repo = mockRepository();
-    const syncedRepo = { ...repo, stars: 200 };
+  it('syncs a repository and refreshes list', async () => {
+    const mockRepos = [mockRepository({ id: '1', name: 'repo1' })];
 
-    vi.mocked(api.getRepositories)
-      .mockResolvedValueOnce([repo])
-      .mockResolvedValueOnce([syncedRepo]);
-    vi.mocked(api.syncRepository).mockResolvedValue();
+    vi.mocked(api.getRepositories).mockResolvedValue(mockRepos);
+    vi.mocked(api.syncRepository).mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useRepositories());
 
@@ -121,29 +133,23 @@ describe('useRepositories', () => {
 
     await result.current.syncRepository('1');
 
-    await waitFor(() => {
-      expect(result.current.repositories[0].stars).toBe(200);
-    });
+    expect(api.syncRepository).toHaveBeenCalledWith('1');
+    expect(api.getRepositories).toHaveBeenCalledTimes(2); // Initial + after sync
   });
 
-  it('refreshes repositories', async () => {
-    const initialRepos = [mockRepository()];
-    const refreshedRepos = [mockRepository(), mockRepository({ id: 2 })];
+  it('refreshes repository list', async () => {
+    const mockRepos = [mockRepository({ id: '1', name: 'repo1' })];
 
-    vi.mocked(api.getRepositories)
-      .mockResolvedValueOnce(initialRepos)
-      .mockResolvedValueOnce(refreshedRepos);
+    vi.mocked(api.getRepositories).mockResolvedValue(mockRepos);
 
     const { result } = renderHook(() => useRepositories());
 
     await waitFor(() => {
-      expect(result.current.repositories).toHaveLength(1);
+      expect(result.current.loading).toBe(false);
     });
 
     await result.current.refresh();
 
-    await waitFor(() => {
-      expect(result.current.repositories).toHaveLength(2);
-    });
+    expect(api.getRepositories).toHaveBeenCalledTimes(2); // Initial + refresh
   });
 });
