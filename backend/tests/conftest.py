@@ -177,3 +177,38 @@ def mock_rag_service(mocker):
         "sources": [],
     }
     return mock
+
+
+# Project fixture
+@pytest.fixture
+async def test_project(db_session: AsyncSession):
+    """Create a test project"""
+    from backend.tests.utils.factories import ProjectFactory
+
+    project = await ProjectFactory.create(
+        db=db_session, name="Test Project", owner="testowner"
+    )
+    return project
+
+
+# User fixture
+@pytest.fixture
+async def test_user(db_session: AsyncSession):
+    """Create a test user"""
+    from backend.tests.utils.factories import UserFactory
+
+    user = await UserFactory.create(
+        db=db_session, email="test@example.com", password="testpassword123"
+    )
+    return user
+
+
+# Authenticated client fixture
+@pytest.fixture
+async def authenticated_client(async_client: AsyncClient, test_user, db_session: AsyncSession):
+    """Client with authentication headers"""
+    from app.auth.jwt import create_token_pair
+
+    tokens = create_token_pair(test_user.id, test_user.email)
+    async_client.headers["Authorization"] = f"Bearer {tokens['access_token']}"
+    return async_client
