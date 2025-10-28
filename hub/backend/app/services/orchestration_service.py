@@ -1,75 +1,43 @@
 """
-Orchestration service - Start/stop CommandCenter instances via docker-compose
+Orchestration service - Start/stop CommandCenter instances via Dagger SDK
 """
 
-import json
 import logging
-import os
-import socket
-import subprocess
-import tempfile
-from datetime import datetime
+import secrets
+from datetime import datetime, timezone
 
-import yaml
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models import Project
+from app.dagger_modules.commandcenter import CommandCenterStack, CommandCenterConfig
 
 logger = logging.getLogger(__name__)
 
 
 class OrchestrationService:
-    """Service for orchestrating docker-compose operations"""
-
-    # Path mapping: container path -> host path
-    CONTAINER_PROJECTS_PATH = "/projects"
-    HOST_PROJECTS_PATH = os.getenv("PROJECTS_ROOT", os.path.expanduser("~/Projects"))
-
-    # Docker Compose service configuration
-    # Essential services that must be started for project functionality
-    ESSENTIAL_SERVICES = ["backend", "frontend", "postgres", "redis"]
-    # Optional services that may conflict with ports or not be required
-    # Flower: Port 5555 (Celery monitoring UI)
-    # Prometheus: Port 9090 (Metrics collection)
-    # Celery worker: Can be started separately if needed
-    EXCLUDED_SERVICES = ["flower", "prometheus", "celery"]
+    """Service for orchestrating Dagger-based CommandCenter stacks"""
 
     def __init__(self, db: AsyncSession):
         self.db = db
-
-    def _get_host_path(self, container_path: str) -> str:
-        """Convert container path to host path for Docker volume mounts"""
-        if container_path.startswith(self.CONTAINER_PROJECTS_PATH):
-            return container_path.replace(
-                self.CONTAINER_PROJECTS_PATH,
-                self.HOST_PROJECTS_PATH,
-                1
-            )
-        return container_path
+        self._active_stacks: dict[int, CommandCenterStack] = {}
 
     def _check_port_available(self, port: int) -> tuple[bool, str]:
-        """
-        Check if a port is available for use.
-
-        Returns:
-            tuple: (is_available, error_message)
-        """
+        """Check if a port is available (same as before)"""
+        import socket
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(1)
                 result = sock.connect_ex(('localhost', port))
                 if result == 0:
-                    # Port is in use
                     return False, f"Port {port} is already in use"
                 return True, ""
         except Exception as e:
             logger.warning(f"Error checking port {port}: {e}")
-            # If we can't check, assume it's available
             return True, ""
 
     async def start_project(self, project_id: int) -> dict:
-        """Start CommandCenter instance"""
+        """Start CommandCenter instance using Dagger"""
         project = await self._get_project(project_id)
 
         if project.status == "running":
@@ -80,7 +48,7 @@ class OrchestrationService:
                 "status": "running",
             }
 
-        # Check for port conflicts before starting
+        # Check for port conflicts
         ports_to_check = [
             ("Frontend", project.frontend_port),
             ("Backend", project.backend_port),
@@ -93,125 +61,50 @@ class OrchestrationService:
             is_available, error = self._check_port_available(port)
             if not is_available:
                 port_conflicts.append(f"{service_name} port {port}")
-                logger.warning(f"Port conflict detected: {error}")
 
         if port_conflicts:
             error_msg = (
                 f"Cannot start project: The following ports are already in use: "
-                f"{', '.join(port_conflicts)}. "
-                f"Please stop the conflicting services or change the project's port configuration."
+                f"{', '.join(port_conflicts)}"
             )
-            logger.error(f"Failed to start project {project_id}: {error_msg}")
             raise RuntimeError(error_msg)
 
-        # Update status to starting
+        # Update status
         project.status = "starting"
         await self.db.commit()
 
         try:
-            # Convert container path to host path for Docker volumes
-            host_cc_path = self._get_host_path(project.cc_path)
-            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+            # Create Dagger configuration
+            config = CommandCenterConfig(
+                project_name=project.name,
+                project_path=project.path,  # Direct path to project folder
+                backend_port=project.backend_port,
+                frontend_port=project.frontend_port,
+                postgres_port=project.postgres_port,
+                redis_port=project.redis_port,
+                db_password=secrets.token_urlsafe(32),
+                secret_key=secrets.token_hex(32),
+            )
 
-            # Create a temporary compose file with absolute host paths
-            # Read and validate docker-compose.yml
-            with open(compose_file, 'r') as f:
-                compose_config = yaml.safe_load(f)
-
-            if not isinstance(compose_config, dict):
-                raise ValueError(f"Invalid docker-compose.yml: expected dict, got {type(compose_config)}")
-
-            # Replace relative volume paths with absolute host paths
-            # Only convert relative bind mounts (./path), not named volumes
-            volumes_converted = 0
-            for service_name, service_config in compose_config.get('services', {}).items():
-                if 'volumes' in service_config:
-                    new_volumes = []
-                    for volume in service_config['volumes']:
-                        if isinstance(volume, str) and ':' in volume:
-                            source, target_part = volume.split(':', 1)
-                            # Only convert relative bind mounts, skip named volumes and absolute paths
-                            if source.startswith('./'):
-                                # Convert to absolute path in container space first
-                                container_abs_path = os.path.join(project.cc_path, source[2:])
-                                # Then convert container path to host path
-                                source = self._get_host_path(container_abs_path)
-                                volumes_converted += 1
-                                logger.debug(f"Converted relative volume path for {service_name}: {volume} -> {source}:{target_part}")
-                                new_volumes.append(f"{source}:{target_part}")
-                            else:
-                                # Keep named volumes, absolute paths, and other formats as-is
-                                new_volumes.append(volume)
-                        else:
-                            # Keep dict-format volumes and other types as-is
-                            new_volumes.append(volume)
-                    service_config['volumes'] = new_volumes
-
-            logger.info(f"Converted {volumes_converted} relative volume paths to absolute paths")
-
-            # Write temporary compose file with secure permissions
-            temp_compose_path = None
+            # Start Dagger stack - manage lifecycle manually to keep stack alive
+            stack = CommandCenterStack(config)
+            await stack.__aenter__()
             try:
-                temp_compose = tempfile.NamedTemporaryFile(
-                    mode='w',
-                    suffix='.yml',
-                    delete=False,
-                    dir=project.cc_path,
-                    prefix='.compose-',
-                    encoding='utf-8'
-                )
-                yaml.dump(compose_config, temp_compose, default_flow_style=False)
-                temp_compose_path = temp_compose.name
-                temp_compose.close()
-
-                # Set secure permissions (owner read/write only)
-                os.chmod(temp_compose_path, 0o600)
-
-                # Set environment for docker-compose
-                env = os.environ.copy()
-
-                # Run docker-compose with temporary file
-                env_file = os.path.join(project.cc_path, ".env")
-                cmd = ["docker-compose", "-f", temp_compose_path, "--env-file", env_file, "up", "-d"] + self.ESSENTIAL_SERVICES
-                logger.info(f"Starting project {project_id}: {' '.join(cmd)}")
-                logger.info(f"Working directory: {project.cc_path}")
-
-                result = subprocess.run(
-                    cmd,
-                    cwd=project.cc_path,
-                    capture_output=True,
-                    text=True,
-                    timeout=120,  # 2 minute timeout
-                    env=env,
-                )
-
-                logger.info(f"Docker-compose stdout: {result.stdout}")
-                if result.stderr:
-                    logger.warning(f"Docker-compose stderr: {result.stderr}")
-
-            finally:
-                # Clean up temporary file
-                if temp_compose_path and os.path.exists(temp_compose_path):
-                    try:
-                        os.unlink(temp_compose_path)
-                        logger.debug(f"Cleaned up temporary compose file: {temp_compose_path}")
-                    except OSError as e:
-                        logger.warning(f"Failed to cleanup temp compose file {temp_compose_path}: {e}")
-
-            if result.returncode != 0:
-                project.status = "error"
-                await self.db.commit()
-                logger.error(f"Failed to start project {project_id}: {result.stderr}")
-                raise RuntimeError(f"Failed to start: {result.stderr}")
+                result = await stack.start()
+                self._active_stacks[project_id] = stack
+                # Keep stack alive - don't call __aexit__ yet
+            except Exception as e:
+                await stack.__aexit__(type(e), e, e.__traceback__)
+                raise
 
             # Update status
             project.status = "running"
-            project.last_started = datetime.utcnow()
+            project.last_started = datetime.now(timezone.utc)
             await self.db.commit()
 
             return {
                 "success": True,
-                "message": "Project started successfully",
+                "message": "Project started successfully via Dagger",
                 "project_id": project_id,
                 "status": "running",
             }
@@ -219,7 +112,7 @@ class OrchestrationService:
         except Exception as e:
             project.status = "error"
             await self.db.commit()
-            raise RuntimeError(f"Failed to start project: {str(e)}")
+            raise RuntimeError(f"Failed to start project with Dagger: {str(e)}")
 
     async def stop_project(self, project_id: int) -> dict:
         """Stop CommandCenter instance"""
@@ -233,32 +126,19 @@ class OrchestrationService:
                 "status": "stopped",
             }
 
-        # Update status
         project.status = "stopping"
         await self.db.commit()
 
         try:
-            # Convert container path to host path for Docker volumes
-            host_cc_path = self._get_host_path(project.cc_path)
-            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
+            # Stop Dagger stack
+            if project_id in self._active_stacks:
+                stack = self._active_stacks[project_id]
+                await stack.stop()
+                await stack.__aexit__(None, None, None)  # Properly close stack
+                del self._active_stacks[project_id]
 
-            # Run docker-compose down with explicit file path
-            result = subprocess.run(
-                ["docker-compose", "-f", compose_file, "down"],
-                cwd=project.cc_path,
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-
-            if result.returncode != 0:
-                project.status = "error"
-                await self.db.commit()
-                raise RuntimeError(f"Failed to stop: {result.stderr}")
-
-            # Update status
             project.status = "stopped"
-            project.last_stopped = datetime.utcnow()
+            project.last_stopped = datetime.now(timezone.utc)
             await self.db.commit()
 
             return {
@@ -275,63 +155,23 @@ class OrchestrationService:
 
     async def restart_project(self, project_id: int) -> dict:
         """Restart CommandCenter instance"""
-        # Stop then start
         await self.stop_project(project_id)
         return await self.start_project(project_id)
 
     async def get_project_status(self, project_id: int) -> dict:
-        """Get real-time status from docker-compose"""
+        """Get real-time status from Dagger"""
         project = await self._get_project(project_id)
 
         try:
-            # Convert container path to host path for Docker volumes
-            host_cc_path = self._get_host_path(project.cc_path)
-            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
-
-            result = subprocess.run(
-                ["docker-compose", "-f", compose_file, "ps", "--format", "json"],
-                cwd=project.cc_path,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-
-            # Parse container status
-            containers = []
-            if result.returncode == 0 and result.stdout:
-                for line in result.stdout.strip().split("\n"):
-                    if line:
-                        containers.append(json.loads(line))
-
-            running_count = sum(1 for c in containers if "running" in c.get("State", "").lower())
-            total_count = len(containers)
-
-            # Determine health
-            if running_count == 0:
-                health = "stopped"
-                status = "stopped"
-            elif running_count == total_count and total_count > 0:
-                health = "healthy"
-                status = "running"
+            if project_id in self._active_stacks:
+                stack = self._active_stacks[project_id]
+                return await stack.status()
             else:
-                health = "unhealthy"
-                status = "running"
-
-            # Update project if changed
-            if project.status != status or project.health != health:
-                project.status = status
-                project.health = health
-                await self.db.commit()
-
-            return {
-                "project_id": project_id,
-                "status": status,
-                "health": health,
-                "containers": containers,
-                "running_count": running_count,
-                "total_count": total_count,
-            }
-
+                return {
+                    "project_id": project_id,
+                    "status": "stopped",
+                    "health": "stopped",
+                }
         except Exception as e:
             return {
                 "project_id": project_id,
@@ -341,30 +181,13 @@ class OrchestrationService:
             }
 
     async def get_logs(self, project_id: int, tail: int = 100) -> dict:
-        """Get docker-compose logs"""
-        project = await self._get_project(project_id)
-
-        try:
-            # Convert container path to host path for Docker volumes
-            host_cc_path = self._get_host_path(project.cc_path)
-            compose_file = os.path.join(project.cc_path, "docker-compose.yml")
-
-            result = subprocess.run(
-                ["docker-compose", "-f", compose_file, "logs", "--tail", str(tail)],
-                cwd=project.cc_path,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-
-            return {
-                "project_id": project_id,
-                "logs": result.stdout,
-                "errors": result.stderr,
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"Failed to get logs: {str(e)}")
+        """Get container logs (to be implemented with Dagger)"""
+        # Placeholder for now
+        return {
+            "project_id": project_id,
+            "logs": "Dagger log retrieval not yet implemented",
+            "errors": "",
+        }
 
     async def _get_project(self, project_id: int) -> Project:
         """Get project or raise error"""
