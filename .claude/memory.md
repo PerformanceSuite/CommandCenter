@@ -324,3 +324,32 @@ This file tracks project history, decisions, and context across sessions.
 For older session history, see: `.claude/archives/memory_archive_2025-10-28.md`
 
 Last rotation: 2025-10-28 12:42 PST (archived 527 lines, kept last 500)
+
+## Session: 2025-10-29 16:11 PDT
+**Duration**: ~1 hour
+**Branch**: main
+
+### Work Completed:
+- Fixed 3 ESLint errors blocking CI (unused imports, variables)
+- Reduced ESLint warnings from 85 → 73 (12 fixed in api.ts)
+- Implemented type safety: Created DashboardStats, DashboardActivity, KnowledgeQueryResponse types
+- Fixed api.ts completely (11 'any' types → 0)
+- Completed all 5 codebase TODOs:
+  - KnowledgeView.tsx: Added navigation to technology radar
+  - TechnologyForm.tsx: Implemented dependencies UI (key-value editor)
+  - research_agent_orchestrator.py: Implemented AI-powered summary generation
+  - technology_service.py: Added security warnings and documentation for project_id
+- Investigated .venv git history (already cleaned up, no action needed)
+- Commits: 730332c, b4ad662, 44addaf, 8972dfe
+
+### Key Decisions:
+- Used router's ai_router for cost-effective AI summaries (economy tier)
+- Documented project_id security issue with FIXME and logging instead of implementing auth (blocked)
+- Created dependencies editor UI using key-value pairs with add/remove functionality
+
+### Next Steps:
+1. Fix remaining 73 'any' type warnings (4-6 hours)
+   - Focus: api.test.ts (10), ResearchSummary.test.tsx (8), ResearchTaskList.test.tsx (6)
+   - Goal: Reduce max-warnings from 100 → 0 in package.json
+2. Cleanup merged Week 3 branches (testing/week3-pyramid, testing/week3-cicd, testing/week3-docs)
+
