@@ -96,19 +96,39 @@ class TechnologyService:
 
         Args:
             technology_data: Technology creation data
-            project_id: Project ID for isolation
-                       TODO (Rec 2.4): Replace default with authenticated user's project_id
-                       Once auth middleware is implemented, make this required and validate
-                       against user's permissions to prevent cross-project data creation
+            project_id: Project ID for isolation (default: 1)
 
         Returns:
             Created technology
 
         Raises:
             HTTPException: If technology with same title exists or invalid project_id
+
+        Security Warning:
+            FIXME: This method currently defaults to project_id=1 which bypasses
+            multi-project isolation. This is a known security issue tracked in Issue #62.
+
+            Required changes (blocked by missing auth infrastructure):
+            1. Remove default value - make project_id required
+            2. Implement auth middleware to extract user context
+            3. Get project_id from authenticated user's permissions
+            4. Validate user has access to the specified project_id
+            5. Update router to pass project_id from auth context
+
+            Until auth is implemented, all technologies are created in project_id=1.
+            See docs/DATA_ISOLATION.md for multi-project architecture details.
         """
-        # TODO (Rec 2.4): Validate project_id against authenticated user's permissions
-        # For now, require explicit project_id (no default)
+        # Log security warning when using default project_id
+        import logging
+        logger = logging.getLogger(__name__)
+
+        if project_id == 1:
+            logger.warning(
+                "Creating technology with default project_id=1. "
+                "Multi-project isolation not enforced until auth middleware is implemented. "
+                "See Issue #62 for tracking."
+            )
+
         if project_id <= 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
