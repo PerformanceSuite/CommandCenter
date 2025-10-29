@@ -157,3 +157,85 @@ async def test_user_cannot_read_other_user_knowledge_entries(
     assert response.status_code == 200
     entry_ids = [e["id"] for e in response.json()]
     assert knowledge_b.id not in entry_ids, "User A should not see User B's knowledge"
+
+
+@pytest.mark.asyncio
+async def test_technology_list_filtered_by_project(
+    user_a, user_b, client, auth_headers_factory, db_session
+):
+    """Technology list is filtered by user's project_id."""
+    # Create technologies for both users
+    tech_a1 = await TechnologyFactory.create(
+        db_session, title="Tech A1", project_id=user_a.project_id
+    )
+    tech_a2 = await TechnologyFactory.create(
+        db_session, title="Tech A2", project_id=user_a.project_id
+    )
+    tech_b1 = await TechnologyFactory.create(
+        db_session, title="Tech B1", project_id=user_b.project_id
+    )
+    await db_session.commit()
+
+    # User A queries technologies
+    headers = auth_headers_factory(user_a)
+    response = await client.get("/api/v1/technologies", headers=headers)
+
+    assert response.status_code == 200
+    tech_ids = [t["id"] for t in response.json()]
+
+    # Should only see User A's technologies
+    assert tech_a1.id in tech_ids
+    assert tech_a2.id in tech_ids
+    assert tech_b1.id not in tech_ids
+
+
+@pytest.mark.asyncio
+async def test_repository_list_filtered_by_project(
+    user_a, user_b, client, auth_headers_factory, db_session
+):
+    """Repository list is filtered by user's project_id."""
+    # Create repositories for both users
+    repo_a = await RepositoryFactory.create(
+        db_session, owner="user-a", name="repo-a", project_id=user_a.project_id
+    )
+    repo_b = await RepositoryFactory.create(
+        db_session, owner="user-b", name="repo-b", project_id=user_b.project_id
+    )
+    await db_session.commit()
+
+    # User A queries repositories
+    headers = auth_headers_factory(user_a)
+    response = await client.get("/api/v1/repositories", headers=headers)
+
+    assert response.status_code == 200
+    repo_ids = [r["id"] for r in response.json()]
+
+    # Should only see User A's repositories
+    assert repo_a.id in repo_ids
+    assert repo_b.id not in repo_ids
+
+
+@pytest.mark.asyncio
+async def test_research_list_filtered_by_project(
+    user_a, user_b, client, auth_headers_factory, db_session
+):
+    """Research task list is filtered by user's project_id."""
+    # Create research tasks for both users
+    research_a = await ResearchTaskFactory.create(
+        db_session, title="Research A", project_id=user_a.project_id
+    )
+    research_b = await ResearchTaskFactory.create(
+        db_session, title="Research B", project_id=user_b.project_id
+    )
+    await db_session.commit()
+
+    # User A queries research tasks
+    headers = auth_headers_factory(user_a)
+    response = await client.get("/api/v1/research", headers=headers)
+
+    assert response.status_code == 200
+    research_ids = [r["id"] for r in response.json()]
+
+    # Should only see User A's research
+    assert research_a.id in research_ids
+    assert research_b.id not in research_ids
