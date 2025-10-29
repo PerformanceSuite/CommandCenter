@@ -57,6 +57,89 @@ alembic upgrade head
 
 ---
 
+## Test Layout
+
+Understanding where tests live and how they're organized.
+
+### Backend Test Structure
+
+```
+backend/tests/
+├── unit/                    # Fast, isolated tests (no external dependencies)
+│   ├── models/             # Database model tests
+│   ├── services/           # Service layer tests (mocked)
+│   ├── routers/            # API router tests (mocked)
+│   └── utils/              # Utility function tests
+├── integration/             # Tests with database/external services
+│   ├── api/                # Full API endpoint tests
+│   ├── database/           # Database integration tests
+│   └── services/           # Service tests with real dependencies
+├── security/                # Security-focused tests
+│   ├── auth/               # Authentication tests
+│   ├── encryption/         # Crypto and token tests
+│   └── input_validation/   # Input sanitization tests
+├── performance/             # Performance and load tests
+│   ├── api/                # API performance benchmarks
+│   └── database/           # Database query performance
+├── conftest.py             # Shared pytest fixtures
+└── utils.py                # Test helper functions
+```
+
+### Frontend Test Structure
+
+```
+frontend/src/__tests__/
+├── components/             # React component tests
+│   ├── Dashboard/         # Dashboard component tests
+│   ├── TechnologyRadar/   # Radar component tests
+│   └── common/            # Shared component tests
+├── hooks/                  # Custom React hook tests
+│   ├── useKnowledge.test.ts
+│   └── useResearch.test.tsx
+├── utils/                  # Utility function tests
+│   ├── dataTransform.test.ts
+│   └── dateFormatting.test.ts
+├── integration/            # Integration tests
+│   ├── ComponentApi.test.tsx
+│   └── ContextProviders.test.tsx
+└── setup.ts                # Test environment setup
+```
+
+### E2E Test Structure
+
+```
+e2e/
+├── tests/                  # Playwright E2E tests
+│   ├── critical-flows.spec.ts    # Core user journeys
+│   ├── api-operations.spec.ts    # API integration tests
+│   └── auth-flows.spec.ts        # Authentication flows
+├── fixtures/               # Test fixtures and page objects
+│   ├── base.ts            # Base test setup
+│   └── pages/             # Page object models
+└── playwright.config.ts    # Playwright configuration
+```
+
+### Test File Naming
+
+- **Unit tests**: `test_<module>.py` or `<component>.test.ts`
+- **Integration tests**: `test_<feature>_integration.py`
+- **E2E tests**: `<feature>.spec.ts`
+
+### Test Markers (Backend)
+
+Tests use pytest markers for categorization:
+
+```python
+@pytest.mark.unit          # Fast, no external dependencies
+@pytest.mark.integration   # Requires database/services
+@pytest.mark.security      # Security-focused tests
+@pytest.mark.performance   # Performance tests
+@pytest.mark.e2e           # End-to-end tests
+@pytest.mark.slow          # Long-running tests
+```
+
+---
+
 ## Running Tests
 
 ### Backend Tests
@@ -135,18 +218,77 @@ npx playwright test --project=chromium
 npx playwright show-report
 ```
 
-### Docker Tests
+### Running Tests in Docker (Recommended)
+
+**Why Docker?** Tests in Docker ensure consistent environment, proper isolation, and match production setup.
+
+#### Quick Commands
 
 ```bash
-# Run all tests in Docker
-make test-docker
+# Run all tests (backend + frontend + e2e)
+make test
 
-# Run backend tests in Docker
-make test-docker-backend
+# Run backend tests only
+make test-backend
 
-# Run frontend tests in Docker
-make test-docker-frontend
+# Run frontend tests only
+make test-frontend
+
+# Run E2E tests only
+make test-e2e
 ```
+
+#### Detailed Docker Test Commands
+
+```bash
+# Backend tests with different markers
+docker-compose exec backend pytest tests/unit/              # Unit tests only
+docker-compose exec backend pytest tests/integration/       # Integration tests only
+docker-compose exec backend pytest -m "not slow"           # Skip slow tests
+docker-compose exec backend pytest --durations=10          # Show slowest tests
+
+# Backend tests with coverage
+docker-compose exec backend pytest --cov=app --cov-report=html
+# View coverage report at backend/htmlcov/index.html
+
+# Frontend tests in Docker
+docker-compose exec frontend npm test                      # Run tests
+docker-compose exec frontend npm test -- --coverage       # With coverage
+docker-compose exec frontend npm run type-check           # TypeScript check
+
+# E2E tests in Docker (requires services running)
+docker-compose up -d                                       # Start all services
+npx playwright test                                         # Run E2E tests
+docker-compose down                                        # Clean up
+
+# Run tests during development
+docker-compose up -d                                       # Start services
+docker-compose exec backend pytest --watch                # Watch mode (if configured)
+```
+
+#### Docker Test Workflow
+
+```bash
+# 1. Start services
+make start
+
+# 2. Run tests
+make test-backend
+
+# 3. View logs if tests fail
+make logs-backend
+
+# 4. Stop services when done
+make stop
+```
+
+#### Advantages of Docker Testing
+
+- **Consistent environment**: Same Python/Node versions as production
+- **Database included**: PostgreSQL + Redis automatically available
+- **Isolated**: No conflicts with local dependencies
+- **CI/CD match**: Tests run same way locally and in GitHub Actions
+- **Easy cleanup**: `make clean` removes all test data
 
 ---
 
