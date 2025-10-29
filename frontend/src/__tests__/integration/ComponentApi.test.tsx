@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TechnologyCard } from '../../components/TechnologyRadar/TechnologyCard';
 import type { Technology } from '../../types/technology';
 
-function createWrapper() {
+function _createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {

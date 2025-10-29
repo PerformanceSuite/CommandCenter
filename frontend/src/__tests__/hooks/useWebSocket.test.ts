@@ -33,7 +33,7 @@ class MockWebSocket {
     this.listeners.get(event)?.delete(handler);
   }
 
-  send(data: string) {
+  send(_data: string) {
     if (this.readyState !== MockWebSocket.OPEN) {
       throw new Error('WebSocket is not open');
     }
@@ -53,7 +53,7 @@ class MockWebSocket {
   }
 
   // Helper method to simulate message
-  simulateMessage(data: any) {
+  simulateMessage(data: unknown) {
     const messageEvent = new MessageEvent('message', {
       data: JSON.stringify(data),
     });
@@ -72,7 +72,7 @@ describe('useWebSocket', () => {
   const originalWebSocket = global.WebSocket;
 
   beforeEach(() => {
-    // @ts-ignore
+    // @ts-expect-error - Mocking global WebSocket for tests
     global.WebSocket = vi.fn((url: string) => {
       mockWebSocket = new MockWebSocket(url);
       return mockWebSocket;
