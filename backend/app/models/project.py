@@ -83,10 +83,10 @@ class Project(Base):
         """Validate project name is not empty and not too long."""
         if not name or not name.strip():
             raise ValueError("Project name cannot be empty")
-        # Truncate to max length if too long
+        # Raise error if name is too long
         max_length = 255
         if len(name) > max_length:
-            return name[:max_length]
+            raise ValueError(f"Project name cannot exceed {max_length} characters")
         return name
 
     def __repr__(self) -> str:
