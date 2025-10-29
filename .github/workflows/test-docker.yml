@@ -20,32 +20,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Enhanced Docker layer caching with GitHub Actions cache
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-backend-${{ hashFiles('backend/requirements.txt', 'backend/Dockerfile.test') }}
+          key: ${{ runner.os }}-buildx-backend-${{ hashFiles('backend/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-buildx-backend-
 
-      # Build with BuildKit cache integration
-      - name: Build backend test image with cache
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile.test
-          push: false
-          tags: commandcenter-test-backend:latest
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          load: true
-
-      # Move cache to avoid growing indefinitely
-      - name: Move Docker cache
+      - name: Build backend test image
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          docker-compose -f docker-compose.test.yml build test-backend
 
       - name: Start test dependencies
         run: |
@@ -79,37 +64,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Enhanced Docker layer caching for frontend
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache-frontend
-          key: ${{ runner.os }}-buildx-frontend-${{ hashFiles('frontend/package-lock.json', 'frontend/Dockerfile') }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-frontend-
-
-      # Build with BuildKit cache integration
-      - name: Build frontend test image with cache
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          target: test
-          push: false
-          tags: commandcenter-test-frontend:latest
-          cache-from: type=local,src=/tmp/.buildx-cache-frontend
-          cache-to: type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max
-          load: true
-
-      # Move cache to avoid growing indefinitely
-      - name: Move Docker cache
-        run: |
-          rm -rf /tmp/.buildx-cache-frontend
-          mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
-
-      - name: Run frontend tests
+      - name: Build and run frontend tests
         run: |
           docker-compose -f docker-compose.test.yml up \
+            --build \
             --abort-on-container-exit \
             --exit-code-from test-frontend \
             test-frontend

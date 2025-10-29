@@ -5,7 +5,8 @@ User model for authentication and authorization
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+from email_validator import validate_email, EmailNotValidError
 
 from app.database import Base
 
@@ -42,6 +43,16 @@ class User(Base):
     jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")
     schedules: Mapped[list["Schedule"]] = relationship("Schedule", back_populates="user")
     integrations: Mapped[list["Integration"]] = relationship("Integration", back_populates="user")
+
+    @validates("email")
+    def validate_email_format(self, key: str, email: str) -> str:
+        """Validate email format."""
+        try:
+            # Validate and normalize the email
+            validated = validate_email(email)
+            return validated.normalized
+        except EmailNotValidError as e:
+            raise ValueError(f"Invalid email address: {e}")
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email='{self.email}')>"
