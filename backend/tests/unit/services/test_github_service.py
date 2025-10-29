@@ -248,3 +248,37 @@ class TestGitHubService:
             await service.list_user_repos(username="nonexistent")
 
         assert "Failed to list repositories" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_github_api_error_handling(self, mocker):
+        """GitHubService handles API errors gracefully."""
+        mock_github = mocker.MagicMock()
+        mock_github.get_repo.side_effect = GithubException(
+            status=403,
+            data={"message": "Rate limit exceeded"}
+        )
+
+        service = GitHubService(access_token="test_token")
+        service.github = mock_github
+
+        with pytest.raises(Exception) as exc_info:
+            await service.get_repository_info("owner", "repo")
+
+        assert "Failed to get repository info" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_github_search_error_handling(self, mocker):
+        """GitHubService handles search errors gracefully."""
+        mock_github = mocker.MagicMock()
+        mock_github.search_repositories.side_effect = GithubException(
+            status=422,
+            data={"message": "Validation failed"}
+        )
+
+        service = GitHubService(access_token="test_token")
+        service.github = mock_github
+
+        with pytest.raises(Exception) as exc_info:
+            await service.search_repositories("invalid query")
+
+        assert "Failed to search repositories" in str(exc_info.value)

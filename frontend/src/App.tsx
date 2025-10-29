@@ -25,7 +25,7 @@ function App() {
   const [backendAvailable, setBackendAvailable] = useState<boolean | null>(null);
   // Read project name from runtime config (injected by docker-entrypoint.sh) or fall back to build-time env
   const [projectName] = useState(
-    (window as any).RUNTIME_CONFIG?.PROJECT_NAME ||
+    (window as Window & { RUNTIME_CONFIG?: { PROJECT_NAME?: string } }).RUNTIME_CONFIG?.PROJECT_NAME ||
     import.meta.env.VITE_PROJECT_NAME ||
     'Command Center'
   );

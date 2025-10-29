@@ -5,7 +5,7 @@ Project model for multi-tenant isolation
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import String, Text, DateTime, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base
 
@@ -77,6 +77,17 @@ class Project(Base):
 
     # Unique constraint: owner + name must be unique
     __table_args__ = (UniqueConstraint("owner", "name", name="uq_project_owner_name"),)
+
+    @validates("name")
+    def validate_name(self, key: str, name: str) -> str:
+        """Validate project name is not empty and not too long."""
+        if not name or not name.strip():
+            raise ValueError("Project name cannot be empty")
+        # Raise error if name is too long
+        max_length = 255
+        if len(name) > max_length:
+            raise ValueError(f"Project name cannot exceed {max_length} characters")
+        return name
 
     def __repr__(self) -> str:
         return f"<Project(id={self.id}, name='{self.name}', owner='{self.owner}')>"
