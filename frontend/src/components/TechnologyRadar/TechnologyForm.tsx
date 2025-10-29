@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import type { Technology, TechnologyCreate } from '../../types/technology';
 import {
   TechnologyDomain as DomainEnum,
@@ -578,10 +578,71 @@ export const TechnologyForm: React.FC<TechnologyFormProps> = ({
             <div>
               <h4 className="text-md font-medium text-slate-300 mb-3">Relationships</h4>
               <div className="space-y-4">
-                {/* TODO: Add UI for 'dependencies' field (JSON object: Record<string, string>)
-                    This field stores technology dependencies as key-value pairs.
-                    Future enhancement: Add a key-value pair editor or JSON editor component.
-                    For now, dependencies can be managed via API directly. */}
+                {/* Dependencies Editor */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Dependencies
+                  </label>
+                  <div className="space-y-2">
+                    {Object.entries(formData.dependencies || {}).map(([key, value], index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => {
+                            const newDeps = { ...(formData.dependencies || {}) };
+                            delete newDeps[key];
+                            newDeps[e.target.value] = value;
+                            setFormData((prev) => ({ ...prev, dependencies: newDeps }));
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Technology ID or name"
+                        />
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={(e) => {
+                            const newDeps = { ...(formData.dependencies || {}) };
+                            newDeps[key] = e.target.value;
+                            setFormData((prev) => ({ ...prev, dependencies: newDeps }));
+                          }}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Relationship (e.g., 'requires', 'integrates-with')"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newDeps = { ...(formData.dependencies || {}) };
+                            delete newDeps[key];
+                            setFormData((prev) => ({
+                              ...prev,
+                              dependencies: Object.keys(newDeps).length > 0 ? newDeps : null
+                            }));
+                          }}
+                          className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                          title="Remove dependency"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newDeps = { ...(formData.dependencies || {}), '': '' };
+                        setFormData((prev) => ({ ...prev, dependencies: newDeps }));
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-md hover:bg-slate-600 transition-colors text-sm"
+                    >
+                      <Plus size={16} />
+                      Add Dependency
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Define technology dependencies and their relationships
+                  </p>
+                </div>
+
                 <div>
                   <label htmlFor="alternatives" className="block text-sm font-medium text-slate-300 mb-1">
                     Alternative Technologies

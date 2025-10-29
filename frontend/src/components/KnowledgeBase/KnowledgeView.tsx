@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Upload, Database, Filter, AlertCircle } from 'lucide-react';
 import { useKnowledge } from '../../hooks/useKnowledge';
 import { useTechnologies } from '../../hooks/useTechnologies';
@@ -8,6 +9,7 @@ import { KnowledgeStats } from './KnowledgeStats';
 import type { KnowledgeSearchRequest } from '../../types/knowledge';
 
 export const KnowledgeView: React.FC = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -311,8 +313,9 @@ export const KnowledgeView: React.FC = () => {
                   result={result}
                   searchQuery={query}
                   onTechnologyClick={(techId) => {
-                    console.log('Navigate to technology:', techId);
-                    // TODO: Implement navigation to technology detail
+                    // Navigate to technology radar view
+                    // Note: In the future, consider adding a dedicated technology detail route
+                    navigate(`/radar?highlight=${techId}`);
                   }}
                 />
               ))}
