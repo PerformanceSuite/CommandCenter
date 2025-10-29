@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { DashboardView } from '../../components/Dashboard/DashboardView';
 import { renderWithMemoryRouter } from '../../test-utils/test-utils';
+import * as dashboardApi from '../../services/dashboardApi';
 import { mockDashboardStats, mockActivity } from '../../test-utils/mocks';
-import { useDashboard } from '../../hooks/useDashboard';
 
 // Mock the dashboard API
 vi.mock('../../services/dashboardApi');
@@ -19,7 +19,8 @@ describe('DashboardView', () => {
   });
 
   it('displays loading spinner while fetching data', () => {
-    vi.mocked(useDashboard).mockReturnValue({
+    const { useDashboard } = require('../../hooks/useDashboard');
+    useDashboard.mockReturnValue({
       stats: null,
       activity: [],
       loading: true,
@@ -33,7 +34,8 @@ describe('DashboardView', () => {
   });
 
   it('displays error message when fetch fails', () => {
-    vi.mocked(useDashboard).mockReturnValue({
+    const { useDashboard } = require('../../hooks/useDashboard');
+    useDashboard.mockReturnValue({
       stats: null,
       activity: [],
       loading: false,
@@ -125,7 +127,7 @@ describe('DashboardView', () => {
       error: null,
     });
 
-    renderWithMemoryRouter(<DashboardView />);
+    const { user } = renderWithMemoryRouter(<DashboardView />);
 
     // We can't fully test navigation without checking the actual navigation,
     // but we can verify the buttons are clickable

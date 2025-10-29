@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { RadarView } from '../../components/TechnologyRadar/RadarView';
 import { renderWithMemoryRouter } from '../../test-utils/test-utils';
 import { mockTechnology } from '../../test-utils/mocks';
-import { useTechnologies } from '../../hooks/useTechnologies';
 
 // Mock the useTechnologies hook
 vi.mock('../../hooks/useTechnologies', () => ({
@@ -16,7 +15,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('displays loading spinner while fetching technologies', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: true,
       error: null,
@@ -32,7 +32,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('displays error message when fetch fails', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: false,
       error: new Error('Failed to fetch technologies'),
@@ -48,7 +49,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('renders technology radar header and controls', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: false,
       error: null,
@@ -66,7 +68,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('renders search and filter controls', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: false,
       error: null,
@@ -103,7 +106,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('displays empty state when no technologies exist', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: false,
       error: null,
@@ -119,7 +123,8 @@ describe('TechnologyRadar (RadarView)', () => {
   });
 
   it('displays empty state with clear filters option when filters are active', () => {
-    vi.mocked(useTechnologies).mockReturnValue({
+    const { useTechnologies } = require('../../hooks/useTechnologies');
+    useTechnologies.mockReturnValue({
       technologies: [],
       loading: false,
       error: null,
@@ -148,7 +153,7 @@ describe('TechnologyRadar (RadarView)', () => {
       totalPages: 1,
     });
 
-    renderWithMemoryRouter(<RadarView />);
+    const { user } = renderWithMemoryRouter(<RadarView />);
 
     // Initially in card view
     const matrixButton = screen.getByText('Matrix');
