@@ -83,14 +83,24 @@ test.describe('Critical User Flows', () => {
 
     test('should be responsive on mobile', async ({ dashboardPage, page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
+      // Wait for viewport change to take effect
+      await page.waitForTimeout(100);
       await dashboardPage.goto();
       await dashboardPage.verifyDashboardLoaded();
+      // Verify layout has adjusted for mobile
+      await expect(dashboardPage.main).toBeVisible();
+      await page.waitForLoadState('networkidle');
     });
 
     test('should be responsive on tablet', async ({ dashboardPage, page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
+      // Wait for viewport change to take effect
+      await page.waitForTimeout(100);
       await dashboardPage.goto();
       await dashboardPage.verifyDashboardLoaded();
+      // Verify layout has adjusted for tablet
+      await expect(dashboardPage.main).toBeVisible();
+      await page.waitForLoadState('networkidle');
     });
   });
 
