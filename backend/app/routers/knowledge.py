@@ -18,7 +18,6 @@ from app.schemas import (
     KnowledgeSearchResult,
 )
 from app.services.rag_service import RAGService
-from app.services.knowledgebeast_service import KnowledgeBeastService, KNOWLEDGEBEAST_AVAILABLE
 from app.services.docling_service import DoclingService
 from app.services.cache_service import CacheService
 from app.config import settings
@@ -26,22 +25,33 @@ from app.config import settings
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 
-# Dependency to get knowledge service (KnowledgeBeast or legacy RAG)
-async def get_knowledge_service(
-    project_id: int = 1,  # TODO: Get from auth context/header
-    collection: str = "default"
+# Dependency to get RAG service (KnowledgeBeast PostgresBackend)
+async def get_rag_service(
+    repository_id: int = 1,  # TODO: Get from auth context/repository context
 ):
-    """Get knowledge service based on feature flag"""
-    if settings.use_knowledgebeast and KNOWLEDGEBEAST_AVAILABLE:
-        return KnowledgeBeastService(project_id=project_id)
-    else:
-        return RAGService(collection_name=collection)
+    """
+    Get RAG service instance for a specific repository
+
+    Each repository gets its own isolated knowledge base collection.
+    The service is automatically initialized before first use.
+
+    Args:
+        repository_id: Repository ID for multi-tenant isolation
+
+    Returns:
+        Initialized RAGService instance
+    """
+    service = RAGService(repository_id=repository_id)
+    await service.initialize()
+    return service
 
 
-# Legacy dependency (deprecated - use get_knowledge_service)
-async def get_rag_service(collection_name: str = "default") -> RAGService:
-    """Get RAG service instance with specified collection"""
-    return RAGService(collection_name=collection_name)
+# Legacy dependency for backward compatibility (deprecated)
+async def get_knowledge_service(
+    repository_id: int = 1,
+):
+    """Legacy alias for get_rag_service - use get_rag_service instead"""
+    return await get_rag_service(repository_id=repository_id)
 
 
 # Dependency to get Docling service
@@ -59,29 +69,26 @@ async def get_cache_service() -> CacheService:
 @router.post("/query", response_model=List[KnowledgeSearchResult])
 async def query_knowledge_base(
     request: KnowledgeSearchRequest,
-    project_id: int = 1,  # TODO: Get from auth context
-    collection: str = "default",
-    mode: str = "hybrid",  # New: vector, keyword, or hybrid
-    alpha: float = 0.7,    # New: hybrid blend (0=keyword, 1=vector)
-    knowledge_service = Depends(get_knowledge_service),
+    repository_id: int = 1,  # TODO: Get from auth context/repository context
+    rag_service: RAGService = Depends(get_rag_service),
     cache_service: CacheService = Depends(get_cache_service),
     db: AsyncSession = Depends(get_db),
 ) -> List[KnowledgeSearchResult]:
     """
-    Query the knowledge base using semantic search
+    Query the knowledge base using hybrid search (vector + keyword)
+
+    Uses KnowledgeBeast PostgresBackend with hybrid search (70% vector, 30% keyword)
+    for optimal retrieval accuracy.
 
     Args:
         request: Search request with query, filters, and limit
-        project_id: Project ID for isolation
-        collection: Collection name (legacy compatibility)
-        mode: Search mode - 'vector', 'keyword', or 'hybrid' (default: hybrid)
-        alpha: Hybrid blend factor 0-1 (0=keyword only, 1=vector only)
+        repository_id: Repository ID for multi-tenant isolation
 
     Returns:
         List of relevant knowledge entries with scores
     """
-    # Create cache key (include mode and alpha for KB)
-    cache_key = f"kb_query:{project_id}:{mode}:{alpha}:{request.query}:{request.category}:{request.limit}"
+    # Create cache key
+    cache_key = f"kb_query:{repository_id}:{request.query}:{request.category}:{request.limit}"
 
     # Try to get from cache first
     cached_result = await cache_service.get(cache_key)
@@ -89,23 +96,12 @@ async def query_knowledge_base(
         return [KnowledgeSearchResult(**item) for item in json.loads(cached_result)]
 
     try:
-        # Query using appropriate service
-        if settings.use_knowledgebeast and KNOWLEDGEBEAST_AVAILABLE:
-            # KnowledgeBeast supports mode and alpha parameters
-            results = await knowledge_service.query(
-                question=request.query,
-                category=request.category,
-                k=request.limit,
-                mode=mode,
-                alpha=alpha
-            )
-        else:
-            # Legacy RAG service doesn't support mode/alpha
-            results = await knowledge_service.query(
-                question=request.query,
-                category=request.category,
-                k=request.limit
-            )
+        # Query using RAG service (hybrid search with alpha=0.7)
+        results = await rag_service.query(
+            question=request.query,
+            category=request.category,
+            k=request.limit
+        )
 
         # Format results
         search_results = []
@@ -145,7 +141,7 @@ async def add_document(
     file: UploadFile = File(...),
     category: str = Form(...),
     technology_id: Optional[int] = Form(None),
-    collection: str = Form("default"),
+    repository_id: int = Form(1),  # Repository ID for multi-tenant isolation
     rag_service: RAGService = Depends(get_rag_service),
     docling_service: DoclingService = Depends(get_docling_service),
     db: AsyncSession = Depends(get_db),
@@ -153,13 +149,15 @@ async def add_document(
     """
     Add a document to the knowledge base
 
-    Supports PDF, Markdown, and text files via Docling processing
+    Supports PDF, Markdown, and text files via Docling processing.
+    Documents are automatically chunked, embedded, and indexed in the
+    repository-specific knowledge base collection.
 
     Args:
-        file: Uploaded file
+        file: Uploaded file (PDF, Markdown, or text)
         category: Document category
         technology_id: Optional technology association
-        collection: Collection name for organization
+        repository_id: Repository ID for multi-tenant isolation
 
     Returns:
         Document processing summary
@@ -198,23 +196,21 @@ async def add_document(
             "technology_id": technology_id,
         }
 
-        # Reinitialize RAG service with correct collection
-        rag_service = RAGService(collection_name=collection)
-
-        # Add to vector database
+        # Add to vector database (uses injected service with correct repository_id)
         chunks_added = await rag_service.add_document(
             content=processed_content, metadata=metadata
         )
 
         # Create knowledge entry in database
         knowledge_entry = KnowledgeEntry(
+            project_id=repository_id,  # Use repository_id as project_id for multi-tenant isolation
             title=filename,
             content=processed_content[:1000],  # Store preview
             category=category,
             technology_id=technology_id,
             source_file=filename,
             source_type=file_extension,
-            embedding_model=settings.embedding_model,
+            embedding_model=settings.EMBEDDING_MODEL,  # Updated to use new config
         )
 
         db.add(knowledge_entry)
@@ -225,7 +221,8 @@ async def add_document(
             "id": knowledge_entry.id,
             "filename": filename,
             "category": category,
-            "collection": collection,
+            "repository_id": repository_id,
+            "collection": f"commandcenter_{repository_id}",
             "chunks_added": chunks_added,
             "file_size": len(content),
             "status": "success",
@@ -243,16 +240,18 @@ async def add_document(
 @router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: int,
-    collection: str = "default",
+    repository_id: int = 1,  # Repository ID for multi-tenant isolation
     rag_service: RAGService = Depends(get_rag_service),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a document from the knowledge base
 
+    Deletes both the vector embeddings and the database entry.
+
     Args:
         document_id: Knowledge entry ID
-        collection: Collection name
+        repository_id: Repository ID for multi-tenant isolation
     """
     # Get knowledge entry
     result = await db.execute(
@@ -267,10 +266,7 @@ async def delete_document(
         )
 
     try:
-        # Reinitialize RAG service with correct collection
-        rag_service = RAGService(collection_name=collection)
-
-        # Delete from vector database
+        # Delete from vector database (uses injected service with correct repository_id)
         if knowledge_entry.source_file:
             await rag_service.delete_by_source(knowledge_entry.source_file)
 
@@ -287,24 +283,25 @@ async def delete_document(
 
 @router.get("/statistics", response_model=Dict[str, Any])
 async def get_knowledge_statistics(
-    collection: str = "default",
+    repository_id: int = 1,  # Repository ID for multi-tenant isolation
     rag_service: RAGService = Depends(get_rag_service),
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
     """
     Get knowledge base statistics
 
+    Provides statistics from both the vector database (PostgresBackend)
+    and the relational database.
+
     Args:
-        collection: Collection name
+        repository_id: Repository ID for multi-tenant isolation
 
     Returns:
-        Statistics about the knowledge base
+        Statistics about the knowledge base including chunk counts,
+        categories, and backend information
     """
     try:
-        # Reinitialize RAG service with correct collection
-        rag_service = RAGService(collection_name=collection)
-
-        # Get RAG statistics
+        # Get RAG statistics (uses injected service with correct repository_id)
         rag_stats = await rag_service.get_statistics()
 
         # Get database statistics
@@ -321,10 +318,11 @@ async def get_knowledge_statistics(
         db_categories = {row[0]: row[1] for row in category_result}
 
         return {
-            "collection": collection,
+            "repository_id": repository_id,
+            "collection": rag_stats["collection_name"],
             "vector_db": rag_stats,
             "database": {"total_entries": db_total, "categories": db_categories},
-            "embedding_model": settings.embedding_model,
+            "embedding_model": settings.EMBEDDING_MODEL,
         }
 
     except Exception as e:
@@ -335,35 +333,50 @@ async def get_knowledge_statistics(
 
 
 @router.get("/collections", response_model=List[str])
-async def list_collections() -> List[str]:
+async def list_collections(db: AsyncSession = Depends(get_db)) -> List[str]:
     """
     List available knowledge base collections
 
+    Each repository has its own collection in the format: commandcenter_{repo_id}
+
     Returns:
-        List of collection names
+        List of collection names (based on repositories)
     """
-    # This would need to be implemented based on how collections are stored
-    # For now, return a default list
-    return ["default", "performia_docs", "research", "technical"]
+    try:
+        # Query distinct repositories that have knowledge entries
+        # This could be enhanced to query the actual PostgresBackend collections
+        from app.models.repository import Repository
+
+        result = await db.execute(select(Repository.id, Repository.name))
+        repositories = result.all()
+
+        return [f"commandcenter_{repo_id}" for repo_id, _ in repositories]
+
+    except Exception:
+        # Fallback to default
+        return ["commandcenter_1"]
 
 
 @router.get("/categories", response_model=List[str])
 async def list_categories(
-    collection: str = "default", rag_service: RAGService = Depends(get_rag_service)
+    repository_id: int = 1,  # Repository ID for multi-tenant isolation
+    rag_service: RAGService = Depends(get_rag_service)
 ) -> List[str]:
     """
     List all categories in the knowledge base
 
+    Note: Category listing from PostgresBackend is not yet implemented.
+    This is a placeholder that will return empty list until enhanced.
+
     Args:
-        collection: Collection name
+        repository_id: Repository ID for multi-tenant isolation
 
     Returns:
         List of category names
     """
     try:
-        # Reinitialize RAG service with correct collection
-        rag_service = RAGService(collection_name=collection)
-
+        # Get categories from RAG service (uses injected service with correct repository_id)
+        # Note: This currently returns empty list - needs custom SQL query implementation
         categories = await rag_service.get_categories()
         return categories
 

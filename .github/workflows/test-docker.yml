@@ -1,0 +1,78 @@
+name: Docker Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  test-backend-docker:
+    name: Backend Tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-backend-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-backend-
+
+      - name: Build backend test image
+        run: |
+          docker-compose -f docker-compose.test.yml build test-backend
+
+      - name: Start test dependencies
+        run: |
+          docker-compose -f docker-compose.test.yml up -d postgres-test redis-test
+
+      - name: Wait for dependencies
+        run: |
+          timeout 30 sh -c 'until docker-compose -f docker-compose.test.yml exec -T postgres-test pg_isready -U test; do sleep 1; done'
+
+      - name: Run backend tests
+        run: |
+          docker-compose -f docker-compose.test.yml up \
+            --abort-on-container-exit \
+            --exit-code-from test-backend \
+            test-backend
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
+
+  test-frontend-docker:
+    name: Frontend Tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and run frontend tests
+        run: |
+          docker-compose -f docker-compose.test.yml up \
+            --build \
+            --abort-on-container-exit \
+            --exit-code-from test-frontend \
+            test-frontend
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v

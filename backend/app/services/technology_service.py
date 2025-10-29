@@ -23,7 +23,7 @@ class TechnologyService:
             db: Database session
         """
         self.db = db
-        self.repo = TechnologyRepository(db)
+        self.repo = TechnologyRepository()
 
     async def list_technologies(
         self,

@@ -59,13 +59,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             return result
     """
     async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+        yield session
 
 
 async def init_db() -> None:

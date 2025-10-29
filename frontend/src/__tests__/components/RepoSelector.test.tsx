@@ -1,102 +1,103 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '../../tests/utils';
+import { describe, it, expect } from 'vitest';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { RepoSelector } from '../../components/Dashboard/RepoSelector';
-import { mockRepository } from '../../tests/utils';
+import { renderWithRouter } from '../../test-utils/test-utils';
+import { mockRepository } from '../../test-utils/mocks';
 
 describe('RepoSelector', () => {
-  it('renders no repositories message when empty', () => {
-    render(<RepoSelector repositories={[]} />);
+  it('displays "No active repositories" message when repositories list is empty', () => {
+    renderWithRouter(<RepoSelector repositories={[]} />);
 
-    expect(screen.getByText(/no active repositories/i)).toBeInTheDocument();
+    expect(screen.getByText('No active repositories')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('displays active repositories', () => {
-    const repos = [
-      mockRepository({ id: '1', name: 'Repo 1', owner: 'owner1', is_active: true }),
-      mockRepository({ id: '2', name: 'Repo 2', owner: 'owner2', is_active: true }),
+  it('displays "No active repositories" message when all repositories are inactive', () => {
+    const inactiveRepos = [
+      mockRepository({ id: '1', name: 'repo1', is_active: false }),
+      mockRepository({ id: '2', name: 'repo2', is_active: false }),
     ];
 
-    render(<RepoSelector repositories={repos} />);
+    renderWithRouter(<RepoSelector repositories={inactiveRepos} />);
 
-    expect(screen.getByText('Repo 1')).toBeInTheDocument();
-    expect(screen.getByText('Repo 2')).toBeInTheDocument();
+    expect(screen.getByText('No active repositories')).toBeInTheDocument();
+  });
+
+  it('renders active repositories in a grid', () => {
+    const repos = [
+      mockRepository({ id: '1', name: 'repo1', owner: 'owner1', is_active: true }),
+      mockRepository({ id: '2', name: 'repo2', owner: 'owner2', is_active: true }),
+      mockRepository({ id: '3', name: 'repo3', owner: 'owner3', is_active: true }),
+    ];
+
+    renderWithRouter(<RepoSelector repositories={repos} />);
+
+    expect(screen.getByText('repo1')).toBeInTheDocument();
+    expect(screen.getByText('repo2')).toBeInTheDocument();
+    expect(screen.getByText('repo3')).toBeInTheDocument();
     expect(screen.getByText('owner1')).toBeInTheDocument();
     expect(screen.getByText('owner2')).toBeInTheDocument();
+    expect(screen.getByText('owner3')).toBeInTheDocument();
   });
 
   it('filters out inactive repositories', () => {
     const repos = [
-      mockRepository({ id: '1', name: 'Active Repo', is_active: true }),
-      mockRepository({ id: '2', name: 'Inactive Repo', is_active: false }),
+      mockRepository({ id: '1', name: 'active-repo', is_active: true }),
+      mockRepository({ id: '2', name: 'inactive-repo', is_active: false }),
     ];
 
-    render(<RepoSelector repositories={repos} />);
+    renderWithRouter(<RepoSelector repositories={repos} />);
 
-    expect(screen.getByText('Active Repo')).toBeInTheDocument();
-    expect(screen.queryByText('Inactive Repo')).not.toBeInTheDocument();
+    expect(screen.getByText('active-repo')).toBeInTheDocument();
+    expect(screen.queryByText('inactive-repo')).not.toBeInTheDocument();
   });
 
-  it('displays repository descriptions when available', () => {
+  it('displays repository description when available', () => {
     const repos = [
       mockRepository({
         id: '1',
-        name: 'Repo 1',
+        name: 'repo1',
+        description: 'A test repository',
+        is_active: true,
+      }),
+    ];
+
+    renderWithRouter(<RepoSelector repositories={repos} />);
+
+    expect(screen.getByText('A test repository')).toBeInTheDocument();
+  });
+
+  it('selects a repository when clicked', async () => {
+    const user = userEvent.setup();
+    const repos = [
+      mockRepository({ id: '1', name: 'repo1', is_active: true }),
+      mockRepository({ id: '2', name: 'repo2', is_active: true }),
+    ];
+
+    renderWithRouter(<RepoSelector repositories={repos} />);
+
+    const repo1Button = screen.getByLabelText(/Select repository.*repo1/);
+    await user.click(repo1Button);
+
+    expect(repo1Button).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('has proper ARIA labels for accessibility', () => {
+    const repos = [
+      mockRepository({
+        id: '1',
+        name: 'test-repo',
+        full_name: 'owner/test-repo',
         description: 'Test description',
         is_active: true,
       }),
     ];
 
-    render(<RepoSelector repositories={repos} />);
+    renderWithRouter(<RepoSelector repositories={repos} />);
 
-    expect(screen.getByText('Test description')).toBeInTheDocument();
-  });
-
-  it('selects repository on click', () => {
-    const repos = [
-      mockRepository({ id: '1', name: 'Repo 1', is_active: true }),
-      mockRepository({ id: '2', name: 'Repo 2', is_active: true }),
-    ];
-
-    render(<RepoSelector repositories={repos} />);
-
-    const repo1Button = screen.getByText('Repo 1').closest('button');
-    fireEvent.click(repo1Button!);
-
-    // Check button shows selected state
-    expect(repo1Button).toHaveClass('border-primary-500');
-  });
-
-  it('shows check icon on selected repository', () => {
-    const repos = [
-      mockRepository({ id: '1', name: 'Repo 1', is_active: true }),
-    ];
-
-    const { container } = render(<RepoSelector repositories={repos} />);
-
-    const repoButton = screen.getByText('Repo 1').closest('button');
-    fireEvent.click(repoButton!);
-
-    // Check icon should be visible after selection
-    const checkIcon = container.querySelector('svg[class*="text-primary-500"]');
-    expect(checkIcon).toBeInTheDocument();
-  });
-
-  it('changes selection when different repo clicked', () => {
-    const repos = [
-      mockRepository({ id: '1', name: 'Repo 1', is_active: true }),
-      mockRepository({ id: '2', name: 'Repo 2', is_active: true }),
-    ];
-
-    render(<RepoSelector repositories={repos} />);
-
-    const repo1Button = screen.getByText('Repo 1').closest('button');
-    const repo2Button = screen.getByText('Repo 2').closest('button');
-
-    fireEvent.click(repo1Button!);
-    expect(repo1Button).toHaveClass('border-primary-500');
-
-    fireEvent.click(repo2Button!);
-    expect(repo2Button).toHaveClass('border-primary-500');
-    expect(repo1Button).not.toHaveClass('border-primary-500');
+    expect(screen.getByRole('group', { name: 'Repository selector' })).toBeInTheDocument();
+    expect(screen.getByRole('list')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Select repository.*test-repo.*Test description/)).toBeInTheDocument();
   });
 });

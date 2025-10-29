@@ -10,6 +10,9 @@ from app.models.repository import Repository
 from app.models.technology import Technology
 from app.models.research_task import ResearchTask
 from app.models.knowledge_entry import KnowledgeEntry
+from app.models.user import User
+from app.models.project import Project
+from app.utils.crypto import hash_password
 
 
 async def create_test_repository(
@@ -81,7 +84,7 @@ async def create_test_technology(
 
 async def create_test_research_task(
     db: AsyncSession,
-    repository_id: int,
+    project_id: int,
     **kwargs
 ) -> ResearchTask:
     """
@@ -89,18 +92,19 @@ async def create_test_research_task(
 
     Args:
         db: Database session
-        repository_id: ID of associated repository
+        project_id: ID of associated project
         **kwargs: Research task attributes to override
 
     Returns:
         Created research task
     """
+    from app.models.research_task import TaskStatus
+
     defaults = {
         "title": "Test Research Task",
         "description": "A test research task",
-        "status": "pending",
-        "priority": "medium",
-        "repository_id": repository_id,
+        "status": TaskStatus.PENDING,
+        "project_id": project_id,
     }
     defaults.update(kwargs)
 
@@ -196,3 +200,61 @@ def create_mock_github_service():
             return [MockGitHubRepo()]
 
     return MockGitHub()
+
+
+async def create_test_user(
+    db: AsyncSession,
+    **kwargs
+) -> User:
+    """
+    Create a test user in the database
+
+    Args:
+        db: Database session
+        **kwargs: User attributes to override
+
+    Returns:
+        Created user
+    """
+    defaults = {
+        "email": "test@example.com",
+        "hashed_password": hash_password("TestPassword123"),
+        "full_name": "Test User",
+        "is_active": True,
+        "is_superuser": False,
+    }
+    defaults.update(kwargs)
+
+    user = User(**defaults)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def create_test_project(
+    db: AsyncSession,
+    **kwargs
+) -> Project:
+    """
+    Create a test project in the database
+
+    Args:
+        db: Database session
+        **kwargs: Project attributes to override
+
+    Returns:
+        Created project
+    """
+    defaults = {
+        "name": "Test Project",
+        "owner": "testowner",
+        "description": "A test project for unit testing",
+    }
+    defaults.update(kwargs)
+
+    project = Project(**defaults)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
+    return project

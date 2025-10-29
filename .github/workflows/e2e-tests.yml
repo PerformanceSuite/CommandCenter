@@ -1,5 +1,17 @@
 name: E2E Tests
 
+# End-to-end tests using Playwright
+# Tests complete user workflows across multiple browsers
+# Expected runtime: ~10-15 minutes per browser (parallelized)
+#
+# Browser matrix: chromium, firefox, webkit
+# Mobile testing: separate job for mobile viewports
+#
+# To debug failures:
+# 1. Download test artifacts from failed run
+# 2. View screenshots and videos in playwright-report/
+# 3. Check test-results/ for detailed logs
+
 on:
   push:
     branches: [ main, develop ]
@@ -72,11 +84,33 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
+      # Install E2E test dependencies
       - name: Install E2E dependencies
         working-directory: ./e2e
-        run: |
-          npm ci
-          npx playwright install --with-deps ${{ matrix.browser }}
+        run: npm ci
+
+      # Cache Playwright browsers to speed up subsequent runs
+      # Browsers are cached by Playwright version
+      - name: Get Playwright version
+        id: playwright-version
+        working-directory: ./e2e
+        run: echo "version=$(npm list @playwright/test --depth=0 --json | jq -r '.dependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-${{ matrix.browser }}
+          restore-keys: |
+            playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-
+            playwright-${{ runner.os }}-
+
+      # Install Playwright browsers (uses cache if available)
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: ./e2e
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Setup environment variables
         run: |

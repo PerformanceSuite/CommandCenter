@@ -2,7 +2,13 @@ name: ${COMPOSE_PROJECT_NAME:-commandcenter}
 
 services:
   postgres:
-    image: postgres:16-alpine
+    # Custom Postgres with pgvector extension
+    # Build with: python backend/scripts/build-postgres.py
+    # Or use pre-built image: commandcenter-postgres:latest
+    image: commandcenter-postgres:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.postgres
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_db
     environment:
       POSTGRES_DB: commandcenter
@@ -37,8 +43,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_backend
     env_file: .env.docker
     volumes:
@@ -90,8 +96,8 @@ services:
 
   celery-worker:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_celery_worker
     command: celery -A app.tasks worker --loglevel=info --concurrency=4
     env_file: .env.docker
@@ -109,8 +115,8 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_celery_beat
     command: celery -A app.tasks beat --loglevel=info
     env_file: .env.docker
@@ -125,8 +131,8 @@ services:
 
   flower:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_flower
     command: celery -A app.tasks flower --port=5555
     ports:

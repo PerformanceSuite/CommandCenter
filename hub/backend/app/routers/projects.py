@@ -11,7 +11,6 @@ from app.database import get_db
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectStats
 from app.services.project_service import ProjectService
-from app.services.setup_service import SetupService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -61,10 +60,12 @@ async def create_project(
     Create new CommandCenter project
 
     This will:
-    1. Create project entry in registry
-    2. Clone CommandCenter to project/commandcenter/
-    3. Generate .env with unique ports
-    4. Configure docker-compose
+    1. Validate project path exists
+    2. Allocate unique ports
+    3. Create project entry in registry
+
+    Note: Dagger handles container orchestration directly.
+    No CommandCenter cloning or docker-compose setup needed.
     """
     return await service.create_project(project_data)
 
@@ -95,11 +96,11 @@ async def delete_project(
     Delete project from registry
 
     Query Parameters:
-    - delete_files: If true, also stops containers and deletes CommandCenter directory
+    - delete_files: If true, also stops running containers via Dagger
 
     Examples:
     - DELETE /api/projects/1 - Only remove from registry
-    - DELETE /api/projects/1?delete_files=true - Remove from registry AND delete files
+    - DELETE /api/projects/1?delete_files=true - Remove from registry AND stop containers
     """
     success = await service.delete_project(project_id, delete_files=delete_files)
     if not success:
@@ -109,12 +110,3 @@ async def delete_project(
         )
 
 
-@router.get("/template/version")
-async def get_template_version():
-    """
-    Get CommandCenter template version information
-
-    Returns git commit, branch, and last commit message
-    This helps verify the template is up-to-date before creating projects
-    """
-    return SetupService.get_template_version()

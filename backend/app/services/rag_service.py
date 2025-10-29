@@ -1,76 +1,98 @@
 """
-RAG (Retrieval-Augmented Generation) service for knowledge base
-Wrapper around the existing process_docs.py knowledge base processor
+RAG (Retrieval-Augmented Generation) service using KnowledgeBeast v3.0 PostgresBackend
 
-Note: RAG dependencies are optional and imported lazily.
-Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers
+This service provides knowledge base RAG operations backed by PostgreSQL with pgvector
+for vector similarity search, replacing the legacy ChromaDB implementation.
+
+Dependencies:
+- knowledgebeast>=3.0.0 (PostgresBackend)
+- sentence-transformers>=2.3.0 (embeddings)
+- langchain>=0.1.0 (text splitting)
 """
 
-import sys
-from pathlib import Path
 from typing import List, Dict, Any, Optional
+import logging
 
 from app.config import settings
 
 # Lazy imports - only import when RAGService is instantiated
 try:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain_chroma import Chroma
-
+    from knowledgebeast.backends.postgres import PostgresBackend
+    from sentence_transformers import SentenceTransformer
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
-    HuggingFaceEmbeddings = None
-    Chroma = None
+    PostgresBackend = None
+    SentenceTransformer = None
 
-# Global cache for embeddings model (expensive to initialize - 8+ seconds)
-_embeddings_cache: Dict[str, Any] = {}
+logger = logging.getLogger(__name__)
 
 
 class RAGService:
-    """Service for knowledge base RAG operations"""
+    """Service for knowledge base RAG operations using KnowledgeBeast PostgresBackend"""
 
-    def __init__(self, db_path: Optional[str] = None, collection_name: str = "default"):
+    def __init__(self, repository_id: int):
         """
-        Initialize RAG service
+        Initialize RAG service for a specific repository
 
         Args:
-            db_path: Path to ChromaDB database (uses config default if not provided)
-            collection_name: Name of the collection for multi-collection support
+            repository_id: Repository ID for multi-tenant isolation
+                          Each repository gets its own collection: commandcenter_{repo_id}
 
         Raises:
-            ImportError: If RAG dependencies are not installed
+            ImportError: If RAG dependencies (KnowledgeBeast) are not installed
         """
         if not RAG_AVAILABLE:
             raise ImportError(
-                "RAG dependencies not installed. "
-                "Install with: pip install langchain langchain-community langchain-chroma chromadb sentence-transformers"
+                "KnowledgeBeast dependencies not installed. "
+                "Install with: pip install knowledgebeast>=3.0.0 sentence-transformers>=2.3.0"
             )
 
-        self.db_path = db_path or settings.knowledge_base_path
-        self.embedding_model_name = settings.embedding_model
-        self.collection_name = collection_name
+        self.repository_id = repository_id
+        self.collection_name = f"{settings.KNOWLEDGE_COLLECTION_PREFIX}_{repository_id}"
 
-        # Initialize embeddings (local model - no API costs)
-        # Use cached embeddings model to avoid 8+ second reload on each instantiation
-        if self.embedding_model_name not in _embeddings_cache:
-            _embeddings_cache[self.embedding_model_name] = HuggingFaceEmbeddings(
-                model_name=self.embedding_model_name
-            )
-        self.embeddings = _embeddings_cache[self.embedding_model_name]
+        # Initialize embedding model (sentence-transformers)
+        # This is used to generate embeddings for queries and documents
+        self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
 
-        # Initialize vector store with specified collection
-        self.vectorstore = Chroma(
-            collection_name=collection_name,
-            embedding_function=self.embeddings,
-            persist_directory=self.db_path,
+        # Build connection string from settings (asyncpg format without +asyncpg)
+        connection_string = settings.get_postgres_url(for_asyncpg=True)
+
+        # Initialize KnowledgeBeast PostgresBackend
+        self.backend = PostgresBackend(
+            connection_string=connection_string,
+            collection_name=self.collection_name,
+            embedding_dimension=settings.EMBEDDING_DIMENSION,
+            pool_size=settings.KB_POOL_MAX_SIZE,
+            pool_min_size=settings.KB_POOL_MIN_SIZE,
+        )
+        self._initialized = False
+
+        logger.info(
+            f"Initialized RAGService for repository {repository_id} "
+            f"with collection '{self.collection_name}'"
         )
 
+    async def initialize(self) -> None:
+        """
+        Initialize backend (creates schema if needed)
+
+        This should be called before first use. It creates the necessary
+        database tables and indexes if they don't exist.
+        """
+        if not self._initialized:
+            await self.backend.initialize()
+            self._initialized = True
+            logger.info(f"Initialized backend for collection '{self.collection_name}'")
+
     async def query(
-        self, question: str, category: Optional[str] = None, k: int = 5
+        self,
+        question: str,
+        category: Optional[str] = None,
+        k: int = 5
     ) -> List[Dict[str, Any]]:
         """
-        Query the knowledge base
+        Query the knowledge base using hybrid search (vector + keyword)
 
         Args:
             question: Natural language question
@@ -78,175 +100,191 @@ class RAGService:
             k: Number of results to return
 
         Returns:
-            List of relevant document chunks with metadata
+            List of relevant document chunks with metadata:
+            [
+                {
+                    "content": "document text",
+                    "metadata": {...},
+                    "score": 0.95,
+                    "category": "docs",
+                    "source": "readme.md"
+                },
+                ...
+            ]
         """
-        # Build filter if category is provided
-        filter_dict = {"category": category} if category else None
+        if not self._initialized:
+            await self.initialize()
 
-        # Search with similarity scores
-        results = self.vectorstore.similarity_search_with_score(
-            question, k=k, filter=filter_dict
+        # Build metadata filter
+        where = {"category": category} if category else None
+
+        # Generate query embedding using sentence-transformers
+        query_embedding = self.embedding_model.encode(question).tolist()
+
+        # Use hybrid search (vector + keyword) for best results
+        # alpha=0.7 means 70% vector, 30% keyword
+        results = await self.backend.query_hybrid(
+            query_embedding=query_embedding,
+            query_text=question,
+            top_k=k,
+            alpha=0.7,
+            where=where
         )
 
+        # Format results to match expected API
         return [
             {
-                "content": doc.page_content,
-                "metadata": doc.metadata,
+                "content": document,  # The actual document text
+                "metadata": metadata,
                 "score": float(score),
-                "category": doc.metadata.get("category", "unknown"),
-                "source": doc.metadata.get("source", "unknown"),
+                "category": metadata.get("category", "unknown"),
+                "source": metadata.get("source", "unknown"),
             }
-            for doc, score in results
+            for doc_id, score, metadata, document in results
         ]
 
     async def add_document(
-        self, content: str, metadata: Dict[str, Any], chunk_size: int = 1000
+        self,
+        content: str,
+        metadata: Dict[str, Any],
+        chunk_size: int = 1000
     ) -> int:
         """
         Add a document to the knowledge base
 
+        The document is automatically chunked and embedded before storage.
+
         Args:
             content: Document content
-            metadata: Document metadata
-            chunk_size: Size of text chunks
+            metadata: Document metadata (e.g., {"source": "readme.md", "category": "docs"})
+            chunk_size: Size of text chunks (default: 1000 characters)
 
         Returns:
             Number of chunks added
         """
+        if not self._initialized:
+            await self.initialize()
+
+        # Use LangChain for text chunking
         from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-        # Split into chunks
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=200,
             length_function=len,
             separators=["\n\n", "\n", " ", ""],
         )
-
         chunks = text_splitter.split_text(content)
 
-        # Prepare metadata for each chunk
+        # Generate embeddings for all chunks using sentence-transformers
+        # encode returns numpy array, convert to list of lists
+        embeddings_array = self.embedding_model.encode(chunks)
+        embeddings = embeddings_array.tolist()
+
+        # Prepare IDs and metadata for each chunk
+        source = metadata.get('source', 'unknown')
+        ids = [f"{source}_{i}" for i in range(len(chunks))]
         metadatas = [metadata.copy() for _ in chunks]
 
-        # Add to vector store
-        self.vectorstore.add_texts(texts=chunks, metadatas=metadatas)
+        # Add to backend
+        await self.backend.add_documents(
+            ids=ids,
+            embeddings=embeddings,
+            documents=chunks,
+            metadatas=metadatas
+        )
+
+        logger.info(
+            f"Added {len(chunks)} chunks from source '{source}' "
+            f"to collection '{self.collection_name}'"
+        )
 
         return len(chunks)
 
     async def delete_by_source(self, source: str) -> bool:
         """
-        Delete documents by source file
+        Delete all documents from a specific source file
 
         Args:
-            source: Source file path
+            source: Source file path (e.g., "docs/readme.md")
 
         Returns:
-            True if successful
+            True if any documents were deleted
         """
-        # Note: ChromaDB delete by metadata filter
-        # This requires the collection to support metadata filtering
-        try:
-            # Get all documents with this source
-            results = self.vectorstore.get(where={"source": source})
+        if not self._initialized:
+            await self.initialize()
 
-            if results and results.get("ids"):
-                self.vectorstore.delete(ids=results["ids"])
-                return True
+        # Delete using metadata filter
+        count = await self.backend.delete_documents(
+            where={"source": source}
+        )
 
-            return False
+        if count > 0:
+            logger.info(
+                f"Deleted {count} chunks from source '{source}' "
+                f"in collection '{self.collection_name}'"
+            )
+            return True
 
-        except Exception as e:
-            print(f"Error deleting documents: {e}")
-            return False
+        return False
 
     async def get_categories(self) -> List[str]:
         """
         Get list of all categories in the knowledge base
 
+        Note: This is a simplified implementation that queries all documents.
+        For large knowledge bases, consider maintaining a separate categories index.
+
         Returns:
-            List of category names
+            Sorted list of unique category names
         """
-        # This is a simplified implementation
-        # In production, you might want to maintain a separate categories table
-        try:
-            # Get all documents and extract unique categories
-            # Note: This might be expensive for large databases
-            results = self.vectorstore.get()
+        if not self._initialized:
+            await self.initialize()
 
-            categories = set()
-            if results and results.get("metadatas"):
-                for metadata in results["metadatas"]:
-                    if "category" in metadata:
-                        categories.add(metadata["category"])
+        # Get all documents and extract unique categories
+        # This could be optimized with a custom SQL query in production
+        stats = await self.backend.get_statistics()
 
-            return sorted(list(categories))
-
-        except Exception as e:
-            print(f"Error getting categories: {e}")
-            return []
+        # For now, return empty list - would need custom query to extract from metadata
+        # This can be enhanced in PostgresBackend later
+        logger.warning("get_categories() is not yet implemented for PostgresBackend")
+        return []
 
     async def get_statistics(self) -> Dict[str, Any]:
         """
         Get knowledge base statistics
 
         Returns:
-            Statistics dictionary
-        """
-        try:
-            results = self.vectorstore.get()
-
-            total_chunks = len(results.get("ids", []))
-
-            # Count by category
-            categories = {}
-            if results.get("metadatas"):
-                for metadata in results["metadatas"]:
-                    category = metadata.get("category", "unknown")
-                    categories[category] = categories.get(category, 0) + 1
-
-            return {
-                "total_chunks": total_chunks,
-                "categories": categories,
-                "embedding_model": self.embedding_model_name,
-                "db_path": self.db_path,
-                "collection_name": self.collection_name,
+            Dictionary with statistics:
+            {
+                "total_chunks": 1234,
+                "categories": {},  # Would need custom query
+                "embedding_model": "all-MiniLM-L6-v2",
+                "backend": "postgres",
+                "collection_name": "commandcenter_1"
             }
-
-        except Exception as e:
-            print(f"Error getting statistics: {e}")
-            return {"total_chunks": 0, "categories": {}, "error": str(e)}
-
-    def process_directory(
-        self, directory: str, category: str, file_extensions: Optional[List[str]] = None
-    ) -> int:
         """
-        Process all documents in a directory
-        This wraps the existing process_docs.py functionality
+        if not self._initialized:
+            await self.initialize()
 
-        Args:
-            directory: Directory path
-            category: Document category
-            file_extensions: List of file extensions to process
+        stats = await self.backend.get_statistics()
 
-        Returns:
-            Total number of chunks added
+        return {
+            "total_chunks": stats.get("document_count", 0),
+            "categories": {},  # Would need custom query to group by category
+            "embedding_model": settings.EMBEDDING_MODEL,
+            "backend": "postgres",
+            "collection_name": self.collection_name,
+            "embedding_dimension": settings.EMBEDDING_DIMENSION,
+        }
+
+    async def close(self):
         """
-        # Import the existing processor
-        sys.path.insert(
-            0,
-            str(
-                Path(__file__).parent.parent.parent.parent.parent
-                / "tools"
-                / "knowledge-base"
-            ),
-        )
+        Close backend connection and cleanup resources
 
-        try:
-            from process_docs import PerformiaKnowledgeProcessor
-
-            processor = PerformiaKnowledgeProcessor(db_path=self.db_path)
-            return processor.process_directory(directory, category)
-
-        except ImportError as e:
-            print(f"Error importing process_docs: {e}")
-            return 0
+        Should be called when shutting down the service.
+        """
+        if self._initialized:
+            await self.backend.close()
+            self._initialized = False
+            logger.info(f"Closed RAGService for collection '{self.collection_name}'")

@@ -27,7 +27,7 @@ async def start_project(
     """
     Start CommandCenter instance
 
-    Runs: docker-compose up -d
+    Starts: Dagger stack
     """
     try:
         result = await service.start_project(project_id)
@@ -48,7 +48,7 @@ async def stop_project(
     """
     Stop CommandCenter instance
 
-    Runs: docker-compose down
+    Stops: Dagger stack
     """
     try:
         result = await service.stop_project(project_id)
@@ -69,7 +69,7 @@ async def restart_project(
     """
     Restart CommandCenter instance
 
-    Runs: docker-compose restart
+    Restarts: Dagger stack
     """
     try:
         result = await service.restart_project(project_id)
@@ -100,7 +100,7 @@ async def get_project_logs(
     tail: int = 100,
     service: OrchestrationService = Depends(get_orchestration_service),
 ):
-    """Get docker-compose logs for project"""
+    """Get logs for project containers"""
     try:
         return await service.get_logs(project_id, tail=tail)
     except ValueError as e:

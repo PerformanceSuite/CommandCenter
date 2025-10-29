@@ -111,8 +111,9 @@ class RepositoryService:
             )
 
         # Create repository
+        # TODO: Get project_id from auth context once auth is implemented
         repository = await self.repo.create(
-            **repository_data.model_dump(), full_name=full_name
+            **repository_data.model_dump(), full_name=full_name, project_id=1
         )
 
         await self.db.commit()

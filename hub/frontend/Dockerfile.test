@@ -1,0 +1,37 @@
+# Hub Frontend Test Dockerfile
+# Node.js test environment
+
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+# Install Chromium for E2E tests
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set Puppeteer to use system Chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy application code
+COPY . .
+
+# Create coverage directory
+RUN mkdir -p /app/coverage
+
+# Default command: run tests with coverage
+CMD ["npm", "test", "--", \
+     "--coverage", \
+     "--reporter=junit", \
+     "--outputFile=/app/coverage/junit.xml"]
