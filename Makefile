@@ -203,3 +203,81 @@ update: ## Pull latest images and restart
 .env: ## Create .env from template if it doesn't exist
 	cp .env.template .env
 	@echo "✅ Created .env - please edit with your configuration"
+
+# ============================================================================
+# Docker Testing Targets
+# ============================================================================
+
+.PHONY: test-docker test-docker-backend test-docker-frontend test-docker-hub
+.PHONY: test-docker-all test-security test-performance test-docker-clean
+
+test-docker: ## Run all tests in Docker
+	@echo "Running all tests in Docker..."
+	docker-compose -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test-backend
+
+test-docker-backend: ## Run backend tests in Docker
+	@echo "Running backend tests in Docker..."
+	docker-compose -f docker-compose.test.yml up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from test-backend \
+		postgres-test redis-test test-backend
+
+test-docker-frontend: ## Run frontend tests in Docker
+	@echo "Running frontend tests in Docker..."
+	docker-compose -f docker-compose.test.yml up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from test-frontend \
+		test-frontend
+
+test-docker-hub: ## Run Hub tests in Docker
+	@echo "Running Hub backend tests..."
+	docker-compose -f docker-compose.test.yml up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from test-hub-backend \
+		test-hub-backend
+	@echo "Running Hub frontend tests..."
+	docker-compose -f docker-compose.test.yml up \
+		--build \
+		--abort-on-container-exit \
+		--exit-code-from test-hub-frontend \
+		test-hub-frontend
+
+test-docker-all: ## Run all tests (backend, frontend, hub) in Docker
+	@echo "Running complete test suite in Docker..."
+	docker-compose -f docker-compose.test.yml up \
+		--build \
+		--abort-on-container-exit
+
+test-security: ## Run security tests only (backend + hub)
+	@echo "Running security tests..."
+	docker-compose -f docker-compose.test.yml run --rm test-backend \
+		pytest tests/security/ -v
+	docker-compose -f docker-compose.test.yml run --rm test-hub-backend \
+		pytest tests/security/ -v
+
+test-performance: ## Run performance tests only
+	@echo "Running performance tests..."
+	docker-compose -f docker-compose.test.yml run --rm test-backend \
+		pytest tests/performance/ -v -s
+
+test-docker-clean: ## Clean up Docker test resources
+	@echo "Cleaning up Docker test resources..."
+	docker-compose -f docker-compose.test.yml down -v
+	docker volume prune -f
+	@echo "Cleaned up test volumes and containers"
+
+test-docker-shell-backend: ## Open shell in backend test container
+	docker-compose -f docker-compose.test.yml run --rm test-backend bash
+
+test-docker-shell-frontend: ## Open shell in frontend test container
+	docker-compose -f docker-compose.test.yml run --rm test-frontend sh
+
+test-docker-coverage: ## Extract coverage reports from containers
+	@echo "Extracting coverage reports..."
+	@mkdir -p coverage-reports
+	docker cp $$(docker-compose -f docker-compose.test.yml ps -q test-backend):/app/coverage/. ./coverage-reports/backend/ 2>/dev/null || true
+	docker cp $$(docker-compose -f docker-compose.test.yml ps -q test-frontend):/app/coverage/. ./coverage-reports/frontend/ 2>/dev/null || true
+	@echo "Coverage reports extracted to ./coverage-reports/"
