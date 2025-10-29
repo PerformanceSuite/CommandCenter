@@ -1,12 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { DashboardView } from '../../components/Dashboard/DashboardView';
 import { renderWithMemoryRouter } from '../../test-utils/test-utils';
-import * as dashboardApi from '../../services/dashboardApi';
 import { mockDashboardStats, mockActivity } from '../../test-utils/mocks';
-
-// Mock the dashboard API
-vi.mock('../../services/dashboardApi');
+import { useDashboard } from '../../hooks/useDashboard';
 
 // Mock the useDashboard hook
 vi.mock('../../hooks/useDashboard', () => ({
@@ -19,8 +16,7 @@ describe('DashboardView', () => {
   });
 
   it('displays loading spinner while fetching data', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: null,
       activity: [],
       loading: true,
@@ -34,8 +30,7 @@ describe('DashboardView', () => {
   });
 
   it('displays error message when fetch fails', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: null,
       activity: [],
       loading: false,
@@ -49,10 +44,9 @@ describe('DashboardView', () => {
   });
 
   it('renders dashboard statistics correctly', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
     const mockStats = mockDashboardStats();
 
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: mockStats,
       activity: [],
       loading: false,
@@ -79,10 +73,9 @@ describe('DashboardView', () => {
   });
 
   it('renders quick actions section', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
     const mockStats = mockDashboardStats();
 
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: mockStats,
       activity: [],
       loading: false,
@@ -99,11 +92,10 @@ describe('DashboardView', () => {
   });
 
   it('renders activity feed', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
     const mockStats = mockDashboardStats();
     const activities = mockActivity();
 
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: mockStats,
       activity: activities,
       loading: false,
@@ -117,17 +109,16 @@ describe('DashboardView', () => {
   });
 
   it('navigates to correct routes when metric cards are clicked', async () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
     const mockStats = mockDashboardStats();
 
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: mockStats,
       activity: [],
       loading: false,
       error: null,
     });
 
-    const { user } = renderWithMemoryRouter(<DashboardView />);
+    renderWithMemoryRouter(<DashboardView />);
 
     // We can't fully test navigation without checking the actual navigation,
     // but we can verify the buttons are clickable
@@ -136,9 +127,7 @@ describe('DashboardView', () => {
   });
 
   it('returns null when stats are not available but not loading', () => {
-    const { useDashboard } = require('../../hooks/useDashboard');
-
-    useDashboard.mockReturnValue({
+    vi.mocked(useDashboard).mockReturnValue({
       stats: null,
       activity: [],
       loading: false,
