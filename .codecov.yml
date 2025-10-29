@@ -1,0 +1,29 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+
+comment:
+  layout: "header, diff, files"
+  behavior: default
+
+ignore:
+  - "backend/tests/"
+  - "frontend/src/__tests__/"
+  - "e2e/tests/"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/test_*.py"
+
+flags:
+  backend:
+    paths:
+      - backend/app/
+  frontend:
+    paths:
+      - frontend/src/

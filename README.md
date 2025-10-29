@@ -110,6 +110,110 @@ See [Data Isolation Guide](./docs/DATA_ISOLATION.md) for complete details.
 
 ---
 
+## Testing
+
+CommandCenter has comprehensive test coverage across all layers.
+
+### Quick Start
+
+```bash
+# Run all tests
+make test
+
+# Backend tests only
+cd backend && pytest
+
+# Frontend tests only
+cd frontend && npm test
+
+# E2E tests only
+npx playwright test
+
+# Docker tests
+make test-docker
+```
+
+### Test Statistics
+
+- **390+ tests total**
+  - Backend: 784+ tests (unit, integration, security, performance)
+  - Frontend: 25+ tests (components, hooks, services)
+  - E2E: ~40 tests (critical user paths)
+- **Coverage:**
+  - Backend: 80%+
+  - Frontend: 60%+
+- **CI Runtime:** <25 minutes
+
+### Test Pyramid
+
+```
+           /\
+          /E2E\ 10%  - Critical user journeys
+         /----\
+        / Int \ 15%  - API & database tests
+       /--------\
+      /  Unit   \ 75% - Fast, isolated tests
+     /------------\
+```
+
+### Documentation
+
+- **[Testing Quickstart](docs/TESTING_QUICKSTART.md)** - How to run and write tests
+- **[Testing Strategy](docs/TESTING_STRATEGY.md)** - Testing philosophy and best practices
+- **[Contributing Guide](docs/CONTRIBUTING.md#testing-requirements)** - PR testing requirements
+- **[CI Workflows](docs/CI_WORKFLOWS.md)** - CI/CD pipeline details
+
+### Running Specific Tests
+
+```bash
+# Backend - specific test file
+pytest backend/tests/unit/models/test_technology.py
+
+# Backend - specific test
+pytest backend/tests/unit/models/test_technology.py::test_validation
+
+# Backend - by keyword
+pytest -k "security"
+
+# Frontend - specific component
+npm test -- Dashboard
+
+# Frontend - watch mode
+npm test -- --watch
+
+# E2E - specific test
+npx playwright test e2e/tests/smoke.spec.ts
+
+# E2E - headed mode (see browser)
+npx playwright test --headed
+```
+
+### CI/CD
+
+Tests run automatically on:
+- Every pull request
+- Every push to main
+- Manual workflow dispatch
+
+**CI Pipeline:**
+1. Smoke tests (<5 min) - Fast feedback
+2. Unit tests (parallel) - Bulk of tests
+3. Integration tests (sharded) - Database tests
+4. E2E tests (4-way shard) - Browser tests
+5. Performance check - Regression detection
+
+**Coverage Enforcement:**
+- Backend must maintain 80%+ coverage
+- Frontend must maintain 60%+ coverage
+- CI fails if coverage drops
+
+### Badges
+
+[![Tests](https://github.com/PerformanceSuite/CommandCenter/workflows/CI/badge.svg)](https://github.com/PerformanceSuite/CommandCenter/actions)
+[![codecov](https://codecov.io/gh/PerformanceSuite/CommandCenter/branch/main/graph/badge.svg)](https://codecov.io/gh/PerformanceSuite/CommandCenter)
+
+---
+
 ## 📖 Documentation
 
 ### Deployment & Operations

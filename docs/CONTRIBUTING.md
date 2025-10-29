@@ -434,6 +434,117 @@ npm run test:watch
 
 ---
 
+## Testing Requirements
+
+All pull requests must include tests. No exceptions.
+
+### Required Tests for PRs
+
+**New Features:**
+- [ ] Unit tests for business logic
+- [ ] Integration tests for API endpoints
+- [ ] Component tests for UI changes
+- [ ] E2E test if critical path affected
+
+**Bug Fixes:**
+- [ ] Regression test demonstrating the bug
+- [ ] Verify fix doesn't break existing tests
+
+**Refactoring:**
+- [ ] All existing tests still pass
+- [ ] Coverage maintained or improved
+
+**API Changes:**
+- [ ] Integration tests for all new/modified endpoints
+- [ ] Security tests if authentication/authorization changed
+- [ ] Performance tests if data-intensive
+
+**UI Changes:**
+- [ ] Component tests for all new/modified components
+- [ ] Accessibility tests
+- [ ] Visual regression tests (if applicable)
+
+### Running Tests Before Commit
+
+```bash
+# Run all affected tests
+cd backend && pytest --picked
+cd frontend && npm test
+
+# Run full suite (recommended)
+make test
+```
+
+### Test Review Checklist
+
+Reviewers should verify:
+
+- [ ] Tests cover the happy path
+- [ ] Tests cover error cases
+- [ ] Tests are not flaky (run 3x locally)
+- [ ] Test names clearly describe what's being tested
+- [ ] No hardcoded values (use fixtures/factories)
+- [ ] Cleanup happens in fixtures (not test body)
+- [ ] Tests run in <5s (unit) or <30s (integration)
+- [ ] No test-only code in production
+
+### Test Quality
+
+**Good Test:**
+```python
+def test_user_cannot_access_other_project_data(user_a, user_b, client):
+    """User A cannot see User B's technologies."""
+    # Arrange: Create data for User B
+    tech = create_technology(user_b, title="Secret")
+
+    # Act: User A tries to access
+    headers = auth_headers(user_a)
+    response = client.get("/api/v1/technologies", headers=headers)
+
+    # Assert: User B's data not returned
+    assert tech.id not in [t["id"] for t in response.json()]
+```
+
+**Bad Test:**
+```python
+def test():  # Unclear name
+    response = client.get("/api/v1/technologies")  # No auth
+    assert response  # Weak assertion
+```
+
+### Coverage Requirements
+
+CI will fail if coverage drops below:
+- Backend: 80%
+- Frontend: 60%
+
+Check coverage locally:
+```bash
+# Backend
+cd backend && pytest --cov=app --cov-report=html
+open htmlcov/index.html
+
+# Frontend
+cd frontend && npm test -- --coverage
+open coverage/lcov-report/index.html
+```
+
+### Writing Your First Test
+
+See [docs/TESTING_QUICKSTART.md](TESTING_QUICKSTART.md) for:
+- Test file organization
+- Example tests
+- Common patterns
+- Debugging techniques
+
+### Getting Help
+
+- Read [Testing Strategy](TESTING_STRATEGY.md) for philosophy
+- Check existing tests for patterns
+- Ask in PR comments if unsure
+
+---
+
 ## Commit Messages
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/) specification.

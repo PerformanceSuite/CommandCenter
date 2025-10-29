@@ -4,9 +4,6 @@ Pytest configuration and shared fixtures
 
 import os
 import asyncio
-import time
-import json
-from pathlib import Path
 from typing import AsyncGenerator, Generator
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -215,39 +212,3 @@ async def authenticated_client(async_client: AsyncClient, test_user, db_session:
     tokens = create_token_pair(test_user.id, test_user.email)
     async_client.headers["Authorization"] = f"Bearer {tokens['access_token']}"
     return async_client
-
-
-# Performance tracking fixture
-@pytest.fixture(scope="function", autouse=True)
-def track_test_duration(request):
-    """Track test duration and flag slow tests."""
-    start = time.time()
-    yield
-    duration = time.time() - start
-
-    # Flag slow tests (>5 seconds)
-    if duration > 5.0:
-        print(f"\n⚠️  Slow test: {request.node.name} took {duration:.2f}s")
-
-    # Save timing data for performance regression analysis
-    timing_file = Path("test-timings.json")
-    timings = {}
-
-    # Load existing timings if file exists
-    if timing_file.exists():
-        try:
-            with open(timing_file, 'r') as f:
-                timings = json.load(f)
-        except (json.JSONDecodeError, IOError):
-            # If file is corrupted, start fresh
-            timings = {}
-
-    # Update with current test timing
-    timings[request.node.nodeid] = duration
-
-    # Save updated timings
-    try:
-        with open(timing_file, 'w') as f:
-            json.dump(timings, f, indent=2)
-    except IOError as e:
-        print(f"Warning: Could not save test timings: {e}")
