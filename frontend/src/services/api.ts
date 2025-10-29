@@ -1,7 +1,9 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import type { Repository } from '../types/repository';
 import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/technology';
 import type { ResearchEntry } from '../types/research';
+import type { KnowledgeQueryResponse } from '../types/knowledge';
+import type { DashboardStats, DashboardActivity } from '../types/dashboard';
 
 // Use relative URL so it works with any port configuration
 // Nginx will proxy /api requests to the backend container
@@ -182,42 +184,42 @@ class ApiClient {
   }
 
   // Knowledge Base
-  async queryKnowledge(query: string): Promise<any> {
-    const response = await this.client.post('/api/v1/knowledge/query', { query });
+  async queryKnowledge(query: string): Promise<KnowledgeQueryResponse> {
+    const response = await this.client.post<KnowledgeQueryResponse>('/api/v1/knowledge/query', { query });
     return response.data;
   }
 
   // Dashboard
-  async getDashboardStats(): Promise<any> {
-    const response = await this.client.get('/api/v1/dashboard/stats');
+  async getDashboardStats(): Promise<DashboardStats> {
+    const response = await this.client.get<DashboardStats>('/api/v1/dashboard/stats');
     return response.data;
   }
 
-  async getDashboardActivity(limit: number = 10): Promise<any> {
-    const response = await this.client.get('/api/v1/dashboard/recent-activity', {
+  async getDashboardActivity(limit: number = 10): Promise<DashboardActivity> {
+    const response = await this.client.get<DashboardActivity>('/api/v1/dashboard/recent-activity', {
       params: { limit },
     });
     return response.data;
   }
 
   // Generic HTTP methods for other APIs
-  async get<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.get(url, config);
   }
 
-  async post<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.post(url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.put(url, data, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.patch(url, data, config);
   }
 
-  async delete(url: string, config?: any): Promise<AxiosResponse> {
+  async delete(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse> {
     return this.client.delete(url, config);
   }
 }

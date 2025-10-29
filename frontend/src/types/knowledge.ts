@@ -14,7 +14,14 @@ export interface KnowledgeSearchResult {
   technology_id?: number;
   source_file?: string;
   score: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
+}
+
+export interface KnowledgeQueryResponse {
+  results: KnowledgeSearchResult[];
+  query: string;
+  total_results: number;
+  search_mode?: string;
 }
 
 export interface KnowledgeEntry {
