@@ -100,8 +100,8 @@ export function normalizeApiResponse<T>(
  * @param obj - Object with snake_case keys
  * @returns Object with camelCase keys
  */
-export function snakeToCamel<T extends Record<string, any>>(obj: T): any {
-  const result: any = {};
+export function snakeToCamel<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
@@ -118,8 +118,8 @@ export function snakeToCamel<T extends Record<string, any>>(obj: T): any {
  * @param obj - Object to clean
  * @returns Object without null/undefined values
  */
-export function removeNullish<T extends Record<string, any>>(obj: T): Partial<T> {
-  const result: any = {};
+export function removeNullish<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(obj)) {
     if (value !== null && value !== undefined) {
@@ -127,5 +127,5 @@ export function removeNullish<T extends Record<string, any>>(obj: T): Partial<T>
     }
   }
 
-  return result;
+  return result as Partial<T>;
 }

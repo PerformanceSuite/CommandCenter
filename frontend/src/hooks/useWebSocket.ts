@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseWebSocketOptions {
-  onMessage?: (data: any) => void;
+  onMessage?: (data: unknown) => void;
   onError?: (error: Event) => void;
   reconnectInterval?: number;
   reconnectAttempts?: number;
@@ -9,7 +9,7 @@ interface UseWebSocketOptions {
 
 export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<any>(null);
+  const [lastMessage, setLastMessage] = useState<unknown>(null);
   const [error, setError] = useState<Error | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -67,7 +67,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     }
   }, [url, onMessage, onError, reconnectInterval, reconnectAttempts]);
 
-  const sendMessage = useCallback((data: any) => {
+  const sendMessage = useCallback((data: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
     }

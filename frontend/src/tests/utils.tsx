@@ -70,7 +70,8 @@ export const createMockApiResponse = <T,>(data: T, status = 200) => ({
   status,
   statusText: 'OK',
   headers: {},
-  config: {} as any,
+  config: {} as Record<string, unknown>,
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react';

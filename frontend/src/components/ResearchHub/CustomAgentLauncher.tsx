@@ -33,7 +33,7 @@ const CustomAgentLauncher: React.FC = () => {
     try {
       const models = await researchApi.getAvailableModels();
       setAvailableModels(models);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load models:', err);
     }
   };
@@ -46,7 +46,7 @@ const CustomAgentLauncher: React.FC = () => {
     setAgents(agents.filter((_, i) => i !== index));
   };
 
-  const handleAgentChange = (index: number, field: keyof AgentTaskRequest, value: any) => {
+  const handleAgentChange = (index: number, field: keyof AgentTaskRequest, value: string | number | undefined) => {
     const updated = [...agents];
     updated[index] = { ...updated[index], [field]: value };
     setAgents(updated);
@@ -69,8 +69,9 @@ const CustomAgentLauncher: React.FC = () => {
 
       // Reset form
       setAgents([{ role: 'deep_researcher', prompt: '' }]);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to launch agents');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to launch agents';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

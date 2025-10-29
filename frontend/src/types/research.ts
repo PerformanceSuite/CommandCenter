@@ -58,7 +58,7 @@ export interface AgentResultMetadata {
 }
 
 export interface AgentResult {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   metadata?: AgentResultMetadata | null;
   error?: string | null;
 }
@@ -108,9 +108,9 @@ export interface TechnologyMonitorResponse {
   technology_id: number;
   technology_name: string;
   period: string;
-  hackernews?: Record<string, any> | null;
-  github?: Record<string, any> | null;
-  arxiv?: Record<string, any> | null;
+  hackernews?: Record<string, unknown> | null;
+  github?: Record<string, unknown> | null;
+  arxiv?: Record<string, unknown> | null;
   alerts: MonitoringAlert[];
   last_updated: string;
 }

@@ -31,7 +31,7 @@ export interface ResearchTask {
   estimated_hours?: number;
   actual_hours?: number;
   uploaded_documents?: DocumentUpload[];
-  metadata_?: Record<string, any>;
+  metadata_?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

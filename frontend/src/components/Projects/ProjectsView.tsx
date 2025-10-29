@@ -9,7 +9,7 @@ export const ProjectsView = () => {
   const { projects, loading, error, createProject, updateProject, deleteProject } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [projectStats, setProjectStats] = useState<Record<number, any>>({});
+  const [projectStats, setProjectStats] = useState<Record<number, Record<string, unknown>>>({});
 
   const handleCreate = async (data: ProjectCreate) => {
     try {

@@ -20,7 +20,7 @@ describe('ResearchSummary', () => {
   });
 
   it('should display loading state initially', () => {
-    (researchApi.getResearchSummary as any).mockReturnValue(new Promise(() => {}));
+    vi.mocked(researchApi.getResearchSummary).mockReturnValue(new Promise(() => {}));
 
     render(<ResearchSummary />);
 
@@ -37,7 +37,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 5.5,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 
@@ -61,7 +61,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 
@@ -72,7 +72,7 @@ describe('ResearchSummary', () => {
   });
 
   it('should display error state on API failure', async () => {
-    (researchApi.getResearchSummary as any).mockRejectedValue(
+    vi.mocked(researchApi.getResearchSummary).mockRejectedValue(
       new Error('Network error')
     );
 
@@ -94,7 +94,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 
@@ -113,7 +113,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 
@@ -147,7 +147,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     const { unmount } = render(<ResearchSummary />);
 
@@ -175,7 +175,7 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    (researchApi.getResearchSummary as any).mockResolvedValue(mockSummary);
+    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 

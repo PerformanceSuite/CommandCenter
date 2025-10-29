@@ -17,9 +17,10 @@ const ResearchSummary: React.FC = () => {
           setSummary(data);
           setError(null);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (isMounted) {
-          setError(err.response?.data?.detail || err.message || 'Failed to load summary');
+          const errorMessage = err instanceof Error ? err.message : 'Failed to load summary';
+          setError(errorMessage);
         }
       } finally {
         if (isMounted) {
@@ -44,8 +45,9 @@ const ResearchSummary: React.FC = () => {
       const data = await researchApi.getResearchSummary();
       setSummary(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Failed to load summary');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load summary';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,7 @@ const ResearchTaskList: React.FC = () => {
     }, 3000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Fixed: removed 'tasks' from deps to prevent memory leak
 
   const refreshTasks = async () => {
@@ -32,7 +33,7 @@ const ResearchTaskList: React.FC = () => {
         newTasks.set(task.task_id, task);
       });
       setTasks(newTasks);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to refresh tasks:', err);
     }
   };
@@ -42,7 +43,7 @@ const ResearchTaskList: React.FC = () => {
     setError(null);
     try {
       await refreshTasks();
-    } catch (err: any) {
+    } catch (err) {
       setError('Failed to refresh tasks');
     } finally {
       setRefreshing(false);
@@ -57,8 +58,9 @@ const ResearchTaskList: React.FC = () => {
       newTasks.set(task.task_id, task);
       setTasks(newTasks);
       setExpandedTaskId(task.task_id);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Task not found');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Task not found';
+      setError(errorMessage);
     }
   };
 

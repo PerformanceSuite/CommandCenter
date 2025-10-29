@@ -62,7 +62,7 @@ export const createMockApiResponse = <T,>(data: T, status = 200) => ({
   status,
   statusText: 'OK',
   headers: {},
-  config: {} as any,
+  config: {} as Record<string, unknown>,
 });
 
 // Mock axios instance

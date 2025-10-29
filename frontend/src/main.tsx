@@ -12,8 +12,8 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors (client errors)
-        const status = (error as any)?.response?.status;
-        if (status >= 400 && status < 500) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status && status >= 400 && status < 500) {
           return false;
         }
         // Retry up to 3 times for network/server errors
@@ -26,8 +26,8 @@ const queryClient = new QueryClient({
     mutations: {
       retry: (failureCount, error) => {
         // Don't retry on 4xx errors
-        const status = (error as any)?.response?.status;
-        if (status >= 400 && status < 500) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status && status >= 400 && status < 500) {
           return false;
         }
         // Retry once for network/server errors

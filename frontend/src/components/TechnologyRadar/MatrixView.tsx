@@ -39,8 +39,8 @@ export const MatrixView: React.FC<MatrixViewProps> = ({ technologies, onEdit, on
   // Sort technologies
   const sortedTechnologies = useMemo(() => {
     return [...technologies].sort((a, b) => {
-      let aVal: any = a[sortField];
-      let bVal: any = b[sortField];
+      let aVal: unknown = a[sortField];
+      let bVal: unknown = b[sortField];
 
       // Handle null values
       if (aVal === null && bVal === null) return 0;

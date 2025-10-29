@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from 'react';
 import type { Technology } from '../../types/technology';
-import { TrendingUp, Beaker, TestTube, Rocket, Edit2, Trash2, ExternalLink, Star, MessageCircle, GitBranch, Zap, Timer, Code, DollarSign, Activity } from 'lucide-react';
+import { TrendingUp, Beaker, TestTube, Rocket, Edit2, Trash2, ExternalLink, Star, MessageCircle, GitBranch, Zap, Timer, Code, DollarSign, Activity, type LucideIcon } from 'lucide-react';
 
 interface TechnologyCardProps {
   technology: Technology;
@@ -8,7 +8,7 @@ interface TechnologyCardProps {
   onDelete?: (technology: Technology) => void;
 }
 
-const statusConfig: Record<string, { label: string; icon: any; color: string }> = {
+const statusConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   discovery: { label: 'Discovery', icon: Beaker, color: 'bg-purple-100 text-purple-700' },
   research: { label: 'Research', icon: TestTube, color: 'bg-blue-100 text-blue-700' },
   evaluation: { label: 'Evaluation', icon: TrendingUp, color: 'bg-yellow-100 text-yellow-700' },

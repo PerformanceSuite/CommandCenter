@@ -1,17 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 
 // Test component that uses multiple contexts
 function TestComponent() {
   return <div data-testid="test-content">Test Content</div>;
-}
-
-// Component that throws an error for ErrorBoundary testing
-function ThrowingComponent() {
-  throw new Error('Test error');
 }
 
 describe('Context Providers', () => {

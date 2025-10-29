@@ -25,7 +25,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleUpdate = (field: keyof ResearchTaskUpdate, value: any) => {
+  const handleUpdate = (field: keyof ResearchTaskUpdate, value: string | number | TaskStatus | undefined) => {
     setEditData((prev) => ({ ...prev, [field]: value }));
   };
 

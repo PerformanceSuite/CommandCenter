@@ -23,7 +23,7 @@ describe('ApiClient', () => {
       },
     };
 
-    mockedAxios.create = vi.fn(() => mockInstance as any);
+    mockedAxios.create = vi.fn(() => mockInstance as unknown as ReturnType<typeof axios.create>);
   });
 
   describe('Repository operations', () => {
@@ -32,7 +32,7 @@ describe('ApiClient', () => {
       const mockGet = vi.fn().mockResolvedValue({ data: repos });
 
       // Replace the client's get method
-      (api as any).client.get = mockGet;
+      (api as { client: { get: typeof mockGet } }).client.get = mockGet;
 
       const result = await api.getRepositories();
 
@@ -43,7 +43,7 @@ describe('ApiClient', () => {
     it('fetches single repository', async () => {
       const repo = mockRepository();
       const mockGet = vi.fn().mockResolvedValue({ data: repo });
-      (api as any).client.get = mockGet;
+      (api as { client: { get: typeof mockGet } }).client.get = mockGet;
 
       const result = await api.getRepository('1');
 
@@ -54,7 +54,7 @@ describe('ApiClient', () => {
     it('creates repository', async () => {
       const newRepo = mockRepository();
       const mockPost = vi.fn().mockResolvedValue({ data: newRepo });
-      (api as any).client.post = mockPost;
+      (api as { client: { post: typeof mockPost } }).client.post = mockPost;
 
       const repoData = { owner: 'test', name: 'repo' };
       const result = await api.createRepository(repoData);
@@ -66,7 +66,7 @@ describe('ApiClient', () => {
     it('updates repository', async () => {
       const updated = mockRepository({ description: 'Updated' });
       const mockPut = vi.fn().mockResolvedValue({ data: updated });
-      (api as any).client.put = mockPut;
+      (api as { client: { put: typeof mockPut } }).client.put = mockPut;
 
       const updateData = { description: 'Updated' };
       const result = await api.updateRepository('1', updateData);
@@ -77,7 +77,7 @@ describe('ApiClient', () => {
 
     it('deletes repository', async () => {
       const mockDelete = vi.fn().mockResolvedValue({});
-      (api as any).client.delete = mockDelete;
+      (api as { client: { delete: typeof mockDelete } }).client.delete = mockDelete;
 
       await api.deleteRepository('1');
 
@@ -86,7 +86,7 @@ describe('ApiClient', () => {
 
     it('syncs repository', async () => {
       const mockPost = vi.fn().mockResolvedValue({});
-      (api as any).client.post = mockPost;
+      (api as { client: { post: typeof mockPost } }).client.post = mockPost;
 
       await api.syncRepository('1');
 
@@ -98,7 +98,7 @@ describe('ApiClient', () => {
     it('fetches all technologies', async () => {
       const techs = [mockTechnology(), mockTechnology({ id: 2 })];
       const mockGet = vi.fn().mockResolvedValue({ data: techs });
-      (api as any).client.get = mockGet;
+      (api as { client: { get: typeof mockGet } }).client.get = mockGet;
 
       const result = await api.getTechnologies();
 
@@ -109,7 +109,7 @@ describe('ApiClient', () => {
     it('creates technology', async () => {
       const newTech = mockTechnology();
       const mockPost = vi.fn().mockResolvedValue({ data: newTech });
-      (api as any).client.post = mockPost;
+      (api as { client: { post: typeof mockPost } }).client.post = mockPost;
 
       const techData = { title: 'Python', domain: 'ai-ml' };
       const result = await api.createTechnology(techData);
@@ -123,7 +123,7 @@ describe('ApiClient', () => {
     it('queries knowledge base', async () => {
       const mockResponse = { answer: 'Test answer', sources: [] };
       const mockPost = vi.fn().mockResolvedValue({ data: mockResponse });
-      (api as any).client.post = mockPost;
+      (api as { client: { post: typeof mockPost } }).client.post = mockPost;
 
       const result = await api.queryKnowledge('test query');
 

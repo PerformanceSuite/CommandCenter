@@ -39,7 +39,7 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    (researchApi.getResearchTaskStatus as any).mockResolvedValue(mockTask);
+    vi.mocked(researchApi.getResearchTaskStatus).mockResolvedValue(mockTask);
 
     render(<ResearchTaskList />);
 
@@ -60,7 +60,7 @@ describe('ResearchTaskList', () => {
   });
 
   it('should display error message when task not found', async () => {
-    (researchApi.getResearchTaskStatus as any).mockRejectedValue({
+    vi.mocked(researchApi.getResearchTaskStatus).mockRejectedValue({
       response: { data: { detail: 'Task not found' } },
     });
 
@@ -89,7 +89,7 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    (researchApi.getResearchTaskStatus as any).mockResolvedValue(mockTask);
+    vi.mocked(researchApi.getResearchTaskStatus).mockResolvedValue(mockTask);
 
     render(<ResearchTaskList />);
 
@@ -142,7 +142,7 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    (researchApi.getResearchTaskStatus as any).mockResolvedValue(mockTask);
+    vi.mocked(researchApi.getResearchTaskStatus).mockResolvedValue(mockTask);
 
     render(<ResearchTaskList />);
 
@@ -182,7 +182,7 @@ describe('ResearchTaskList', () => {
         error: null,
       };
 
-      (researchApi.getResearchTaskStatus as any).mockResolvedValue(mockTask);
+      vi.mocked(researchApi.getResearchTaskStatus).mockResolvedValue(mockTask);
 
       const { unmount } = render(<ResearchTaskList />);
 
@@ -211,7 +211,7 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    (researchApi.getResearchTaskStatus as any).mockResolvedValue(mockTask);
+    vi.mocked(researchApi.getResearchTaskStatus).mockResolvedValue(mockTask);
 
     render(<ResearchTaskList />);
 
