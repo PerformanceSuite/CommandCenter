@@ -79,3 +79,6 @@ celery-redbeat==2.2.0  # Redis-backed beat scheduler
 
 # Export formats (Sprint 3.1)
 openpyxl>=3.1.5,<4.0.0  # Excel export support (docling requires >=3.1.5)
+
+# Selective test running (CI optimization)
+pytest-picked==0.5.0
