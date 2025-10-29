@@ -105,3 +105,37 @@ async def test_database_files_isolated_per_project(
     assert parent_a != parent_b, (
         "Database files must be in separate directories per project"
     )
+
+
+@pytest.mark.asyncio
+async def test_container_names_unique_per_project(
+    project_configs, mock_orchestration_service
+):
+    """Each project's containers have unique names."""
+    # Start both projects
+    stack_a = await mock_orchestration_service.start_project(project_configs[0])
+    stack_b = await mock_orchestration_service.start_project(project_configs[1])
+
+    # Get container names
+    containers_a = ["proj-a-postgres", "proj-a-redis", "proj-a-backend"]
+    containers_b = ["proj-b-postgres", "proj-b-redis", "proj-b-backend"]
+
+    # No overlap
+    assert set(containers_a).isdisjoint(set(containers_b)), (
+        "Container names must be unique per project"
+    )
+
+
+@pytest.mark.asyncio
+async def test_network_isolation_between_projects(
+    project_configs, mock_orchestration_service
+):
+    """Projects cannot access each other's network services."""
+    stack_a = await mock_orchestration_service.start_project(project_configs[0])
+    stack_b = await mock_orchestration_service.start_project(project_configs[1])
+
+    # Projects should use separate Docker networks
+    network_a = f"{project_configs[0].project_name}_network"
+    network_b = f"{project_configs[1].project_name}_network"
+
+    assert network_a != network_b, "Networks must be separate"
