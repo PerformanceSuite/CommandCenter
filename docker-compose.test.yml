@@ -1,0 +1,126 @@
+version: '3.8'
+
+# Test orchestration for all CommandCenter components
+# Includes dedicated test databases and service dependencies
+
+services:
+  # Test database (PostgreSQL)
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: commandcenter_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+
+  # Test cache (Redis)
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend tests
+  test-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ./backend:/app
+      - backend-test-results:/app/test-results
+      - backend-coverage:/app/coverage
+    environment:
+      DATABASE_URL: postgresql://test:test@postgres-test:5432/commandcenter_test
+      REDIS_URL: redis://redis-test:6379
+      SECRET_KEY: test-secret-key-for-testing-only
+      TESTING: "true"
+      PYTHONPATH: /app
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 2 &&
+        pytest -v
+        --cov=app
+        --cov-report=xml:/app/coverage/coverage.xml
+        --cov-report=html:/app/coverage/htmlcov
+        --cov-report=term-missing
+        --junitxml=/app/test-results/junit.xml
+      "
+
+  # Frontend tests
+  test-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Anonymous volume for node_modules
+      - frontend-coverage:/app/coverage
+    environment:
+      CI: "true"
+      VITE_API_URL: http://localhost:8000
+    command: npm test -- --coverage --watchAll=false
+
+  # Hub backend tests
+  test-hub-backend:
+    build:
+      context: ./hub/backend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ./hub/backend:/app
+      - hub-backend-test-results:/app/test-results
+      - hub-backend-coverage:/app/coverage
+      - /var/run/docker.sock:/var/run/docker.sock  # For Dagger tests
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:///./test.db
+      TESTING: "true"
+      PYTHONPATH: /app
+    command: >
+      sh -c "
+        pytest -v
+        --cov=app
+        --cov-report=xml:/app/coverage/coverage.xml
+        --cov-report=html:/app/coverage/htmlcov
+        --cov-report=term-missing
+        --junitxml=/app/test-results/junit.xml
+      "
+
+  # Hub frontend tests
+  test-hub-frontend:
+    build:
+      context: ./hub/frontend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ./hub/frontend:/app
+      - /app/node_modules
+      - hub-frontend-coverage:/app/coverage
+    environment:
+      CI: "true"
+      VITE_API_URL: http://localhost:9001
+    command: npm test -- --coverage --watchAll=false
+
+volumes:
+  postgres-test-data:
+  backend-test-results:
+  backend-coverage:
+  frontend-coverage:
+  hub-backend-test-results:
+  hub-backend-coverage:
+  hub-frontend-coverage:

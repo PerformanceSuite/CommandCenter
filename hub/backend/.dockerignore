@@ -12,20 +12,17 @@ env/
 .pytest_cache/
 test-results/
 coverage/
-htmlcov/
 .coverage
+
+# Database
+*.db
+*.sqlite
+data/
 
 # IDE
 .vscode/
 .idea/
 *.swp
-*.swo
 
 # OS
 .DS_Store
-Thumbs.db
-
-# Data
-data/
-*.db
-*.sqlite
