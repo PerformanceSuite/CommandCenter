@@ -13,6 +13,7 @@ from app.models.project_analysis import ProjectAnalysis
 from app.models.job import Job, JobStatus, JobType
 from app.models.schedule import Schedule, ScheduleFrequency
 from app.models.integration import Integration, IntegrationType, IntegrationStatus
+from app.models.ingestion_source import IngestionSource, SourceType, SourceStatus
 
 __all__ = [
     "Project",
@@ -37,4 +38,7 @@ __all__ = [
     "Integration",
     "IntegrationType",
     "IntegrationStatus",
+    "IngestionSource",
+    "SourceType",
+    "SourceStatus",
 ]

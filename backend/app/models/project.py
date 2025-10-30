@@ -3,11 +3,14 @@ Project model for multi-tenant isolation
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import String, Text, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.ingestion_source import IngestionSource
 
 
 class Project(Base):
@@ -73,6 +76,9 @@ class Project(Base):
     )
     integrations: Mapped[list["Integration"]] = relationship(
         "Integration", back_populates="project", cascade="all, delete-orphan"
+    )
+    ingestion_sources: Mapped[list["IngestionSource"]] = relationship(
+        "IngestionSource", back_populates="project", cascade="all, delete-orphan"
     )
 
     # Unique constraint: owner + name must be unique

@@ -212,3 +212,20 @@ async def authenticated_client(async_client: AsyncClient, test_user, db_session:
     tokens = create_token_pair(test_user.id, test_user.email)
     async_client.headers["Authorization"] = f"Bearer {tokens['access_token']}"
     return async_client
+
+
+# Sample project fixture for ingestion tests
+@pytest.fixture
+async def sample_project(db_session: AsyncSession):
+    """Create a sample project for testing"""
+    from app.models.project import Project
+
+    project = Project(
+        name="Test Project",
+        owner="testowner",
+        description="Project for testing"
+    )
+    db_session.add(project)
+    await db_session.commit()
+    await db_session.refresh(project)
+    return project
