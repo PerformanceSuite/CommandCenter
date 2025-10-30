@@ -75,14 +75,14 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                 entries = feed_scraper.deduplicate_entries(entries)
 
                 # Ingest into RAG
-                rag_service = RAGService()
+                rag_service = RAGService(repository_id=source.project_id)
+                await rag_service.initialize()
                 documents_ingested = 0
 
                 for entry in entries:
                     try:
                         # Add document to RAG system
-                        rag_service.add_document(
-                            project_id=source.project_id,
+                        await rag_service.add_document(
                             content=entry.content,
                             metadata={
                                 'title': entry.title,
