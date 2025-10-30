@@ -1,0 +1,123 @@
+Claude Code Best Practices: A Guide to Skills, Sub-agents, and Commands
+
+1.0 Introduction: Navigating the Complexity of Modern Agentic Tooling
+
+Claude Code is a powerful suite of tools that has fundamentally changed the landscape of modern engineering. For many, including the author, it has generated more code in months "than in my previous 15 years as an engineer." However, as this once-simple tool has matured, its feature set—which now includes Agent Skills, Sub-agents, Custom Slash Commands, and MCP Servers—has grown increasingly complex. This expansion has led to considerable confusion about when and how to deploy each capability effectively.
+
+This guide provides software engineers with a clear, simplified framework for understanding and applying these features in their professional workflows. Its purpose is to cut through the ambiguity, offering a structured approach to leveraging the full power of Claude Code without getting lost in the overlapping functionality. The first step toward this clarity is to compare the core capabilities of each feature side-by-side, establishing a foundational understanding of their distinct roles.
+
+2.0 The Core Capabilities: A Comparative Framework
+
+Choosing the right tool for the job is a strategic decision that begins with a clear-eyed analysis of its fundamental capabilities. While features like Skills, Sub-agents, and Slash Commands have significant overlap, they differ critically in their approach to agent interaction, context management, and structural organization. Understanding these distinctions is the key to unlocking efficient and scalable agentic development.
+
+The following table provides a comparative breakdown of the four key features against their most important operational capabilities.
+
+Capability	Agent Skills	MCP Servers	Sub-agents	Custom Slash Commands
+Trigger Mechanism	Agent-triggered (Autonomous)	Agent-triggered	Agent-triggered	User-triggered (Manual)
+Context Efficiency	High (Uses "progressive disclosure")	Low (Can "torch your context window" on startup)	High (Isolated context)	High (User-defined context)
+Context Persistence	High	High	None (Context is lost post-execution)	High
+Modularity	High (Dedicated, opinionated directory structure)	Moderate	Low (User-defined)	Low (User-defined)
+Composability	Highest (Top-level orchestrator; can use all other features)	Low (Primitive unit)	Moderate (Can use commands/MCPs)	High (Can trigger other features, but is a primitive unit)
+
+As the table illustrates, a significant degree of functional overlap exists across these tools. However, a closer look reveals that the key differentiators are often the intended approach (e.g., autonomous vs. manual) and the primary trigger (agent vs. user). This nuanced understanding forms the basis for selecting the right feature for a specific engineering task, which we will explore through concrete use cases in the following section.
+
+3.0 Feature Deep Dive and Actionable Use Cases
+
+After comparing their high-level capabilities, the next step is to analyze each feature individually. A formal definition clarifies its intended purpose, but real-world examples provide the practical wisdom needed for effective implementation. This section offers a detailed breakdown of each feature, pairing its official definition with concrete, actionable use cases to guide engineers on when to deploy each tool for optimal results.
+
+3.1 Custom Slash Commands: The Foundational Primitive
+
+* Definition: "Reusable prompt shortcuts that you invoke manually."
+* Analysis: Custom Slash Commands are described as the "primitive of agentic coding" and are the recommended starting point for nearly any task. They are the most direct way to interact with the language model, and mastering the prompt is considered the "fundamental unit of knowledge work." This makes them the ideal tool for testing, refining, and validating a core prompt before considering its inclusion in a more complex, automated workflow.
+* Use Cases:
+  * Generalizing git commit messages for consistency.
+  * Creating a standard UI component within a specific framework.
+  * Executing a simple, one-off task, such as creating a single git work tree.
+
+3.2 Sub-agents: For Parallelization and Isolated Workflows
+
+* Definition: Used "to delegate isolatable specialized tasks with separate contexts that can work in parallel."
+* Analysis: Sub-agents are the definitive choice for two specific scenarios: parallel execution and context isolation. The guiding principle is simple: "Whenever you see parallel you should always just jump to sub agents." They are designed to perform work outside the main agent's context window, which is ideal for large-scale tasks that don't need to pollute the primary context. The crucial trade-off is that this isolated context is lost once the task is complete.
+* Use Cases:
+  * Running a comprehensive security audit across a large codebase.
+  * Fixing and debugging a large number of failing tests at scale.
+  * Any task requiring parallel execution, like creating multiple git work trees simultaneously.
+
+3.3 MCP Servers: For External Integrations
+
+* Definition: Used for "connecting your agents to external tools and data sources."
+* Analysis: The role of MCP Servers is distinct and unambiguous. Any workflow that involves interacting with third-party services, external APIs, or outside data sources is a prime candidate for an MCP server. Architecturally, they represent a clean separation of concerns, decoupling the agent's internal logic from the implementation details of external data sources.
+* Use Cases:
+  * Connecting to a Jira instance to manage tickets.
+  * Querying an external or internal database.
+  * Fetching real-time weather data from a public API.
+
+3.4 Agent Skills: For Autonomous, Reoccurring Workflows
+
+* Definition: Used to "package custom expertise that your agent autonomously applies to your reoccurring workflows."
+* Analysis: The core purpose of a Skill is to manage an entire problem set, not just a single, discrete task. This is the most critical distinction. Using a Skill for a one-off task (e.g., creating a single git work tree) is a clear architectural anti-pattern. The correct architectural pattern is to use a Skill to manage the entire lifecycle of git work trees—a reoccurring problem that involves creating, removing, listing, and merging them. The agent can then autonomously invoke the correct part of the Skill as needed.
+* Use Cases:
+  * Automatically extracting text and structured data from any PDF uploaded to the project.
+  * Continuously detecting and flagging style guide violations in new code.
+  * Managing the complete lifecycle of git work trees for parallel development.
+
+Understanding how these distinct features can be layered and combined is the key to unlocking advanced agentic development workflows.
+
+4.0 The Compositional Hierarchy: From Primitives to Managers
+
+The most effective agentic engineers do not use these features in isolation. Instead, they compose them in a logical hierarchy to build robust, scalable, and maintainable solutions. By understanding this compositional structure, developers can start with simple primitives and progressively build them into sophisticated, autonomous systems.
+
+The Prompt as the Primitive
+
+At the base of the entire hierarchy lies the prompt. The Custom Slash Command is the direct embodiment of this principle, making it the foundational unit of all agentic work. As the source material emphatically states: "Do not give away the prompt. The prompt is the fundamental unit of knowledge work and of programming." Every complex operation, whether executed by a Sub-agent or a Skill, ultimately resolves to a prompt. Therefore, mastery begins here.
+
+Illustrating the Hierarchy
+
+The "git work tree" example provides a perfect illustration of the proper escalation path from a simple task to a complex problem set:
+
+1. Start with a Slash Command: When the task is to perform a simple, one-off action like creating a single git work tree, a /create_work_tree slash command is the correct and most efficient tool. It's direct, manual, and solves the immediate problem.
+2. Escalate to a Sub-agent: If the requirement changes to creating many work trees simultaneously, the workflow now requires parallelization. This is the clear trigger to escalate to a Sub-agent. Crucially, this Sub-agent does not need to reinvent the logic; it can simply call the existing /create_work_tree slash command multiple times in parallel.
+3. Graduate to a Skill: The problem evolves again. It's no longer just about "creating" work trees, but about "managing" them over time—a recurring problem set that includes creating, removing, listing, and merging. This is the point to graduate to a Skill. The Skill acts as a "Work Tree Manager," orchestrating multiple slash commands and other tools to autonomously handle the entire problem domain.
+
+The Chain of Command
+
+This escalation path reveals a clear and strict compositional hierarchy that should govern your architectural decisions. Skills sit at the top, acting as high-level managers capable of using MCP Servers, Sub-agents, and Slash Commands. An MCP Server, by contrast, is a lower-level unit focused on a single integration; it would not use a Skill. While a slash command can technically trigger a skill, the architecturally sound pattern is for Skills to orchestrate primitives like slash commands, not the other way around. This maintains a clean "chain of command" and prevents circular dependencies.
+
+With this compositional framework in mind, it's valuable to take a step back and perform an expert evaluation of the Agent Skills feature itself—weighing its advantages against its current limitations.
+
+5.0 Expert Analysis: Evaluating the Agent Skills Feature
+
+Understanding the "what" and "how" of a new technology is crucial, but a senior engineer must also critically evaluate its underlying strengths and weaknesses. A balanced analysis, based on hands-on experience, reveals where a feature truly shines and where it has room to grow. This section presents such an analysis for the Agent Skills feature.
+
+5.1 The Strengths of an Agent-First Approach
+
+Agent Skills introduce several powerful advantages by prioritizing an agent-first, autonomous workflow.
+
+* Agent-Invoked Autonomy: Skills lean directly into agent autonomy. Instead of requiring manual invocation, they empower the agent to recognize a situation and apply the appropriate solution from its library of skills.
+* Context Protection: By using a "progressive disclosure" model, Skills are highly context-efficient. They only load the necessary information into the context window as needed, unlike MCP servers which can consume a large portion of the context on startup.
+* Dedicated Modularity: Skills provide an opinionated, isolated file system pattern. This dedicated directory structure makes it easier to logically group, create, update, and distribute solutions for recurring problems.
+* High Composability: As a higher-level compositional unit, a Skill can orchestrate all other features. It can call Slash Commands, delegate to Sub-agents, and connect to MCP servers, acting as a central manager for a complex problem set.
+
+5.2 Critiques and Current Limitations
+
+Despite its strengths, the Agent Skills feature in its current form is not without critiques and limitations.
+
+* Incomplete Implementation: The feature "doesn't go all the way." A true modular system would have dedicated /commands and /agents directories within a skill's file structure, allowing the true primitive (the prompt) to be bundled alongside its orchestrator. This omission is the feature's biggest weakness.
+* Uncertain Reliability: The reliability of chaining multiple skills together to execute a complex sequence of tasks is not yet proven. In contrast, a sequence of manually triggered slash commands is deterministic and guaranteed to execute in the specified order.
+* Limited Innovation: From a critical perspective, the feature can be viewed as "canyonated prompt engineering plus modularity." This raises the essential question: "what's the actual innovation?" While packaging is useful, experienced engineers could achieve similar results with existing tools.
+
+Despite these valid critiques, the introduction of Skills represents a strategic direction for agentic development. The final step is to synthesize these insights into a clear set of recommendations for integrating them into a modern workflow.
+
+6.0 Final Recommendations and Conclusion
+
+Successfully navigating the Claude Code ecosystem requires a disciplined, hierarchical approach. Rather than viewing its features as interchangeable options, engineers should treat them as a set of specialized tools, each with a distinct purpose. By adhering to a clear set of principles, you can build powerful, scalable, and maintainable agentic systems.
+
+Here are the final best practices synthesized from this guide:
+
+1. Prioritize Slash Commands: Always begin by building a prompt-based custom slash command. As the source author warns, avoiding mastery of the prompt means "you will not progress as an agentic engineer... in 2025, in 2026, and beyond." This is the foundational unit of all agentic work, and mastering it is non-negotiable.
+2. Use Tools for Their Purpose: Escalate to more complex features only when their specific purpose is required. Use Sub-agents exclusively for parallelization and tasks requiring strict context isolation. Use MCP Servers exclusively for integrations with external tools and data sources.
+3. Adopt Skills for Management: Treat Skills as a top-level orchestrator or manager. Promote a set of related slash commands and other tools into a Skill only when you have a reoccurring problem set that can be managed autonomously by the agent over its entire lifecycle.
+  * Avoid the common mistake of "graduating" a simple, one-off task to a Skill; a Skill's purpose is to manage a problem's lifecycle, not execute a single action.
+4. Embrace Composition: Do not see these features as replacements for one another. The most powerful solutions emerge from composing these tools together in a logical hierarchy, with prompts as the primitive, slash commands as the building blocks, and skills as the intelligent managers.
+
+The tools and features for agentic engineering will undoubtedly continue to evolve. However, a strong foundation in these first principles—starting simple, respecting each tool's purpose, and composing solutions intelligently—will enable you to build effectively with Claude Code both today and into the future.
