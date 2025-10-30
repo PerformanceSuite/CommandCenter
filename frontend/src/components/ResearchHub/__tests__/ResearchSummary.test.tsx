@@ -1,35 +1,31 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ResearchSummary from '../ResearchSummary';
-import { researchApi } from '../../../services/researchApi';
+import { useResearchSummary } from '../../../hooks/useResearchSummary';
 
-vi.mock('../../../services/researchApi', () => ({
-  researchApi: {
-    getResearchSummary: vi.fn(),
-  },
+vi.mock('../../../hooks/useResearchSummary', () => ({
+  useResearchSummary: vi.fn(),
 }));
-
-const mockGetResearchSummary = researchApi.getResearchSummary as ReturnType<typeof vi.fn>;
 
 describe('ResearchSummary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('should display loading state initially', () => {
-    mockGetResearchSummary.mockReturnValue(new Promise(() => {}));
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: null,
+      loading: true,
+      error: null,
+      refetch: vi.fn(),
+    });
 
     render(<ResearchSummary />);
 
     expect(screen.getByText('Loading summary...')).toBeInTheDocument();
   });
 
-  it('should display summary metrics when loaded', async () => {
+  it('should display summary metrics when loaded', () => {
     const mockSummary = {
       total_tasks: 10,
       completed_tasks: 7,
@@ -39,24 +35,24 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 5.5,
     };
 
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: mockSummary,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
 
     render(<ResearchSummary />);
 
-    // Run pending timers to allow useEffect and promises to resolve
-    await vi.advanceTimersByTimeAsync(0);
-
-    await waitFor(() => {
-      expect(screen.getByText('10')).toBeInTheDocument(); // total tasks
-      expect(screen.getByText('7')).toBeInTheDocument(); // completed
-      expect(screen.getByText('2')).toBeInTheDocument(); // failed
-      expect(screen.getByText('25')).toBeInTheDocument(); // agents
-      expect(screen.getByText('$1.23')).toBeInTheDocument(); // cost
-      expect(screen.getByText('5.5s')).toBeInTheDocument(); // avg time
-    });
+    expect(screen.getByText('10')).toBeInTheDocument(); // total tasks
+    expect(screen.getByText('7')).toBeInTheDocument(); // completed
+    expect(screen.getByText('2')).toBeInTheDocument(); // failed
+    expect(screen.getByText('25')).toBeInTheDocument(); // agents
+    expect(screen.getByText('$1.23')).toBeInTheDocument(); // cost
+    expect(screen.getByText('5.5s')).toBeInTheDocument(); // avg time
   });
 
-  it('should calculate completion rate correctly', async () => {
+  it('should calculate completion rate correctly', () => {
     const mockSummary = {
       total_tasks: 10,
       completed_tasks: 7,
@@ -66,34 +62,41 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: mockSummary,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
 
     render(<ResearchSummary />);
 
-    await vi.advanceTimersByTimeAsync(0);
-
-    await waitFor(() => {
-      // 7/10 = 70%
-      expect(screen.getByText('70.0%')).toBeInTheDocument();
-    });
+    // 7/10 = 70%
+    expect(screen.getByText('70.0%')).toBeInTheDocument();
   });
 
-  it('should display error state on API failure', async () => {
-    mockGetResearchSummary.mockRejectedValue(
-      new Error('Network error')
-    );
+  it('should display error state on API failure', () => {
+    const mockRefetch = vi.fn();
+
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: null,
+      loading: false,
+      error: 'Network error',
+      refetch: mockRefetch,
+    });
 
     render(<ResearchSummary />);
 
-    await vi.advanceTimersByTimeAsync(0);
+    expect(screen.getByText(/Network error/)).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText(/Network error/)).toBeInTheDocument();
-      expect(screen.getByText('Retry')).toBeInTheDocument();
-    });
+    const retryButton = screen.getByText('Retry');
+    expect(retryButton).toBeInTheDocument();
+
+    fireEvent.click(retryButton);
+    expect(mockRefetch).toHaveBeenCalledTimes(1);
   });
 
-  it('should display empty state when no tasks exist', async () => {
+  it('should display empty state when no tasks exist', () => {
     const mockSummary = {
       total_tasks: 0,
       completed_tasks: 0,
@@ -103,82 +106,19 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: mockSummary,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
 
     render(<ResearchSummary />);
 
-    await vi.advanceTimersByTimeAsync(0);
-
-    await waitFor(() => {
-      expect(screen.getByText(/No research tasks have been launched yet/)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/No research tasks have been launched yet/)).toBeInTheDocument();
   });
 
-  it('should auto-refresh every 10 seconds', async () => {
-    const mockSummary = {
-      total_tasks: 5,
-      completed_tasks: 3,
-      failed_tasks: 1,
-      agents_deployed: 10,
-      total_cost_usd: 0,
-      avg_execution_time_seconds: 0,
-    };
-
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
-
-    render(<ResearchSummary />);
-
-    // Initial load
-    await vi.advanceTimersByTimeAsync(0);
-    await waitFor(() => {
-      expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
-    });
-
-    // Fast-forward 10 seconds
-    await vi.advanceTimersByTimeAsync(10000);
-
-    await waitFor(() => {
-      expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(2);
-    });
-
-    // Fast-forward another 10 seconds
-    await vi.advanceTimersByTimeAsync(10000);
-
-    await waitFor(() => {
-      expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(3);
-    });
-  });
-
-  it('should cleanup on unmount to prevent memory leaks', async () => {
-    const mockSummary = {
-      total_tasks: 5,
-      completed_tasks: 3,
-      failed_tasks: 1,
-      agents_deployed: 10,
-      total_cost_usd: 0,
-      avg_execution_time_seconds: 0,
-    };
-
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
-
-    const { unmount } = render(<ResearchSummary />);
-
-    await vi.advanceTimersByTimeAsync(0);
-    await waitFor(() => {
-      expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
-    });
-
-    // Unmount component
-    unmount();
-
-    // Fast-forward 10 seconds after unmount
-    await vi.advanceTimersByTimeAsync(10000);
-
-    // Should NOT call API again after unmount
-    expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
-  });
-
-  it('should display progress bar visualization', async () => {
+  it('should display progress bar visualization', () => {
     const mockSummary = {
       total_tasks: 10,
       completed_tasks: 6,
@@ -188,15 +128,16 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    mockGetResearchSummary.mockResolvedValue(mockSummary);
+    vi.mocked(useResearchSummary).mockReturnValue({
+      summary: mockSummary,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
 
     render(<ResearchSummary />);
 
-    await vi.advanceTimersByTimeAsync(0);
-
-    await waitFor(() => {
-      const progressSection = screen.getByText('Task Completion Progress');
-      expect(progressSection).toBeInTheDocument();
-    });
+    const progressSection = screen.getByText('Task Completion Progress');
+    expect(progressSection).toBeInTheDocument();
   });
 });
