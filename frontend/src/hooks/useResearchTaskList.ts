@@ -28,10 +28,8 @@ export function useResearchTaskList(pollInterval: number = 3000) {
       next.delete(taskId);
       return next;
     });
-    if (expandedTaskId === taskId) {
-      setExpandedTaskId(null);
-    }
-  }, [expandedTaskId]);
+    setExpandedTaskId(prev => (prev === taskId ? null : prev));
+  }, []);
 
   const refreshTasks = useCallback(async () => {
     if (tasks.size === 0) return;
@@ -50,8 +48,8 @@ export function useResearchTaskList(pollInterval: number = 3000) {
       setTasks(newTasks);
       setError(null);
     } catch (err) {
-      console.error('Failed to refresh tasks:', err);
-      setError('Failed to refresh tasks');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Failed to refresh tasks: ${errorMessage}`);
     } finally {
       setRefreshing(false);
     }
@@ -70,7 +68,7 @@ export function useResearchTaskList(pollInterval: number = 3000) {
     }, pollInterval);
 
     return () => clearInterval(interval);
-  }, [pollInterval, tasks, refreshTasks]);
+  }, [pollInterval, tasks]);
 
   return {
     tasks,
