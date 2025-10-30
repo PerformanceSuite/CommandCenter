@@ -4,6 +4,7 @@ Webhook endpoints for knowledge ingestion
 import logging
 import hmac
 import hashlib
+import os
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, Request, HTTPException, Query, Header, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -130,8 +131,29 @@ async def generic_webhook(
         }
     }
     """
-    # Basic API key validation (configure in environment)
-    # For production, implement proper authentication
+    # Validate API key
+    expected_api_key = os.getenv('GENERIC_WEBHOOK_API_KEY')
+
+    if not expected_api_key:
+        logger.error("GENERIC_WEBHOOK_API_KEY environment variable not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="Webhook API key not configured on server"
+        )
+
+    if not x_api_key:
+        logger.warning("Generic webhook request missing X-API-Key header")
+        raise HTTPException(
+            status_code=401,
+            detail="Missing API key"
+        )
+
+    if x_api_key != expected_api_key:
+        logger.warning(f"Invalid API key provided for generic webhook: {x_api_key[:8]}...")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid API key"
+        )
 
     payload = await request.json()
 
