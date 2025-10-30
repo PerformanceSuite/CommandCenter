@@ -3,7 +3,7 @@ Pydantic schemas for ingestion sources
 """
 from datetime import datetime
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict, field_validator
 
 from app.models.ingestion_source import SourceType, SourceStatus
 
@@ -18,6 +18,28 @@ class IngestionSourceBase(BaseModel):
     priority: int = Field(default=5, ge=1, le=10)
     enabled: bool = True
     config: Optional[Dict[str, Any]] = None
+
+    @field_validator('schedule')
+    @classmethod
+    def validate_schedule(cls, v: Optional[str]) -> Optional[str]:
+        """Validate cron schedule expression"""
+        if v is None:
+            return v
+
+        try:
+            from croniter import croniter
+            # This will raise ValueError if invalid
+            croniter(v)
+            return v
+        except (ValueError, KeyError) as e:
+            raise ValueError(f"Invalid cron expression: {str(e)}")
+        except ImportError:
+            # If croniter is not installed, skip validation with a warning
+            import logging
+            logging.getLogger(__name__).warning(
+                "croniter not installed, skipping schedule validation"
+            )
+            return v
 
 
 class IngestionSourceCreate(IngestionSourceBase):

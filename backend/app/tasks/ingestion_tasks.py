@@ -4,7 +4,7 @@ Celery tasks for automated knowledge ingestion
 import logging
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from pathlib import Path
 from celery import Task
@@ -68,7 +68,7 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
                 # Update status to running
                 source.status = SourceStatus.RUNNING
-                source.last_run = datetime.utcnow()
+                source.last_run = datetime.now(timezone.utc)
                 await db.commit()
 
                 # Parse feed
@@ -107,7 +107,7 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
                 # Update source status
                 source.status = SourceStatus.SUCCESS
-                source.last_success = datetime.utcnow()
+                source.last_success = datetime.now(timezone.utc)
                 source.documents_ingested += documents_ingested
                 source.error_count = 0  # Reset error count on success
                 source.last_error = None
@@ -123,6 +123,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
             except Exception as e:
                 logger.error(f"RSS scraping failed for source {source_id}: {e}")
+
+                # Rollback failed transaction
+                await db.rollback()
 
                 # Update source status
                 if source:
@@ -194,7 +197,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
                 # Update status
                 source.status = SourceStatus.RUNNING
-                source.last_run = datetime.utcnow()
+                source.last_run = datetime.now(timezone.utc)
                 await db.commit()
 
                 # Get config
@@ -256,7 +259,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
                 # Update source status
                 source.status = SourceStatus.SUCCESS
-                source.last_success = datetime.utcnow()
+                source.last_success = datetime.now(timezone.utc)
                 source.documents_ingested += documents_ingested
                 source.error_count = 0
                 source.last_error = None
@@ -272,6 +275,9 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
             except Exception as e:
                 logger.error(f"Documentation scraping failed: {e}")
+
+                # Rollback failed transaction
+                await db.rollback()
 
                 if source:
                     source.status = SourceStatus.ERROR
@@ -352,7 +358,7 @@ def process_webhook_payload(
                 # Update source status if exists
                 if source:
                     source.status = SourceStatus.RUNNING
-                    source.last_run = datetime.utcnow()
+                    source.last_run = datetime.now(timezone.utc)
                     await db.commit()
 
                 # Extract content based on event type
@@ -430,7 +436,7 @@ def process_webhook_payload(
                 # Update source status
                 if source:
                     source.status = SourceStatus.SUCCESS
-                    source.last_success = datetime.utcnow()
+                    source.last_success = datetime.now(timezone.utc)
                     source.documents_ingested += documents_ingested
                     source.error_count = 0
                     source.last_error = None
@@ -446,6 +452,9 @@ def process_webhook_payload(
 
             except Exception as e:
                 logger.error(f"Webhook processing failed: {e}")
+
+                # Rollback failed transaction
+                await db.rollback()
 
                 if source:
                     source.status = SourceStatus.ERROR
@@ -555,7 +564,7 @@ def process_file_change(
 
                 # Update source status
                 source.status = SourceStatus.RUNNING
-                source.last_run = datetime.utcnow()
+                source.last_run = datetime.now(timezone.utc)
                 await db.commit()
 
                 # Extract content
@@ -586,7 +595,7 @@ def process_file_change(
 
                 # Update source status
                 source.status = SourceStatus.SUCCESS
-                source.last_success = datetime.utcnow()
+                source.last_success = datetime.now(timezone.utc)
                 source.documents_ingested += 1
                 source.error_count = 0
                 source.last_error = None
@@ -602,6 +611,9 @@ def process_file_change(
 
             except Exception as e:
                 logger.error(f"File processing failed: {e}")
+
+                # Rollback failed transaction
+                await db.rollback()
 
                 if source:
                     source.status = SourceStatus.ERROR

@@ -245,6 +245,16 @@ class FileWatcherService:
         """
         now = datetime.now()
 
+        # Clean up old entries to prevent memory leak
+        # Remove entries older than 1 hour when dict grows beyond 1000 entries
+        if len(self._last_processed) > 1000:
+            cutoff = now - timedelta(hours=1)
+            self._last_processed = {
+                k: v for k, v in self._last_processed.items()
+                if v > cutoff
+            }
+            self.logger.debug(f"Cleaned up debounce cache, {len(self._last_processed)} entries remain")
+
         if file_path in self._last_processed:
             time_since_last = now - self._last_processed[file_path]
             if time_since_last < timedelta(seconds=debounce_seconds):
