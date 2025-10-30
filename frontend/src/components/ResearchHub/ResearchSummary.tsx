@@ -1,57 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { researchApi } from '../../services/researchApi';
-import type { ResearchSummaryResponse } from '../../types/research';
+import React from 'react';
+import { useResearchSummary } from '../../hooks/useResearchSummary';
 
 const ResearchSummary: React.FC = () => {
-  const [summary, setSummary] = useState<ResearchSummaryResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      try {
-        const data = await researchApi.getResearchSummary();
-        if (isMounted) {
-          setSummary(data);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to load summary';
-          setError(errorMessage);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
-
-    // Refresh every 10 seconds
-    const interval = setInterval(loadData, 10000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
-  const loadSummary = async () => {
-    try {
-      const data = await researchApi.getResearchSummary();
-      setSummary(data);
-      setError(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load summary';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { summary, loading, error, refetch } = useResearchSummary();
 
   if (loading) {
     return (
@@ -67,7 +18,7 @@ const ResearchSummary: React.FC = () => {
       <div className="research-summary">
         <h2>Research Summary</h2>
         <div className="error-message">❌ {error}</div>
-        <button className="btn-retry" onClick={loadSummary}>
+        <button className="btn-retry" onClick={refetch}>
           Retry
         </button>
       </div>
