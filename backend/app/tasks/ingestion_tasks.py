@@ -3,8 +3,10 @@ Celery tasks for automated knowledge ingestion
 """
 import logging
 import asyncio
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional
+from pathlib import Path
 from celery import Task
 from sqlalchemy import select
 
@@ -13,6 +15,7 @@ from app.models.ingestion_source import IngestionSource, SourceType, SourceStatu
 from app.services.feed_scraper_service import FeedScraperService
 from app.services.documentation_scraper_service import DocumentationScraperService
 from app.services.rag_service import RAGService
+from app.services.file_watcher_service import FileWatcherService, FileChangeEvent
 
 logger = logging.getLogger(__name__)
 
@@ -470,3 +473,139 @@ def process_webhook_payload(
 
     # Create new event loop
     return asyncio.run(_process_webhook())
+
+
+@celery_app.task(base=IngestionTask, bind=True)
+def process_file_change(
+    self,
+    source_id: int,
+    event: FileChangeEvent
+) -> Dict[str, Any]:
+    """
+    Process file system change and ingest document.
+
+    Args:
+        source_id: ID of IngestionSource
+        event: FileChangeEvent with file path and event type
+
+    Returns:
+        Dict with status and documents_ingested
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from app.config import settings
+
+    # Create async database connection
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async def _process_file():
+        async with async_session_maker() as db:
+            source = None
+            try:
+                # Load source
+                result = await db.execute(
+                    select(IngestionSource).filter(IngestionSource.id == source_id)
+                )
+                source = result.scalar_one_or_none()
+
+                if not source:
+                    return {'status': 'error', 'error': 'Source not found'}
+
+                if not source.enabled:
+                    return {'status': 'skipped', 'message': 'Source is disabled'}
+
+                # Get config
+                config = source.config or {}
+                patterns = config.get('patterns', ['*'])
+                ignore_patterns = config.get('ignore', [])
+
+                # Initialize file watcher service
+                file_watcher = FileWatcherService()
+
+                # Get file path from event (handle both FileChangeEvent and dict)
+                file_path = event.file_path if hasattr(event, 'file_path') else event['file_path']
+                event_type = event.event_type if hasattr(event, 'event_type') else event['event_type']
+
+                # Check patterns
+                if not file_watcher.should_process_file(file_path, patterns):
+                    return {'status': 'skipped', 'message': 'File does not match patterns'}
+
+                if file_watcher.should_ignore_file(file_path, ignore_patterns):
+                    return {'status': 'skipped', 'message': 'File matches ignore patterns'}
+
+                # Update source status
+                source.status = SourceStatus.RUNNING
+                source.last_run = datetime.utcnow()
+                await db.commit()
+
+                # Extract content
+                content = file_watcher.extract_text_from_file(file_path)
+
+                if not content:
+                    return {'status': 'skipped', 'message': 'No content extracted'}
+
+                # Ingest into RAG
+                rag_service = RAGService()
+
+                filename = os.path.basename(file_path)
+
+                await rag_service.add_document(
+                    project_id=source.project_id,
+                    content=content,
+                    metadata={
+                        'title': filename,
+                        'file_path': file_path,
+                        'file_type': Path(file_path).suffix,
+                        'event_type': event_type,
+                        'source_type': 'file_watcher',
+                        'source_id': source.id,
+                        'source_name': source.name,
+                        'priority': source.priority
+                    }
+                )
+
+                # Update source status
+                source.status = SourceStatus.SUCCESS
+                source.last_success = datetime.utcnow()
+                source.documents_ingested += 1
+                source.error_count = 0
+                source.last_error = None
+                await db.commit()
+
+                logger.info(f"File ingested: {filename}")
+
+                return {
+                    'status': 'success',
+                    'documents_ingested': 1,
+                    'file_path': file_path
+                }
+
+            except Exception as e:
+                logger.error(f"File processing failed: {e}")
+
+                if source:
+                    source.status = SourceStatus.ERROR
+                    source.error_count += 1
+                    source.last_error = str(e)
+                    await db.commit()
+
+                return {'status': 'error', 'error': str(e)}
+
+            finally:
+                await engine.dispose()
+
+    # Run the async function
+    # Apply nest_asyncio to allow nested event loops (needed for testing)
+    import nest_asyncio
+    nest_asyncio.apply()
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Create task in existing loop
+            return loop.run_until_complete(_process_file())
+    except RuntimeError:
+        pass
+
+    # Create new event loop
+    return asyncio.run(_process_file())
