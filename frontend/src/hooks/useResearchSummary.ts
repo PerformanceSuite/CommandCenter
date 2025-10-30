@@ -25,37 +25,15 @@ export function useResearchSummary(refreshInterval: number = 10000) {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadData = async () => {
-      try {
-        const data = await researchApi.getResearchSummary();
-        if (isMounted) {
-          setSummary(data);
-          setError(null);
-        }
-      } catch (err) {
-        if (isMounted) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to load summary';
-          setError(errorMessage);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadData();
+    fetchSummary(); // Initial load
 
     // Refresh at specified interval
-    const interval = setInterval(loadData, refreshInterval);
+    const interval = setInterval(fetchSummary, refreshInterval);
 
     return () => {
-      isMounted = false;
       clearInterval(interval);
     };
-  }, [refreshInterval]);
+  }, [refreshInterval, fetchSummary]);
 
   return {
     summary,
