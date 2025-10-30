@@ -8,7 +8,7 @@ const ResearchTaskList: React.FC = () => {
     refreshing,
     error,
     addTask,
-    removeTask,
+    // removeTask, // Not used in current UI
     refreshTasks,
     toggleExpand,
   } = useResearchTaskList();
