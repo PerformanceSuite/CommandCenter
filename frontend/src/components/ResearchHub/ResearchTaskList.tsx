@@ -1,72 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { researchApi } from '../../services/researchApi';
-import type { ResearchTask as OrchestrationTask } from '../../types/research';
+import React, { useState } from 'react';
+import { useResearchTaskList } from '../../hooks/useResearchTaskList';
 
 const ResearchTaskList: React.FC = () => {
-  const [tasks, setTasks] = useState<Map<string, OrchestrationTask>>(new Map());
-  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Poll for task updates every 3 seconds
-    // Empty dependency array - interval created once on mount, not on every task update
-    const interval = setInterval(() => {
-      refreshTasks();
-    }, 3000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Fixed: removed 'tasks' from deps to prevent memory leak
-
-  const refreshTasks = async () => {
-    if (tasks.size === 0) return;
-
-    try {
-      const promises = Array.from(tasks.keys()).map(taskId =>
-        researchApi.getResearchTaskStatus(taskId)
-      );
-      const updated = await Promise.all(promises);
-
-      const newTasks = new Map(tasks);
-      updated.forEach(task => {
-        newTasks.set(task.task_id, task);
-      });
-      setTasks(newTasks);
-    } catch (err) {
-      console.error('Failed to refresh tasks:', err);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    setError(null);
-    try {
-      await refreshTasks();
-    } catch (err) {
-      setError('Failed to refresh tasks');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleAddTask = async (taskId: string) => {
-    setError(null);
-    try {
-      const task = await researchApi.getResearchTaskStatus(taskId);
-      const newTasks = new Map(tasks);
-      newTasks.set(task.task_id, task);
-      setTasks(newTasks);
-      setExpandedTaskId(task.task_id);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Task not found';
-      setError(errorMessage);
-    }
-  };
-
-  const toggleExpand = (taskId: string) => {
-    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
-  };
+  const {
+    tasks,
+    expandedTaskId,
+    refreshing,
+    error,
+    addTask,
+    removeTask,
+    refreshTasks,
+    toggleExpand,
+  } = useResearchTaskList();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -101,7 +46,7 @@ const ResearchTaskList: React.FC = () => {
         <h2>Research Tasks</h2>
         <button
           className="btn-refresh"
-          onClick={handleRefresh}
+          onClick={refreshTasks}
           disabled={refreshing || tasks.size === 0}
         >
           {refreshing ? 'Refreshing...' : 'Refresh All'}
@@ -129,7 +74,7 @@ const ResearchTaskList: React.FC = () => {
         <button
           className="btn-add"
           onClick={() => {
-            handleAddTask(newTaskId);
+            addTask(newTaskId);
             setNewTaskId('');
           }}
           disabled={!newTaskId.trim()}
