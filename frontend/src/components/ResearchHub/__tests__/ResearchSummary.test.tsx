@@ -9,6 +9,8 @@ vi.mock('../../../services/researchApi', () => ({
   },
 }));
 
+const mockGetResearchSummary = researchApi.getResearchSummary as ReturnType<typeof vi.fn>;
+
 describe('ResearchSummary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,7 +22,7 @@ describe('ResearchSummary', () => {
   });
 
   it('should display loading state initially', () => {
-    vi.mocked(researchApi.getResearchSummary).mockReturnValue(new Promise(() => {}));
+    mockGetResearchSummary.mockReturnValue(new Promise(() => {}));
 
     render(<ResearchSummary />);
 
@@ -37,9 +39,12 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 5.5,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
+
+    // Run pending timers to allow useEffect and promises to resolve
+    await vi.advanceTimersByTimeAsync(0);
 
     await waitFor(() => {
       expect(screen.getByText('10')).toBeInTheDocument(); // total tasks
@@ -61,9 +66,11 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
+
+    await vi.advanceTimersByTimeAsync(0);
 
     await waitFor(() => {
       // 7/10 = 70%
@@ -72,11 +79,13 @@ describe('ResearchSummary', () => {
   });
 
   it('should display error state on API failure', async () => {
-    vi.mocked(researchApi.getResearchSummary).mockRejectedValue(
+    mockGetResearchSummary.mockRejectedValue(
       new Error('Network error')
     );
 
     render(<ResearchSummary />);
+
+    await vi.advanceTimersByTimeAsync(0);
 
     await waitFor(() => {
       expect(screen.getByText(/Network error/)).toBeInTheDocument();
@@ -94,9 +103,11 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
+
+    await vi.advanceTimersByTimeAsync(0);
 
     await waitFor(() => {
       expect(screen.getByText(/No research tasks have been launched yet/)).toBeInTheDocument();
@@ -113,24 +124,25 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
 
     // Initial load
+    await vi.advanceTimersByTimeAsync(0);
     await waitFor(() => {
       expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
     });
 
     // Fast-forward 10 seconds
-    vi.advanceTimersByTime(10000);
+    await vi.advanceTimersByTimeAsync(10000);
 
     await waitFor(() => {
       expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(2);
     });
 
     // Fast-forward another 10 seconds
-    vi.advanceTimersByTime(10000);
+    await vi.advanceTimersByTimeAsync(10000);
 
     await waitFor(() => {
       expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(3);
@@ -147,10 +159,11 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     const { unmount } = render(<ResearchSummary />);
 
+    await vi.advanceTimersByTimeAsync(0);
     await waitFor(() => {
       expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
     });
@@ -159,7 +172,7 @@ describe('ResearchSummary', () => {
     unmount();
 
     // Fast-forward 10 seconds after unmount
-    vi.advanceTimersByTime(10000);
+    await vi.advanceTimersByTimeAsync(10000);
 
     // Should NOT call API again after unmount
     expect(researchApi.getResearchSummary).toHaveBeenCalledTimes(1);
@@ -175,9 +188,11 @@ describe('ResearchSummary', () => {
       avg_execution_time_seconds: 0,
     };
 
-    vi.mocked(researchApi.getResearchSummary).mockResolvedValue(mockSummary);
+    mockGetResearchSummary.mockResolvedValue(mockSummary);
 
     render(<ResearchSummary />);
+
+    await vi.advanceTimersByTimeAsync(0);
 
     await waitFor(() => {
       const progressSection = screen.getByText('Task Completion Progress');
