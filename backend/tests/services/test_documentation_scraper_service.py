@@ -157,3 +157,83 @@ def test_handle_404_error(doc_scraper):
         page = doc_scraper.scrape_page('https://example.com/not-found')
 
     assert page is None
+
+
+def test_ssrf_protection_localhost(doc_scraper):
+    """Test SSRF protection blocks localhost URLs"""
+    with pytest.raises(ValueError, match="Access to localhost is not allowed"):
+        doc_scraper._is_safe_url('http://localhost:8080/admin')
+
+    with pytest.raises(ValueError, match="Access to localhost is not allowed"):
+        doc_scraper._is_safe_url('https://localhost/api')
+
+
+def test_ssrf_protection_loopback_ip(doc_scraper):
+    """Test SSRF protection blocks loopback IP addresses"""
+    with pytest.raises(ValueError, match="Access to loopback address"):
+        doc_scraper._is_safe_url('http://127.0.0.1/admin')
+
+    with pytest.raises(ValueError, match="Access to loopback address"):
+        doc_scraper._is_safe_url('http://127.0.0.2:8080/internal')
+
+
+def test_ssrf_protection_private_ip(doc_scraper):
+    """Test SSRF protection blocks private IP addresses"""
+    # 192.168.x.x range
+    with pytest.raises(ValueError, match="Access to private IP address"):
+        doc_scraper._is_safe_url('http://192.168.1.1/router')
+
+    # 10.x.x.x range
+    with pytest.raises(ValueError, match="Access to private IP address"):
+        doc_scraper._is_safe_url('http://10.0.0.1/internal')
+
+    # 172.16-31.x.x range
+    with pytest.raises(ValueError, match="Access to private IP address"):
+        doc_scraper._is_safe_url('http://172.16.0.1/internal')
+
+
+def test_ssrf_protection_cloud_metadata(doc_scraper):
+    """Test SSRF protection blocks cloud metadata endpoint"""
+    with pytest.raises(ValueError, match="Access to cloud metadata endpoint is not allowed"):
+        doc_scraper._is_safe_url('http://169.254.169.254/latest/meta-data/')
+
+
+def test_ssrf_protection_link_local(doc_scraper):
+    """Test SSRF protection blocks link-local addresses"""
+    with pytest.raises(ValueError, match="Access to link-local address"):
+        doc_scraper._is_safe_url('http://169.254.1.1/service')
+
+
+def test_ssrf_protection_invalid_scheme(doc_scraper):
+    """Test SSRF protection blocks non-http(s) schemes"""
+    with pytest.raises(ValueError, match="Invalid URL scheme.*Only http and https are allowed"):
+        doc_scraper._is_safe_url('file:///etc/passwd')
+
+    with pytest.raises(ValueError, match="Invalid URL scheme.*Only http and https are allowed"):
+        doc_scraper._is_safe_url('ftp://example.com/file')
+
+
+def test_ssrf_protection_valid_url(doc_scraper):
+    """Test SSRF protection allows valid public URLs"""
+    # Should not raise any exception
+    assert doc_scraper._is_safe_url('https://example.com/docs') == True
+    assert doc_scraper._is_safe_url('http://docs.python.org/api') == True
+
+
+def test_scrape_page_ssrf_protection(doc_scraper):
+    """Test that scrape_page validates URLs for SSRF"""
+    with pytest.raises(ValueError, match="Access to localhost is not allowed"):
+        with patch('time.sleep'):
+            doc_scraper.scrape_page('http://localhost:8080/admin')
+
+
+def test_fetch_sitemap_ssrf_protection(doc_scraper):
+    """Test that fetch_sitemap validates URLs for SSRF"""
+    with pytest.raises(ValueError, match="Access to private IP address"):
+        doc_scraper.fetch_sitemap('http://192.168.1.1/sitemap.xml')
+
+
+def test_scrape_documentation_ssrf_protection(doc_scraper):
+    """Test that scrape_documentation validates start URL for SSRF"""
+    with pytest.raises(ValueError, match="Access to loopback address"):
+        doc_scraper.scrape_documentation('http://127.0.0.1:8000/docs')

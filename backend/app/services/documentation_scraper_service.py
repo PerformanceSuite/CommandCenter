@@ -3,6 +3,7 @@ Documentation scraper service for automated docs ingestion
 """
 import logging
 import time
+import ipaddress
 from typing import List, Set, Optional
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlparse
@@ -46,6 +47,68 @@ class DocumentationScraperService:
         })
         self.robots_parser = None
 
+    def _is_safe_url(self, url: str) -> bool:
+        """
+        Validate URL to prevent SSRF attacks.
+
+        Args:
+            url: URL to validate
+
+        Returns:
+            True if URL is safe, False otherwise
+
+        Raises:
+            ValueError: If URL is not safe with detailed reason
+        """
+        try:
+            parsed = urlparse(url)
+
+            # Only allow http and https schemes
+            if parsed.scheme not in ('http', 'https'):
+                raise ValueError(f"Invalid URL scheme: {parsed.scheme}. Only http and https are allowed.")
+
+            # Get hostname
+            hostname = parsed.hostname
+            if not hostname:
+                raise ValueError("URL must have a valid hostname")
+
+            # Block localhost variations
+            if hostname.lower() in ('localhost', 'localhost.localdomain'):
+                raise ValueError("Access to localhost is not allowed")
+
+            # Try to resolve hostname to IP address
+            try:
+                import socket
+                ip_str = socket.gethostbyname(hostname)
+                ip = ipaddress.ip_address(ip_str)
+
+                # Block loopback addresses (127.0.0.0/8, ::1)
+                if ip.is_loopback:
+                    raise ValueError(f"Access to loopback address {ip} is not allowed")
+
+                # Block cloud metadata endpoint (169.254.169.254) - check before link-local
+                if str(ip) == '169.254.169.254':
+                    raise ValueError("Access to cloud metadata endpoint is not allowed")
+
+                # Block link-local addresses (169.254.0.0/16, fe80::/10)
+                if ip.is_link_local:
+                    raise ValueError(f"Access to link-local address {ip} is not allowed")
+
+                # Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
+                if ip.is_private:
+                    raise ValueError(f"Access to private IP address {ip} is not allowed")
+
+            except socket.gaierror:
+                # If hostname cannot be resolved, allow it (will fail naturally on request)
+                self.logger.warning(f"Could not resolve hostname: {hostname}")
+
+            return True
+
+        except ValueError:
+            raise
+        except Exception as e:
+            raise ValueError(f"Invalid URL: {e}")
+
     def fetch_sitemap(self, sitemap_url: str) -> List[str]:
         """
         Fetch and parse sitemap.xml for URLs.
@@ -57,6 +120,9 @@ class DocumentationScraperService:
             List of URLs from sitemap
         """
         self.logger.info(f"Fetching sitemap: {sitemap_url}")
+
+        # Validate URL for SSRF protection
+        self._is_safe_url(sitemap_url)
 
         try:
             response = self.session.get(sitemap_url, timeout=10)
@@ -115,6 +181,9 @@ class DocumentationScraperService:
         Returns:
             DocumentationPage or None if failed
         """
+        # Validate URL for SSRF protection
+        self._is_safe_url(url)
+
         try:
             # Rate limiting
             time.sleep(self.rate_limit)
@@ -222,6 +291,9 @@ class DocumentationScraperService:
             List of DocumentationPage objects
         """
         self.logger.info(f"Starting documentation scrape: {start_url}")
+
+        # Validate start URL for SSRF protection
+        self._is_safe_url(start_url)
 
         pages = []
         visited: Set[str] = set()

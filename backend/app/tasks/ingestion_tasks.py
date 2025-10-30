@@ -203,6 +203,11 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 # Initialize scraper
                 doc_scraper = DocumentationScraperService(rate_limit=1.0)
 
+                # Validate URLs for SSRF protection before starting
+                doc_scraper._is_safe_url(source.url)
+                if use_sitemap and 'sitemap_url' in config:
+                    doc_scraper._is_safe_url(config['sitemap_url'])
+
                 # Scrape pages
                 if use_sitemap and 'sitemap_url' in config:
                     # Use sitemap
