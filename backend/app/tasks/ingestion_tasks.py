@@ -526,6 +526,26 @@ def process_file_change(
                 file_path = event.file_path if hasattr(event, 'file_path') else event['file_path']
                 event_type = event.event_type if hasattr(event, 'event_type') else event['event_type']
 
+                # Security: Validate file path to prevent path traversal
+                try:
+                    resolved_path = Path(file_path).resolve()
+                    resolved_str = str(resolved_path)
+
+                    # Import security constants
+                    from app.services.file_watcher_service import BLOCKED_PATH_PREFIXES
+
+                    # Check against blocked system directories
+                    for blocked_prefix in BLOCKED_PATH_PREFIXES:
+                        if resolved_str.startswith(blocked_prefix):
+                            logger.error(f"Attempted to process file in blocked directory: {resolved_str}")
+                            return {
+                                'status': 'error',
+                                'error': f'Access denied: Cannot process files in system directory {blocked_prefix}'
+                            }
+                except Exception as e:
+                    logger.error(f"Path validation failed for {file_path}: {e}")
+                    return {'status': 'error', 'error': f'Invalid file path: {str(e)}'}
+
                 # Check patterns
                 if not file_watcher.should_process_file(file_path, patterns):
                     return {'status': 'skipped', 'message': 'File does not match patterns'}

@@ -16,6 +16,21 @@ from docx import Document
 
 logger = logging.getLogger(__name__)
 
+# Security: Maximum file size to process (100MB default)
+MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 100MB
+
+# Security: System directories that should never be watched
+BLOCKED_PATH_PREFIXES = [
+    '/etc',
+    '/root',
+    '/sys',
+    '/proc',
+    '/dev',
+    '/boot',
+    '/var/log',
+    '/var/run',
+]
+
 
 @dataclass
 class FileChangeEvent:
@@ -28,9 +43,90 @@ class FileChangeEvent:
 class FileWatcherService:
     """Service for monitoring file system changes"""
 
-    def __init__(self):
+    def __init__(self, max_file_size_bytes: int = MAX_FILE_SIZE_BYTES):
         self.logger = logger
         self._last_processed: Dict[str, datetime] = {}
+        self.max_file_size_bytes = max_file_size_bytes
+
+    def _validate_watch_path(self, path: str) -> str:
+        """
+        Validate that a path is safe to watch.
+
+        Args:
+            path: Path to validate
+
+        Returns:
+            Resolved absolute path
+
+        Raises:
+            ValueError: If path is not safe to watch
+        """
+        try:
+            # Resolve path to handle symlinks and relative paths
+            resolved_path = Path(path).resolve()
+            resolved_str = str(resolved_path)
+
+            # Check against blocked system directories
+            # Handle both direct paths and macOS symlinks (e.g., /etc -> /private/etc)
+            for blocked_prefix in BLOCKED_PATH_PREFIXES:
+                # Check direct match
+                if resolved_str.startswith(blocked_prefix):
+                    self.logger.error(f"Attempted to watch blocked system directory: {resolved_str}")
+                    raise ValueError(
+                        f"Access denied: Cannot watch system directory {blocked_prefix}"
+                    )
+                # Check macOS /private prefix (e.g., /private/etc)
+                private_prefix = f"/private{blocked_prefix}"
+                if resolved_str.startswith(private_prefix):
+                    self.logger.error(f"Attempted to watch blocked system directory: {resolved_str}")
+                    raise ValueError(
+                        f"Access denied: Cannot watch system directory {blocked_prefix}"
+                    )
+
+            # Ensure path exists
+            if not resolved_path.exists():
+                raise ValueError(f"Path does not exist: {resolved_str}")
+
+            # Ensure path is a directory for watching
+            if not resolved_path.is_dir():
+                raise ValueError(f"Path is not a directory: {resolved_str}")
+
+            self.logger.info(f"Path validation passed: {resolved_str}")
+            return resolved_str
+
+        except Exception as e:
+            self.logger.error(f"Path validation failed for {path}: {e}")
+            raise
+
+    def _validate_file_size(self, file_path: str) -> None:
+        """
+        Validate that a file is not too large to process.
+
+        Args:
+            file_path: Path to file
+
+        Raises:
+            ValueError: If file exceeds maximum size
+        """
+        try:
+            file_size = os.path.getsize(file_path)
+
+            if file_size > self.max_file_size_bytes:
+                size_mb = file_size / (1024 * 1024)
+                max_mb = self.max_file_size_bytes / (1024 * 1024)
+
+                self.logger.error(
+                    f"File size violation: {file_path} is {size_mb:.2f}MB, "
+                    f"max allowed is {max_mb:.2f}MB"
+                )
+
+                raise ValueError(
+                    f"File too large: {size_mb:.2f}MB exceeds maximum of {max_mb:.2f}MB"
+                )
+
+        except OSError as e:
+            self.logger.error(f"Failed to check file size for {file_path}: {e}")
+            raise ValueError(f"Cannot access file: {file_path}")
 
     def extract_text_from_file(self, file_path: str) -> str:
         """
@@ -42,6 +138,13 @@ class FileWatcherService:
         Returns:
             Extracted text content
         """
+        # Security: Validate file size before processing
+        try:
+            self._validate_file_size(file_path)
+        except ValueError as e:
+            self.logger.error(f"File size validation failed: {e}")
+            return ""
+
         file_ext = Path(file_path).suffix.lower()
 
         try:
@@ -220,7 +323,14 @@ def start_watching(
 
     Returns:
         Observer instance (call .stop() to stop watching)
+
+    Raises:
+        ValueError: If directory path is not safe to watch
     """
+    # Security: Validate path before watching
+    file_watcher_service = FileWatcherService()
+    validated_directory = file_watcher_service._validate_watch_path(directory)
+
     if patterns is None:
         patterns = ['*']
 
@@ -230,9 +340,9 @@ def start_watching(
     event_handler = FileChangeHandler(callback, patterns, ignore_patterns)
 
     observer = Observer()
-    observer.schedule(event_handler, directory, recursive=True)
+    observer.schedule(event_handler, validated_directory, recursive=True)
     observer.start()
 
-    logger.info(f"Started watching directory: {directory}")
+    logger.info(f"Started watching directory: {validated_directory}")
 
     return observer
