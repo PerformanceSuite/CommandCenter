@@ -27,6 +27,7 @@ celery_app = Celery(
         "app.tasks.export_tasks",
         "app.tasks.webhook_tasks",
         "app.tasks.scheduled_tasks",
+        "app.tasks.ingestion_tasks",
     ],
 )
 
@@ -87,6 +88,7 @@ celery_app.conf.task_routes = {
     "app.tasks.export_tasks.*": {"queue": "export", "priority": 5},
     "app.tasks.webhook_tasks.*": {"queue": "webhooks", "priority": 6},
     "app.tasks.scheduled_tasks.*": {"queue": "default", "priority": 7},
+    "app.tasks.ingestion_tasks.*": {"queue": "default", "priority": 7},
 }
 
 
@@ -110,6 +112,7 @@ try:
     from app.tasks import export_tasks  # noqa: F401
     from app.tasks import webhook_tasks  # noqa: F401
     from app.tasks import scheduled_tasks  # noqa: F401
+    from app.tasks import ingestion_tasks  # noqa: F401
 except ImportError as e:
     # Tasks may not exist yet during initial setup
     print(f"Warning: Could not import task modules: {e}")

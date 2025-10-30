@@ -79,3 +79,10 @@ celery-redbeat==2.2.0  # Redis-backed beat scheduler
 
 # Export formats (Sprint 3.1)
 openpyxl>=3.1.5,<4.0.0  # Excel export support (docling requires >=3.1.5)
+
+# RSS Feed scraping (Phase B Knowledge Ingestion)
+feedparser==6.0.11
+beautifulsoup4==4.12.3
+newspaper3k==0.2.8
+lxml_html_clean==0.4.3  # Required by newspaper3k for HTML cleaning
+nest-asyncio==1.6.0  # Allow nested event loops in Celery tasks
