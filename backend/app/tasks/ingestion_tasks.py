@@ -4,7 +4,7 @@ Celery tasks for automated knowledge ingestion
 import logging
 import asyncio
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from celery import Task
 from sqlalchemy import select
 
@@ -296,3 +296,177 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
     # Create new event loop
     return asyncio.run(_scrape_docs())
+
+
+@celery_app.task(base=IngestionTask, bind=True)
+def process_webhook_payload(
+    self,
+    source_id: Optional[int],
+    payload: Dict[str, Any],
+    event_type: str,
+    project_id: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Process webhook payload and ingest into RAG system.
+
+    Args:
+        source_id: ID of IngestionSource (None for generic webhooks)
+        payload: Webhook payload
+        event_type: Type of event (release, push, generic, etc.)
+        project_id: Project ID (for generic webhooks)
+
+    Returns:
+        Dict with status and documents_ingested
+    """
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from app.config import settings
+
+    # Create async database connection
+    engine = create_async_engine(settings.database_url, echo=False)
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    async def _process_webhook():
+        async with async_session_maker() as db:
+            source = None
+            try:
+                # Load source if provided
+                if source_id:
+                    result = await db.execute(
+                        select(IngestionSource).where(IngestionSource.id == source_id)
+                    )
+                    source = result.scalar_one_or_none()
+
+                    if not source:
+                        return {'status': 'error', 'error': 'Source not found'}
+
+                    project_id_to_use = source.project_id
+                else:
+                    project_id_to_use = project_id
+
+                if not project_id_to_use:
+                    return {'status': 'error', 'error': 'Project ID required'}
+
+                # Update source status if exists
+                if source:
+                    source.status = SourceStatus.RUNNING
+                    source.last_run = datetime.utcnow()
+                    await db.commit()
+
+                # Extract content based on event type
+                documents = []
+
+                if event_type == 'release':
+                    # GitHub release event
+                    release = payload.get('release', {})
+                    documents.append({
+                        'title': f"Release: {release.get('name', release.get('tag_name'))}",
+                        'content': release.get('body', ''),
+                        'url': release.get('html_url'),
+                        'metadata': {
+                            'event_type': 'release',
+                            'tag': release.get('tag_name'),
+                            'repository': payload.get('repository', {}).get('full_name'),
+                            'published_at': release.get('published_at')
+                        }
+                    })
+
+                elif event_type == 'push':
+                    # GitHub push event
+                    for commit in payload.get('commits', []):
+                        documents.append({
+                            'title': f"Commit: {commit.get('message', '').split(chr(10))[0]}",
+                            'content': commit.get('message', ''),
+                            'url': commit.get('url'),
+                            'metadata': {
+                                'event_type': 'commit',
+                                'sha': commit.get('id'),
+                                'author': commit.get('author', {}).get('name'),
+                                'repository': payload.get('repository', {}).get('full_name')
+                            }
+                        })
+
+                elif event_type == 'generic':
+                    # Generic webhook
+                    documents.append({
+                        'title': payload.get('title'),
+                        'content': payload.get('content'),
+                        'url': payload.get('url'),
+                        'metadata': payload.get('metadata', {})
+                    })
+
+                # Ingest documents
+                rag_service = RAGService(repository_id=project_id_to_use)
+                await rag_service.initialize()
+                documents_ingested = 0
+
+                for doc in documents:
+                    try:
+                        metadata = doc.get('metadata', {})
+                        metadata.update({
+                            'source_type': 'webhook',
+                            'event_type': event_type
+                        })
+
+                        if source:
+                            metadata.update({
+                                'source_id': source.id,
+                                'source_name': source.name,
+                                'priority': source.priority
+                            })
+
+                        await rag_service.add_document(
+                            content=doc['content'],
+                            metadata=metadata
+                        )
+                        documents_ingested += 1
+
+                    except Exception as e:
+                        logger.error(f"Failed to ingest webhook document: {e}")
+                        continue
+
+                # Update source status
+                if source:
+                    source.status = SourceStatus.SUCCESS
+                    source.last_success = datetime.utcnow()
+                    source.documents_ingested += documents_ingested
+                    source.error_count = 0
+                    source.last_error = None
+                    await db.commit()
+
+                logger.info(f"Webhook processing complete: {documents_ingested} documents ingested")
+
+                return {
+                    'status': 'success',
+                    'documents_ingested': documents_ingested,
+                    'event_type': event_type
+                }
+
+            except Exception as e:
+                logger.error(f"Webhook processing failed: {e}")
+
+                if source:
+                    source.status = SourceStatus.ERROR
+                    source.error_count += 1
+                    source.last_error = str(e)
+                    await db.commit()
+
+                return {'status': 'error', 'error': str(e)}
+
+            finally:
+                await engine.dispose()
+
+    # Run the async function
+    # Apply nest_asyncio to allow nested event loops (needed for testing)
+    import nest_asyncio
+    nest_asyncio.apply()
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Create task in existing loop
+            return loop.run_until_complete(_process_webhook())
+    except RuntimeError:
+        pass
+
+    # Create new event loop
+    return asyncio.run(_process_webhook())
