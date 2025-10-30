@@ -1,125 +1,93 @@
 # Current Session
 
-**Session Ended: 2025-10-30 07:15 UTC**
+**Session Ended: 2025-10-30 07:40 UTC**
 
 ## Session Summary
 
 **Branch:** feature/production-foundations (worktree: `.worktrees/production-foundations`)
-**Duration:** ~1 hour 20 minutes
-**Focus:** Phase A: Dagger Production Hardening (Tasks 1-5)
+**Duration:** ~12 minutes
+**Focus:** Phase A: Dagger Production Hardening (Tasks 6-7 of 10)
 
 ### Work Completed
 
-**Methodology:** Subagent-Driven Development
-- Fresh subagent per task
-- Code review after each task
-- All Critical/Important issues fixed immediately
+**Methodology:** Test-Driven Development (TDD)
+- RED: Write failing test
+- GREEN: Minimal implementation
+- REFACTOR: (not needed for these tasks)
 
-**Tasks Completed (50% of Phase A):**
+**Tasks Completed (20% of Phase A in this session):**
 
-✅ **Task 1: Log Retrieval Method**
-- Added `get_logs()` and `stream_logs()` to CommandCenterStack
-- Created service container registry
-- 5 unit tests passing
-- Code review score: 9/10 (approved after fixes)
+✅ **Task 6: Non-Root User Execution**
+- Added user ID constants (Postgres: 999, Redis: 999, App: 1000)
+- Applied `.with_user()` to postgres and redis container builds
+- 1 security test passing
+- Code review: Security hardening complete
+- Commit: f5687d2
 
-✅ **Task 2: Service Registry**
-- Distinguished Container vs Service objects (critical for log/health operations)
-- Fixed `_service_containers` to store Container objects before `.as_service()`
-- 5 tests passing
-- Code review score: 9.5/10
-
-✅ **Task 3: Hub API Endpoint for Logs**
-- Created GET /api/orchestration/{id}/logs/{service}
-- Added `get_project_logs()` to OrchestrationService
-- Implemented input validation (Query bounds, service whitelist)
-- 7 integration tests passing
-- Code review: Approved with validation improvements
-
-✅ **Task 4: Health Check Methods**
-- Implemented health checks for all services (postgres/redis/backend/frontend)
-- Added startup ordering with timeouts (postgres 30s, redis 30s, backend 60s)
-- 12 unit tests passing
-- Fixed timeout handling to fail fast
-- Code review score: 8.5/10
-
-✅ **Task 5: Resource Limits**
-- Added configurable resource limits to CommandCenterConfig
-- Defaults: Postgres (1 CPU, 2GB), Redis (0.5 CPU, 512MB), Backend (1 CPU, 1GB), Frontend (0.5 CPU, 512MB)
-- 3 unit tests passing
+✅ **Task 7: Retry Logic with Exponential Backoff**
+- Created `with_retry()` decorator with exponential backoff
+- Applied to `start()` method (3 retries, delays: 1s, 2s, 4s)
+- 3 unit tests passing (transient failure, backoff timing, max retries)
+- Code review: Reliability improvement complete
+- Commit: 629dc95
 
 ### Metrics
 
-**Test Coverage:** 32 tests passing
-- test_dagger_logs.py: 5 tests
-- test_logs_api.py: 7 tests
-- test_dagger_health.py: 12 tests
-- test_dagger_resources.py: 3 tests
+**Test Coverage:** +4 tests (36 total passing in Phase A)
+- test_containers_run_as_non_root_user: PASS
+- test_start_retries_on_transient_failure: PASS
+- test_start_uses_exponential_backoff: PASS
+- test_start_fails_after_max_retries: PASS
 
-**Commits:** 11 commits
-- 04295a1: feat: add log retrieval system
-- e21379d: fix(tests): mock Dagger services
-- 72e02de: refactor: address code review feedback
-- a9b74bc: fix: store Container objects
-- db05464: feat: add Hub API endpoint
-- 03b2a75: fix(tests): use AsyncClient
-- 9cda321: refactor: add input validation
-- 202802f: feat: add health checks
-- 344ea09: fix: raise error on timeout
-- 57f2f66: feat: add resource limits
-- 057dfda: fix(tests): mock services
+**Commits:** 2 commits this session (13 total in Phase A)
+- f5687d2: Security hardening
+- 629dc95: Retry logic
+
+**Progress:** 70% complete (7/10 tasks done)
+- Tasks 1-5: ✅ Complete (previous session)
+- Tasks 6-7: ✅ Complete (this session)
+- Tasks 8-10: ⏳ Remaining
 
 ### Key Technical Decisions
 
-**Container vs Service Object Distinction:**
-- Container objects provide `stdout()`, `stderr()`, `with_exec()` for logs and health checks
-- Service objects are only for networking (hostname resolution)
-- Registry stores Containers before calling `.as_service()`
+**Non-Root Execution:**
+- Used UID 999 for postgres/redis (standard in alpine images)
+- Used UID 1000 for backend/frontend (non-privileged)
+- Hardens against container escape vulnerabilities
 
-**Defense-in-Depth Validation:**
-- API layer: FastAPI Query validation
-- Service layer: Explicit whitelists
-- Prevents invalid data from reaching Dagger stack
-
-**Fail-Fast Philosophy:**
-- Health check timeouts now raise RuntimeError immediately
-- Prevents silent failures and cascading issues
+**Retry Logic:**
+- Exponential backoff prevents thundering herd
+- Max 3 retries balances reliability vs. timeout duration
+- Decorator pattern keeps code clean and reusable
 
 ## Next Session Priorities
 
 **Remaining Phase A Tasks (Week 3):**
 
-1. **Task 6:** Non-Root User Execution (security hardening)
-2. **Task 7:** Retry Logic with Exponential Backoff (reliability)
-3. **Task 8:** Service Restart Method (recovery)
-4. **Task 9:** Update Documentation (DAGGER_ARCHITECTURE.md, SECURITY.md)
-5. **Task 10:** Verify All Tests Pass (final validation)
+1. **Task 8:** Service Restart Method (recovery) - ~20 minutes
+2. **Task 9:** Update Documentation (DAGGER_ARCHITECTURE.md, SECURITY.md) - ~15 minutes
+3. **Task 10:** Verify All Tests Pass (final validation) - ~10 minutes
 
-**Estimated Time:** 1-2 hours to complete Phase A
+**Estimated Time:** 45 minutes to complete Phase A
 
 ## Files Modified
 
 **Source Files:**
-- hub/backend/app/dagger_modules/commandcenter.py (major enhancements)
-- hub/backend/app/services/orchestration_service.py (added get_project_logs)
-- hub/backend/app/routers/orchestration.py (added logs endpoint)
+- hub/backend/app/dagger_modules/commandcenter.py (security + retry logic)
 
 **Test Files (Created):**
-- hub/backend/tests/unit/test_dagger_logs.py
-- hub/backend/tests/unit/test_dagger_health.py
-- hub/backend/tests/unit/test_dagger_resources.py
-- hub/backend/tests/integration/test_logs_api.py
+- hub/backend/tests/security/test_dagger_security.py (added non-root test)
+- hub/backend/tests/unit/test_dagger_retry.py (created, 3 tests)
 
 **Documentation:**
-- docs/plans/2025-10-29-phase-a-dagger-hardening-plan.md (created)
-- docs/plans/2025-10-29-production-foundations-design.md (created)
+- None this session (Task 9 pending)
 
 ## Session Quality Metrics
 
-**Code Quality:** High (8.5-9.5/10 code review scores)
-**Test Coverage:** Comprehensive (32 tests, all passing)
-**Process Adherence:** Excellent (TDD followed, reviews completed)
-**Issues Fixed:** All Critical and Important issues resolved immediately
+**Code Quality:** High (TDD followed strictly)
+**Test Coverage:** Comprehensive (all features tested)
+**Process Adherence:** Excellent (RED-GREEN cycle enforced)
+**Context Usage:** 50.5% (101k/200k tokens)
 
 ---
 
