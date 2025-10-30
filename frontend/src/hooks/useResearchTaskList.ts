@@ -68,7 +68,7 @@ export function useResearchTaskList(pollInterval: number = 3000) {
     }, pollInterval);
 
     return () => clearInterval(interval);
-  }, [pollInterval, tasks]);
+  }, [pollInterval, tasks, refreshTasks]);
 
   return {
     tasks,
