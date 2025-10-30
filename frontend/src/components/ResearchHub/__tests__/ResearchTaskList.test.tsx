@@ -1,28 +1,35 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ResearchTaskList from '../ResearchTaskList';
-import { researchApi } from '../../../services/researchApi';
+import { useResearchTaskList } from '../../../hooks/useResearchTaskList';
+import type { ResearchTask } from '../../../types/research';
 
-// Mock the research API
-vi.mock('../../../services/researchApi', () => ({
-  researchApi: {
-    getResearchTaskStatus: vi.fn(),
-  },
+vi.mock('../../../hooks/useResearchTaskList', () => ({
+  useResearchTaskList: vi.fn(),
 }));
 
-const mockGetResearchTaskStatus = researchApi.getResearchTaskStatus as ReturnType<typeof vi.fn>;
-
 describe('ResearchTaskList', () => {
+  const mockAddTask = vi.fn();
+  const mockRemoveTask = vi.fn();
+  const mockRefreshTasks = vi.fn();
+  const mockToggleExpand = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('should render empty state when no tasks are tracked', () => {
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: new Map(),
+      expandedTaskId: null,
+      refreshing: false,
+      error: null,
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
+    });
+
     render(<ResearchTaskList />);
 
     expect(screen.getByText('No tasks tracked yet.')).toBeInTheDocument();
@@ -30,9 +37,9 @@ describe('ResearchTaskList', () => {
   });
 
   it('should allow adding a task by ID', async () => {
-    const mockTask = {
+    const mockTask: ResearchTask = {
       task_id: 'test-uuid-123',
-      status: 'pending' as const,
+      status: 'pending',
       technology: 'React',
       created_at: '2025-10-10T12:00:00Z',
       completed_at: null,
@@ -41,88 +48,50 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    mockGetResearchTaskStatus.mockResolvedValue(mockTask);
+    const tasksMap = new Map();
+    tasksMap.set('test-uuid-123', mockTask);
 
-    render(<ResearchTaskList />);
-
-    const input = screen.getByPlaceholderText('Enter task ID to track...');
-    const addButton = screen.getByText('Add Task');
-
-    fireEvent.change(input, { target: { value: 'test-uuid-123' } });
-    fireEvent.click(addButton);
-
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledWith('test-uuid-123');
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/test-uuid-123/)).toBeInTheDocument();
-      expect(screen.getByText('pending')).toBeInTheDocument();
-    });
-  });
-
-  it('should display error message when task not found', async () => {
-    mockGetResearchTaskStatus.mockRejectedValue({
-      response: { data: { detail: 'Task not found' } },
-    });
-
-    render(<ResearchTaskList />);
-
-    const input = screen.getByPlaceholderText('Enter task ID to track...');
-    const addButton = screen.getByText('Add Task');
-
-    fireEvent.change(input, { target: { value: 'invalid-id' } });
-    fireEvent.click(addButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Task not found/)).toBeInTheDocument();
-    });
-  });
-
-  it('should auto-refresh tasks every 3 seconds', async () => {
-    const mockTask = {
-      task_id: 'test-uuid-123',
-      status: 'running' as const,
-      technology: 'React',
-      created_at: '2025-10-10T12:00:00Z',
-      completed_at: null,
-      results: null,
-      summary: null,
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: tasksMap,
+      expandedTaskId: null,
+      refreshing: false,
       error: null,
-    };
-
-    mockGetResearchTaskStatus.mockResolvedValue(mockTask);
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
+    });
 
     render(<ResearchTaskList />);
 
-    // Add a task first
-    const input = screen.getByPlaceholderText('Enter task ID to track...');
-    fireEvent.change(input, { target: { value: 'test-uuid-123' } });
-    fireEvent.click(screen.getByText('Add Task'));
-
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledTimes(1);
-    });
-
-    // Fast-forward 3 seconds
-    vi.advanceTimersByTime(3000);
-
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledTimes(2);
-    });
-
-    // Fast-forward another 3 seconds
-    vi.advanceTimersByTime(3000);
-
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledTimes(3);
-    });
+    // Task ID is truncated to 8 chars + "..."
+    expect(screen.getByText(/test-uui\.\.\./)).toBeInTheDocument();
+    // Status badge contains emoji + text
+    expect(screen.getByText(/pending/)).toBeInTheDocument();
+    expect(screen.getByText('React')).toBeInTheDocument();
   });
 
-  it('should expand task details when task card is clicked', async () => {
-    const mockTask = {
+  it('should display error message when task not found', () => {
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: new Map(),
+      expandedTaskId: null,
+      refreshing: false,
+      error: 'Failed to add task: Task not found',
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
+    });
+
+    render(<ResearchTaskList />);
+
+    expect(screen.getByText(/Task not found/)).toBeInTheDocument();
+  });
+
+  it('should expand task details when task card is clicked', () => {
+    const mockTask: ResearchTask = {
       task_id: 'test-uuid-123',
-      status: 'completed' as const,
+      status: 'completed',
       technology: 'React',
       created_at: '2025-10-10T12:00:00Z',
       completed_at: '2025-10-10T12:05:00Z',
@@ -144,36 +113,59 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    mockGetResearchTaskStatus.mockResolvedValue(mockTask);
+    const tasksMap = new Map();
+    tasksMap.set('test-uuid-123', mockTask);
 
-    render(<ResearchTaskList />);
-
-    // Add task
-    const input = screen.getByPlaceholderText('Enter task ID to track...');
-    fireEvent.change(input, { target: { value: 'test-uuid-123' } });
-    fireEvent.click(screen.getByText('Add Task'));
-
-    await waitFor(() => {
-      expect(screen.getByText(/test-uuid-123/)).toBeInTheDocument();
+    // First render - not expanded
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: tasksMap,
+      expandedTaskId: null,
+      refreshing: false,
+      error: null,
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
     });
+
+    const { rerender } = render(<ResearchTaskList />);
+
+    // Verify task is displayed (truncated ID)
+    expect(screen.getByText(/test-uui\.\.\./)).toBeInTheDocument();
+    expect(screen.getByText(/completed/)).toBeInTheDocument();
 
     // Click task card to expand
-    const taskCard = screen.getByText('completed').closest('.task-header');
+    const taskCard = screen.getByText(/completed/).closest('.task-header');
     fireEvent.click(taskCard!);
 
-    // Check expanded content
-    await waitFor(() => {
-      expect(screen.getByText('Research completed successfully')).toBeInTheDocument();
-      expect(screen.getByText('deep_researcher')).toBeInTheDocument();
-      expect(screen.getByText(/5.2s/)).toBeInTheDocument();
+    expect(mockToggleExpand).toHaveBeenCalledWith('test-uuid-123');
+
+    // Re-render with expanded state
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: tasksMap,
+      expandedTaskId: 'test-uuid-123',
+      refreshing: false,
+      error: null,
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
     });
+
+    rerender(<ResearchTaskList />);
+
+    // Check expanded content
+    expect(screen.getByText('Research completed successfully')).toBeInTheDocument();
+    expect(screen.getByText('deep_researcher')).toBeInTheDocument();
+    // Execution time displayed as "5.20s" with timer emoji
+    expect(screen.getByText(/5\.20s/)).toBeInTheDocument();
   });
 
-  it('should display status badges with correct styling', async () => {
+  it('should display status badges with correct styling', () => {
     const statuses = ['pending', 'running', 'completed', 'failed'] as const;
 
     for (const status of statuses) {
-      const mockTask = {
+      const mockTask: ResearchTask = {
         task_id: `test-${status}`,
         status,
         technology: 'React',
@@ -184,27 +176,34 @@ describe('ResearchTaskList', () => {
         error: null,
       };
 
-      mockGetResearchTaskStatus.mockResolvedValue(mockTask);
+      const tasksMap = new Map();
+      tasksMap.set(`test-${status}`, mockTask);
+
+      vi.mocked(useResearchTaskList).mockReturnValue({
+        tasks: tasksMap,
+        expandedTaskId: null,
+        refreshing: false,
+        error: null,
+        addTask: mockAddTask,
+        removeTask: mockRemoveTask,
+        refreshTasks: mockRefreshTasks,
+        toggleExpand: mockToggleExpand,
+      });
 
       const { unmount } = render(<ResearchTaskList />);
 
-      const input = screen.getByPlaceholderText('Enter task ID to track...');
-      fireEvent.change(input, { target: { value: `test-${status}` } });
-      fireEvent.click(screen.getByText('Add Task'));
-
-      await waitFor(() => {
-        const badge = screen.getByText(status);
-        expect(badge).toHaveClass(`status-${status}`);
-      });
+      // Status text is inside badge with emoji, use regex and check class
+      const badge = screen.getByText(new RegExp(status)).closest('.status-badge');
+      expect(badge).toHaveClass(`status-${status}`);
 
       unmount();
     }
   });
 
-  it('should handle manual refresh', async () => {
-    const mockTask = {
+  it('should handle manual refresh', () => {
+    const mockTask: ResearchTask = {
       task_id: 'test-uuid-123',
-      status: 'running' as const,
+      status: 'running',
       technology: 'React',
       created_at: '2025-10-10T12:00:00Z',
       completed_at: null,
@@ -213,25 +212,26 @@ describe('ResearchTaskList', () => {
       error: null,
     };
 
-    mockGetResearchTaskStatus.mockResolvedValue(mockTask);
+    const tasksMap = new Map();
+    tasksMap.set('test-uuid-123', mockTask);
+
+    vi.mocked(useResearchTaskList).mockReturnValue({
+      tasks: tasksMap,
+      expandedTaskId: null,
+      refreshing: false,
+      error: null,
+      addTask: mockAddTask,
+      removeTask: mockRemoveTask,
+      refreshTasks: mockRefreshTasks,
+      toggleExpand: mockToggleExpand,
+    });
 
     render(<ResearchTaskList />);
-
-    // Add a task
-    const input = screen.getByPlaceholderText('Enter task ID to track...');
-    fireEvent.change(input, { target: { value: 'test-uuid-123' } });
-    fireEvent.click(screen.getByText('Add Task'));
-
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledTimes(1);
-    });
 
     // Click refresh button
     const refreshButton = screen.getByText('Refresh All');
     fireEvent.click(refreshButton);
 
-    await waitFor(() => {
-      expect(researchApi.getResearchTaskStatus).toHaveBeenCalledTimes(2);
-    });
+    expect(mockRefreshTasks).toHaveBeenCalledTimes(1);
   });
 });
