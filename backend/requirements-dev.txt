@@ -17,7 +17,7 @@ mypy==1.8.0
 
 # Security Scanning
 bandit==1.7.6
-safety==2.3.5
+safety>=3.0.0  # Updated for packaging>=22.0 compatibility
 
 # Development Tools
 ipython==8.18.1
