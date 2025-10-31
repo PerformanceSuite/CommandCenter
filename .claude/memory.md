@@ -1,6 +1,128 @@
 # CommandCenter Project Memory
 
-## Session: 2025-10-31 10:20-11:17 PDT (LATEST)
+## Session: 2025-10-31 13:25 PDT (LATEST)
+**Duration**: ~3 hours
+**Branch**: feature/phase-b-knowledge-ingestion
+
+### Work Completed:
+**CI/CD Test Fixes & Comprehensive README Rewrite**
+
+✅ **Fixed 4 Failing Frontend Smoke Tests** (Systematic Debugging)
+
+**Root Cause**: Test mocks didn't match updated API contract after pagination was added (commit d0c7e05)
+
+1. **useTechnologies tests** (2 failures → passing):
+   - Old mock: `api.getTechnologies.mockResolvedValue([tech1, tech2])`
+   - New contract: `{ items: Technology[], total: number, page: number, page_size: number }`
+   - Fix: Updated 5 mock instances to return paginated structure
+
+2. **useRepositories tests** (2 failures → passing):
+   - Issue: Tests didn't wait for React state updates after mutations
+   - Fix: Wrapped state assertions in `waitFor()` for create, update, delete operations
+
+**Commit**: `bfad250` - fix: update test mocks to match pagination API contract
+- Files: 2 files, +42 insertions, -11 deletions
+- Tests: 12/12 passing (was 8/12)
+- Local verification: ✅ All tests passing
+
+✅ **Comprehensive README Rewrite** (2 iterations)
+
+**First Update** (Commit `fcad79b`):
+- Added full vision statement: "Operating system for R&D teams"
+- Complete roadmap (Phases A-E with detailed Phase C-E vision)
+- Current capabilities deep dive (Phase B features)
+- Hub explanation, architecture diagrams, use cases
+- Changes: +614 insertions, -312 deletions
+
+**Second Update** (Commit `66d8c7e`) - **MAJOR EXPANSION**:
+- **Positioning shift**: "R&D management" → "Personal AI Operating System for Knowledge Work"
+- **Core identity established**:
+  - Intelligent layer between you and ALL tools
+  - Personal AI with YOUR context (not generic ChatGPT)
+  - Active intelligence vs passive storage (not Notion/Obsidian)
+  - Unified ecosystem hub with bi-directional sync
+  - Privacy-first (local embeddings, self-hosted)
+
+**Key Differentiators Articulated**:
+1. Personal AI that knows YOUR context (research history, preferences, work habits)
+2. Active Intelligence: Proactively surfaces insights before you ask
+3. Unified Ecosystem Hub: Single interface to GitHub, Notion, Slack, Obsidian, Zotero, Linear, ArXiv, YouTube, Browser
+4. Privacy-First: Data isolation, local embeddings, self-hosted control
+
+**Expanded Roadmap Vision**:
+- **Phase D: Ecosystem Integration** (6-8 weeks)
+  - Communication: Slack, Discord, Teams chatbots
+  - PKM: Notion, Obsidian, Roam bi-directional sync
+  - Academic: Zotero, ArXiv, PubMed, Google Scholar
+  - Project Mgmt: Linear, Jira task sync
+  - Content: YouTube transcripts, podcast ingestion, browser extension
+  - Data: Google Drive, Dropbox cloud storage
+
+- **Phase E: Habit Coach AI** (8-10 weeks)
+  - Pattern learning (when you research, what topics, preferences)
+  - Intelligent notifications ("This paper matches your spatial audio work")
+  - Research suggestions based on your patterns
+  - Context management ("You were researching async Rust 3 weeks ago")
+  - Knowledge gap detection
+  - Habit formation and optimization
+
+**Tone Transformation**:
+- Before: "helps R&D teams track technologies"
+- After: "Your intelligent partner that automates the tedious, connects the scattered, and amplifies your best thinking"
+
+**Changes**: +623 insertions, -441 deletions
+**Total README**: 985 lines (comprehensive vision document)
+
+### Commits This Session (3 total):
+- `bfad250` - fix: update test mocks to match pagination API contract
+- `fcad79b` - docs: comprehensive README update - vision, roadmap, and capabilities
+- `66d8c7e` - docs: rewrite README with full vision - Personal AI Operating System
+
+### Files Modified:
+**Tests:**
+- `frontend/src/__tests__/hooks/useRepositories.test.ts` (waitFor wrappers)
+- `frontend/src/hooks/__tests__/useTechnologies.test.ts` (pagination mocks)
+
+**Documentation:**
+- `README.md` (2 comprehensive rewrites, +833 net insertions)
+
+### CI/CD Status:
+- New workflow runs triggered with test fixes
+- Run IDs: 18983894523, 18983894493, 18983894485
+- Status at session end: In progress
+- Expected: All frontend smoke tests should now pass
+
+### Key Decisions:
+- Used systematic debugging (root cause investigation before fixes)
+- README now positions CommandCenter as ambitious Personal AI OS platform
+- Articulated clear differentiation vs generic AI tools and passive PKM tools
+- Roadmap extended to Phase D (Ecosystem) and Phase E (Habit Coach)
+
+### Next Steps:
+**IMMEDIATE:**
+1. Monitor CI/CD: Verify test fixes resolved all failures
+2. Merge PR #63 once CI is green
+3. Pull latest main
+
+**AFTER MERGE:**
+Choose next priority:
+- Option 1: Phase C (Observability Layer) - Prometheus, Grafana, tracing
+- Option 2: Phase B Testing & Docs - End-to-end tests, user documentation
+- Option 3: Habit Coach Feature - Start design/brainstorming
+- Option 4: Fix remaining test failures (Issues #64-69)
+
+**Recommendation**: Phase C (Observability) to complete production foundations
+
+### Status:
+- PR #63: Open, CI/CD running with fixes
+- Branch: feature/phase-b-knowledge-ingestion (3 commits ahead of origin)
+- Tests fixed: 4/4 frontend smoke tests
+- README: Comprehensive vision document complete
+- Infrastructure: 67% complete
+
+---
+
+## Session: 2025-10-31 10:20-11:17 PDT
 **Duration**: ~57 minutes
 **Branch**: feature/phase-b-knowledge-ingestion
 
@@ -160,227 +282,43 @@ Created 6 GitHub issues tracking all failing tests:
 
 ---
 
-## Session: 2025-10-30 05:55-07:15 UTC
-**Duration**: ~1 hour 20 minutes
-**Branch**: feature/production-foundations (worktree: `.worktrees/production-foundations`)
-
-### Work Completed:
-**Phase A: Dagger Production Hardening - Tasks 1-5 Complete (50%)**
-
-Used **subagent-driven development** to execute implementation plan with code review after each task.
-
-✅ **Task 1: Log Retrieval** (5 tests passing)
-✅ **Task 2: Service Registry** (5 tests passing)
-✅ **Task 3: Hub API Endpoint** (7 tests passing)
-✅ **Task 4: Health Checks** (12 tests passing)
-✅ **Task 5: Resource Limits** (3 tests passing)
-
-**Total: 32 tests passing**, 11 commits
-
-### Key Accomplishments:
-- Container log retrieval via CommandCenterStack and HTTP API
-- Service registry distinguishing Container vs Service objects
-- Comprehensive health check system with startup ordering
-- Configurable resource limits with sensible defaults
-- All code reviewed with Critical/Important issues fixed immediately
-
-### Next Steps:
-**Remaining Phase A Tasks (Week 3):**
-- Task 6: Non-Root User Execution
-- Task 7: Retry Logic with Exponential Backoff
-- Task 8: Service Restart Method
-- Task 9: Update Documentation
-- Task 10: Verify All Tests Pass
-
-**Estimated**: 1-2 hours to complete Phase A
-
-### Files:
-- Plan: `docs/plans/2025-10-29-phase-a-dagger-hardening-plan.md` ✅
-- Design: `docs/plans/2025-10-29-production-foundations-design.md` ✅
-- 7 new test files, 3 modified source files
-
----
-
-## Session: 2025-10-30 07:28-07:40 UTC
-**Duration**: 12 minutes
-**Branch**: feature/production-foundations (worktree)
-
-### Work Completed:
-- Task 6: Non-Root User Execution (security hardening, UID 999 for postgres/redis)
-- Task 7: Retry Logic with Exponential Backoff (3 retries, 1s/2s/4s delays)
-- Added 4 tests (all passing): security + retry tests
-- TDD methodology: RED-GREEN cycle strictly followed
-- Commits: f5687d2, 629dc95
-
-### Key Decisions:
-- User IDs: 999 for system services, 1000 for app containers
-- Exponential backoff decorator pattern for clean code reuse
-- Decorator applied to start() method for transient failure handling
-
-### Progress:
-- Phase A: 70% complete (7/10 tasks)
-- Tasks 1-5: ✅ (previous session)
-- Tasks 6-7: ✅ (this session)
-- Tasks 8-10: Remaining (service restart, documentation, final tests)
-
-### Next Steps:
-1. Task 8: Service Restart Method (recovery functionality)
-2. Task 9: Update Documentation (DAGGER_ARCHITECTURE.md, SECURITY.md)
-3. Task 10: Verify All Tests Pass (90%+ coverage target)
-
-**Context Health**: 50.5% (101k/200k tokens) - at threshold
-**Details**: See .claude/logs/sessions/2025-10-30_072800.md
-
----
-
-## Session: 2025-10-29 16:00-16:15 PDT (Previous - Interrupted)
-**Duration**: ~15 minutes (bash shell failure)
-**Branch**: main
-
-### Work Completed:
-- Ran `/start`, loaded superpowers skills
-- Verified design document (767 lines)
-- Attempted worktree setup - interrupted by shell crash
-
-### Blocker:
-- Bash shell unresponsive (fixed by restart in next session)
-
----
-
-## Session: 2025-10-29 15:30-15:47 PDT
-**Duration**: ~17 minutes
-**Branch**: main
-
-### Work Completed:
-- Started session with /start, reviewed project status
-- Read and analyzed two roadmap documents:
-  - `docs/plans/2025-10-29-ecosystem-integration-roadmap.md`
-  - `docs/plans/2025-10-29-commandcenter-habit-coach-feature-request.md`
-- Identified significant infrastructure overlap between roadmaps
-- **Infrastructure Assessment** (via Explore agent):
-  - Dagger orchestration: PARTIAL (basic, needs production hardening)
-  - KnowledgeBeast/RAG: FUNCTIONAL (v3.0, production-ready)
-  - Scheduled Jobs (Celery): PRODUCTION-READY ✅
-  - Knowledge Ingestion: PARTIAL (manual API only, no automation)
-- Conducted brainstorming session using superpowers:brainstorming skill
-- Validated three-phase sequential design for production-grade foundations
-
-### Key Decisions:
-- **Scope**: Foundation layer only (infrastructure hardening, not full feature roadmap)
-- **Timeline**: Flexible/iterative (no hard deadline)
-- **Team**: Solo developer + AI assistance
-- **Success Criteria**: Production-grade foundations before building Habit Coach/ecosystem features
-- **Approach**: Sequential Component Hardening (complete each 100% before moving on)
-- **Three-Phase Plan**:
-  - Phase A: Dagger Production Hardening (Weeks 1-3)
-  - Phase B: Automated Knowledge Ingestion (Weeks 4-6)
-  - Phase C: Observability Layer (Weeks 7-9)
-
-### Design Validated (4 Sections):
-1. Overall architecture & sequencing
-2. Phase A details (log retrieval, health checks, resource limits, security)
-3. Phase B details (Celery tasks, feed scrapers, webhooks, file watchers)
-4. Phase C details (Prometheus, Grafana, tracing, alerting, analytics)
-
-### Next Steps:
-1. **Write comprehensive design document** to `docs/plans/2025-10-29-production-foundations-design.md`
-2. Set up git worktree for implementation
-3. Create detailed implementation plan via superpowers:writing-plans
-4. Begin Phase A implementation
-
-### Status:
-- Brainstorming: COMPLETE ✅
-- Design validation: COMPLETE ✅
-- Design documentation: IN PROGRESS (interrupted by /end)
-
----
-
-## Session: 2025-10-29 19:15 PDT
-**Duration**: ~2 hours
-**Branch**: main (pushed to origin)
-
-### Work Completed:
-- ✅ **Fixed all 28 failing tests** through architectural refactoring
-- ✅ Extracted hooks: `useResearchSummary`, `useResearchTaskList`
-- ✅ Refactored components: ResearchSummary (-49 lines), ResearchTaskList (-69 lines)
-- ✅ Updated all tests to mock hooks instead of fake timers
-- ✅ Test results: 22/22 research tests passing (100% success)
-- ✅ Overall suite: 130/145 tests passing (89.7%)
-
-### Key Decisions:
-- Architectural refactoring over fake timer workarounds
-- Followed existing `useDashboard` hook pattern
-- Separated concerns: hooks (business logic) + components (rendering)
-- Eliminated fake timers entirely from tests
-- Fixed stale closure in useResearchTaskList
-
-### Approach - Subagent-Driven Development:
-- Used superpowers:subagent-driven-development skill
-- Executed 7 tasks with code review after each
-- Iterative fixes applied when issues found
-- TDD methodology throughout
-
-### Commits This Session (11 total):
-- `53ab5aa` - feat: add useResearchSummary hook with tests
-- `9c51df1` - refactor: eliminate duplicate logic in useResearchSummary
-- `bb05153` - refactor: use useResearchSummary hook in component
-- `25d3a30` - test: refactor ResearchSummary tests to mock hook
-- `6977f6c` - feat: add useResearchTaskList hook with tests
-- `e931293` - fix: resolve stale closure and error handling in useResearchTaskList
-- `cb4bb89` - refactor: use useResearchTaskList hook in component
-- `30e5723` - fix: remove unused removeTask variable
-- `cdab056` - test: refactor ResearchTaskList tests to mock hook
-- `bcb61d0` - chore: verify all 28 research component tests now passing
-- `37420b0` - fix: add refreshTasks to useEffect dependencies
-
-### Files Modified: 11 files (+2026, -372)
-- New hooks: 2 files (useResearchSummary.ts, useResearchTaskList.ts)
-- New hook tests: 2 files (10 tests total)
-- Refactored components: 2 files
-- Refactored tests: 2 files (12 tests total)
-- Documentation: 3 files (plan, ideas, habit coach request)
-
-### Next Steps (Priority Order):
-1. ✅ **Fix 28 failing tests** - COMPLETE
-2. **Restore max-warnings: 0 in package.json** (currently 100)
-3. **Verify backend tests still pass**
-4. **Complete Issue #62 acceptance criteria**
-5. **Consider: Habit coach feature** (docs/plans/ has new request)
-
----
-
 ## Project Context
 
-**CommandCenter**: Multi-project R&D management and knowledge base system
-- FastAPI (Python 3.11) backend + React 18 TypeScript frontend
-- PostgreSQL + pgvector for RAG (KnowledgeBeast v3.0)
-- Docker Compose deployment
-- 1,676 total tests across Week 1-3
-- CI/CD: <25min runtime (44% improvement from 45min)
+**CommandCenter**: Your Personal AI Operating System for Knowledge Work
+- Not just R&D management - intelligent layer between you and all your tools
+- Unified ecosystem hub: GitHub, Notion, Slack, Obsidian, Zotero, Linear, ArXiv, YouTube, Browser
+- Active intelligence that learns YOUR patterns and proactively surfaces insights
+- Privacy-first: Data isolation, local embeddings, self-hosted control
 
-**Current Phase**: Phase B Complete (PR #63 - Awaiting CI/CD)
-- Knowledge Ingestion: ✅ Complete (6/6 tasks)
-- Infrastructure: 67% complete (Celery ✅, RAG ✅, Ingestion ✅, Dagger 🟡, Observability ❌)
-- Next: Backend tests pending → Merge decision → Choose next priority
-
-**Key Dependencies**:
-- Backend: FastAPI, SQLAlchemy, KnowledgeBeast, sentence-transformers
+**Tech Stack**:
+- Backend: FastAPI, SQLAlchemy, Celery, KnowledgeBeast, sentence-transformers
 - Frontend: React 18, TypeScript, Vite, TanStack Query
-- Testing: pytest (backend), vitest (frontend)
-- Orchestration: Dagger SDK (Hub)
+- Database: PostgreSQL 16 + pgvector
+- Orchestration: Dagger SDK (Hub), Docker Compose
+- Testing: pytest (1,676 tests), vitest (47 tests), Playwright (40 E2E tests)
+
+**Current Phase**: Phase B Complete (PR #63 - Awaiting Merge)
+- Knowledge Ingestion: ✅ Complete (6/6 tasks, 50+ tests)
+- Infrastructure: 67% complete (Celery ✅, RAG ✅, Ingestion ✅, Dagger 🟡, Observability ❌)
+- Next: Merge PR #63 → Choose next priority (Phase C recommended)
+
+**Future Roadmap**:
+- **Phase C** (Next): Observability Layer - Prometheus, Grafana, tracing, alerting
+- **Phase D** (Future): Ecosystem Integration - Slack, Notion, Obsidian, Zotero, ArXiv, YouTube, Browser Extension
+- **Phase E** (Future): Habit Coach AI - Pattern learning, proactive intelligence, context management
 
 **Repository Health**:
 - Hygiene Score: ✅ Clean
 - USS Version: v2.1
-- Branch: feature/phase-b-knowledge-ingestion (3 commits ahead of origin)
-- Active PR: #63 (CI/CD fixes applied, awaiting final validation)
-- GitHub Issues: #64-69 (pre-existing test failures documented)
+- Branch: feature/phase-b-knowledge-ingestion
+- Active PR: #63 (CI/CD in progress, test fixes applied)
+- Test Coverage: Backend 80%+, Frontend 60%+
 
-**Last Updated**: 2025-10-31 11:17 PDT
+**Last Updated**: 2025-10-31 13:25 PDT
 
 **Next Session Recommendations**:
-1. Check PR #63 CI/CD status (backend tests)
+1. Check PR #63 CI/CD status
 2. Merge PR #63 if tests pass
-3. Address test failures (Issues #64-69) OR
-4. Begin Phase C (Observability) OR
-5. Start Habit Coach feature design
+3. Begin Phase C (Observability Layer) - recommended path
+4. OR: Start Habit Coach feature design (requires Phase C first)
+5. OR: Address test failures (Issues #64-69)
