@@ -312,15 +312,15 @@ jobs:
           GITHUB_TOKEN=dummy
           EOF
 
-      # Start all services using docker-compose
-      - name: Start services with docker-compose
-        run: docker-compose up -d
+      # Start all services using docker compose
+      - name: Start services with docker compose
+        run: docker compose up -d
 
       # Wait for all services to be healthy
       # Ensures services are ready before running tests
       - name: Wait for services to be healthy
         run: |
-          timeout 120 bash -c 'until docker-compose ps | grep -q "healthy"; do sleep 2; done' || true
+          timeout 120 bash -c 'until docker compose ps | grep -q "healthy"; do sleep 2; done' || true
           sleep 10
 
       # Verify service endpoints are accessible
@@ -332,17 +332,17 @@ jobs:
       # Run integration tests against running services
       - name: Run integration tests
         run: |
-          docker-compose exec -T backend pytest test_api.py -v || true
+          docker compose exec -T backend pytest test_api.py -v || true
 
       # Show logs if tests fail for debugging
       - name: Show logs on failure
         if: failure()
-        run: docker-compose logs
+        run: docker compose logs
 
       # Always cleanup services to free resources
       - name: Cleanup
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Security Scanning
   # Scans for vulnerabilities in code and dependencies
