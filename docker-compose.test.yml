@@ -76,7 +76,7 @@ services:
     environment:
       CI: "true"
       VITE_API_URL: http://localhost:8000
-    command: npm test -- --coverage --watchAll=false
+    command: npm test -- --run --coverage
 
   # Hub backend tests
   test-hub-backend:
@@ -114,7 +114,7 @@ services:
     environment:
       CI: "true"
       VITE_API_URL: http://localhost:9001
-    command: npm test -- --coverage --watchAll=false
+    command: npm test -- --run --coverage
 
 volumes:
   postgres-test-data:
