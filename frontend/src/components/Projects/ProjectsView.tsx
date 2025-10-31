@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Edit2, FolderOpen, Database, FileText, Beaker } from 'lucide-react';
 import { useProjects } from '../../hooks/useProjects';
-import { Project, ProjectCreate } from '../../types/project';
+import { Project, ProjectCreate, ProjectStats } from '../../types/project';
 import { ProjectForm } from './ProjectForm';
 import { projectApi } from '../../services/projectApi';
 
@@ -9,7 +9,7 @@ export const ProjectsView = () => {
   const { projects, loading, error, createProject, updateProject, deleteProject } = useProjects();
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [projectStats, setProjectStats] = useState<Record<number, Record<string, unknown>>>({});
+  const [projectStats, setProjectStats] = useState<Record<number, ProjectStats>>({});
 
   const handleCreate = async (data: ProjectCreate) => {
     try {

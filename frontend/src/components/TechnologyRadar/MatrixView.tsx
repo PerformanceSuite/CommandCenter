@@ -42,17 +42,20 @@ export const MatrixView: React.FC<MatrixViewProps> = ({ technologies, onEdit, on
       let aVal: unknown = a[sortField];
       let bVal: unknown = b[sortField];
 
-      // Handle null values
+      // Handle null/undefined values
       if (aVal === null && bVal === null) return 0;
-      if (aVal === null) return 1;
-      if (bVal === null) return -1;
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
 
       // String comparison for text fields
-      if (typeof aVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        const aLower = aVal.toLowerCase();
+        const bLower = bVal.toLowerCase();
+        const comparison = aLower < bLower ? -1 : aLower > bLower ? 1 : 0;
+        return sortDirection === 'asc' ? comparison : -comparison;
       }
 
+      // Numeric comparison
       const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sortDirection === 'asc' ? comparison : -comparison;
     });
