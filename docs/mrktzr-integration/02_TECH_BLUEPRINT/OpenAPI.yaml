@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: CC↔MR Integration API
+  version: 1.0.0
+servers:
+  - url: https://cc.local/api
+    description: CommandCenter API
+  - url: https://mr.local/api
+    description: MRKTZR API
+paths:
+  /insights/export:
+    get:
+      summary: Export aggregated topic briefs for a tenant
+      parameters:
+        - in: query
+          name: tenant_id
+          schema: { type: string }
+          required: true
+        - in: query
+          name: since
+          description: ISO8601 timestamp filter
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: List of TopicBrief
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicBrief'
+  /campaigns/intake:
+    post:
+      summary: Ingest topic briefs into MRKTZR to seed campaigns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenant_id: { type: string }
+                briefs:
+                  type: array
+                  items: { $ref: '#/components/schemas/TopicBrief' }
+      responses:
+        '202': { description: Accepted }
+  /analytics/intake:
+    post:
+      summary: Ingest post/campaign analytics into CommandCenter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenant_id: { type: string }
+                metrics:
+                  type: array
+                  items: { $ref: '#/components/schemas/EngagementMetric' }
+      responses:
+        '202': { description: Accepted }
+components:
+  schemas:
+    TopicBrief:
+      type: object
+      required: [id, title, summary, topics, sources, guidance]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        summary: { type: string }
+        topics:
+          type: array
+          items: { type: string }
+        keywords:
+          type: array
+          items: { type: string }
+        persona_hints:
+          type: array
+          items: { $ref: '#/components/schemas/PersonaHint' }
+        sources:
+          type: array
+          items: { $ref: '#/components/schemas/Citation' }
+        guidance:
+          type: object
+          properties:
+            tone: { type: string }
+            calls_to_action: { type: array, items: { type: string } }
+            channel_recos: { type: array, items: { type: string } }
+            compliance_notes: { type: string }
+    PersonaHint:
+      type: object
+      properties:
+        persona_id: { type: string }
+        name: { type: string }
+        demographics: { type: object, additionalProperties: true }
+        brand_voice: { type: string }
+    Citation:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+        title: { type: string }
+        snippet: { type: string }
+        score: { type: number, format: float }
+    EngagementMetric:
+      type: object
+      required: [id, campaign_id, channel, ts, metrics]
+      properties:
+        id: { type: string, format: uuid }
+        campaign_id: { type: string }
+        post_id: { type: string }
+        channel: { type: string, enum: [x, linkedin, youtube, tiktok, rss] }
+        ts: { type: string, format: date-time }
+        metrics:
+          type: object
+          properties:
+            impressions: { type: integer }
+            clicks: { type: integer }
+            ctr: { type: number, format: float }
+            likes: { type: integer }
+            comments: { type: integer }
+            shares: { type: integer }
+            watch_time_ms: { type: integer }
+            conversions: { type: integer }
+            conversion_value: { type: number, format: float }
