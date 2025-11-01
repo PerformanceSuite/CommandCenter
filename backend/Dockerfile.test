@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
 # Copy KnowledgeBeast library (monorepo dependency)
 COPY libs/knowledgebeast /libs/knowledgebeast
 
+# Install KnowledgeBeast first (it has its own dependencies)
+RUN cd /libs/knowledgebeast && pip install --no-cache-dir -e .
+
 # Install Python dependencies
 COPY backend/requirements.txt /app/requirements.txt
 COPY backend/requirements-dev.txt /app/requirements-dev.txt
