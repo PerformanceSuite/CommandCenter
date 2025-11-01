@@ -207,8 +207,12 @@ class Schedule(Base):
             "success_rate": self.success_rate,
             "is_active": self.is_active,
             "last_error": self.last_error,
-            "last_success_at": self.last_success_at.isoformat() if self.last_success_at else None,
-            "last_failure_at": self.last_failure_at.isoformat() if self.last_failure_at else None,
+            "last_success_at": (
+                self.last_success_at.isoformat() if self.last_success_at else None
+            ),
+            "last_failure_at": (
+                self.last_failure_at.isoformat() if self.last_failure_at else None
+            ),
             "created_by": self.created_by,
             "tags": self.tags,
             "created_at": self.created_at.isoformat() if self.created_at else None,

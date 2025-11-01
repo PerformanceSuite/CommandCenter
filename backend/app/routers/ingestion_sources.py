@@ -1,6 +1,7 @@
 """
 API endpoints for managing ingestion sources
 """
+
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, Depends, status
@@ -13,12 +14,12 @@ from app.schemas.ingestion import (
     IngestionSourceCreate,
     IngestionSourceUpdate,
     IngestionSourceResponse,
-    IngestionSourceList
+    IngestionSourceList,
 )
 from app.tasks.ingestion_tasks import (
     scrape_rss_feed,
     scrape_documentation,
-    process_webhook_payload
+    process_webhook_payload,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,10 +27,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ingestion", tags=["ingestion"])
 
 
-@router.post("/sources", response_model=IngestionSourceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sources",
+    response_model=IngestionSourceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_source(
-    source: IngestionSourceCreate,
-    db: AsyncSession = Depends(get_db)
+    source: IngestionSourceCreate, db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new ingestion source.
@@ -51,7 +55,7 @@ async def list_sources(
     enabled: Optional[bool] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     List ingestion sources with optional filters.
@@ -85,10 +89,7 @@ async def list_sources(
 
 
 @router.get("/sources/{source_id}", response_model=IngestionSourceResponse)
-async def get_source(
-    source_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get ingestion source by ID.
     """
@@ -107,7 +108,7 @@ async def get_source(
 async def update_source(
     source_id: int,
     source_update: IngestionSourceUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Update ingestion source.
@@ -134,10 +135,7 @@ async def update_source(
 
 
 @router.delete("/sources/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_source(
-    source_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def delete_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Delete ingestion source.
     """
@@ -158,10 +156,7 @@ async def delete_source(
 
 
 @router.post("/sources/{source_id}/run", status_code=status.HTTP_202_ACCEPTED)
-async def trigger_manual_run(
-    source_id: int,
-    db: AsyncSession = Depends(get_db)
-):
+async def trigger_manual_run(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Manually trigger ingestion source run.
     """
@@ -185,19 +180,13 @@ async def trigger_manual_run(
         task = scrape_documentation.delay(source_id)
     elif source.type == SourceType.WEBHOOK:
         raise HTTPException(
-            status_code=400,
-            detail="Webhook sources cannot be triggered manually"
+            status_code=400, detail="Webhook sources cannot be triggered manually"
         )
     elif source.type == SourceType.FILE_WATCHER:
         raise HTTPException(
-            status_code=400,
-            detail="File watcher sources run automatically"
+            status_code=400, detail="File watcher sources run automatically"
         )
 
     logger.info(f"Triggered manual run for source: {source.name} (task_id: {task.id})")
 
-    return {
-        "task_id": task.id,
-        "source_id": source_id,
-        "source_name": source.name
-    }
+    return {"task_id": task.id, "source_id": source_id, "source_name": source.name}

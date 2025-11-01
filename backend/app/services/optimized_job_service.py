@@ -56,7 +56,7 @@ class OptimizedJobService:
         # Build base query with window function for count
         count_window = func.count().over()
 
-        base_query = select(Job, count_window.label('total_count'))
+        base_query = select(Job, count_window.label("total_count"))
 
         # Apply filters
         filters = []
@@ -150,15 +150,14 @@ class OptimizedJobService:
         next_cursor = jobs[-1].created_at if has_next and jobs else None
 
         return {
-            'items': jobs,
-            'next_cursor': next_cursor.isoformat() if next_cursor else None,
-            'has_next': has_next,
-            'count': len(jobs)
+            "items": jobs,
+            "next_cursor": next_cursor.isoformat() if next_cursor else None,
+            "has_next": has_next,
+            "count": len(jobs),
         }
 
     async def get_statistics_optimized(
-        self,
-        project_id: Optional[int] = None
+        self, project_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Get job statistics with optimized query.
@@ -175,19 +174,31 @@ class OptimizedJobService:
 
         # Single query for all counts using conditional aggregation
         query = select(
-            func.count(Job.id).label('total'),
-            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label('pending'),
-            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label('running'),
-            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label('completed'),
-            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label('failed'),
-            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label('cancelled'),
+            func.count(Job.id).label("total"),
+            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label(
+                "pending"
+            ),
+            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label(
+                "running"
+            ),
+            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label(
+                "completed"
+            ),
+            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label(
+                "failed"
+            ),
+            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label(
+                "cancelled"
+            ),
             func.avg(
                 func.case(
-                    (Job.status == JobStatus.COMPLETED,
-                     func.extract('epoch', Job.completed_at - Job.started_at)),
-                    else_=None
+                    (
+                        Job.status == JobStatus.COMPLETED,
+                        func.extract("epoch", Job.completed_at - Job.started_at),
+                    ),
+                    else_=None,
                 )
-            ).label('avg_duration')
+            ).label("avg_duration"),
         ).where(base_filter)
 
         result = await self.db.execute(query)
@@ -256,9 +267,8 @@ class OptimizedJobService:
                 await loop.run_in_executor(
                     self._executor,
                     lambda: celery_app.control.revoke(
-                        job.celery_task_id,
-                        terminate=True
-                    )
+                        job.celery_task_id, terminate=True
+                    ),
                 )
             except Exception as e:
                 # Log error but don't fail the cancellation
@@ -273,11 +283,7 @@ class OptimizedJobService:
 
         return job
 
-    async def batch_update_status(
-        self,
-        job_ids: List[int],
-        status: str
-    ) -> int:
+    async def batch_update_status(self, job_ids: List[int], status: str) -> int:
         """
         Batch update job statuses for efficiency.
 
@@ -297,11 +303,12 @@ class OptimizedJobService:
             .where(Job.id.in_(job_ids))
             .values(
                 status=status,
-                completed_at=datetime.utcnow() if status in [
-                    JobStatus.COMPLETED,
-                    JobStatus.FAILED,
-                    JobStatus.CANCELLED
-                ] else None
+                completed_at=(
+                    datetime.utcnow()
+                    if status
+                    in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
+                    else None
+                ),
             )
         )
 
@@ -311,8 +318,7 @@ class OptimizedJobService:
         return result.rowcount
 
     async def get_jobs_by_celery_ids(
-        self,
-        celery_task_ids: List[str]
+        self, celery_task_ids: List[str]
     ) -> Dict[str, Job]:
         """
         Get multiple jobs by their Celery task IDs in a single query.

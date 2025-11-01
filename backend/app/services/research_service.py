@@ -2,6 +2,7 @@
 Research task business logic service
 Handles research task operations with transaction management
 """
+
 import os
 import uuid
 from pathlib import Path

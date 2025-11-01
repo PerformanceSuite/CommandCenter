@@ -25,7 +25,9 @@ class ScheduleBase(BaseModel):
         description="Schedule frequency (once, hourly, daily, weekly, monthly, cron)",
     )
     cron_expression: Optional[str] = Field(
-        None, max_length=100, description="Cron expression (required if frequency='cron')"
+        None,
+        max_length=100,
+        description="Cron expression (required if frequency='cron')",
     )
     interval_seconds: Optional[int] = Field(
         None, gt=0, description="Interval in seconds (for custom intervals)"
@@ -33,9 +35,7 @@ class ScheduleBase(BaseModel):
     timezone: str = Field(
         default="UTC", max_length=50, description="IANA timezone for schedule execution"
     )
-    start_time: Optional[datetime] = Field(
-        None, description="When to start executing"
-    )
+    start_time: Optional[datetime] = Field(None, description="When to start executing")
     end_time: Optional[datetime] = Field(None, description="When to stop executing")
     enabled: bool = Field(default=True, description="Whether schedule is enabled")
     tags: Optional[Dict[str, Any]] = Field(
@@ -66,7 +66,9 @@ class ScheduleCreate(ScheduleBase):
     """Schema for creating a new schedule."""
 
     project_id: int = Field(..., gt=0, description="Project ID")
-    created_by: Optional[int] = Field(None, gt=0, description="User ID who created schedule")
+    created_by: Optional[int] = Field(
+        None, gt=0, description="User ID who created schedule"
+    )
 
 
 class ScheduleUpdate(BaseModel):

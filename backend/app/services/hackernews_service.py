@@ -38,7 +38,9 @@ class HackerNewsService:
         """Close HTTP client"""
         await self.client.aclose()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10)
+    )
     async def _fetch_item(self, item_id: int) -> Optional[Dict[str, Any]]:
         """
         Fetch a single HackerNews item by ID
@@ -120,7 +122,7 @@ class HackerNewsService:
         keywords: List[str],
         since_hours: int = 168,  # Last week
         min_score: int = 10,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
         Search HackerNews for stories matching keywords
@@ -136,7 +138,9 @@ class HackerNewsService:
         """
         try:
             # Calculate timestamp for date filter
-            since_timestamp = int((datetime.utcnow() - timedelta(hours=since_hours)).timestamp())
+            since_timestamp = int(
+                (datetime.utcnow() - timedelta(hours=since_hours)).timestamp()
+            )
 
             # Build search query (OR logic for multiple keywords)
             query = " OR ".join(keywords)
@@ -154,7 +158,9 @@ class HackerNewsService:
             data = response.json()
 
             stories = [self._normalize_algolia_hit(hit) for hit in data.get("hits", [])]
-            logger.info(f"✅ Found {len(stories)} HN stories matching keywords: {keywords}")
+            logger.info(
+                f"✅ Found {len(stories)} HN stories matching keywords: {keywords}"
+            )
             return stories
 
         except Exception as e:
@@ -162,10 +168,7 @@ class HackerNewsService:
             return []
 
     async def monitor_technologies(
-        self,
-        technology_names: List[str],
-        since_hours: int = 168,
-        min_score: int = 20
+        self, technology_names: List[str], since_hours: int = 168, min_score: int = 20
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Monitor HackerNews for mentions of specific technologies
@@ -185,7 +188,7 @@ class HackerNewsService:
                 keywords=[tech_name],
                 since_hours=since_hours,
                 min_score=min_score,
-                limit=20
+                limit=20,
             )
             results[tech_name] = stories
 
@@ -201,7 +204,9 @@ class HackerNewsService:
         return {
             "id": story.get("id"),
             "title": story.get("title", ""),
-            "url": story.get("url", f"https://news.ycombinator.com/item?id={story.get('id')}"),
+            "url": story.get(
+                "url", f"https://news.ycombinator.com/item?id={story.get('id')}"
+            ),
             "score": story.get("score", 0),
             "author": story.get("by", "unknown"),
             "time": datetime.fromtimestamp(story.get("time", 0)).isoformat(),
@@ -220,7 +225,9 @@ class HackerNewsService:
         return {
             "id": hit.get("objectID"),
             "title": hit.get("title", ""),
-            "url": hit.get("url", f"https://news.ycombinator.com/item?id={hit.get('objectID')}"),
+            "url": hit.get(
+                "url", f"https://news.ycombinator.com/item?id={hit.get('objectID')}"
+            ),
             "score": hit.get("points", 0),
             "author": hit.get("author", "unknown"),
             "time": hit.get("created_at", ""),
@@ -230,9 +237,7 @@ class HackerNewsService:
         }
 
     async def calculate_relevance_score(
-        self,
-        story_title: str,
-        technology_keywords: List[str]
+        self, story_title: str, technology_keywords: List[str]
     ) -> float:
         """
         Calculate relevance score for a story based on technology keywords
@@ -245,7 +250,9 @@ class HackerNewsService:
             Relevance score (0.0 - 1.0)
         """
         title_lower = story_title.lower()
-        matches = sum(1 for keyword in technology_keywords if keyword.lower() in title_lower)
+        matches = sum(
+            1 for keyword in technology_keywords if keyword.lower() in title_lower
+        )
         return min(1.0, matches / max(1, len(technology_keywords)))
 
 

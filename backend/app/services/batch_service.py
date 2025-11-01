@@ -53,10 +53,7 @@ class BatchService:
         """
         # Validate repositories exist and belong to project
         stmt = select(Repository).where(
-            and_(
-                Repository.id.in_(repository_ids),
-                Repository.project_id == project_id
-            )
+            and_(Repository.id.in_(repository_ids), Repository.project_id == project_id)
         )
         result = await self.db.execute(stmt)
         repositories = result.scalars().all()
@@ -239,7 +236,9 @@ class BatchService:
         completed = by_status.get("completed", 0)
         failed = by_status.get("failed", 0)
         success_rate = (
-            (completed / (completed + failed)) * 100 if (completed + failed) > 0 else None
+            (completed / (completed + failed)) * 100
+            if (completed + failed) > 0
+            else None
         )
 
         return {

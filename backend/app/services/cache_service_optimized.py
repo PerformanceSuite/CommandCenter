@@ -15,12 +15,13 @@ from contextlib import asynccontextmanager
 # Lazy imports
 try:
     import redis.asyncio as redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
     redis = None
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class OptimizedCacheService:
@@ -34,7 +35,7 @@ class OptimizedCacheService:
         self,
         redis_url: Optional[str] = None,
         default_ttl: timedelta = timedelta(minutes=5),
-        prefix: str = "cc"
+        prefix: str = "cc",
     ):
         """
         Initialize optimized cache service.
@@ -48,6 +49,7 @@ class OptimizedCacheService:
             raise ImportError("Redis not installed. Install with: pip install redis")
 
         import os
+
         self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
         self.default_ttl = default_ttl
         self.prefix = prefix
@@ -61,14 +63,14 @@ class OptimizedCacheService:
                 self.redis_url,
                 encoding="utf-8",
                 decode_responses=False,  # Allow binary data
-                max_connections=20,       # Connection pool size
+                max_connections=20,  # Connection pool size
                 socket_keepalive=True,
                 socket_keepalive_options={
                     1: 1,  # TCP_KEEPIDLE
                     2: 1,  # TCP_KEEPINTVL
                     3: 3,  # TCP_KEEPCNT
                 },
-                health_check_interval=30
+                health_check_interval=30,
             )
         return self.redis_client
 
@@ -101,12 +103,7 @@ class OptimizedCacheService:
             print(f"Cache get error for {key}: {e}")
             return None
 
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        ttl: Optional[timedelta] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[timedelta] = None) -> bool:
         """Set value in cache with automatic serialization."""
         try:
             client = await self._get_client()
@@ -118,11 +115,7 @@ class OptimizedCacheService:
             except (TypeError, ValueError):
                 data = pickle.dumps(value)
 
-            return await client.setex(
-                key,
-                int(ttl.total_seconds()),
-                data
-            )
+            return await client.setex(key, int(ttl.total_seconds()), data)
         except Exception as e:
             print(f"Cache set error for {key}: {e}")
             return False
@@ -133,7 +126,7 @@ class OptimizedCacheService:
         params: Union[dict, str],
         fetch_func: Callable[[], Awaitable[T]],
         ttl: Optional[timedelta] = None,
-        force_refresh: bool = False
+        force_refresh: bool = False,
     ) -> T:
         """
         Get from cache or fetch and cache with stampede prevention.
@@ -163,9 +156,7 @@ class OptimizedCacheService:
 
         try:
             # Try to acquire lock (expires after 30 seconds)
-            lock_acquired = await client.set(
-                lock_key, "1", nx=True, ex=30
-            )
+            lock_acquired = await client.set(lock_key, "1", nx=True, ex=30)
 
             if not lock_acquired:
                 # Another process is fetching, wait briefly
@@ -207,9 +198,7 @@ class OptimizedCacheService:
             return {}
 
     async def mset(
-        self,
-        items: Dict[str, Any],
-        ttl: Optional[timedelta] = None
+        self, items: Dict[str, Any], ttl: Optional[timedelta] = None
     ) -> bool:
         """Set multiple values in a single operation."""
         try:
@@ -247,9 +236,7 @@ class OptimizedCacheService:
 
             # Use SCAN for better performance
             while True:
-                cursor, keys = await client.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await client.scan(cursor, match=pattern, count=100)
                 if keys:
                     deleted += await client.delete(*keys)
                 if cursor == 0:
@@ -292,7 +279,7 @@ class OptimizedCacheService:
         self,
         namespace: str,
         ttl: Optional[timedelta] = None,
-        key_func: Optional[Callable] = None
+        key_func: Optional[Callable] = None,
     ):
         """
         Decorator for caching function results.
@@ -302,6 +289,7 @@ class OptimizedCacheService:
             async def list_technologies(**filters):
                 return await db.query(Technology).filter(**filters)
         """
+
         def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
             @wraps(func)
             async def wrapper(*args, **kwargs) -> T:
@@ -313,16 +301,18 @@ class OptimizedCacheService:
                     cache_params = {
                         "func": func.__name__,
                         "args": str(args),
-                        "kwargs": str(sorted(kwargs.items()))
+                        "kwargs": str(sorted(kwargs.items())),
                     }
 
                 return await self.get_or_set(
                     namespace=namespace,
                     params=cache_params,
                     fetch_func=lambda: func(*args, **kwargs),
-                    ttl=ttl
+                    ttl=ttl,
                 )
+
             return wrapper
+
         return decorator
 
     async def close(self):
@@ -337,13 +327,7 @@ class CacheMetrics:
 
     def __init__(self, cache_service: OptimizedCacheService):
         self.cache = cache_service
-        self.operations = {
-            "gets": 0,
-            "sets": 0,
-            "hits": 0,
-            "misses": 0,
-            "errors": 0
-        }
+        self.operations = {"gets": 0, "sets": 0, "hits": 0, "misses": 0, "errors": 0}
 
     async def record_get(self, hit: bool):
         """Record a cache get operation."""
@@ -364,15 +348,9 @@ class CacheMetrics:
     def get_metrics(self) -> dict:
         """Get current metrics."""
         total_gets = self.operations["gets"]
-        hit_rate = (
-            self.operations["hits"] / total_gets * 100
-            if total_gets > 0 else 0
-        )
+        hit_rate = self.operations["hits"] / total_gets * 100 if total_gets > 0 else 0
 
-        return {
-            **self.operations,
-            "hit_rate": round(hit_rate, 2)
-        }
+        return {**self.operations, "hit_rate": round(hit_rate, 2)}
 
     def reset(self):
         """Reset metrics."""
@@ -390,6 +368,7 @@ async def get_cache_service() -> OptimizedCacheService:
 
     if _cache_instance is None:
         import os
+
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         _cache_instance = OptimizedCacheService(redis_url=redis_url)
 
@@ -398,33 +377,25 @@ async def get_cache_service() -> OptimizedCacheService:
 
 # Example usage patterns
 async def cache_technology_list(
-    filters: dict,
-    fetch_func: Callable,
-    ttl: timedelta = timedelta(minutes=5)
+    filters: dict, fetch_func: Callable, ttl: timedelta = timedelta(minutes=5)
 ):
     """Cache technology list queries."""
     cache = await get_cache_service()
     return await cache.get_or_set(
-        namespace="tech:list",
-        params=filters,
-        fetch_func=fetch_func,
-        ttl=ttl
+        namespace="tech:list", params=filters, fetch_func=fetch_func, ttl=ttl
     )
 
 
 async def cache_job_stats(
     project_id: Optional[int],
     fetch_func: Callable,
-    ttl: timedelta = timedelta(minutes=2)
+    ttl: timedelta = timedelta(minutes=2),
 ):
     """Cache job statistics."""
     cache = await get_cache_service()
     params = {"project_id": project_id} if project_id else {}
     return await cache.get_or_set(
-        namespace="job:stats",
-        params=params,
-        fetch_func=fetch_func,
-        ttl=ttl
+        namespace="job:stats", params=params, fetch_func=fetch_func, ttl=ttl
     )
 
 

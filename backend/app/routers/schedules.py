@@ -132,7 +132,9 @@ async def list_schedules(
 
         # Apply pagination
         offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size).order_by(Schedule.created_at.desc())
+        query = (
+            query.offset(offset).limit(page_size).order_by(Schedule.created_at.desc())
+        )
 
         # Execute query
         result = await db.execute(query)

@@ -46,7 +46,7 @@ class MCPAuthenticator:
         self._valid_tokens[token] = {
             "user_id": user_id,
             "expires_at": expires_at,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.utcnow(),
         }
 
         return token
@@ -97,9 +97,7 @@ class MCPRateLimiter:
     """
 
     def __init__(
-        self,
-        requests_per_minute: int = 100,
-        global_requests_per_minute: int = 1000
+        self, requests_per_minute: int = 100, global_requests_per_minute: int = 1000
     ):
         """
         Initialize rate limiter.

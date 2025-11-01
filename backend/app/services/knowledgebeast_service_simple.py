@@ -11,6 +11,7 @@ import logging
 # Lazy import for KnowledgeBeast
 try:
     from knowledgebeast import KnowledgeBase, KnowledgeBeastConfig
+
     KNOWLEDGEBEAST_AVAILABLE = True
 except ImportError:
     KNOWLEDGEBEAST_AVAILABLE = False
@@ -44,11 +45,14 @@ class KnowledgeBeastService:
 
         self.project_id = project_id
         self.collection_name = f"project_{project_id}"
-        self.db_path = db_path or getattr(settings, "knowledgebeast_db_path", "./kb_chroma_db")
+        self.db_path = db_path or getattr(
+            settings, "knowledgebeast_db_path", "./kb_chroma_db"
+        )
         self.embedding_model = embedding_model
 
         # Create per-project persist directory
         import os
+
         self.persist_dir = os.path.join(self.db_path, self.collection_name)
         os.makedirs(self.persist_dir, exist_ok=True)
 
@@ -84,14 +88,16 @@ class KnowledgeBeastService:
             results = []
             for item in response.get("results", []):
                 metadata = item.get("metadata", {})
-                results.append({
-                    "content": item.get("content", ""),
-                    "metadata": metadata,
-                    "score": item.get("score", 0.0),
-                    "category": metadata.get("category", "unknown"),
-                    "source": metadata.get("source", "unknown"),
-                    "title": metadata.get("title", "Untitled"),
-                })
+                results.append(
+                    {
+                        "content": item.get("content", ""),
+                        "metadata": metadata,
+                        "score": item.get("score", 0.0),
+                        "category": metadata.get("category", "unknown"),
+                        "source": metadata.get("source", "unknown"),
+                        "title": metadata.get("title", "Untitled"),
+                    }
+                )
 
             # Filter by category if requested
             if category:
@@ -104,10 +110,7 @@ class KnowledgeBeastService:
             raise
 
     async def add_document(
-        self,
-        content: str,
-        metadata: Dict[str, Any],
-        chunk_size: int = 1000
+        self, content: str, metadata: Dict[str, Any], chunk_size: int = 1000
     ) -> int:
         """Add document to KB"""
         try:
@@ -115,7 +118,9 @@ class KnowledgeBeastService:
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".txt"
+            ) as f:
                 f.write(content)
                 temp_path = f.name
 

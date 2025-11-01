@@ -3,7 +3,15 @@ Jobs API router for managing async task execution.
 """
 
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
 import json
@@ -192,7 +200,9 @@ async def delete_job(
 @router.post("/{job_id}/dispatch", response_model=JobResponse)
 async def dispatch_job(
     job_id: int,
-    delay_seconds: int = Query(0, ge=0, le=3600, description="Delay before execution (0-3600 seconds)"),
+    delay_seconds: int = Query(
+        0, ge=0, le=3600, description="Delay before execution (0-3600 seconds)"
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """

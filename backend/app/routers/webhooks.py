@@ -522,9 +522,7 @@ async def list_webhook_deliveries(
     # Apply pagination
     offset = (page - 1) * page_size
     result = await db.execute(
-        query.order_by(desc(WebhookDelivery.created_at))
-        .limit(page_size)
-        .offset(offset)
+        query.order_by(desc(WebhookDelivery.created_at)).limit(page_size).offset(offset)
     )
     deliveries = result.scalars().all()
 

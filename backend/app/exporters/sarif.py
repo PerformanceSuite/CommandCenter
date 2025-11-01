@@ -35,7 +35,9 @@ class SARIFExporter(BaseExporter):
     SARIF_KIND_REVIEW = "review"
     SARIF_KIND_NOTAPPLICABLE = "notApplicable"
 
-    def __init__(self, project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"):
+    def __init__(
+        self, project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"
+    ):
         """
         Initialize SARIF exporter.
 
@@ -177,16 +179,20 @@ class SARIFExporter(BaseExporter):
         if "files" in metrics:
             for file_info in metrics.get("files", []):
                 if isinstance(file_info, dict) and "path" in file_info:
-                    artifacts.append({
-                        "location": {"uri": self._path_to_uri(file_info["path"])},
-                        "length": file_info.get("size", -1),
-                    })
+                    artifacts.append(
+                        {
+                            "location": {"uri": self._path_to_uri(file_info["path"])},
+                            "length": file_info.get("size", -1),
+                        }
+                    )
 
         # If no specific files, add project root
         if not artifacts:
-            artifacts.append({
-                "location": {"uri": self._path_to_uri(self.project_path)},
-            })
+            artifacts.append(
+                {
+                    "location": {"uri": self._path_to_uri(self.project_path)},
+                }
+            )
 
         return artifacts
 
@@ -374,7 +380,9 @@ class SARIFExporter(BaseExporter):
         return hashlib.sha256(key.encode()).hexdigest()[:16]
 
 
-def export_to_sarif(project_analysis: Dict[str, Any], tool_name: str = "CommandCenter") -> Dict[str, Any]:
+def export_to_sarif(
+    project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"
+) -> Dict[str, Any]:
     """
     Convenience function to export analysis to SARIF format.
 

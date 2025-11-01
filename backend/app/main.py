@@ -196,7 +196,9 @@ app.include_router(mcp.router)  # MCP (Model Context Protocol) endpoints
 app.include_router(jobs.router)  # Jobs API for async task management
 app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
 app.include_router(schedules.router)  # Schedule management for recurring tasks
-app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
+app.include_router(
+    export.router
+)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 

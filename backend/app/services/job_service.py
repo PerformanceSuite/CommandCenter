@@ -316,9 +316,7 @@ class JobService:
 
         return progress_info
 
-    async def get_active_jobs(
-        self, project_id: Optional[int] = None
-    ) -> List[Job]:
+    async def get_active_jobs(self, project_id: Optional[int] = None) -> List[Job]:
         """
         Get all active (pending or running) jobs.
 

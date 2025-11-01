@@ -15,7 +15,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from github import Github, GithubException
 
-from app.integrations.base import WebhookIntegration, IntegrationError, IntegrationAuthError
+from app.integrations.base import (
+    WebhookIntegration,
+    IntegrationError,
+    IntegrationAuthError,
+)
 from app.models.research_task import ResearchTask
 from app.models.integration import IntegrationType
 from app.services.github_service import GitHubService
@@ -119,7 +123,9 @@ class GitHubIntegration(WebhookIntegration):
 
         return secret
 
-    async def handle_webhook(self, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_webhook(
+        self, event_type: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Handle GitHub webhook event.
 
@@ -171,7 +177,7 @@ class GitHubIntegration(WebhookIntegration):
             task = await self.sync_issue_to_task(
                 issue_number=issue["number"],
                 issue_data=issue,
-                repository=payload.get("repository", {})
+                repository=payload.get("repository", {}),
             )
             return {
                 "status": "synced",
@@ -181,7 +187,9 @@ class GitHubIntegration(WebhookIntegration):
 
         elif action == "closed":
             # Mark task as done
-            task = await self._find_task_by_issue(issue["number"], payload["repository"]["id"])
+            task = await self._find_task_by_issue(
+                issue["number"], payload["repository"]["id"]
+            )
             if task:
                 task.status = "done"
                 await self.db.commit()
@@ -189,7 +197,9 @@ class GitHubIntegration(WebhookIntegration):
 
         return {"status": "processed", "action": action}
 
-    async def _handle_pull_request_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_pull_request_webhook(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Handle pull_request webhook.
 
@@ -233,7 +243,9 @@ class GitHubIntegration(WebhookIntegration):
 
         # Only process pushes to default branch
         if ref == f"refs/heads/{repo.get('default_branch')}":
-            self._logger.info(f"Push to default branch in {repo.get('full_name')}, syncing repo")
+            self._logger.info(
+                f"Push to default branch in {repo.get('full_name')}, syncing repo"
+            )
             return {
                 "status": "sync_triggered",
                 "repository": repo.get("full_name"),
@@ -272,11 +284,15 @@ class GitHubIntegration(WebhookIntegration):
             # Update existing task
             existing_task.title = issue_data["title"]
             existing_task.description = issue_data.get("body", "")
-            existing_task.status = self._map_issue_state_to_task_status(issue_data["state"])
+            existing_task.status = self._map_issue_state_to_task_status(
+                issue_data["state"]
+            )
             existing_task.updated_at = datetime.utcnow()
             await self.db.commit()
             await self.db.refresh(existing_task)
-            self._logger.info(f"Updated task {existing_task.id} from issue #{issue_number}")
+            self._logger.info(
+                f"Updated task {existing_task.id} from issue #{issue_number}"
+            )
             return existing_task
 
         # Create new task
@@ -347,7 +363,9 @@ class GitHubIntegration(WebhookIntegration):
                 body=task.description or "",
                 state=self._map_task_status_to_issue_state(task.status),
             )
-            self._logger.info(f"Updated issue #{existing_issue_number} from task {task_id}")
+            self._logger.info(
+                f"Updated issue #{existing_issue_number} from task {task_id}"
+            )
 
             return {
                 "issue_number": existing_issue_number,
@@ -365,12 +383,14 @@ class GitHubIntegration(WebhookIntegration):
 
         # Update task with issue reference
         task.tags = task_tags or {}
-        task.tags.update({
-            "github_issue": issue.number,
-            "github_repo": f"{owner}/{repo}",
-            "github_url": issue.html_url,
-            "synced_to": "github",
-        })
+        task.tags.update(
+            {
+                "github_issue": issue.number,
+                "github_repo": f"{owner}/{repo}",
+                "github_url": issue.html_url,
+                "synced_to": "github",
+            }
+        )
         await self.db.commit()
 
         self._logger.info(f"Created issue #{issue.number} from task {task_id}")

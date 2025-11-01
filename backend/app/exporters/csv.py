@@ -65,25 +65,29 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Technology",
-            "Version",
-            "Category",
-            "Confidence (%)",
-            "Description",
-            "Source File",
-        ])
+        writer.writerow(
+            [
+                "Technology",
+                "Version",
+                "Category",
+                "Confidence (%)",
+                "Description",
+                "Source File",
+            ]
+        )
 
         # Data rows
         for tech in self._get_technology_list():
-            writer.writerow([
-                tech.get("name", ""),
-                tech.get("version", ""),
-                tech.get("category", ""),
-                tech.get("confidence", ""),
-                tech.get("description", ""),
-                tech.get("source_file", ""),
-            ])
+            writer.writerow(
+                [
+                    tech.get("name", ""),
+                    tech.get("version", ""),
+                    tech.get("category", ""),
+                    tech.get("confidence", ""),
+                    tech.get("description", ""),
+                    tech.get("source_file", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -98,30 +102,36 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Package",
-            "Current Version",
-            "Latest Version",
-            "Status",
-            "Severity",
-            "Package Manager",
-            "File",
-        ])
+        writer.writerow(
+            [
+                "Package",
+                "Current Version",
+                "Latest Version",
+                "Status",
+                "Severity",
+                "Package Manager",
+                "File",
+            ]
+        )
 
         # Data rows
         for dep in self._get_dependency_list():
-            is_outdated = dep.get("is_outdated", False) or dep.get("needs_update", False)
+            is_outdated = dep.get("is_outdated", False) or dep.get(
+                "needs_update", False
+            )
             status = "Outdated" if is_outdated else "Current"
 
-            writer.writerow([
-                dep.get("name", ""),
-                dep.get("current_version", ""),
-                dep.get("latest_version", ""),
-                status,
-                dep.get("severity", ""),
-                dep.get("package_manager", ""),
-                dep.get("file", ""),
-            ])
+            writer.writerow(
+                [
+                    dep.get("name", ""),
+                    dep.get("current_version", ""),
+                    dep.get("latest_version", ""),
+                    status,
+                    dep.get("severity", ""),
+                    dep.get("package_manager", ""),
+                    dep.get("file", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -144,7 +154,9 @@ class CSVExporter(BaseExporter):
         writer.writerow(["Lines of Code", metrics.get("lines_of_code", 0)])
         writer.writerow(["File Count", metrics.get("file_count", 0)])
         writer.writerow(["Complexity Score", metrics.get("complexity", 0)])
-        writer.writerow(["Documentation Coverage (%)", metrics.get("documentation_coverage", 0)])
+        writer.writerow(
+            ["Documentation Coverage (%)", metrics.get("documentation_coverage", 0)]
+        )
         writer.writerow(["Test Coverage (%)", metrics.get("test_coverage", 0)])
 
         # Add language breakdown if available
@@ -168,25 +180,29 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Title",
-            "Description",
-            "Category",
-            "Priority",
-            "Estimated Effort",
-            "Recommendation",
-        ])
+        writer.writerow(
+            [
+                "Title",
+                "Description",
+                "Category",
+                "Priority",
+                "Estimated Effort",
+                "Recommendation",
+            ]
+        )
 
         # Data rows
         for gap in self._get_research_gaps_list():
-            writer.writerow([
-                gap.get("title", ""),
-                gap.get("description", ""),
-                gap.get("category", ""),
-                gap.get("priority", ""),
-                gap.get("estimated_effort", ""),
-                gap.get("recommendation", ""),
-            ])
+            writer.writerow(
+                [
+                    gap.get("title", ""),
+                    gap.get("description", ""),
+                    gap.get("category", ""),
+                    gap.get("priority", ""),
+                    gap.get("estimated_effort", ""),
+                    gap.get("recommendation", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -204,7 +220,9 @@ class CSVExporter(BaseExporter):
         writer.writerow(["CommandCenter Analysis Report"])
         writer.writerow(["Project", self.project_path])
         writer.writerow(["Analyzed At", self.analyzed_at])
-        writer.writerow(["Analysis Version", self.analysis.get("analysis_version", "2.0.0")])
+        writer.writerow(
+            ["Analysis Version", self.analysis.get("analysis_version", "2.0.0")]
+        )
         writer.writerow([])
 
         # Summary section
@@ -223,30 +241,38 @@ class CSVExporter(BaseExporter):
 
         # Technologies section
         writer.writerow(["DETECTED TECHNOLOGIES"])
-        writer.writerow(["Technology", "Version", "Category", "Confidence (%)", "Description"])
+        writer.writerow(
+            ["Technology", "Version", "Category", "Confidence (%)", "Description"]
+        )
         for tech in technologies:
-            writer.writerow([
-                tech.get("name", ""),
-                tech.get("version", ""),
-                tech.get("category", ""),
-                tech.get("confidence", ""),
-                tech.get("description", ""),
-            ])
+            writer.writerow(
+                [
+                    tech.get("name", ""),
+                    tech.get("version", ""),
+                    tech.get("category", ""),
+                    tech.get("confidence", ""),
+                    tech.get("description", ""),
+                ]
+            )
         writer.writerow([])
 
         # Dependencies section
         writer.writerow(["DEPENDENCIES"])
-        writer.writerow(["Package", "Current Version", "Latest Version", "Status", "Severity"])
+        writer.writerow(
+            ["Package", "Current Version", "Latest Version", "Status", "Severity"]
+        )
         for dep in dependencies:
             is_outdated = dep.get("is_outdated", False)
             status = "Outdated" if is_outdated else "Current"
-            writer.writerow([
-                dep.get("name", ""),
-                dep.get("current_version", ""),
-                dep.get("latest_version", ""),
-                status,
-                dep.get("severity", ""),
-            ])
+            writer.writerow(
+                [
+                    dep.get("name", ""),
+                    dep.get("current_version", ""),
+                    dep.get("latest_version", ""),
+                    status,
+                    dep.get("severity", ""),
+                ]
+            )
         writer.writerow([])
 
         # Metrics section
@@ -260,15 +286,19 @@ class CSVExporter(BaseExporter):
 
         # Research gaps section
         writer.writerow(["RESEARCH GAPS"])
-        writer.writerow(["Title", "Description", "Category", "Priority", "Recommendation"])
+        writer.writerow(
+            ["Title", "Description", "Category", "Priority", "Recommendation"]
+        )
         for gap in research_gaps:
-            writer.writerow([
-                gap.get("title", ""),
-                gap.get("description", ""),
-                gap.get("category", ""),
-                gap.get("priority", ""),
-                gap.get("recommendation", ""),
-            ])
+            writer.writerow(
+                [
+                    gap.get("title", ""),
+                    gap.get("description", ""),
+                    gap.get("category", ""),
+                    gap.get("priority", ""),
+                    gap.get("recommendation", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -329,7 +359,9 @@ class ExcelExporter(CSVExporter):
         # Title
         ws["A1"] = "CommandCenter Analysis Report"
         ws["A1"].font = Font(size=16, bold=True, color="FFFFFF")
-        ws["A1"].fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
+        ws["A1"].fill = PatternFill(
+            start_color="3B82F6", end_color="3B82F6", fill_type="solid"
+        )
 
         # Metadata
         ws["A3"] = "Project:"
@@ -373,7 +405,9 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
+            )
 
         # Data
         for row, tech in enumerate(self._get_technology_list(), 2):
@@ -402,7 +436,9 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
+            )
 
         # Data
         for row, dep in enumerate(self._get_dependency_list(), 2):
@@ -473,7 +509,9 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
+            )
 
         # Data
         for row, gap in enumerate(self._get_research_gaps_list(), 2):

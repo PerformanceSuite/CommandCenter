@@ -1,6 +1,7 @@
 """
 File watcher service for monitoring local directories
 """
+
 import logging
 import os
 from datetime import datetime, timedelta
@@ -21,20 +22,21 @@ MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024  # 100MB
 
 # Security: System directories that should never be watched
 BLOCKED_PATH_PREFIXES = [
-    '/etc',
-    '/root',
-    '/sys',
-    '/proc',
-    '/dev',
-    '/boot',
-    '/var/log',
-    '/var/run',
+    "/etc",
+    "/root",
+    "/sys",
+    "/proc",
+    "/dev",
+    "/boot",
+    "/var/log",
+    "/var/run",
 ]
 
 
 @dataclass
 class FileChangeEvent:
     """Represents a file system change event"""
+
     event_type: str  # created, modified, deleted
     file_path: str
     is_directory: bool
@@ -71,14 +73,18 @@ class FileWatcherService:
             for blocked_prefix in BLOCKED_PATH_PREFIXES:
                 # Check direct match
                 if resolved_str.startswith(blocked_prefix):
-                    self.logger.error(f"Attempted to watch blocked system directory: {resolved_str}")
+                    self.logger.error(
+                        f"Attempted to watch blocked system directory: {resolved_str}"
+                    )
                     raise ValueError(
                         f"Access denied: Cannot watch system directory {blocked_prefix}"
                     )
                 # Check macOS /private prefix (e.g., /private/etc)
                 private_prefix = f"/private{blocked_prefix}"
                 if resolved_str.startswith(private_prefix):
-                    self.logger.error(f"Attempted to watch blocked system directory: {resolved_str}")
+                    self.logger.error(
+                        f"Attempted to watch blocked system directory: {resolved_str}"
+                    )
                     raise ValueError(
                         f"Access denied: Cannot watch system directory {blocked_prefix}"
                     )
@@ -148,11 +154,11 @@ class FileWatcherService:
         file_ext = Path(file_path).suffix.lower()
 
         try:
-            if file_ext == '.pdf':
+            if file_ext == ".pdf":
                 return self._extract_pdf(file_path)
-            elif file_ext == '.docx':
+            elif file_ext == ".docx":
                 return self._extract_docx(file_path)
-            elif file_ext in ['.txt', '.md', '.markdown']:
+            elif file_ext in [".txt", ".md", ".markdown"]:
                 return self._extract_text(file_path)
             else:
                 self.logger.warning(f"Unsupported file type: {file_ext}")
@@ -164,31 +170,27 @@ class FileWatcherService:
 
     def _extract_pdf(self, file_path: str) -> str:
         """Extract text from PDF file"""
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             pdf_reader = PyPDF2.PdfReader(f)
             text_parts = []
 
             for page in pdf_reader.pages:
                 text_parts.append(page.extract_text())
 
-            return '\n\n'.join(text_parts)
+            return "\n\n".join(text_parts)
 
     def _extract_docx(self, file_path: str) -> str:
         """Extract text from DOCX file"""
         doc = Document(file_path)
         text_parts = [para.text for para in doc.paragraphs]
-        return '\n\n'.join(text_parts)
+        return "\n\n".join(text_parts)
 
     def _extract_text(self, file_path: str) -> str:
         """Extract text from plain text file"""
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             return f.read()
 
-    def should_process_file(
-        self,
-        file_path: str,
-        patterns: List[str]
-    ) -> bool:
+    def should_process_file(self, file_path: str, patterns: List[str]) -> bool:
         """
         Check if file matches any of the allowed patterns.
 
@@ -207,11 +209,7 @@ class FileWatcherService:
 
         return False
 
-    def should_ignore_file(
-        self,
-        file_path: str,
-        ignore_patterns: List[str]
-    ) -> bool:
+    def should_ignore_file(self, file_path: str, ignore_patterns: List[str]) -> bool:
         """
         Check if file matches any ignore patterns.
 
@@ -228,11 +226,7 @@ class FileWatcherService:
 
         return False
 
-    def should_debounce(
-        self,
-        file_path: str,
-        debounce_seconds: int = 2
-    ) -> bool:
+    def should_debounce(self, file_path: str, debounce_seconds: int = 2) -> bool:
         """
         Check if enough time has passed since last processing.
 
@@ -250,10 +244,11 @@ class FileWatcherService:
         if len(self._last_processed) > 1000:
             cutoff = now - timedelta(hours=1)
             self._last_processed = {
-                k: v for k, v in self._last_processed.items()
-                if v > cutoff
+                k: v for k, v in self._last_processed.items() if v > cutoff
             }
-            self.logger.debug(f"Cleaned up debounce cache, {len(self._last_processed)} entries remain")
+            self.logger.debug(
+                f"Cleaned up debounce cache, {len(self._last_processed)} entries remain"
+            )
 
         if file_path in self._last_processed:
             time_since_last = now - self._last_processed[file_path]
@@ -271,7 +266,7 @@ class FileChangeHandler(FileSystemEventHandler):
         self,
         callback: Callable[[FileChangeEvent], None],
         patterns: List[str],
-        ignore_patterns: List[str]
+        ignore_patterns: List[str],
     ):
         self.callback = callback
         self.patterns = patterns
@@ -283,14 +278,14 @@ class FileChangeHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        self._process_event('created', event.src_path)
+        self._process_event("created", event.src_path)
 
     def on_modified(self, event: FileSystemEvent):
         """Called when file is modified"""
         if event.is_directory:
             return
 
-        self._process_event('modified', event.src_path)
+        self._process_event("modified", event.src_path)
 
     def _process_event(self, event_type: str, file_path: str):
         """Process file system event"""
@@ -308,9 +303,7 @@ class FileChangeHandler(FileSystemEventHandler):
 
         # Trigger callback
         event = FileChangeEvent(
-            event_type=event_type,
-            file_path=file_path,
-            is_directory=False
+            event_type=event_type, file_path=file_path, is_directory=False
         )
 
         self.callback(event)
@@ -320,7 +313,7 @@ def start_watching(
     directory: str,
     callback: Callable[[FileChangeEvent], None],
     patterns: List[str] = None,
-    ignore_patterns: List[str] = None
+    ignore_patterns: List[str] = None,
 ) -> Observer:
     """
     Start watching directory for file changes.
@@ -342,10 +335,10 @@ def start_watching(
     validated_directory = file_watcher_service._validate_watch_path(directory)
 
     if patterns is None:
-        patterns = ['*']
+        patterns = ["*"]
 
     if ignore_patterns is None:
-        ignore_patterns = ['.git', '__pycache__', '.DS_Store', 'node_modules']
+        ignore_patterns = [".git", "__pycache__", ".DS_Store", "node_modules"]
 
     event_handler = FileChangeHandler(callback, patterns, ignore_patterns)
 

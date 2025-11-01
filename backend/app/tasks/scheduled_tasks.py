@@ -31,14 +31,20 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
     Returns:
         dict: Summary of dispatched schedules
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
     from app.services.schedule_service import ScheduleService
     import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_dispatcher():
         """Inner async function to run the dispatcher."""
@@ -61,13 +67,19 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
                         )
                         job = await service.execute_schedule(schedule.id)
 
-                        dispatched.append({
-                            "schedule_id": schedule.id,
-                            "schedule_name": schedule.name,
-                            "job_id": job.id,
-                            "task_type": schedule.task_type,
-                            "next_run": schedule.next_run_at.isoformat() if schedule.next_run_at else None,
-                        })
+                        dispatched.append(
+                            {
+                                "schedule_id": schedule.id,
+                                "schedule_name": schedule.name,
+                                "job_id": job.id,
+                                "task_type": schedule.task_type,
+                                "next_run": (
+                                    schedule.next_run_at.isoformat()
+                                    if schedule.next_run_at
+                                    else None
+                                ),
+                            }
+                        )
 
                         # Record success
                         await service.record_execution_result(
@@ -80,11 +92,13 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
                             f"Failed to execute schedule {schedule.id}: {e}",
                             exc_info=True,
                         )
-                        failed.append({
-                            "schedule_id": schedule.id,
-                            "schedule_name": schedule.name,
-                            "error": str(e),
-                        })
+                        failed.append(
+                            {
+                                "schedule_id": schedule.id,
+                                "schedule_name": schedule.name,
+                                "error": str(e),
+                            }
+                        )
 
                         # Record failure
                         await service.record_execution_result(
@@ -132,7 +146,11 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
     Returns:
         dict: Summary of cleaned up schedules
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from sqlalchemy import select, and_
     from app.config import settings
     from app.models import Schedule
@@ -140,7 +158,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_cleanup():
         """Inner async function to run the cleanup."""
@@ -168,11 +188,13 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                     schedule.enabled = False
                     disabled_count += 1
 
-                    disabled_schedules.append({
-                        "schedule_id": schedule.id,
-                        "schedule_name": schedule.name,
-                        "end_time": schedule.end_time.isoformat(),
-                    })
+                    disabled_schedules.append(
+                        {
+                            "schedule_id": schedule.id,
+                            "schedule_name": schedule.name,
+                            "end_time": schedule.end_time.isoformat(),
+                        }
+                    )
 
                     logger.info(
                         f"Disabled expired schedule {schedule.id} ({schedule.name})"
@@ -186,7 +208,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                     "schedules": disabled_schedules,
                 }
 
-                logger.info(f"Schedule cleanup completed: {disabled_count} schedules disabled")
+                logger.info(
+                    f"Schedule cleanup completed: {disabled_count} schedules disabled"
+                )
 
                 return result
 
@@ -215,7 +239,11 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
     Returns:
         dict: Health report with any issues found
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from sqlalchemy import select
     from app.config import settings
     from app.models import Schedule
@@ -224,7 +252,9 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_monitor():
         """Inner async function to run the monitor."""
@@ -241,27 +271,37 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
 
                 for schedule in schedules:
                     # Check failure rate
-                    if schedule.run_count > 10 and schedule.success_rate and schedule.success_rate < 50:
-                        issues.append({
-                            "schedule_id": schedule.id,
-                            "schedule_name": schedule.name,
-                            "issue_type": "high_failure_rate",
-                            "details": f"Success rate: {schedule.success_rate:.1f}%",
-                            "severity": "warning",
-                        })
+                    if (
+                        schedule.run_count > 10
+                        and schedule.success_rate
+                        and schedule.success_rate < 50
+                    ):
+                        issues.append(
+                            {
+                                "schedule_id": schedule.id,
+                                "schedule_name": schedule.name,
+                                "issue_type": "high_failure_rate",
+                                "details": f"Success rate: {schedule.success_rate:.1f}%",
+                                "severity": "warning",
+                            }
+                        )
 
                     # Check if schedule hasn't run recently
                     if schedule.last_run_at:
                         time_since_run = now - schedule.last_run_at
                         # Alert if hasn't run in 7 days (for non-once schedules)
-                        if schedule.frequency != "once" and time_since_run > timedelta(days=7):
-                            issues.append({
-                                "schedule_id": schedule.id,
-                                "schedule_name": schedule.name,
-                                "issue_type": "stale_schedule",
-                                "details": f"Last run: {schedule.last_run_at.isoformat()}",
-                                "severity": "info",
-                            })
+                        if schedule.frequency != "once" and time_since_run > timedelta(
+                            days=7
+                        ):
+                            issues.append(
+                                {
+                                    "schedule_id": schedule.id,
+                                    "schedule_name": schedule.name,
+                                    "issue_type": "stale_schedule",
+                                    "details": f"Last run: {schedule.last_run_at.isoformat()}",
+                                    "severity": "info",
+                                }
+                            )
 
                     # Check consecutive failures (last 3 runs all failed)
                     if (
@@ -273,13 +313,15 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                         # Check if multiple recent failures
                         recent_failure_threshold = schedule.run_count - 3
                         if schedule.success_count <= recent_failure_threshold:
-                            issues.append({
-                                "schedule_id": schedule.id,
-                                "schedule_name": schedule.name,
-                                "issue_type": "consecutive_failures",
-                                "details": f"Last error: {schedule.last_error[:100] if schedule.last_error else 'Unknown'}",
-                                "severity": "critical",
-                            })
+                            issues.append(
+                                {
+                                    "schedule_id": schedule.id,
+                                    "schedule_name": schedule.name,
+                                    "issue_type": "consecutive_failures",
+                                    "details": f"Last error: {schedule.last_error[:100] if schedule.last_error else 'Unknown'}",
+                                    "severity": "critical",
+                                }
+                            )
 
                 # Group issues by severity
                 critical = [i for i in issues if i["severity"] == "critical"]
@@ -305,7 +347,9 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 elif warnings:
                     logger.info(f"Found {len(warnings)} schedule warnings")
 
-                logger.info(f"Schedule health monitoring completed: {len(issues)} total issues")
+                logger.info(
+                    f"Schedule health monitoring completed: {len(issues)} total issues"
+                )
 
                 return result
 
@@ -335,7 +379,11 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
     Returns:
         dict: Execution result
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from sqlalchemy import select
     from app.config import settings
     from app.services.schedule_service import ScheduleService
@@ -344,7 +392,9 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_execution():
         """Inner async function to run the execution."""
@@ -373,15 +423,23 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
                     "schedule_name": schedule.name if schedule else None,
                     "job_id": job.id,
                     "status": "success",
-                    "next_run": schedule.next_run_at.isoformat() if schedule and schedule.next_run_at else None,
+                    "next_run": (
+                        schedule.next_run_at.isoformat()
+                        if schedule and schedule.next_run_at
+                        else None
+                    ),
                 }
 
-                logger.info(f"Successfully executed schedule {schedule_id}, created job {job.id}")
+                logger.info(
+                    f"Successfully executed schedule {schedule_id}, created job {job.id}"
+                )
 
                 return result_data
 
             except Exception as e:
-                logger.error(f"Failed to execute schedule {schedule_id}: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to execute schedule {schedule_id}: {e}", exc_info=True
+                )
 
                 # Record failure
                 await service.record_execution_result(

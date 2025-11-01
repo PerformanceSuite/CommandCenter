@@ -282,7 +282,9 @@ class WebhookService:
                 attempt_number, config.retry_delay_seconds
             )
             delivery.status = DeliveryStatus.RETRYING
-            delivery.scheduled_for = datetime.utcnow() + timedelta(seconds=delay_seconds)
+            delivery.scheduled_for = datetime.utcnow() + timedelta(
+                seconds=delay_seconds
+            )
 
             config.total_deliveries += 1
             await self.db.commit()

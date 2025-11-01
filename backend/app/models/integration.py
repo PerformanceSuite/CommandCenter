@@ -107,9 +107,7 @@ class Integration(Base):
     last_sync_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     last_error_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    error_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Consecutive errors
+    error_count: Mapped[int] = mapped_column(Integer, default=0)  # Consecutive errors
     success_count: Mapped[int] = mapped_column(
         Integer, default=0
     )  # Successful operations
@@ -135,12 +133,8 @@ class Integration(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="integrations"
-    )
-    user: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="integrations"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="integrations")
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="integrations")
 
     # Indexes for common queries
     __table_args__ = (
@@ -226,7 +220,9 @@ class Integration(Base):
             "is_healthy": self.is_healthy,
             "is_token_expired": self.is_token_expired,
             "needs_refresh": self.needs_refresh,
-            "last_sync_at": self.last_sync_at.isoformat() if self.last_sync_at else None,
+            "last_sync_at": (
+                self.last_sync_at.isoformat() if self.last_sync_at else None
+            ),
             "last_error": self.last_error,
             "last_error_at": (
                 self.last_error_at.isoformat() if self.last_error_at else None

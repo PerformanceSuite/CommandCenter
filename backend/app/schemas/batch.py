@@ -67,9 +67,7 @@ class BatchJobResponse(BaseModel):
     job_id: int = Field(..., description="Batch job ID")
     job_type: str = Field(..., description="Type of batch operation")
     total_items: int = Field(..., description="Total number of items in batch")
-    completed_items: int = Field(
-        default=0, description="Number of completed items"
-    )
+    completed_items: int = Field(default=0, description="Number of completed items")
     failed_items: int = Field(default=0, description="Number of failed items")
     status: str = Field(..., description="Overall batch status")
     progress: int = Field(..., description="Progress percentage (0-100)")
@@ -89,9 +87,7 @@ class BatchAnalyzeResponse(BatchJobResponse):
     """Schema for batch analyze response with analysis-specific fields."""
 
     repository_ids: List[int] = Field(..., description="Repository IDs being analyzed")
-    celery_task_id: Optional[str] = Field(
-        default=None, description="Celery task UUID"
-    )
+    celery_task_id: Optional[str] = Field(default=None, description="Celery task UUID")
 
 
 class BatchExportResponse(BatchJobResponse):
@@ -106,8 +102,12 @@ class BatchExportResponse(BatchJobResponse):
 class BatchImportResponse(BatchJobResponse):
     """Schema for batch import response with import-specific fields."""
 
-    imported_count: int = Field(default=0, description="Number of successfully imported items")
-    skipped_count: int = Field(default=0, description="Number of skipped items (duplicates)")
+    imported_count: int = Field(
+        default=0, description="Number of successfully imported items"
+    )
+    skipped_count: int = Field(
+        default=0, description="Number of skipped items (duplicates)"
+    )
     failed_count: int = Field(default=0, description="Number of failed imports")
     conflicts: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="List of conflicts encountered"

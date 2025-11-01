@@ -90,16 +90,24 @@ class MCPServer:
             "prompts/get", self._handle_get_prompt
         )
         # Context management handlers
-        self._connection_manager.register_handler("context/set", self._handle_context_set)
-        self._connection_manager.register_handler("context/get", self._handle_context_get)
-        self._connection_manager.register_handler("context/has", self._handle_context_has)
+        self._connection_manager.register_handler(
+            "context/set", self._handle_context_set
+        )
+        self._connection_manager.register_handler(
+            "context/get", self._handle_context_get
+        )
+        self._connection_manager.register_handler(
+            "context/has", self._handle_context_has
+        )
         self._connection_manager.register_handler(
             "context/delete", self._handle_context_delete
         )
         self._connection_manager.register_handler(
             "context/clear", self._handle_context_clear
         )
-        self._connection_manager.register_handler("context/list", self._handle_context_list)
+        self._connection_manager.register_handler(
+            "context/list", self._handle_context_list
+        )
 
     # Provider management
     def register_resource_provider(self, provider: ResourceProvider) -> None:
@@ -493,7 +501,9 @@ class MCPServer:
             raise InvalidParamsError("Context key parameter required")
 
         exists = session.has_context(key)
-        self._logger.debug(f"Session {session.session_id} check context: {key} = {exists}")
+        self._logger.debug(
+            f"Session {session.session_id} check context: {key} = {exists}"
+        )
 
         return {"key": key, "exists": exists}
 
@@ -522,7 +532,9 @@ class MCPServer:
             raise InvalidParamsError("Context key parameter required")
 
         deleted = session.delete_context(key)
-        self._logger.debug(f"Session {session.session_id} delete context: {key} = {deleted}")
+        self._logger.debug(
+            f"Session {session.session_id} delete context: {key} = {deleted}"
+        )
 
         return {"success": deleted, "key": key}
 
@@ -562,7 +574,9 @@ class MCPServer:
             Dictionary of all context
         """
         context = session.get_all_context()
-        self._logger.debug(f"Session {session.session_id} list context: {len(context)} items")
+        self._logger.debug(
+            f"Session {session.session_id} list context: {len(context)} items"
+        )
 
         return {"context": context, "count": len(context)}
 

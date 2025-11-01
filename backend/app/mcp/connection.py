@@ -394,9 +394,7 @@ class MCPConnectionManager:
         }
 
     # Session context management
-    async def set_session_context(
-        self, session_id: str, key: str, value: Any
-    ) -> bool:
+    async def set_session_context(self, session_id: str, key: str, value: Any) -> bool:
         """
         Set context value for a session.
 
@@ -486,7 +484,9 @@ class MCPConnectionManager:
         session.clear_context()
         return True
 
-    async def get_all_session_context(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_all_session_context(
+        self, session_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Get all context from a session.
 

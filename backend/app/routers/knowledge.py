@@ -88,7 +88,9 @@ async def query_knowledge_base(
         List of relevant knowledge entries with scores
     """
     # Create cache key
-    cache_key = f"kb_query:{repository_id}:{request.query}:{request.category}:{request.limit}"
+    cache_key = (
+        f"kb_query:{repository_id}:{request.query}:{request.category}:{request.limit}"
+    )
 
     # Try to get from cache first
     cached_result = await cache_service.get(cache_key)
@@ -98,9 +100,7 @@ async def query_knowledge_base(
     try:
         # Query using RAG service (hybrid search with alpha=0.7)
         results = await rag_service.query(
-            question=request.query,
-            category=request.category,
-            k=request.limit
+            question=request.query, category=request.category, k=request.limit
         )
 
         # Format results
@@ -360,7 +360,7 @@ async def list_collections(db: AsyncSession = Depends(get_db)) -> List[str]:
 @router.get("/categories", response_model=List[str])
 async def list_categories(
     repository_id: int = 1,  # Repository ID for multi-tenant isolation
-    rag_service: RAGService = Depends(get_rag_service)
+    rag_service: RAGService = Depends(get_rag_service),
 ) -> List[str]:
     """
     List all categories in the knowledge base

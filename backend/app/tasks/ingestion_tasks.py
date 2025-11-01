@@ -1,6 +1,7 @@
 """
 Celery tasks for automated knowledge ingestion
 """
+
 import logging
 import asyncio
 import os
@@ -22,8 +23,9 @@ logger = logging.getLogger(__name__)
 
 class IngestionTask(Task):
     """Base task for ingestion with error handling"""
+
     autoretry_for = (Exception,)
-    retry_kwargs = {'max_retries': 3}
+    retry_kwargs = {"max_retries": 3}
     retry_backoff = True
     retry_backoff_max = 600  # 10 minutes
     retry_jitter = True
@@ -40,12 +42,18 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
     Returns:
         Dict with status, documents_ingested, and optional error
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _scrape_feed():
         async with async_session_maker() as db:
@@ -59,12 +67,12 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
                 if not source:
                     logger.error(f"Ingestion source {source_id} not found")
-                    return {'status': 'error', 'error': 'Source not found'}
+                    return {"status": "error", "error": "Source not found"}
 
                 # Check if enabled
                 if not source.enabled:
                     logger.info(f"Skipping disabled source: {source.name}")
-                    return {'status': 'skipped', 'message': 'Source is disabled'}
+                    return {"status": "skipped", "message": "Source is disabled"}
 
                 # Update status to running
                 source.status = SourceStatus.RUNNING
@@ -89,16 +97,20 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                         await rag_service.add_document(
                             content=entry.content,
                             metadata={
-                                'title': entry.title,
-                                'url': entry.url,
-                                'author': entry.author,
-                                'published': entry.published.isoformat() if entry.published else None,
-                                'tags': entry.tags,
-                                'source_type': 'rss',
-                                'source_id': source.id,
-                                'source_name': source.name,
-                                'priority': source.priority
-                            }
+                                "title": entry.title,
+                                "url": entry.url,
+                                "author": entry.author,
+                                "published": (
+                                    entry.published.isoformat()
+                                    if entry.published
+                                    else None
+                                ),
+                                "tags": entry.tags,
+                                "source_type": "rss",
+                                "source_id": source.id,
+                                "source_name": source.name,
+                                "priority": source.priority,
+                            },
                         )
                         documents_ingested += 1
                     except Exception as e:
@@ -113,12 +125,14 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                 source.last_error = None
                 await db.commit()
 
-                logger.info(f"RSS scraping complete: {documents_ingested} documents ingested from {source.name}")
+                logger.info(
+                    f"RSS scraping complete: {documents_ingested} documents ingested from {source.name}"
+                )
 
                 return {
-                    'status': 'success',
-                    'documents_ingested': documents_ingested,
-                    'source_name': source.name
+                    "status": "success",
+                    "documents_ingested": documents_ingested,
+                    "source_name": source.name,
                 }
 
             except Exception as e:
@@ -134,17 +148,14 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                     source.last_error = str(e)
                     await db.commit()
 
-                return {
-                    'status': 'error',
-                    'error': str(e),
-                    'source_id': source_id
-                }
+                return {"status": "error", "error": str(e), "source_id": source_id}
             finally:
                 await engine.dispose()
 
     # Run the async function
     # Apply nest_asyncio to allow nested event loops (needed for testing)
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:
@@ -170,12 +181,18 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
     Returns:
         Dict with status, documents_ingested, and optional error
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _scrape_docs():
         async with async_session_maker() as db:
@@ -189,11 +206,11 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
                 if not source:
                     logger.error(f"Ingestion source {source_id} not found")
-                    return {'status': 'error', 'error': 'Source not found'}
+                    return {"status": "error", "error": "Source not found"}
 
                 if not source.enabled:
                     logger.info(f"Skipping disabled source: {source.name}")
-                    return {'status': 'skipped', 'message': 'Source is disabled'}
+                    return {"status": "skipped", "message": "Source is disabled"}
 
                 # Update status
                 source.status = SourceStatus.RUNNING
@@ -202,22 +219,24 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
                 # Get config
                 config = source.config or {}
-                max_depth = config.get('max_depth', 3)
-                max_pages = config.get('max_pages', 100)
-                use_sitemap = config.get('use_sitemap', False)
+                max_depth = config.get("max_depth", 3)
+                max_pages = config.get("max_pages", 100)
+                use_sitemap = config.get("use_sitemap", False)
 
                 # Initialize scraper
                 doc_scraper = DocumentationScraperService(rate_limit=1.0)
 
                 # Validate URLs for SSRF protection before starting
                 doc_scraper._is_safe_url(source.url)
-                if use_sitemap and 'sitemap_url' in config:
-                    doc_scraper._is_safe_url(config['sitemap_url'])
+                if use_sitemap and "sitemap_url" in config:
+                    doc_scraper._is_safe_url(config["sitemap_url"])
 
                 # Scrape pages
-                if use_sitemap and 'sitemap_url' in config:
+                if use_sitemap and "sitemap_url" in config:
                     # Use sitemap
-                    sitemap_urls = await doc_scraper.fetch_sitemap(config['sitemap_url'])
+                    sitemap_urls = await doc_scraper.fetch_sitemap(
+                        config["sitemap_url"]
+                    )
                     pages = []
                     for url in sitemap_urls[:max_pages]:
                         if doc_scraper.is_allowed(url):
@@ -227,9 +246,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 else:
                     # Crawl recursively
                     pages = await doc_scraper.scrape_documentation(
-                        source.url,
-                        max_depth=max_depth,
-                        max_pages=max_pages
+                        source.url, max_depth=max_depth, max_pages=max_pages
                     )
 
                 # Close the HTTP client session
@@ -245,15 +262,15 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                         await rag_service.add_document(
                             content=page.content,
                             metadata={
-                                'title': page.title,
-                                'url': page.url,
-                                'headings': page.headings,
-                                'code_blocks': page.code_blocks,
-                                'source_type': 'documentation',
-                                'source_id': source.id,
-                                'source_name': source.name,
-                                'priority': source.priority
-                            }
+                                "title": page.title,
+                                "url": page.url,
+                                "headings": page.headings,
+                                "code_blocks": page.code_blocks,
+                                "source_type": "documentation",
+                                "source_id": source.id,
+                                "source_name": source.name,
+                                "priority": source.priority,
+                            },
                         )
                         documents_ingested += 1
                     except Exception as e:
@@ -268,12 +285,14 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 source.last_error = None
                 await db.commit()
 
-                logger.info(f"Documentation scraping complete: {documents_ingested} pages from {source.name}")
+                logger.info(
+                    f"Documentation scraping complete: {documents_ingested} pages from {source.name}"
+                )
 
                 return {
-                    'status': 'success',
-                    'documents_ingested': documents_ingested,
-                    'source_name': source.name
+                    "status": "success",
+                    "documents_ingested": documents_ingested,
+                    "source_name": source.name,
                 }
 
             except Exception as e:
@@ -288,7 +307,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                     source.last_error = str(e)
                     await db.commit()
 
-                return {'status': 'error', 'error': str(e)}
+                return {"status": "error", "error": str(e)}
 
             finally:
                 await engine.dispose()
@@ -296,6 +315,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
     # Run the async function
     # Apply nest_asyncio to allow nested event loops (needed for testing)
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:
@@ -316,7 +336,7 @@ def process_webhook_payload(
     source_id: Optional[int],
     payload: Dict[str, Any],
     event_type: str,
-    project_id: Optional[int] = None
+    project_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Process webhook payload and ingest into RAG system.
@@ -330,12 +350,18 @@ def process_webhook_payload(
     Returns:
         Dict with status and documents_ingested
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _process_webhook():
         async with async_session_maker() as db:
@@ -349,14 +375,14 @@ def process_webhook_payload(
                     source = result.scalar_one_or_none()
 
                     if not source:
-                        return {'status': 'error', 'error': 'Source not found'}
+                        return {"status": "error", "error": "Source not found"}
 
                     project_id_to_use = source.project_id
                 else:
                     project_id_to_use = project_id
 
                 if not project_id_to_use:
-                    return {'status': 'error', 'error': 'Project ID required'}
+                    return {"status": "error", "error": "Project ID required"}
 
                 # Update source status if exists
                 if source:
@@ -367,44 +393,54 @@ def process_webhook_payload(
                 # Extract content based on event type
                 documents = []
 
-                if event_type == 'release':
+                if event_type == "release":
                     # GitHub release event
-                    release = payload.get('release', {})
-                    documents.append({
-                        'title': f"Release: {release.get('name', release.get('tag_name'))}",
-                        'content': release.get('body', ''),
-                        'url': release.get('html_url'),
-                        'metadata': {
-                            'event_type': 'release',
-                            'tag': release.get('tag_name'),
-                            'repository': payload.get('repository', {}).get('full_name'),
-                            'published_at': release.get('published_at')
+                    release = payload.get("release", {})
+                    documents.append(
+                        {
+                            "title": f"Release: {release.get('name', release.get('tag_name'))}",
+                            "content": release.get("body", ""),
+                            "url": release.get("html_url"),
+                            "metadata": {
+                                "event_type": "release",
+                                "tag": release.get("tag_name"),
+                                "repository": payload.get("repository", {}).get(
+                                    "full_name"
+                                ),
+                                "published_at": release.get("published_at"),
+                            },
                         }
-                    })
+                    )
 
-                elif event_type == 'push':
+                elif event_type == "push":
                     # GitHub push event
-                    for commit in payload.get('commits', []):
-                        documents.append({
-                            'title': f"Commit: {commit.get('message', '').split(chr(10))[0]}",
-                            'content': commit.get('message', ''),
-                            'url': commit.get('url'),
-                            'metadata': {
-                                'event_type': 'commit',
-                                'sha': commit.get('id'),
-                                'author': commit.get('author', {}).get('name'),
-                                'repository': payload.get('repository', {}).get('full_name')
+                    for commit in payload.get("commits", []):
+                        documents.append(
+                            {
+                                "title": f"Commit: {commit.get('message', '').split(chr(10))[0]}",
+                                "content": commit.get("message", ""),
+                                "url": commit.get("url"),
+                                "metadata": {
+                                    "event_type": "commit",
+                                    "sha": commit.get("id"),
+                                    "author": commit.get("author", {}).get("name"),
+                                    "repository": payload.get("repository", {}).get(
+                                        "full_name"
+                                    ),
+                                },
                             }
-                        })
+                        )
 
-                elif event_type == 'generic':
+                elif event_type == "generic":
                     # Generic webhook
-                    documents.append({
-                        'title': payload.get('title'),
-                        'content': payload.get('content'),
-                        'url': payload.get('url'),
-                        'metadata': payload.get('metadata', {})
-                    })
+                    documents.append(
+                        {
+                            "title": payload.get("title"),
+                            "content": payload.get("content"),
+                            "url": payload.get("url"),
+                            "metadata": payload.get("metadata", {}),
+                        }
+                    )
 
                 # Ingest documents
                 rag_service = RAGService(repository_id=project_id_to_use)
@@ -413,22 +449,22 @@ def process_webhook_payload(
 
                 for doc in documents:
                     try:
-                        metadata = doc.get('metadata', {})
-                        metadata.update({
-                            'source_type': 'webhook',
-                            'event_type': event_type
-                        })
+                        metadata = doc.get("metadata", {})
+                        metadata.update(
+                            {"source_type": "webhook", "event_type": event_type}
+                        )
 
                         if source:
-                            metadata.update({
-                                'source_id': source.id,
-                                'source_name': source.name,
-                                'priority': source.priority
-                            })
+                            metadata.update(
+                                {
+                                    "source_id": source.id,
+                                    "source_name": source.name,
+                                    "priority": source.priority,
+                                }
+                            )
 
                         await rag_service.add_document(
-                            content=doc['content'],
-                            metadata=metadata
+                            content=doc["content"], metadata=metadata
                         )
                         documents_ingested += 1
 
@@ -445,12 +481,14 @@ def process_webhook_payload(
                     source.last_error = None
                     await db.commit()
 
-                logger.info(f"Webhook processing complete: {documents_ingested} documents ingested")
+                logger.info(
+                    f"Webhook processing complete: {documents_ingested} documents ingested"
+                )
 
                 return {
-                    'status': 'success',
-                    'documents_ingested': documents_ingested,
-                    'event_type': event_type
+                    "status": "success",
+                    "documents_ingested": documents_ingested,
+                    "event_type": event_type,
                 }
 
             except Exception as e:
@@ -465,7 +503,7 @@ def process_webhook_payload(
                     source.last_error = str(e)
                     await db.commit()
 
-                return {'status': 'error', 'error': str(e)}
+                return {"status": "error", "error": str(e)}
 
             finally:
                 await engine.dispose()
@@ -473,6 +511,7 @@ def process_webhook_payload(
     # Run the async function
     # Apply nest_asyncio to allow nested event loops (needed for testing)
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:
@@ -488,11 +527,7 @@ def process_webhook_payload(
 
 
 @celery_app.task(base=IngestionTask, bind=True)
-def process_file_change(
-    self,
-    source_id: int,
-    event: FileChangeEvent
-) -> Dict[str, Any]:
+def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[str, Any]:
     """
     Process file system change and ingest document.
 
@@ -503,12 +538,18 @@ def process_file_change(
     Returns:
         Dict with status and documents_ingested
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _process_file():
         async with async_session_maker() as db:
@@ -521,22 +562,30 @@ def process_file_change(
                 source = result.scalar_one_or_none()
 
                 if not source:
-                    return {'status': 'error', 'error': 'Source not found'}
+                    return {"status": "error", "error": "Source not found"}
 
                 if not source.enabled:
-                    return {'status': 'skipped', 'message': 'Source is disabled'}
+                    return {"status": "skipped", "message": "Source is disabled"}
 
                 # Get config
                 config = source.config or {}
-                patterns = config.get('patterns', ['*'])
-                ignore_patterns = config.get('ignore', [])
+                patterns = config.get("patterns", ["*"])
+                ignore_patterns = config.get("ignore", [])
 
                 # Initialize file watcher service
                 file_watcher = FileWatcherService()
 
                 # Get file path from event (handle both FileChangeEvent and dict)
-                file_path = event.file_path if hasattr(event, 'file_path') else event['file_path']
-                event_type = event.event_type if hasattr(event, 'event_type') else event['event_type']
+                file_path = (
+                    event.file_path
+                    if hasattr(event, "file_path")
+                    else event["file_path"]
+                )
+                event_type = (
+                    event.event_type
+                    if hasattr(event, "event_type")
+                    else event["event_type"]
+                )
 
                 # Security: Validate file path to prevent path traversal
                 try:
@@ -549,21 +598,29 @@ def process_file_change(
                     # Check against blocked system directories
                     for blocked_prefix in BLOCKED_PATH_PREFIXES:
                         if resolved_str.startswith(blocked_prefix):
-                            logger.error(f"Attempted to process file in blocked directory: {resolved_str}")
+                            logger.error(
+                                f"Attempted to process file in blocked directory: {resolved_str}"
+                            )
                             return {
-                                'status': 'error',
-                                'error': f'Access denied: Cannot process files in system directory {blocked_prefix}'
+                                "status": "error",
+                                "error": f"Access denied: Cannot process files in system directory {blocked_prefix}",
                             }
                 except Exception as e:
                     logger.error(f"Path validation failed for {file_path}: {e}")
-                    return {'status': 'error', 'error': f'Invalid file path: {str(e)}'}
+                    return {"status": "error", "error": f"Invalid file path: {str(e)}"}
 
                 # Check patterns
                 if not file_watcher.should_process_file(file_path, patterns):
-                    return {'status': 'skipped', 'message': 'File does not match patterns'}
+                    return {
+                        "status": "skipped",
+                        "message": "File does not match patterns",
+                    }
 
                 if file_watcher.should_ignore_file(file_path, ignore_patterns):
-                    return {'status': 'skipped', 'message': 'File matches ignore patterns'}
+                    return {
+                        "status": "skipped",
+                        "message": "File matches ignore patterns",
+                    }
 
                 # Update source status
                 source.status = SourceStatus.RUNNING
@@ -574,7 +631,7 @@ def process_file_change(
                 content = file_watcher.extract_text_from_file(file_path)
 
                 if not content:
-                    return {'status': 'skipped', 'message': 'No content extracted'}
+                    return {"status": "skipped", "message": "No content extracted"}
 
                 # Ingest into RAG
                 rag_service = RAGService()
@@ -585,15 +642,15 @@ def process_file_change(
                     project_id=source.project_id,
                     content=content,
                     metadata={
-                        'title': filename,
-                        'file_path': file_path,
-                        'file_type': Path(file_path).suffix,
-                        'event_type': event_type,
-                        'source_type': 'file_watcher',
-                        'source_id': source.id,
-                        'source_name': source.name,
-                        'priority': source.priority
-                    }
+                        "title": filename,
+                        "file_path": file_path,
+                        "file_type": Path(file_path).suffix,
+                        "event_type": event_type,
+                        "source_type": "file_watcher",
+                        "source_id": source.id,
+                        "source_name": source.name,
+                        "priority": source.priority,
+                    },
                 )
 
                 # Update source status
@@ -607,9 +664,9 @@ def process_file_change(
                 logger.info(f"File ingested: {filename}")
 
                 return {
-                    'status': 'success',
-                    'documents_ingested': 1,
-                    'file_path': file_path
+                    "status": "success",
+                    "documents_ingested": 1,
+                    "file_path": file_path,
                 }
 
             except Exception as e:
@@ -624,7 +681,7 @@ def process_file_change(
                     source.last_error = str(e)
                     await db.commit()
 
-                return {'status': 'error', 'error': str(e)}
+                return {"status": "error", "error": str(e)}
 
             finally:
                 await engine.dispose()
@@ -632,6 +689,7 @@ def process_file_change(
     # Run the async function
     # Apply nest_asyncio to allow nested event loops (needed for testing)
     import nest_asyncio
+
     nest_asyncio.apply()
 
     try:

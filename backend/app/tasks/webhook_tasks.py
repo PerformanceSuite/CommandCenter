@@ -48,7 +48,9 @@ def deliver_webhook(self, delivery_id: int, attempt_number: int = 1) -> Dict[str
         }
 
 
-async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[str, Any]:
+async def _deliver_webhook_async(
+    delivery_id: int, attempt_number: int
+) -> Dict[str, Any]:
     """
     Async implementation of webhook delivery.
 
@@ -115,7 +117,9 @@ def create_and_deliver_webhook(
     """
     try:
         result = asyncio.run(
-            _create_and_deliver_webhook_async(config_id, project_id, event_type, payload)
+            _create_and_deliver_webhook_async(
+                config_id, project_id, event_type, payload
+            )
         )
         return result
     except Exception as e:

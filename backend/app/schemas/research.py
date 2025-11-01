@@ -151,10 +151,14 @@ class ResearchTaskListResponse(BaseModel):
 # Research Agent Orchestration Schemas (Phase 2)
 # ============================================================================
 
+
 class AgentTaskRequest(BaseModel):
     """Request schema for individual agent task"""
 
-    role: str = Field(..., description="Agent role: technology_scout, deep_researcher, comparator, integrator, monitor")
+    role: str = Field(
+        ...,
+        description="Agent role: technology_scout, deep_researcher, comparator, integrator, monitor",
+    )
     prompt: str = Field(..., min_length=1)
     model: Optional[str] = None
     provider: Optional[str] = None
@@ -215,7 +219,9 @@ class TechnologyMonitorRequest(BaseModel):
     """Request schema for technology monitoring"""
 
     technology_id: int
-    sources: list[str] = Field(default=["hackernews", "github"])  # hackernews, github, arxiv
+    sources: list[str] = Field(
+        default=["hackernews", "github"]
+    )  # hackernews, github, arxiv
     days_back: int = Field(default=7, ge=1, le=30)
 
 

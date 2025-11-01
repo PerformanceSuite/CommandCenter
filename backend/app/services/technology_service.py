@@ -90,7 +90,9 @@ class TechnologyService:
         """
         return await self.repo.get_by_title(title)
 
-    async def create_technology(self, technology_data: TechnologyCreate, project_id: int = 1) -> Technology:
+    async def create_technology(
+        self, technology_data: TechnologyCreate, project_id: int = 1
+    ) -> Technology:
         """
         Create new technology
 
@@ -120,6 +122,7 @@ class TechnologyService:
         """
         # Log security warning when using default project_id
         import logging
+
         logger = logging.getLogger(__name__)
 
         if project_id == 1:
@@ -146,7 +149,7 @@ class TechnologyService:
 
         # Create technology with project_id
         tech_data = technology_data.model_dump()
-        tech_data['project_id'] = project_id
+        tech_data["project_id"] = project_id
         technology = await self.repo.create(**tech_data)
 
         await self.db.commit()

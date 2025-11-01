@@ -128,7 +128,6 @@ class CommandCenterToolProvider(ToolProvider):
                 ],
                 returns="Updated task details",
             ),
-
             # Technology tools
             Tool(
                 name="add_technology",
@@ -174,7 +173,6 @@ class CommandCenterToolProvider(ToolProvider):
                 ],
                 returns="Created technology with ID",
             ),
-
             # Schedule tools
             Tool(
                 name="create_schedule",
@@ -272,7 +270,6 @@ class CommandCenterToolProvider(ToolProvider):
                 ],
                 returns="Updated schedule status",
             ),
-
             # Job tools
             Tool(
                 name="create_job",
@@ -422,6 +419,7 @@ class CommandCenterToolProvider(ToolProvider):
             raise InvalidParamsError("task_id is required")
 
         from sqlalchemy import select
+
         result = await self.db.execute(
             select(ResearchTask).where(ResearchTask.id == arguments["task_id"])
         )
@@ -511,7 +509,9 @@ class CommandCenterToolProvider(ToolProvider):
                 "schedule_id": schedule.id,
                 "name": schedule.name,
                 "frequency": schedule.frequency,
-                "next_run_at": schedule.next_run_at.isoformat() if schedule.next_run_at else None,
+                "next_run_at": (
+                    schedule.next_run_at.isoformat() if schedule.next_run_at else None
+                ),
                 "enabled": schedule.enabled,
                 "message": f"Schedule '{schedule.name}' created successfully",
             },
@@ -596,7 +596,8 @@ class CommandCenterToolProvider(ToolProvider):
                 "job_id": job.id,
                 "job_type": job.job_type,
                 "status": job.status,
-                "message": f"Job {job.id} created" + (" and dispatched" if arguments.get("dispatch") else ""),
+                "message": f"Job {job.id} created"
+                + (" and dispatched" if arguments.get("dispatch") else ""),
             },
         )
 

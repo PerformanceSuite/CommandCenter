@@ -40,14 +40,20 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
     Raises:
         Exception: Any unhandled exception during execution
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
     from app.services.job_service import JobService
     import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_job():
         """Inner async function to run the job."""
@@ -69,9 +75,7 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
                         self, job_id, parameters, service
                     )
                 elif job_type == JobType.EXPORT:
-                    result = await execute_export_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_export_job(self, job_id, parameters, service)
                 elif job_type == JobType.BATCH_ANALYSIS:
                     result = await execute_batch_analysis_job(
                         self, job_id, parameters, service
@@ -151,6 +155,7 @@ async def execute_analysis_job(
     # TODO: Implement actual analysis logic
     # For now, simulate work
     import asyncio
+
     await asyncio.sleep(2)
 
     await service.update_job(
@@ -205,6 +210,7 @@ async def execute_export_job(
 
     # TODO: Implement actual export logic
     import asyncio
+
     await asyncio.sleep(3)
 
     return {
@@ -245,6 +251,7 @@ async def execute_batch_analysis_job(
 
         # TODO: Implement actual analysis
         import asyncio
+
         await asyncio.sleep(1)
 
         results.append({"repository_id": repo_id, "status": "completed"})
@@ -280,6 +287,7 @@ async def execute_batch_export_job(
 
     # TODO: Implement actual batch export logic
     import asyncio
+
     await asyncio.sleep(2)
 
     return {
@@ -315,6 +323,7 @@ async def execute_webhook_delivery_job(
 
     # TODO: Implement actual webhook delivery
     import asyncio
+
     await asyncio.sleep(1)
 
     return {
@@ -350,6 +359,7 @@ async def execute_scheduled_analysis_job(
 
     # TODO: Implement scheduled analysis logic
     import asyncio
+
     await asyncio.sleep(2)
 
     return {

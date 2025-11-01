@@ -162,7 +162,9 @@ class CodeAnalyzer:
                     if language == "python":
                         file_metrics = await self._analyze_python_file(file_path)
                         if file_metrics:
-                            ast_metrics["total_complexity"] += file_metrics["complexity"]
+                            ast_metrics["total_complexity"] += file_metrics[
+                                "complexity"
+                            ]
                             ast_metrics["total_functions"] += file_metrics["functions"]
                             ast_metrics["total_classes"] += file_metrics["classes"]
                             ast_metrics["total_imports"] += file_metrics["imports"]

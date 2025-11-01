@@ -1,6 +1,7 @@
 """
 Documentation scraper service for automated docs ingestion
 """
+
 import logging
 import asyncio
 import ipaddress
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DocumentationPage:
     """Represents a scraped documentation page"""
+
     url: str
     title: str
     content: str
@@ -42,9 +44,9 @@ class DocumentationScraperService:
         self.logger = logger
         self.rate_limit = rate_limit
         self.client = httpx.AsyncClient(
-            headers={'User-Agent': 'CommandCenter Documentation Bot/1.0'},
+            headers={"User-Agent": "CommandCenter Documentation Bot/1.0"},
             timeout=10.0,
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.robots_parser = None
 
@@ -69,8 +71,10 @@ class DocumentationScraperService:
             parsed = urlparse(url)
 
             # Only allow http and https schemes
-            if parsed.scheme not in ('http', 'https'):
-                raise ValueError(f"Invalid URL scheme: {parsed.scheme}. Only http and https are allowed.")
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError(
+                    f"Invalid URL scheme: {parsed.scheme}. Only http and https are allowed."
+                )
 
             # Get hostname
             hostname = parsed.hostname
@@ -78,12 +82,13 @@ class DocumentationScraperService:
                 raise ValueError("URL must have a valid hostname")
 
             # Block localhost variations
-            if hostname.lower() in ('localhost', 'localhost.localdomain'):
+            if hostname.lower() in ("localhost", "localhost.localdomain"):
                 raise ValueError("Access to localhost is not allowed")
 
             # Try to resolve hostname to IP address
             try:
                 import socket
+
                 ip_str = socket.gethostbyname(hostname)
                 ip = ipaddress.ip_address(ip_str)
 
@@ -92,16 +97,20 @@ class DocumentationScraperService:
                     raise ValueError(f"Access to loopback address {ip} is not allowed")
 
                 # Block cloud metadata endpoint (169.254.169.254) - check before link-local
-                if str(ip) == '169.254.169.254':
+                if str(ip) == "169.254.169.254":
                     raise ValueError("Access to cloud metadata endpoint is not allowed")
 
                 # Block link-local addresses (169.254.0.0/16, fe80::/10)
                 if ip.is_link_local:
-                    raise ValueError(f"Access to link-local address {ip} is not allowed")
+                    raise ValueError(
+                        f"Access to link-local address {ip} is not allowed"
+                    )
 
                 # Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
                 if ip.is_private:
-                    raise ValueError(f"Access to private IP address {ip} is not allowed")
+                    raise ValueError(
+                        f"Access to private IP address {ip} is not allowed"
+                    )
 
             except socket.gaierror:
                 # If hostname cannot be resolved, allow it (will fail naturally on request)
@@ -137,10 +146,10 @@ class DocumentationScraperService:
             root = ET.fromstring(response.text)
 
             # Extract URLs (handle namespace)
-            namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+            namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
             urls = []
-            for url_elem in root.findall('.//ns:url', namespace):
-                loc = url_elem.find('ns:loc', namespace)
+            for url_elem in root.findall(".//ns:url", namespace):
+                loc = url_elem.find("ns:loc", namespace)
                 if loc is not None and loc.text:
                     urls.append(loc.text)
 
@@ -174,7 +183,7 @@ class DocumentationScraperService:
                 self.logger.warning(f"Could not read robots.txt: {e}")
                 return True  # Allow if robots.txt not available
 
-        return self.robots_parser.can_fetch('CommandCenter Documentation Bot', url)
+        return self.robots_parser.can_fetch("CommandCenter Documentation Bot", url)
 
     async def scrape_page(self, url: str) -> Optional[DocumentationPage]:
         """
@@ -202,14 +211,20 @@ class DocumentationScraperService:
             response.raise_for_status()
 
             # Parse HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
 
             # Extract title
-            title = soup.title.string if soup.title else 'Untitled'
+            title = soup.title.string if soup.title else "Untitled"
 
             # Extract main content (try common selectors)
             main_content = None
-            for selector in ['main', 'article', '.content', '#content', '.documentation']:
+            for selector in [
+                "main",
+                "article",
+                ".content",
+                "#content",
+                ".documentation",
+            ]:
                 main_content = soup.select_one(selector)
                 if main_content:
                     break
@@ -218,22 +233,35 @@ class DocumentationScraperService:
                 main_content = soup.body
 
             # Extract text content
-            content = main_content.get_text(separator='\n', strip=True) if main_content else ''
+            content = (
+                main_content.get_text(separator="\n", strip=True)
+                if main_content
+                else ""
+            )
 
             # Extract headings
-            headings = [h.get_text(strip=True) for h in main_content.find_all(['h1', 'h2', 'h3', 'h4'])] \
-                if main_content else []
+            headings = (
+                [
+                    h.get_text(strip=True)
+                    for h in main_content.find_all(["h1", "h2", "h3", "h4"])
+                ]
+                if main_content
+                else []
+            )
 
             # Extract code blocks
-            code_blocks = [code.get_text() for code in main_content.find_all(['code', 'pre'])] \
-                if main_content else []
+            code_blocks = (
+                [code.get_text() for code in main_content.find_all(["code", "pre"])]
+                if main_content
+                else []
+            )
 
             return DocumentationPage(
                 url=url,
                 title=title,
                 content=content,
                 headings=headings,
-                code_blocks=code_blocks
+                code_blocks=code_blocks,
             )
 
         except Exception as e:
@@ -255,13 +283,13 @@ class DocumentationScraperService:
             response = await self.client.get(page_url)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
 
             links = []
             base_domain = urlparse(base_url).netloc
 
-            for a_tag in soup.find_all('a', href=True):
-                href = a_tag['href']
+            for a_tag in soup.find_all("a", href=True):
+                href = a_tag["href"]
 
                 # Convert relative URLs to absolute
                 absolute_url = urljoin(page_url, href)
@@ -269,7 +297,7 @@ class DocumentationScraperService:
                 # Only include internal links
                 if urlparse(absolute_url).netloc == base_domain:
                     # Remove fragment
-                    absolute_url = absolute_url.split('#')[0]
+                    absolute_url = absolute_url.split("#")[0]
                     links.append(absolute_url)
 
             return list(set(links))  # Deduplicate
@@ -279,10 +307,7 @@ class DocumentationScraperService:
             return []
 
     async def scrape_documentation(
-        self,
-        start_url: str,
-        max_depth: int = 3,
-        max_pages: int = 100
+        self, start_url: str, max_depth: int = 3, max_pages: int = 100
     ) -> List[DocumentationPage]:
         """
         Scrape documentation site recursively.

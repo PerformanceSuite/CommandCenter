@@ -77,7 +77,9 @@ class KnowledgeBeastService:
 
         self.project_id = project_id
         self.collection_name = f"project_{project_id}"
-        self.db_path = db_path or getattr(settings, "knowledgebeast_db_path", "./kb_chroma_db")
+        self.db_path = db_path or getattr(
+            settings, "knowledgebeast_db_path", "./kb_chroma_db"
+        )
         self.embedding_model = embedding_model
 
         logger.info(
@@ -101,10 +103,12 @@ class KnowledgeBeastService:
                 self.repository,
                 model_name=self.embedding_model,
                 alpha=0.7,  # 70% vector, 30% keyword
-                cache_size=1000
+                cache_size=1000,
             )
 
-            logger.info(f"KnowledgeBeast initialized successfully for project {self.project_id}")
+            logger.info(
+                f"KnowledgeBeast initialized successfully for project {self.project_id}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to initialize KnowledgeBeast: {e}", exc_info=True)
@@ -146,7 +150,9 @@ class KnowledgeBeastService:
             # Use HybridQueryEngine's actual API (from query_engine.py)
             if mode == "vector":
                 # search_vector returns: Tuple[List[Tuple[doc_id, doc, score]], degraded_mode]
-                raw_results, degraded = self.query_engine.search_vector(question, top_k=k)
+                raw_results, degraded = self.query_engine.search_vector(
+                    question, top_k=k
+                )
             elif mode == "keyword":
                 # search_keyword returns: List[Tuple[doc_id, doc, score]]
                 raw_results = self.query_engine.search_keyword(question)
@@ -154,16 +160,22 @@ class KnowledgeBeastService:
                 degraded = False
             else:  # hybrid (default)
                 # search_hybrid returns: Tuple[List[Tuple[doc_id, doc, score]], degraded_mode]
-                raw_results, degraded = self.query_engine.search_hybrid(question, alpha=alpha, top_k=k)
+                raw_results, degraded = self.query_engine.search_hybrid(
+                    question, alpha=alpha, top_k=k
+                )
 
             # Format results to match CommandCenter schema
             formatted_results = self._format_results(raw_results)
 
             # Filter by category if requested
             if category:
-                formatted_results = [r for r in formatted_results if r.get("category") == category]
+                formatted_results = [
+                    r for r in formatted_results if r.get("category") == category
+                ]
 
-            logger.debug(f"Query returned {len(formatted_results)} results (degraded={degraded})")
+            logger.debug(
+                f"Query returned {len(formatted_results)} results (degraded={degraded})"
+            )
             return formatted_results
 
         except Exception as e:
@@ -217,11 +229,11 @@ class KnowledgeBeastService:
 
                 # Create document data structure
                 doc_data = {
-                    'name': metadata.get('title', metadata.get('source', 'Untitled')),
-                    'content': chunk,
-                    'path': metadata.get('source', 'unknown'),
-                    'category': metadata.get('category', 'unknown'),
-                    'metadata': metadata
+                    "name": metadata.get("title", metadata.get("source", "Untitled")),
+                    "content": chunk,
+                    "path": metadata.get("source", "unknown"),
+                    "category": metadata.get("category", "unknown"),
+                    "metadata": metadata,
                 }
 
                 # Add to repository (this is what HybridQueryEngine uses)
@@ -236,7 +248,9 @@ class KnowledgeBeastService:
             # Refresh HybridQueryEngine's embedding cache
             self.query_engine.refresh_embeddings()
 
-            logger.info(f"Successfully added {len(chunks)} chunks to project {self.project_id}")
+            logger.info(
+                f"Successfully added {len(chunks)} chunks to project {self.project_id}"
+            )
             return len(chunks)
 
         except Exception as e:
@@ -260,7 +274,10 @@ class KnowledgeBeastService:
             doc_ids_to_delete = []
 
             for doc_id, doc_data in self.repository.documents.items():
-                if doc_data.get('path') == source or doc_data.get('metadata', {}).get('source') == source:
+                if (
+                    doc_data.get("path") == source
+                    or doc_data.get("metadata", {}).get("source") == source
+                ):
                     doc_ids_to_delete.append(doc_id)
 
             if doc_ids_to_delete:
@@ -273,7 +290,9 @@ class KnowledgeBeastService:
                     for doc_id in doc_ids_to_delete:
                         doc_set.discard(doc_id)
 
-                logger.info(f"Deleted {len(doc_ids_to_delete)} documents with source={source}")
+                logger.info(
+                    f"Deleted {len(doc_ids_to_delete)} documents with source={source}"
+                )
                 return True
 
             logger.warning(f"No documents found with source={source}")
@@ -294,7 +313,9 @@ class KnowledgeBeastService:
             # Extract unique categories from repository
             categories = set()
             for doc_data in self.repository.documents.values():
-                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category')
+                category = doc_data.get("category") or doc_data.get("metadata", {}).get(
+                    "category"
+                )
                 if category:
                     categories.add(category)
 
@@ -325,7 +346,9 @@ class KnowledgeBeastService:
             # Get category breakdown
             categories = {}
             for doc_data in self.repository.documents.values():
-                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category', 'unknown')
+                category = doc_data.get("category") or doc_data.get("metadata", {}).get(
+                    "category", "unknown"
+                )
                 categories[category] = categories.get(category, 0) + 1
 
             return {
@@ -399,9 +422,15 @@ class KnowledgeBeastService:
                             "content": doc_data.get("content", ""),
                             "metadata": metadata,
                             "score": float(score),
-                            "category": doc_data.get("category", metadata.get("category", "unknown")),
-                            "source": doc_data.get("path", metadata.get("source", "unknown")),
-                            "title": doc_data.get("name", metadata.get("title", "Untitled")),
+                            "category": doc_data.get(
+                                "category", metadata.get("category", "unknown")
+                            ),
+                            "source": doc_data.get(
+                                "path", metadata.get("source", "unknown")
+                            ),
+                            "title": doc_data.get(
+                                "name", metadata.get("title", "Untitled")
+                            ),
                         }
                     )
 

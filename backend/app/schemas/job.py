@@ -38,7 +38,9 @@ class JobUpdate(BaseModel):
     current_step: Optional[str] = Field(
         default=None, description="Current operation description"
     )
-    result: Optional[Dict[str, Any]] = Field(default=None, description="Job result data")
+    result: Optional[Dict[str, Any]] = Field(
+        default=None, description="Job result data"
+    )
     error: Optional[str] = Field(default=None, description="Error message if failed")
     traceback: Optional[str] = Field(
         default=None, description="Full traceback for debugging"
@@ -52,15 +54,15 @@ class JobResponse(JobBase):
 
     id: int = Field(..., description="Job ID")
     project_id: int = Field(..., description="Project ID")
-    celery_task_id: Optional[str] = Field(
-        default=None, description="Celery task UUID"
-    )
+    celery_task_id: Optional[str] = Field(default=None, description="Celery task UUID")
     status: str = Field(..., description="Job status")
     progress: int = Field(..., description="Progress percentage (0-100)")
     current_step: Optional[str] = Field(
         default=None, description="Current operation description"
     )
-    result: Optional[Dict[str, Any]] = Field(default=None, description="Job result data")
+    result: Optional[Dict[str, Any]] = Field(
+        default=None, description="Job result data"
+    )
     error: Optional[str] = Field(default=None, description="Error message if failed")
     created_by: Optional[int] = Field(
         default=None, description="User ID who created the job"
@@ -125,7 +127,8 @@ class JobStatisticsResponse(BaseModel):
         ..., description="Job counts by status (pending, running, completed, etc.)"
     )
     success_rate: Optional[float] = Field(
-        default=None, description="Success rate percentage (completed / (completed + failed) * 100)"
+        default=None,
+        description="Success rate percentage (completed / (completed + failed) * 100)",
     )
     average_duration_seconds: Optional[float] = Field(
         default=None, description="Average duration of completed jobs in seconds"

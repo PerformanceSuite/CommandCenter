@@ -185,7 +185,9 @@ class ScheduleService:
         # Validate updates
         if "cron_expression" in updates:
             if not self._validate_cron(updates["cron_expression"]):
-                raise ValueError(f"Invalid cron expression: {updates['cron_expression']}")
+                raise ValueError(
+                    f"Invalid cron expression: {updates['cron_expression']}"
+                )
 
         if "timezone" in updates:
             if not self._validate_timezone(updates["timezone"]):
@@ -404,9 +406,7 @@ class ScheduleService:
         total_successes = sum(s.success_count for s in schedules)
         total_failures = sum(s.failure_count for s in schedules)
 
-        success_rate = (
-            (total_successes / total_runs * 100) if total_runs > 0 else 0.0
-        )
+        success_rate = (total_successes / total_runs * 100) if total_runs > 0 else 0.0
 
         # Count by frequency
         frequency_counts = {}
@@ -514,13 +514,22 @@ class ScheduleService:
             # Next month, first day
             if base_time.month == 12:
                 next_run = base_time.replace(
-                    year=base_time.year + 1, month=1, day=1,
-                    hour=0, minute=0, second=0, microsecond=0
+                    year=base_time.year + 1,
+                    month=1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
                 )
             else:
                 next_run = base_time.replace(
-                    month=base_time.month + 1, day=1,
-                    hour=0, minute=0, second=0, microsecond=0
+                    month=base_time.month + 1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
                 )
 
         elif frequency == ScheduleFrequency.CRON:
@@ -589,7 +598,9 @@ class ScheduleService:
         conflicts = []
         if task_parameters:
             for schedule in schedules:
-                if self._has_parameter_overlap(task_parameters, schedule.task_parameters):
+                if self._has_parameter_overlap(
+                    task_parameters, schedule.task_parameters
+                ):
                     conflicts.append(schedule)
 
         return conflicts

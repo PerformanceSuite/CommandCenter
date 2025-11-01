@@ -237,7 +237,9 @@ class HTMLExporter(BaseExporter):
             </div>
         </section>"""
 
-    def _generate_research_gaps_section(self, research_gaps: List[Dict[str, Any]]) -> str:
+    def _generate_research_gaps_section(
+        self, research_gaps: List[Dict[str, Any]]
+    ) -> str:
         """Generate research gaps section."""
         gap_cards = "\n".join(
             [
@@ -274,7 +276,9 @@ class HTMLExporter(BaseExporter):
             "data": list(categories.values()),
         }
 
-    def _prepare_dependency_status_data(self, dependencies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _prepare_dependency_status_data(
+        self, dependencies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Prepare data for dependency status chart."""
         current = sum(1 for d in dependencies if not d.get("is_outdated", False))
         outdated = sum(1 for d in dependencies if d.get("is_outdated", False))

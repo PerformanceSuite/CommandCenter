@@ -1,6 +1,7 @@
 """
 IngestionSource model for automated knowledge ingestion
 """
+
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from enum import Enum
@@ -12,6 +13,7 @@ from app.database import Base
 
 class SourceType(str, Enum):
     """Types of ingestion sources"""
+
     RSS = "rss"
     DOCUMENTATION = "documentation"
     WEBHOOK = "webhook"
@@ -20,6 +22,7 @@ class SourceType(str, Enum):
 
 class SourceStatus(str, Enum):
     """Status of ingestion source"""
+
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
@@ -76,9 +79,13 @@ class IngestionSource(Base):
     error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     # Relationships
@@ -87,4 +94,6 @@ class IngestionSource(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"
+        return (
+            f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"
+        )

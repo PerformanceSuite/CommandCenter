@@ -41,8 +41,12 @@ class User(Base):
 
     # Relationships
     jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")
-    schedules: Mapped[list["Schedule"]] = relationship("Schedule", back_populates="user")
-    integrations: Mapped[list["Integration"]] = relationship("Integration", back_populates="user")
+    schedules: Mapped[list["Schedule"]] = relationship(
+        "Schedule", back_populates="user"
+    )
+    integrations: Mapped[list["Integration"]] = relationship(
+        "Integration", back_populates="user"
+    )
 
     @validates("email")
     def validate_email_format(self, key: str, email: str) -> str:

@@ -1,6 +1,7 @@
 """
 Feed scraper service for RSS/Atom feed ingestion
 """
+
 import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FeedEntry:
     """Represents a parsed feed entry"""
+
     title: str
     url: str
     content: str
@@ -44,9 +46,7 @@ class FeedScraperService:
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
     async def parse_feed(
-        self,
-        feed_url: str,
-        auth: Optional[Tuple[str, str]] = None
+        self, feed_url: str, auth: Optional[Tuple[str, str]] = None
     ) -> List[FeedEntry]:
         """
         Parse RSS or Atom feed and extract entries.
@@ -67,43 +67,50 @@ class FeedScraperService:
         if auth:
             # Add auth to URL for feedparser
             from urllib.parse import urlparse, urlunparse
+
             parsed = urlparse(feed_url)
             netloc_with_auth = f"{auth[0]}:{auth[1]}@{parsed.netloc}"
-            feed_url_with_auth = urlunparse((
-                parsed.scheme, netloc_with_auth, parsed.path,
-                parsed.params, parsed.query, parsed.fragment
-            ))
+            feed_url_with_auth = urlunparse(
+                (
+                    parsed.scheme,
+                    netloc_with_auth,
+                    parsed.path,
+                    parsed.params,
+                    parsed.query,
+                    parsed.fragment,
+                )
+            )
             feed_data = feedparser.parse(feed_url_with_auth)
         else:
             feed_data = feedparser.parse(feed_url)
 
         # Check for errors
-        if feed_data.get('bozo', False):
-            error_msg = str(feed_data.get('bozo_exception', 'Unknown error'))
+        if feed_data.get("bozo", False):
+            error_msg = str(feed_data.get("bozo_exception", "Unknown error"))
             self.logger.error(f"Feed parsing error: {error_msg}")
             raise ValueError(f"Feed is malformed or invalid: {error_msg}")
 
         entries = []
-        for entry in feed_data.get('entries', []):
+        for entry in feed_data.get("entries", []):
             # Extract basic metadata
-            title = entry.get('title', 'Untitled')
-            url = entry.get('link', '')
-            summary = entry.get('summary', '')
+            title = entry.get("title", "Untitled")
+            url = entry.get("link", "")
+            summary = entry.get("summary", "")
 
             # Extract published date (RSS uses 'published_parsed', Atom uses 'updated_parsed')
             published = None
-            if 'published_parsed' in entry and entry['published_parsed']:
-                published = datetime(*entry['published_parsed'][:6])
-            elif 'updated_parsed' in entry and entry['updated_parsed']:
-                published = datetime(*entry['updated_parsed'][:6])
+            if "published_parsed" in entry and entry["published_parsed"]:
+                published = datetime(*entry["published_parsed"][:6])
+            elif "updated_parsed" in entry and entry["updated_parsed"]:
+                published = datetime(*entry["updated_parsed"][:6])
 
             # Extract author
-            author = entry.get('author', None)
+            author = entry.get("author", None)
 
             # Extract tags
             tags = []
-            if 'tags' in entry:
-                tags = [tag['term'] for tag in entry['tags'] if 'term' in tag]
+            if "tags" in entry:
+                tags = [tag["term"] for tag in entry["tags"] if "term" in tag]
 
             # Attempt to extract full content
             content = await self.extract_full_content(url, summary_fallback=summary)
@@ -115,7 +122,7 @@ class FeedScraperService:
                 summary=summary,
                 published=published,
                 author=author,
-                tags=tags
+                tags=tags,
             )
             entries.append(feed_entry)
 
@@ -123,9 +130,7 @@ class FeedScraperService:
         return entries
 
     def _extract_full_content_blocking(
-        self,
-        article_url: str,
-        summary_fallback: str = ""
+        self, article_url: str, summary_fallback: str = ""
     ) -> str:
         """
         Extract full article content from URL (blocking I/O).
@@ -147,7 +152,9 @@ class FeedScraperService:
             if article.text:
                 return article.text
             else:
-                self.logger.warning(f"No content extracted from {article_url}, using summary")
+                self.logger.warning(
+                    f"No content extracted from {article_url}, using summary"
+                )
                 return summary_fallback
 
         except Exception as e:
@@ -155,9 +162,7 @@ class FeedScraperService:
             return summary_fallback
 
     async def extract_full_content(
-        self,
-        article_url: str,
-        summary_fallback: str = ""
+        self, article_url: str, summary_fallback: str = ""
     ) -> str:
         """
         Extract full article content from URL (async-safe).
@@ -175,7 +180,7 @@ class FeedScraperService:
             self.executor,
             self._extract_full_content_blocking,
             article_url,
-            summary_fallback
+            summary_fallback,
         )
 
     def deduplicate_entries(self, entries: List[FeedEntry]) -> List[FeedEntry]:

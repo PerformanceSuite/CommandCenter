@@ -39,7 +39,6 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
-
     # Task routing
     task_default_queue="default",
     task_queues=(
@@ -48,27 +47,21 @@ celery_app.conf.update(
         Queue("export", Exchange("export"), routing_key="export"),
         Queue("webhooks", Exchange("webhooks"), routing_key="webhooks"),
     ),
-
     # Task priorities
     task_queue_max_priority=10,
     task_default_priority=5,
-
     # Task results
     result_expires=3600,  # Results expire after 1 hour
     result_extended=True,  # Store additional metadata
-
     # Worker configuration
     worker_prefetch_multiplier=4,
     worker_max_tasks_per_child=1000,
-
     # Task time limits
     task_soft_time_limit=300,  # 5 minutes soft limit
     task_time_limit=600,  # 10 minutes hard limit
-
     # Task retries
     task_acks_late=True,  # Acknowledge after task completion
     task_reject_on_worker_lost=True,
-
     # Beat schedule (for scheduled tasks)
     beat_scheduler="redbeat.RedBeatScheduler",  # Use Redis-backed scheduler
     redbeat_redis_url=CELERY_BROKER_URL,
@@ -77,6 +70,7 @@ celery_app.conf.update(
 # Import and set beat schedule
 try:
     from app.beat_schedule import beat_schedule
+
     celery_app.conf.beat_schedule = beat_schedule
 except ImportError:
     print("Warning: Could not import beat_schedule")

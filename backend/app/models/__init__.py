@@ -8,7 +8,12 @@ from app.models.repository import Repository
 from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.knowledge_entry import KnowledgeEntry
-from app.models.webhook import WebhookConfig, WebhookEvent, WebhookDelivery, GitHubRateLimit
+from app.models.webhook import (
+    WebhookConfig,
+    WebhookEvent,
+    WebhookDelivery,
+    GitHubRateLimit,
+)
 from app.models.project_analysis import ProjectAnalysis
 from app.models.job import Job, JobStatus, JobType
 from app.models.schedule import Schedule, ScheduleFrequency
