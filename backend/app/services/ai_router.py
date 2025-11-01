@@ -207,7 +207,9 @@ class AIRouterService:
                 )
                 logger.info("✅ Anthropic client initialized")
             except ImportError:
-                logger.warning("⚠️  Anthropic SDK not installed (pip install anthropic)")
+                logger.warning(
+                    "⚠️  Anthropic SDK not installed (pip install anthropic)"
+                )
 
         # OpenAI direct client
         if settings.openai_api_key:
