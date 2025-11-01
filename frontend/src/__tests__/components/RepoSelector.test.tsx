@@ -71,13 +71,13 @@ describe('RepoSelector', () => {
   it('selects a repository when clicked', async () => {
     const user = userEvent.setup();
     const repos = [
-      mockRepository({ id: '1', name: 'repo1', is_active: true }),
-      mockRepository({ id: '2', name: 'repo2', is_active: true }),
+      mockRepository({ id: '1', name: 'repo1', full_name: 'testowner/repo1', is_active: true }),
+      mockRepository({ id: '2', name: 'repo2', full_name: 'testowner/repo2', is_active: true }),
     ];
 
     renderWithRouter(<RepoSelector repositories={repos} />);
 
-    const repo1Button = screen.getByLabelText(/Select repository.*repo1/);
+    const repo1Button = screen.getByLabelText(/Select repository testowner\/repo1/);
     await user.click(repo1Button);
 
     expect(repo1Button).toHaveAttribute('aria-pressed', 'true');
