@@ -16,19 +16,13 @@ RUN apt-get update && apt-get install -y \
 COPY libs/knowledgebeast /libs/knowledgebeast
 
 # Install Python dependencies
-COPY backend/requirements.txt .
+COPY backend/requirements.txt /app/requirements.txt
+COPY backend/requirements-dev.txt /app/requirements-dev.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install test dependencies
-RUN pip install --no-cache-dir \
-    pytest==7.4.3 \
-    pytest-asyncio==0.21.1 \
-    pytest-cov==4.1.0 \
-    pytest-xdist==3.5.0 \
-    pytest-timeout==2.2.0
+RUN pip install --no-cache-dir -r requirements-dev.txt
 
 # Copy application code
-COPY backend/ .
+COPY backend/ /app/
 
 # Create directories for test results and coverage
 RUN mkdir -p /app/test-results /app/coverage

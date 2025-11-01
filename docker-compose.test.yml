@@ -35,12 +35,11 @@ services:
   # Backend tests
   test-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.test
+      context: .
+      dockerfile: ./backend/Dockerfile.test
     volumes:
       - ./backend:/app
       - backend-test-results:/app/test-results
-      - backend-coverage:/app/coverage
     environment:
       DATABASE_URL: postgresql://test:test@postgres-test:5432/commandcenter_test
       REDIS_URL: redis://redis-test:6379
@@ -72,7 +71,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules  # Anonymous volume for node_modules
-      - frontend-coverage:/app/coverage
     environment:
       CI: "true"
       VITE_API_URL: http://localhost:8000
@@ -86,7 +84,6 @@ services:
     volumes:
       - ./hub/backend:/app
       - hub-backend-test-results:/app/test-results
-      - hub-backend-coverage:/app/coverage
       - /var/run/docker.sock:/var/run/docker.sock  # For Dagger tests
     environment:
       DATABASE_URL: sqlite+aiosqlite:///./test.db
@@ -110,7 +107,6 @@ services:
     volumes:
       - ./hub/frontend:/app
       - /app/node_modules
-      - hub-frontend-coverage:/app/coverage
     environment:
       CI: "true"
       VITE_API_URL: http://localhost:9001
@@ -119,8 +115,4 @@ services:
 volumes:
   postgres-test-data:
   backend-test-results:
-  backend-coverage:
-  frontend-coverage:
   hub-backend-test-results:
-  hub-backend-coverage:
-  hub-frontend-coverage:
