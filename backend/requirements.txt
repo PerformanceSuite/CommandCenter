@@ -86,7 +86,7 @@ beautifulsoup4==4.12.3
 newspaper3k==0.2.8
 lxml_html_clean==0.4.3  # Required by newspaper3k for HTML cleaning
 nest-asyncio==1.6.0  # Allow nested event loops in Celery tasks
-requests==2.31.0  # HTTP library for documentation scraper (already included via other dependencies, pinned for clarity)
+# Note: httpx is used for async HTTP (defined above), requests removed from explicit deps
 
 # File System Watchers (Phase B Task 5)
 python-magic==0.4.27

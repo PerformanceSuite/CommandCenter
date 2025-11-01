@@ -2,13 +2,13 @@
 Documentation scraper service for automated docs ingestion
 """
 import logging
-import time
+import asyncio
 import ipaddress
 from typing import List, Set, Optional
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
-import requests
+import httpx
 from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 
@@ -41,11 +41,16 @@ class DocumentationScraperService:
         """
         self.logger = logger
         self.rate_limit = rate_limit
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'CommandCenter Documentation Bot/1.0'
-        })
+        self.client = httpx.AsyncClient(
+            headers={'User-Agent': 'CommandCenter Documentation Bot/1.0'},
+            timeout=10.0,
+            follow_redirects=True
+        )
         self.robots_parser = None
+
+    async def close(self):
+        """Close the HTTP client session."""
+        await self.client.aclose()
 
     def _is_safe_url(self, url: str) -> bool:
         """
@@ -109,7 +114,7 @@ class DocumentationScraperService:
         except Exception as e:
             raise ValueError(f"Invalid URL: {e}")
 
-    def fetch_sitemap(self, sitemap_url: str) -> List[str]:
+    async def fetch_sitemap(self, sitemap_url: str) -> List[str]:
         """
         Fetch and parse sitemap.xml for URLs.
 
@@ -125,7 +130,7 @@ class DocumentationScraperService:
         self._is_safe_url(sitemap_url)
 
         try:
-            response = self.session.get(sitemap_url, timeout=10)
+            response = await self.client.get(sitemap_url)
             response.raise_for_status()
 
             # Parse XML
@@ -171,7 +176,7 @@ class DocumentationScraperService:
 
         return self.robots_parser.can_fetch('CommandCenter Documentation Bot', url)
 
-    def scrape_page(self, url: str) -> Optional[DocumentationPage]:
+    async def scrape_page(self, url: str) -> Optional[DocumentationPage]:
         """
         Scrape a single documentation page.
 
@@ -186,9 +191,9 @@ class DocumentationScraperService:
 
         try:
             # Rate limiting
-            time.sleep(self.rate_limit)
+            await asyncio.sleep(self.rate_limit)
 
-            response = self.session.get(url, timeout=10)
+            response = await self.client.get(url)
 
             if response.status_code == 404:
                 self.logger.warning(f"Page not found: {url}")
@@ -235,7 +240,7 @@ class DocumentationScraperService:
             self.logger.error(f"Failed to scrape page {url}: {e}")
             return None
 
-    def extract_links(self, page_url: str, base_url: str) -> List[str]:
+    async def extract_links(self, page_url: str, base_url: str) -> List[str]:
         """
         Extract internal links from a page.
 
@@ -247,7 +252,7 @@ class DocumentationScraperService:
             List of internal links
         """
         try:
-            response = self.session.get(page_url, timeout=10)
+            response = await self.client.get(page_url)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -273,7 +278,7 @@ class DocumentationScraperService:
             self.logger.error(f"Failed to extract links from {page_url}: {e}")
             return []
 
-    def scrape_documentation(
+    async def scrape_documentation(
         self,
         start_url: str,
         max_depth: int = 3,
@@ -318,14 +323,14 @@ class DocumentationScraperService:
                 continue
 
             # Scrape page
-            page = self.scrape_page(current_url)
+            page = await self.scrape_page(current_url)
             if page:
                 pages.append(page)
                 visited.add(current_url)
 
                 # Extract and queue links
                 if depth < max_depth:
-                    links = self.extract_links(current_url, base_url)
+                    links = await self.extract_links(current_url, base_url)
                     for link in links:
                         if link not in visited:
                             to_visit.append((link, depth + 1))
