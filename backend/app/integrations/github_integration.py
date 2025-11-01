@@ -18,7 +18,6 @@ from github import Github, GithubException
 from app.integrations.base import (
     WebhookIntegration,
     IntegrationError,
-    IntegrationAuthError,
 )
 from app.models.research_task import ResearchTask
 from app.models.integration import IntegrationType
