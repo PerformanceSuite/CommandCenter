@@ -2,6 +2,8 @@
 Feed scraper service for RSS/Atom feed ingestion
 """
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import List, Optional, Tuple
 from dataclasses import dataclass
@@ -31,10 +33,17 @@ class FeedEntry:
 class FeedScraperService:
     """Service for scraping and parsing RSS/Atom feeds"""
 
-    def __init__(self):
-        self.logger = logger
+    def __init__(self, max_workers: int = 4):
+        """
+        Initialize feed scraper service.
 
-    def parse_feed(
+        Args:
+            max_workers: Maximum number of threads for blocking I/O operations
+        """
+        self.logger = logger
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    async def parse_feed(
         self,
         feed_url: str,
         auth: Optional[Tuple[str, str]] = None
@@ -97,7 +106,7 @@ class FeedScraperService:
                 tags = [tag['term'] for tag in entry['tags'] if 'term' in tag]
 
             # Attempt to extract full content
-            content = self.extract_full_content(url, summary_fallback=summary)
+            content = await self.extract_full_content(url, summary_fallback=summary)
 
             feed_entry = FeedEntry(
                 title=title,
@@ -113,13 +122,15 @@ class FeedScraperService:
         self.logger.info(f"Parsed {len(entries)} entries from feed")
         return entries
 
-    def extract_full_content(
+    def _extract_full_content_blocking(
         self,
         article_url: str,
         summary_fallback: str = ""
     ) -> str:
         """
-        Extract full article content from URL.
+        Extract full article content from URL (blocking I/O).
+
+        This is a synchronous helper called from executor.
 
         Args:
             article_url: URL of the article
@@ -142,6 +153,30 @@ class FeedScraperService:
         except Exception as e:
             self.logger.error(f"Failed to extract content from {article_url}: {e}")
             return summary_fallback
+
+    async def extract_full_content(
+        self,
+        article_url: str,
+        summary_fallback: str = ""
+    ) -> str:
+        """
+        Extract full article content from URL (async-safe).
+
+        Args:
+            article_url: URL of the article
+            summary_fallback: Summary to use if extraction fails
+
+        Returns:
+            Full article text or fallback summary
+        """
+        # Run blocking newspaper3k calls in executor
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            self.executor,
+            self._extract_full_content_blocking,
+            article_url,
+            summary_fallback
+        )
 
     def deduplicate_entries(self, entries: List[FeedEntry]) -> List[FeedEntry]:
         """

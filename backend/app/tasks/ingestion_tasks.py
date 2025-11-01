@@ -73,7 +73,7 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
                 # Parse feed
                 feed_scraper = FeedScraperService()
-                entries = feed_scraper.parse_feed(source.url)
+                entries = await feed_scraper.parse_feed(source.url)
 
                 # Deduplicate
                 entries = feed_scraper.deduplicate_entries(entries)
@@ -217,20 +217,23 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 # Scrape pages
                 if use_sitemap and 'sitemap_url' in config:
                     # Use sitemap
-                    sitemap_urls = doc_scraper.fetch_sitemap(config['sitemap_url'])
+                    sitemap_urls = await doc_scraper.fetch_sitemap(config['sitemap_url'])
                     pages = []
                     for url in sitemap_urls[:max_pages]:
                         if doc_scraper.is_allowed(url):
-                            page = doc_scraper.scrape_page(url)
+                            page = await doc_scraper.scrape_page(url)
                             if page:
                                 pages.append(page)
                 else:
                     # Crawl recursively
-                    pages = doc_scraper.scrape_documentation(
+                    pages = await doc_scraper.scrape_documentation(
                         source.url,
                         max_depth=max_depth,
                         max_pages=max_pages
                     )
+
+                # Close the HTTP client session
+                await doc_scraper.close()
 
                 # Ingest into RAG
                 rag_service = RAGService(repository_id=source.project_id)

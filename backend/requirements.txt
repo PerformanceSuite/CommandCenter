@@ -83,10 +83,10 @@ openpyxl>=3.1.5,<4.0.0  # Excel export support (docling requires >=3.1.5)
 # RSS Feed scraping (Phase B Knowledge Ingestion)
 feedparser==6.0.11
 beautifulsoup4==4.12.3
-newspaper3k==0.2.8
-lxml_html_clean==0.4.3  # Required by newspaper3k for HTML cleaning
+newspaper4k==0.9.3  # Maintained fork of newspaper3k (last updated 2024)
 nest-asyncio==1.6.0  # Allow nested event loops in Celery tasks
-requests==2.31.0  # HTTP library for documentation scraper (already included via other dependencies, pinned for clarity)
+# Note: httpx is used for async HTTP (defined above), requests removed from explicit deps
+# Note: lxml_html_clean removed (newspaper4k handles HTML cleaning internally)
 
 # File System Watchers (Phase B Task 5)
 python-magic==0.4.27
