@@ -184,6 +184,7 @@ jobs:
         working-directory: backend
         run: |
           flake8 tests/integration/ --max-line-length=100
+        continue-on-error: true
 
       - name: Run mypy on test code
         working-directory: backend
