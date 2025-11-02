@@ -86,13 +86,15 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("postgres:15-alpine")
-            .with_user(str(self.POSTGRES_USER_ID))  # Run as non-root
+            # TODO: with_user breaks postgres initialization - need to fix
+            # .with_user(str(self.POSTGRES_USER_ID))  # Run as non-root
             .with_env_variable("POSTGRES_USER", "commandcenter")
             .with_env_variable("POSTGRES_PASSWORD", self.config.db_password)
             .with_env_variable("POSTGRES_DB", "commandcenter")
             .with_exposed_port(5432)
-            .with_resource_limit("cpu", str(limits.postgres_cpu))
-            .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.postgres_cpu))
+            # .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
         )
 
     async def build_redis(self) -> dagger.Container:
@@ -105,10 +107,12 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("redis:7-alpine")
-            .with_user(str(self.REDIS_USER_ID))  # Run as non-root
+            # TODO: with_user breaks redis startup - need to fix
+            # .with_user(str(self.REDIS_USER_ID))  # Run as non-root
             .with_exposed_port(6379)
-            .with_resource_limit("cpu", str(limits.redis_cpu))
-            .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.redis_cpu))
+            # .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
         )
 
     async def build_backend(self, postgres_host: str, redis_host: str) -> dagger.Container:
@@ -124,7 +128,8 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("python:3.11-slim")
-            .with_user(str(self.APP_USER_ID))  # Run as non-root
+            # TODO: with_user breaks pip install - need to fix
+            # .with_user(str(self.APP_USER_ID))  # Run as non-root
             # Install CommandCenter backend dependencies
             .with_exec(["pip", "install", "fastapi", "uvicorn[standard]",
                        "sqlalchemy", "asyncpg", "redis", "langchain",
@@ -141,8 +146,9 @@ class CommandCenterStack:
             # Run backend
             .with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
             .with_exposed_port(8000)
-            .with_resource_limit("cpu", str(limits.backend_cpu))
-            .with_resource_limit("memory", f"{limits.backend_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.backend_cpu))
+            # .with_resource_limit("memory", f"{limits.backend_memory_mb}m")
         )
 
     async def build_frontend(self, backend_url: str) -> dagger.Container:
@@ -155,7 +161,8 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("node:18-alpine")
-            .with_user(str(self.APP_USER_ID))  # Run as non-root
+            # TODO: with_user breaks npm install - need to fix
+            # .with_user(str(self.APP_USER_ID))  # Run as non-root
             # Install CommandCenter frontend dependencies
             .with_exec(["npm", "install", "-g", "vite", "react", "react-dom"])
             # Set environment variables
@@ -164,8 +171,9 @@ class CommandCenterStack:
             # Run frontend dev server
             .with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"])
             .with_exposed_port(3000)
-            .with_resource_limit("cpu", str(limits.frontend_cpu))
-            .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.frontend_cpu))
+            # .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
         )
 
     @retry_with_backoff(max_attempts=3, initial_delay=2.0)
@@ -189,11 +197,17 @@ class CommandCenterStack:
             self._service_containers["backend"] = backend
             self._service_containers["frontend"] = frontend
 
-            # Start as services
+            # Start as services and bind to keep them running
             postgres_svc = postgres.as_service()
             redis_svc = redis.as_service()
             backend_svc = backend.as_service()
             frontend_svc = frontend.as_service()
+
+            # Keep services running by calling up() and storing endpoints
+            await postgres_svc.up()
+            await redis_svc.up()
+            await backend_svc.up()
+            await frontend_svc.up()
 
             logger.info(f"CommandCenter stack started successfully for {self.config.project_name}")
 
