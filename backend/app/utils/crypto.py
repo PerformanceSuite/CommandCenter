@@ -7,7 +7,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
-from passlib.context import CryptContext
 from app.config import settings
 
 
@@ -77,17 +76,3 @@ def decrypt_token(encrypted_token: str) -> str:
     if not settings.ENCRYPT_TOKENS:
         return encrypted_token
     return get_token_encryption().decrypt(encrypted_token)
-
-
-# Password hashing context for user authentication
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def hash_password(password: str) -> str:
-    """Hash a password for storage."""
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)

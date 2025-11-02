@@ -28,7 +28,12 @@ class ExportService:
             raise ValueError("Technologies cannot be None")
 
         data = [
-            {"id": t.id, "title": t.title, "domain": t.domain, "status": t.status}
+            {
+                "id": t.id,
+                "title": t.title,
+                "domain": t.domain,
+                "status": t.status,
+            }
             for t in technologies
         ]
         return json.dumps(data)
@@ -57,6 +62,13 @@ class ExportService:
         writer.writeheader()
 
         for t in technologies:
-            writer.writerow({"id": t.id, "title": t.title, "domain": t.domain, "status": t.status})
+            writer.writerow(
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "domain": t.domain,
+                    "status": t.status,
+                }
+            )
 
         return output.getvalue()

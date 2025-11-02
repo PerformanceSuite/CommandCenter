@@ -93,7 +93,9 @@ class JobService:
 
         return job
 
-    async def get_job_by_celery_task_id(self, celery_task_id: str) -> Optional[Job]:
+    async def get_job_by_celery_task_id(
+        self, celery_task_id: str
+    ) -> Optional[Job]:
         """
         Get job by Celery task ID.
 
@@ -103,7 +105,9 @@ class JobService:
         Returns:
             Job or None if not found
         """
-        result = await self.db.execute(select(Job).where(Job.celery_task_id == celery_task_id))
+        result = await self.db.execute(
+            select(Job).where(Job.celery_task_id == celery_task_id)
+        )
         return result.scalar_one_or_none()
 
     async def create_job(
@@ -241,7 +245,9 @@ class JobService:
                 celery_app.control.revoke(job.celery_task_id, terminate=True)
             except Exception as e:
                 # Log error but don't fail the cancellation
-                print(f"Failed to revoke Celery task {job.celery_task_id}: {e}")
+                print(
+                    f"Failed to revoke Celery task {job.celery_task_id}: {e}"
+                )
 
         # Update job status
         job.status = JobStatus.CANCELLED
@@ -296,9 +302,15 @@ class JobService:
             "current_step": job.current_step,
             "is_terminal": job.is_terminal,
             "is_active": job.is_active,
-            "created_at": job.created_at.isoformat() if job.created_at else None,
-            "started_at": job.started_at.isoformat() if job.started_at else None,
-            "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+            "created_at": job.created_at.isoformat()
+            if job.created_at
+            else None,
+            "started_at": job.started_at.isoformat()
+            if job.started_at
+            else None,
+            "completed_at": job.completed_at.isoformat()
+            if job.completed_at
+            else None,
             "duration_seconds": job.duration_seconds,
         }
 
@@ -314,7 +326,9 @@ class JobService:
 
         return progress_info
 
-    async def get_active_jobs(self, project_id: Optional[int] = None) -> List[Job]:
+    async def get_active_jobs(
+        self, project_id: Optional[int] = None
+    ) -> List[Job]:
         """
         Get all active (pending or running) jobs.
 
@@ -325,7 +339,10 @@ class JobService:
             List of active jobs
         """
         query = select(Job).where(
-            or_(Job.status == JobStatus.PENDING, Job.status == JobStatus.RUNNING)
+            or_(
+                Job.status == JobStatus.PENDING,
+                Job.status == JobStatus.RUNNING,
+            )
         )
 
         if project_id:
@@ -336,7 +353,9 @@ class JobService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_statistics(self, project_id: Optional[int] = None) -> Dict[str, Any]:
+    async def get_statistics(
+        self, project_id: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Get job statistics.
 
@@ -363,9 +382,12 @@ class JobService:
         cancelled = sum(1 for j in all_jobs if j.status == JobStatus.CANCELLED)
 
         # Calculate average duration for completed jobs
-        completed_jobs = [j for j in all_jobs if j.duration_seconds is not None]
+        completed_jobs = [
+            j for j in all_jobs if j.duration_seconds is not None
+        ]
         avg_duration = (
-            sum(j.duration_seconds for j in completed_jobs) / len(completed_jobs)
+            sum(j.duration_seconds for j in completed_jobs)
+            / len(completed_jobs)
             if completed_jobs
             else None
         )
@@ -380,7 +402,9 @@ class JobService:
                 "cancelled": cancelled,
             },
             "success_rate": (
-                (completed / (completed + failed) * 100) if (completed + failed) > 0 else None
+                (completed / (completed + failed) * 100)
+                if (completed + failed) > 0
+                else None
             ),
             "average_duration_seconds": avg_duration,
             "active_jobs": pending + running,

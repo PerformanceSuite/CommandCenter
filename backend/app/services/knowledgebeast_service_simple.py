@@ -45,7 +45,9 @@ class KnowledgeBeastService:
 
         self.project_id = project_id
         self.collection_name = f"project_{project_id}"
-        self.db_path = db_path or getattr(settings, "knowledgebeast_db_path", "./kb_chroma_db")
+        self.db_path = db_path or getattr(
+            settings, "knowledgebeast_db_path", "./kb_chroma_db"
+        )
         self.embedding_model = embedding_model
 
         # Create per-project persist directory
@@ -61,7 +63,9 @@ class KnowledgeBeastService:
             vector_cache_size=1000,
         )
 
-        logger.info(f"KB initialized: project={project_id}, dir={self.persist_dir}")
+        logger.info(
+            f"KB initialized: project={project_id}, dir={self.persist_dir}"
+        )
 
     async def query(
         self,
@@ -116,7 +120,9 @@ class KnowledgeBeastService:
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".txt"
+            ) as f:
                 f.write(content)
                 temp_path = f.name
 

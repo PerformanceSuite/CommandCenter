@@ -51,7 +51,8 @@ class RateLimitService:
                     "limit": rate_limits.core.limit,
                     "remaining": rate_limits.core.remaining,
                     "reset": rate_limits.core.reset,
-                    "used": rate_limits.core.limit - rate_limits.core.remaining,
+                    "used": rate_limits.core.limit
+                    - rate_limits.core.remaining,
                     "percentage_used": (
                         (rate_limits.core.limit - rate_limits.core.remaining)
                         / rate_limits.core.limit
@@ -64,9 +65,13 @@ class RateLimitService:
                     "limit": rate_limits.search.limit,
                     "remaining": rate_limits.search.remaining,
                     "reset": rate_limits.search.reset,
-                    "used": rate_limits.search.limit - rate_limits.search.remaining,
+                    "used": rate_limits.search.limit
+                    - rate_limits.search.remaining,
                     "percentage_used": (
-                        (rate_limits.search.limit - rate_limits.search.remaining)
+                        (
+                            rate_limits.search.limit
+                            - rate_limits.search.remaining
+                        )
                         / rate_limits.search.limit
                         * 100
                         if rate_limits.search.limit > 0
@@ -77,9 +82,13 @@ class RateLimitService:
                     "limit": rate_limits.graphql.limit,
                     "remaining": rate_limits.graphql.remaining,
                     "reset": rate_limits.graphql.reset,
-                    "used": rate_limits.graphql.limit - rate_limits.graphql.remaining,
+                    "used": rate_limits.graphql.limit
+                    - rate_limits.graphql.remaining,
                     "percentage_used": (
-                        (rate_limits.graphql.limit - rate_limits.graphql.remaining)
+                        (
+                            rate_limits.graphql.limit
+                            - rate_limits.graphql.remaining
+                        )
                         / rate_limits.graphql.limit
                         * 100
                         if rate_limits.graphql.limit > 0
@@ -91,7 +100,9 @@ class RateLimitService:
             logger.error(f"Failed to get rate limit status: {e}")
             raise
 
-    async def store_rate_limit_status(self, db: AsyncSession, token: Optional[str] = None) -> None:
+    async def store_rate_limit_status(
+        self, db: AsyncSession, token: Optional[str] = None
+    ) -> None:
         """
         Store current rate limit status in database
 
@@ -146,7 +157,9 @@ class RateLimitService:
             logger.error(f"Failed to check rate limit: {e}")
             return False
 
-    async def wait_for_rate_limit_reset(self, resource_type: str = "core") -> None:
+    async def wait_for_rate_limit_reset(
+        self, resource_type: str = "core"
+    ) -> None:
         """
         Wait until rate limit resets
 
@@ -159,7 +172,9 @@ class RateLimitService:
             now = datetime.utcnow()
 
             if reset_time > now:
-                wait_seconds = (reset_time - now).total_seconds() + 1  # Add 1 second buffer
+                wait_seconds = (
+                    reset_time - now
+                ).total_seconds() + 1  # Add 1 second buffer
                 logger.warning(
                     f"Rate limit exceeded for {resource_type}. "
                     f"Waiting {wait_seconds:.0f} seconds until reset."
@@ -171,7 +186,9 @@ class RateLimitService:
             await asyncio.sleep(60)
 
 
-def with_rate_limit_retry(max_attempts: int = 3, min_wait: int = 1, max_wait: int = 10):
+def with_rate_limit_retry(
+    max_attempts: int = 3, min_wait: int = 1, max_wait: int = 10
+):
     """
     Decorator to add exponential backoff retry logic for GitHub API calls
 
@@ -188,7 +205,9 @@ def with_rate_limit_retry(max_attempts: int = 3, min_wait: int = 1, max_wait: in
         @retry(
             stop=stop_after_attempt(max_attempts),
             wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
-            retry=retry_if_exception_type((GithubException, RateLimitExceededException)),
+            retry=retry_if_exception_type(
+                (GithubException, RateLimitExceededException)
+            ),
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )
@@ -202,7 +221,9 @@ def with_rate_limit_retry(max_attempts: int = 3, min_wait: int = 1, max_wait: in
             except GithubException as e:
                 if e.status == 403 and "rate limit" in str(e).lower():
                     logger.error(f"Rate limit error in {func.__name__}: {e}")
-                    raise RateLimitExceededException(e.status, e.data, e.headers)
+                    raise RateLimitExceededException(
+                        e.status, e.data, e.headers
+                    )
                 raise
 
         return wrapper

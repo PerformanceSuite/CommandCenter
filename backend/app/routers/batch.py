@@ -85,7 +85,9 @@ async def batch_analyze(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -93,7 +95,11 @@ async def batch_analyze(
         )
 
 
-@router.post("/export", response_model=BatchExportResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/export",
+    response_model=BatchExportResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def batch_export(
     request: BatchExportRequest,
     db: AsyncSession = Depends(get_db),
@@ -151,7 +157,9 @@ async def batch_export(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -159,7 +167,11 @@ async def batch_export(
         )
 
 
-@router.post("/import", response_model=BatchImportResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/import",
+    response_model=BatchImportResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def batch_import(
     request: BatchImportRequest,
     db: AsyncSession = Depends(get_db),
@@ -220,7 +232,9 @@ async def batch_import(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

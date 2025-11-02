@@ -48,7 +48,8 @@ async def get_rate_limit_status(
 
 @router.post("/track", status_code=status.HTTP_201_CREATED)
 async def track_rate_limit(
-    db: AsyncSession = Depends(get_db), github: Github = Depends(get_github_client)
+    db: AsyncSession = Depends(get_db),
+    github: Github = Depends(get_github_client),
 ) -> Dict[str, str]:
     """
     Store current rate limit status in database for tracking
@@ -62,7 +63,9 @@ async def track_rate_limit(
     """
     try:
         rate_limit_service = RateLimitService(github)
-        await rate_limit_service.store_rate_limit_status(db, token=settings.github_token)
+        await rate_limit_service.store_rate_limit_status(
+            db, token=settings.github_token
+        )
 
         return {
             "status": "success",

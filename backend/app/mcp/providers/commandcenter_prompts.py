@@ -197,7 +197,9 @@ class CommandCenterPromptProvider(PromptProvider):
             raise PromptNotFoundError(name)
 
     # Prompt handlers
-    async def _prompt_analyze_project(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_analyze_project(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate project analysis prompt."""
         if "project_name" not in arguments:
             raise InvalidParamsError("project_name is required")
@@ -243,7 +245,9 @@ Use the CommandCenter resources (commandcenter://projects/{project_name}) to gat
 
         return PromptResult(messages=messages)
 
-    async def _prompt_evaluate_technology(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_evaluate_technology(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate technology evaluation prompt."""
         if "technology_name" not in arguments:
             raise InvalidParamsError("technology_name is required")
@@ -295,7 +299,9 @@ Base your evaluation on current CommandCenter technologies (commandcenter://tech
 
         return PromptResult(messages=messages)
 
-    async def _prompt_plan_research(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_plan_research(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate research planning prompt."""
         if "topic" not in arguments:
             raise InvalidParamsError("topic is required")
@@ -348,7 +354,9 @@ Format as actionable tasks that can be created in CommandCenter using the create
 
         return PromptResult(messages=messages)
 
-    async def _prompt_review_code(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_review_code(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate code review prompt."""
         if "repository_name" not in arguments:
             raise InvalidParamsError("repository_name is required")
@@ -433,7 +441,9 @@ Access repository data via commandcenter://repositories/{repository_name}""",
 
         return PromptResult(messages=messages)
 
-    async def _prompt_generate_report(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_generate_report(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate report generation prompt."""
         if "report_type" not in arguments:
             raise InvalidParamsError("report_type is required")
@@ -484,7 +494,9 @@ Gather data from CommandCenter resources (commandcenter://overview, commandcente
 
         return PromptResult(messages=messages)
 
-    async def _prompt_prioritize_tasks(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_prioritize_tasks(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate task prioritization prompt."""
         criteria = arguments.get("criteria", "impact")
 
@@ -524,7 +536,9 @@ Retrieve current tasks from commandcenter://research/tasks and provide a priorit
 
         return PromptResult(messages=messages)
 
-    async def _prompt_architecture_review(self, arguments: Dict[str, Any]) -> PromptResult:
+    async def _prompt_architecture_review(
+        self, arguments: Dict[str, Any]
+    ) -> PromptResult:
         """Generate architecture review prompt."""
         if "system_name" not in arguments:
             raise InvalidParamsError("system_name is required")

@@ -36,7 +36,9 @@ class HTMLExporter(BaseExporter):
         metrics = self._get_metrics()
         research_gaps = self._get_research_gaps_list()
 
-        return self._generate_html(technologies, dependencies, metrics, research_gaps)
+        return self._generate_html(
+            technologies, dependencies, metrics, research_gaps
+        )
 
     def _generate_html(
         self,
@@ -107,7 +109,9 @@ class HTMLExporter(BaseExporter):
         research_gaps: List[Dict[str, Any]],
     ) -> str:
         """Generate summary metrics section."""
-        outdated_count = sum(1 for d in dependencies if d.get("is_outdated", False))
+        outdated_count = sum(
+            1 for d in dependencies if d.get("is_outdated", False)
+        )
 
         return f"""
         <section class="summary-section">
@@ -237,7 +241,9 @@ class HTMLExporter(BaseExporter):
             </div>
         </section>"""
 
-    def _generate_research_gaps_section(self, research_gaps: List[Dict[str, Any]]) -> str:
+    def _generate_research_gaps_section(
+        self, research_gaps: List[Dict[str, Any]]
+    ) -> str:
         """Generate research gaps section."""
         gap_cards = "\n".join(
             [
@@ -262,7 +268,9 @@ class HTMLExporter(BaseExporter):
             </div>
         </section>"""
 
-    def _prepare_chart_data(self, technologies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _prepare_chart_data(
+        self, technologies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Prepare data for technology category chart."""
         categories = {}
         for tech in technologies:
@@ -274,9 +282,13 @@ class HTMLExporter(BaseExporter):
             "data": list(categories.values()),
         }
 
-    def _prepare_dependency_status_data(self, dependencies: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _prepare_dependency_status_data(
+        self, dependencies: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Prepare data for dependency status chart."""
-        current = sum(1 for d in dependencies if not d.get("is_outdated", False))
+        current = sum(
+            1 for d in dependencies if not d.get("is_outdated", False)
+        )
         outdated = sum(1 for d in dependencies if d.get("is_outdated", False))
 
         return {
@@ -297,7 +309,7 @@ class HTMLExporter(BaseExporter):
         try:
             dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
             return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
-        except:
+        except Exception:
             return dt_str
 
     def _get_styles(self) -> str:
@@ -540,7 +552,9 @@ class HTMLExporter(BaseExporter):
         }
     </style>"""
 
-    def _get_scripts(self, tech_data: Dict[str, Any], dep_data: Dict[str, Any]) -> str:
+    def _get_scripts(
+        self, tech_data: Dict[str, Any], dep_data: Dict[str, Any]
+    ) -> str:
         """Get embedded JavaScript for charts."""
         return f"""
     <script>

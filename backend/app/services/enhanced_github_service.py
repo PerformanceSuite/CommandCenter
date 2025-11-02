@@ -77,8 +77,12 @@ class EnhancedGitHubService:
                 "forks": repo.forks_count,
                 "language": repo.language,
                 "github_id": repo.id,
-                "created_at": repo.created_at.isoformat() if repo.created_at else None,
-                "updated_at": repo.updated_at.isoformat() if repo.updated_at else None,
+                "created_at": repo.created_at.isoformat()
+                if repo.created_at
+                else None,
+                "updated_at": repo.updated_at.isoformat()
+                if repo.updated_at
+                else None,
                 "topics": repo.get_topics(),
                 "has_issues": repo.has_issues,
                 "has_wiki": repo.has_wiki,
@@ -93,13 +97,19 @@ class EnhancedGitHubService:
             return repo_info
 
         except GithubException as e:
-            logger.error(f"Failed to get repository info for {owner}/{name}: {e}")
+            logger.error(
+                f"Failed to get repository info for {owner}/{name}: {e}"
+            )
             raise Exception(f"Failed to get repository info: {e}")
 
     @track_github_api_call("list_pull_requests", "GET")
     @with_rate_limit_retry(max_attempts=3)
     async def list_pull_requests(
-        self, owner: str, name: str, state: str = "open", use_cache: bool = True
+        self,
+        owner: str,
+        name: str,
+        state: str = "open",
+        use_cache: bool = True,
     ) -> List[Dict[str, Any]]:
         """
         List pull requests with caching
@@ -135,8 +145,16 @@ class EnhancedGitHubService:
                         "title": pr.title,
                         "state": pr.state,
                         "user": pr.user.login if pr.user else None,
-                        "created_at": (pr.created_at.isoformat() if pr.created_at else None),
-                        "updated_at": (pr.updated_at.isoformat() if pr.updated_at else None),
+                        "created_at": (
+                            pr.created_at.isoformat()
+                            if pr.created_at
+                            else None
+                        ),
+                        "updated_at": (
+                            pr.updated_at.isoformat()
+                            if pr.updated_at
+                            else None
+                        ),
                         "merged": pr.merged,
                         "mergeable": pr.mergeable,
                         "head": pr.head.ref if pr.head else None,
@@ -152,7 +170,9 @@ class EnhancedGitHubService:
             return pr_list
 
         except GithubException as e:
-            logger.error(f"Failed to list pull requests for {owner}/{name}: {e}")
+            logger.error(
+                f"Failed to list pull requests for {owner}/{name}: {e}"
+            )
             raise Exception(f"Failed to list pull requests: {e}")
 
     @track_github_api_call("list_issues", "GET")
@@ -193,9 +213,21 @@ class EnhancedGitHubService:
                         "state": issue.state,
                         "user": issue.user.login if issue.user else None,
                         "labels": [label.name for label in issue.labels],
-                        "created_at": (issue.created_at.isoformat() if issue.created_at else None),
-                        "updated_at": (issue.updated_at.isoformat() if issue.updated_at else None),
-                        "closed_at": (issue.closed_at.isoformat() if issue.closed_at else None),
+                        "created_at": (
+                            issue.created_at.isoformat()
+                            if issue.created_at
+                            else None
+                        ),
+                        "updated_at": (
+                            issue.updated_at.isoformat()
+                            if issue.updated_at
+                            else None
+                        ),
+                        "closed_at": (
+                            issue.closed_at.isoformat()
+                            if issue.closed_at
+                            else None
+                        ),
                         "html_url": issue.html_url,
                         "comments": issue.comments,
                     }
@@ -275,12 +307,16 @@ class EnhancedGitHubService:
                 raise ValueError(f"Invalid action: {action}")
 
         except GithubException as e:
-            logger.error(f"Failed to manage label {label_name} for {owner}/{name}: {e}")
+            logger.error(
+                f"Failed to manage label {label_name} for {owner}/{name}: {e}"
+            )
             raise Exception(f"Failed to manage label: {e}")
 
     @track_github_api_call("get_actions_workflows", "GET")
     @with_rate_limit_retry(max_attempts=3)
-    async def list_workflows(self, owner: str, name: str) -> List[Dict[str, Any]]:
+    async def list_workflows(
+        self, owner: str, name: str
+    ) -> List[Dict[str, Any]]:
         """
         List GitHub Actions workflows
 
@@ -304,10 +340,14 @@ class EnhancedGitHubService:
                         "path": workflow.path,
                         "state": workflow.state,
                         "created_at": (
-                            workflow.created_at.isoformat() if workflow.created_at else None
+                            workflow.created_at.isoformat()
+                            if workflow.created_at
+                            else None
                         ),
                         "updated_at": (
-                            workflow.updated_at.isoformat() if workflow.updated_at else None
+                            workflow.updated_at.isoformat()
+                            if workflow.updated_at
+                            else None
                         ),
                         "url": workflow.html_url,
                         "badge_url": workflow.badge_url,
@@ -380,4 +420,6 @@ class EnhancedGitHubService:
         if self.redis:
             pattern = f"github:*:{owner}:{name}*"
             deleted = await self.redis.delete_pattern(pattern)
-            logger.info(f"Invalidated {deleted} cache entries for {owner}/{name}")
+            logger.info(
+                f"Invalidated {deleted} cache entries for {owner}/{name}"
+            )

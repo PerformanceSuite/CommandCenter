@@ -14,9 +14,14 @@ from sqlalchemy import select
 from app.tasks import celery_app
 from app.models.ingestion_source import IngestionSource, SourceStatus
 from app.services.feed_scraper_service import FeedScraperService
-from app.services.documentation_scraper_service import DocumentationScraperService
+from app.services.documentation_scraper_service import (
+    DocumentationScraperService,
+)
 from app.services.rag_service import RAGService
-from app.services.file_watcher_service import FileWatcherService, FileChangeEvent
+from app.services.file_watcher_service import (
+    FileWatcherService,
+    FileChangeEvent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +56,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _scrape_feed():
         async with async_session_maker() as db:
@@ -59,7 +66,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
             try:
                 # Load source
                 result = await db.execute(
-                    select(IngestionSource).where(IngestionSource.id == source_id)
+                    select(IngestionSource).where(
+                        IngestionSource.id == source_id
+                    )
                 )
                 source = result.scalar_one_or_none()
 
@@ -70,7 +79,10 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                 # Check if enabled
                 if not source.enabled:
                     logger.info(f"Skipping disabled source: {source.name}")
-                    return {"status": "skipped", "message": "Source is disabled"}
+                    return {
+                        "status": "skipped",
+                        "message": "Source is disabled",
+                    }
 
                 # Update status to running
                 source.status = SourceStatus.RUNNING
@@ -99,7 +111,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                                 "url": entry.url,
                                 "author": entry.author,
                                 "published": (
-                                    entry.published.isoformat() if entry.published else None
+                                    entry.published.isoformat()
+                                    if entry.published
+                                    else None
                                 ),
                                 "tags": entry.tags,
                                 "source_type": "rss",
@@ -110,7 +124,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                         )
                         documents_ingested += 1
                     except Exception as e:
-                        logger.error(f"Failed to ingest entry '{entry.title}': {e}")
+                        logger.error(
+                            f"Failed to ingest entry '{entry.title}': {e}"
+                        )
                         continue
 
                 # Update source status
@@ -132,7 +148,9 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                 }
 
             except Exception as e:
-                logger.error(f"RSS scraping failed for source {source_id}: {e}")
+                logger.error(
+                    f"RSS scraping failed for source {source_id}: {e}"
+                )
 
                 # Rollback failed transaction
                 await db.rollback()
@@ -144,7 +162,11 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                     source.last_error = str(e)
                     await db.commit()
 
-                return {"status": "error", "error": str(e), "source_id": source_id}
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "source_id": source_id,
+                }
             finally:
                 await engine.dispose()
 
@@ -186,7 +208,9 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _scrape_docs():
         async with async_session_maker() as db:
@@ -194,7 +218,9 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
             try:
                 # Load source
                 result = await db.execute(
-                    select(IngestionSource).where(IngestionSource.id == source_id)
+                    select(IngestionSource).where(
+                        IngestionSource.id == source_id
+                    )
                 )
                 source = result.scalar_one_or_none()
 
@@ -204,7 +230,10 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
                 if not source.enabled:
                     logger.info(f"Skipping disabled source: {source.name}")
-                    return {"status": "skipped", "message": "Source is disabled"}
+                    return {
+                        "status": "skipped",
+                        "message": "Source is disabled",
+                    }
 
                 # Update status
                 source.status = SourceStatus.RUNNING
@@ -228,7 +257,9 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 # Scrape pages
                 if use_sitemap and "sitemap_url" in config:
                     # Use sitemap
-                    sitemap_urls = await doc_scraper.fetch_sitemap(config["sitemap_url"])
+                    sitemap_urls = await doc_scraper.fetch_sitemap(
+                        config["sitemap_url"]
+                    )
                     pages = []
                     for url in sitemap_urls[:max_pages]:
                         if doc_scraper.is_allowed(url):
@@ -266,7 +297,9 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                         )
                         documents_ingested += 1
                     except Exception as e:
-                        logger.error(f"Failed to ingest page '{page.title}': {e}")
+                        logger.error(
+                            f"Failed to ingest page '{page.title}': {e}"
+                        )
                         continue
 
                 # Update source status
@@ -351,7 +384,9 @@ def process_webhook_payload(
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _process_webhook():
         async with async_session_maker() as db:
@@ -360,7 +395,9 @@ def process_webhook_payload(
                 # Load source if provided
                 if source_id:
                     result = await db.execute(
-                        select(IngestionSource).where(IngestionSource.id == source_id)
+                        select(IngestionSource).where(
+                            IngestionSource.id == source_id
+                        )
                     )
                     source = result.scalar_one_or_none()
 
@@ -394,7 +431,9 @@ def process_webhook_payload(
                             "metadata": {
                                 "event_type": "release",
                                 "tag": release.get("tag_name"),
-                                "repository": payload.get("repository", {}).get("full_name"),
+                                "repository": payload.get(
+                                    "repository", {}
+                                ).get("full_name"),
                                 "published_at": release.get("published_at"),
                             },
                         }
@@ -411,8 +450,12 @@ def process_webhook_payload(
                                 "metadata": {
                                     "event_type": "commit",
                                     "sha": commit.get("id"),
-                                    "author": commit.get("author", {}).get("name"),
-                                    "repository": payload.get("repository", {}).get("full_name"),
+                                    "author": commit.get("author", {}).get(
+                                        "name"
+                                    ),
+                                    "repository": payload.get(
+                                        "repository", {}
+                                    ).get("full_name"),
                                 },
                             }
                         )
@@ -436,7 +479,12 @@ def process_webhook_payload(
                 for doc in documents:
                     try:
                         metadata = doc.get("metadata", {})
-                        metadata.update({"source_type": "webhook", "event_type": event_type})
+                        metadata.update(
+                            {
+                                "source_type": "webhook",
+                                "event_type": event_type,
+                            }
+                        )
 
                         if source:
                             metadata.update(
@@ -447,7 +495,9 @@ def process_webhook_payload(
                                 }
                             )
 
-                        await rag_service.add_document(content=doc["content"], metadata=metadata)
+                        await rag_service.add_document(
+                            content=doc["content"], metadata=metadata
+                        )
                         documents_ingested += 1
 
                     except Exception as e:
@@ -463,7 +513,9 @@ def process_webhook_payload(
                     source.last_error = None
                     await db.commit()
 
-                logger.info(f"Webhook processing complete: {documents_ingested} documents ingested")
+                logger.info(
+                    f"Webhook processing complete: {documents_ingested} documents ingested"
+                )
 
                 return {
                     "status": "success",
@@ -507,7 +559,9 @@ def process_webhook_payload(
 
 
 @celery_app.task(base=IngestionTask, bind=True)
-def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[str, Any]:
+def process_file_change(
+    self, source_id: int, event: FileChangeEvent
+) -> Dict[str, Any]:
     """
     Process file system change and ingest document.
 
@@ -527,7 +581,9 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def _process_file():
         async with async_session_maker() as db:
@@ -535,7 +591,9 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
             try:
                 # Load source
                 result = await db.execute(
-                    select(IngestionSource).filter(IngestionSource.id == source_id)
+                    select(IngestionSource).filter(
+                        IngestionSource.id == source_id
+                    )
                 )
                 source = result.scalar_one_or_none()
 
@@ -543,7 +601,10 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                     return {"status": "error", "error": "Source not found"}
 
                 if not source.enabled:
-                    return {"status": "skipped", "message": "Source is disabled"}
+                    return {
+                        "status": "skipped",
+                        "message": "Source is disabled",
+                    }
 
                 # Get config
                 config = source.config or {}
@@ -554,9 +615,15 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                 file_watcher = FileWatcherService()
 
                 # Get file path from event (handle both FileChangeEvent and dict)
-                file_path = event.file_path if hasattr(event, "file_path") else event["file_path"]
+                file_path = (
+                    event.file_path
+                    if hasattr(event, "file_path")
+                    else event["file_path"]
+                )
                 event_type = (
-                    event.event_type if hasattr(event, "event_type") else event["event_type"]
+                    event.event_type
+                    if hasattr(event, "event_type")
+                    else event["event_type"]
                 )
 
                 # Security: Validate file path to prevent path traversal
@@ -565,7 +632,9 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                     resolved_str = str(resolved_path)
 
                     # Import security constants
-                    from app.services.file_watcher_service import BLOCKED_PATH_PREFIXES
+                    from app.services.file_watcher_service import (
+                        BLOCKED_PATH_PREFIXES,
+                    )
 
                     # Check against blocked system directories
                     for blocked_prefix in BLOCKED_PATH_PREFIXES:
@@ -578,8 +647,13 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                                 "error": f"Access denied: Cannot process files in system directory {blocked_prefix}",
                             }
                 except Exception as e:
-                    logger.error(f"Path validation failed for {file_path}: {e}")
-                    return {"status": "error", "error": f"Invalid file path: {str(e)}"}
+                    logger.error(
+                        f"Path validation failed for {file_path}: {e}"
+                    )
+                    return {
+                        "status": "error",
+                        "error": f"Invalid file path: {str(e)}",
+                    }
 
                 # Check patterns
                 if not file_watcher.should_process_file(file_path, patterns):
@@ -603,7 +677,10 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                 content = file_watcher.extract_text_from_file(file_path)
 
                 if not content:
-                    return {"status": "skipped", "message": "No content extracted"}
+                    return {
+                        "status": "skipped",
+                        "message": "No content extracted",
+                    }
 
                 # Ingest into RAG
                 rag_service = RAGService()

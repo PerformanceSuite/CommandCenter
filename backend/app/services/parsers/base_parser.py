@@ -95,7 +95,9 @@ class BaseParser(ABC):
             NotImplementedError: If registry lookup not implemented
             httpx.HTTPError: If registry request fails
         """
-        raise NotImplementedError(f"{self.name} parser does not implement latest version lookup")
+        raise NotImplementedError(
+            f"{self.name} parser does not implement latest version lookup"
+        )
 
     async def _read_file_async(self, file_path: Path) -> str:
         """

@@ -75,7 +75,9 @@ class RepositoryService:
 
         return repository
 
-    async def get_repository_by_full_name(self, full_name: str) -> Optional[Repository]:
+    async def get_repository_by_full_name(
+        self, full_name: str
+    ) -> Optional[Repository]:
         """
         Get repository by full name
 
@@ -87,7 +89,9 @@ class RepositoryService:
         """
         return await self.repo.get_by_full_name(full_name)
 
-    async def create_repository(self, repository_data: RepositoryCreate) -> Repository:
+    async def create_repository(
+        self, repository_data: RepositoryCreate
+    ) -> Repository:
         """
         Create new repository
 
@@ -111,9 +115,8 @@ class RepositoryService:
             )
 
         # Create repository
-        # TODO: Get project_id from auth context once auth is implemented
         repository = await self.repo.create(
-            **repository_data.model_dump(), full_name=full_name, project_id=1
+            **repository_data.model_dump(), full_name=full_name
         )
 
         await self.db.commit()
@@ -162,7 +165,9 @@ class RepositoryService:
         await self.repo.delete(repository)
         await self.db.commit()
 
-    async def sync_repository(self, repository_id: int, force: bool = False) -> Dict[str, Any]:
+    async def sync_repository(
+        self, repository_id: int, force: bool = False
+    ) -> Dict[str, Any]:
         """
         Sync repository with GitHub
 
@@ -179,7 +184,9 @@ class RepositoryService:
         repository = await self.get_repository(repository_id)
 
         # Initialize async GitHub service
-        async with GitHubAsyncService(access_token=repository.access_token) as github_service:
+        async with GitHubAsyncService(
+            access_token=repository.access_token
+        ) as github_service:
             try:
                 # Sync with GitHub
                 sync_info = await github_service.sync_repository(
@@ -191,7 +198,9 @@ class RepositoryService:
                 # Update repository with sync info
                 update_fields = {
                     "last_commit_sha": sync_info.get("last_commit_sha"),
-                    "last_commit_message": sync_info.get("last_commit_message"),
+                    "last_commit_message": sync_info.get(
+                        "last_commit_message"
+                    ),
                     "last_commit_author": sync_info.get("last_commit_author"),
                     "last_commit_date": sync_info.get("last_commit_date"),
                     "last_synced_at": sync_info.get("last_synced_at"),
@@ -201,7 +210,9 @@ class RepositoryService:
                     "description": sync_info.get("description"),
                 }
 
-                repository = await self.repo.update(repository, **update_fields)
+                repository = await self.repo.update(
+                    repository, **update_fields
+                )
                 await self.db.commit()
                 await self.db.refresh(repository)
 
@@ -209,7 +220,9 @@ class RepositoryService:
                     "repository_id": repository.id,
                     "synced": sync_info["synced"],
                     "last_commit_sha": sync_info.get("last_commit_sha"),
-                    "last_commit_message": sync_info.get("last_commit_message"),
+                    "last_commit_message": sync_info.get(
+                        "last_commit_message"
+                    ),
                     "last_synced_at": sync_info["last_synced_at"],
                     "changes_detected": sync_info["changes_detected"],
                 }
@@ -249,9 +262,13 @@ class RepositoryService:
             )
 
         # Fetch from GitHub
-        async with GitHubAsyncService(access_token=access_token) as github_service:
+        async with GitHubAsyncService(
+            access_token=access_token
+        ) as github_service:
             try:
-                repo_info = await github_service.get_repository_info(owner, name)
+                repo_info = await github_service.get_repository_info(
+                    owner, name
+                )
 
                 # Create repository
                 repository = await self.repo.create(

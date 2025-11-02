@@ -207,11 +207,15 @@ class AIRouterService:
                 )
                 logger.info("✅ Anthropic client initialized")
             except ImportError:
-                logger.warning("⚠️  Anthropic SDK not installed (pip install anthropic)")
+                logger.warning(
+                    "⚠️  Anthropic SDK not installed (pip install anthropic)"
+                )
 
         # OpenAI direct client
         if settings.openai_api_key:
-            self._clients[AIProvider.OPENAI] = AsyncOpenAI(api_key=settings.openai_api_key)
+            self._clients[AIProvider.OPENAI] = AsyncOpenAI(
+                api_key=settings.openai_api_key
+            )
             logger.info("✅ OpenAI client initialized")
 
         # Google AI client
@@ -223,10 +227,14 @@ class AIRouterService:
                 self._clients[AIProvider.GOOGLE] = genai
                 logger.info("✅ Google AI client initialized")
             except ImportError:
-                logger.warning("⚠️  Google AI SDK not installed (pip install google-generativeai)")
+                logger.warning(
+                    "⚠️  Google AI SDK not installed (pip install google-generativeai)"
+                )
 
         if not self._clients:
-            logger.warning("⚠️  No AI providers configured! Add API keys to .env")
+            logger.warning(
+                "⚠️  No AI providers configured! Add API keys to .env"
+            )
 
     async def chat_completion(
         self,
@@ -286,7 +294,9 @@ class AIRouterService:
                         **kwargs,
                     )
                 except Exception as fallback_error:
-                    logger.warning(f"⚠️  Fallback provider {fallback} failed: {fallback_error}")
+                    logger.warning(
+                        f"⚠️  Fallback provider {fallback} failed: {fallback_error}"
+                    )
                     continue
 
             # All providers failed
@@ -349,7 +359,8 @@ class AIRouterService:
                 "usage": {
                     "prompt_tokens": response.usage.input_tokens,
                     "completion_tokens": response.usage.output_tokens,
-                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+                    "total_tokens": response.usage.input_tokens
+                    + response.usage.output_tokens,
                 },
                 "provider": provider.value,
                 "finish_reason": response.stop_reason,
@@ -375,9 +386,9 @@ class AIRouterService:
                     "total_tokens": response.usage_metadata.total_token_count,
                 },
                 "provider": provider.value,
-                "finish_reason": (
-                    response.candidates[0].finish_reason.name if response.candidates else "STOP"
-                ),
+                "finish_reason": response.candidates[0].finish_reason.name
+                if response.candidates
+                else "STOP",
             }
 
         else:

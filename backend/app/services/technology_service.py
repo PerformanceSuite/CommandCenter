@@ -23,7 +23,7 @@ class TechnologyService:
             db: Database session
         """
         self.db = db
-        self.repo = TechnologyRepository()
+        self.repo = TechnologyRepository(db)
 
     async def list_technologies(
         self,
@@ -78,7 +78,9 @@ class TechnologyService:
 
         return technology
 
-    async def get_technology_by_title(self, title: str) -> Optional[Technology]:
+    async def get_technology_by_title(
+        self, title: str
+    ) -> Optional[Technology]:
         """
         Get technology by title
 
@@ -98,40 +100,19 @@ class TechnologyService:
 
         Args:
             technology_data: Technology creation data
-            project_id: Project ID for isolation (default: 1)
+            project_id: Project ID for isolation
+                       TODO (Rec 2.4): Replace default with authenticated user's project_id
+                       Once auth middleware is implemented, make this required and validate
+                       against user's permissions to prevent cross-project data creation
 
         Returns:
             Created technology
 
         Raises:
             HTTPException: If technology with same title exists or invalid project_id
-
-        Security Warning:
-            FIXME: This method currently defaults to project_id=1 which bypasses
-            multi-project isolation. This is a known security issue tracked in Issue #62.
-
-            Required changes (blocked by missing auth infrastructure):
-            1. Remove default value - make project_id required
-            2. Implement auth middleware to extract user context
-            3. Get project_id from authenticated user's permissions
-            4. Validate user has access to the specified project_id
-            5. Update router to pass project_id from auth context
-
-            Until auth is implemented, all technologies are created in project_id=1.
-            See docs/DATA_ISOLATION.md for multi-project architecture details.
         """
-        # Log security warning when using default project_id
-        import logging
-
-        logger = logging.getLogger(__name__)
-
-        if project_id == 1:
-            logger.warning(
-                "Creating technology with default project_id=1. "
-                "Multi-project isolation not enforced until auth middleware is implemented. "
-                "See Issue #62 for tracking."
-            )
-
+        # TODO (Rec 2.4): Validate project_id against authenticated user's permissions
+        # For now, require explicit project_id (no default)
         if project_id <= 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -214,7 +195,9 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
+    async def update_status(
+        self, technology_id: int, new_status: TechnologyStatus
+    ) -> Technology:
         """
         Update technology status
 
@@ -236,7 +219,9 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
+    async def update_priority(
+        self, technology_id: int, new_priority: int
+    ) -> Technology:
         """
         Update technology priority
 
@@ -264,7 +249,9 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
+    async def update_relevance_score(
+        self, technology_id: int, new_score: int
+    ) -> Technology:
         """
         Update technology relevance score
 
@@ -285,7 +272,9 @@ class TechnologyService:
             )
 
         technology = await self.get_technology(technology_id)
-        technology = await self.repo.update(technology, relevance_score=new_score)
+        technology = await self.repo.update(
+            technology, relevance_score=new_score
+        )
 
         await self.db.commit()
         await self.db.refresh(technology)
@@ -317,7 +306,9 @@ class TechnologyService:
         total = await self.repo.count()
         by_status = await self.repo.count_by_status()
         by_domain = await self.repo.count_by_domain()
-        high_priority = await self.repo.get_high_priority(min_priority=4, limit=5)
+        high_priority = await self.repo.get_high_priority(
+            min_priority=4, limit=5
+        )
 
         return {
             "total": total,
@@ -356,5 +347,9 @@ class TechnologyService:
             Tuple of (list of technologies, total count)
         """
         return await self.repo.search(
-            search_term=query, domain=domain, status=status, skip=skip, limit=limit
+            search_term=query,
+            domain=domain,
+            status=status,
+            skip=skip,
+            limit=limit,
         )

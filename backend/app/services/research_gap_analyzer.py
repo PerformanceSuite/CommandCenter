@@ -38,7 +38,9 @@ class ResearchGapAnalyzer:
     }
 
     async def analyze(
-        self, dependencies: List[Dependency], technologies: List[DetectedTechnology]
+        self,
+        dependencies: List[Dependency],
+        technologies: List[DetectedTechnology],
     ) -> List[ResearchGap]:
         """
         Identify research gaps.
@@ -114,7 +116,9 @@ class ResearchGapAnalyzer:
             latest_ver = version_pkg.parse(latest)
 
             # Handle versions without major/minor/patch
-            if not hasattr(current_ver, "major") or not hasattr(latest_ver, "major"):
+            if not hasattr(current_ver, "major") or not hasattr(
+                latest_ver, "major"
+            ):
                 return "low"
 
             # Calculate major version difference
@@ -197,4 +201,6 @@ class ResearchGapAnalyzer:
             ),
         }
 
-        return tasks.get(severity, f"Upgrade {dep.name} to v{dep.latest_version}")
+        return tasks.get(
+            severity, f"Upgrade {dep.name} to v{dep.latest_version}"
+        )

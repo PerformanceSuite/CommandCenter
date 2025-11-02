@@ -34,27 +34,33 @@ def verify_github_signature(
     # GitHub sends signature in format: sha256=<hash>
     if not signature_header.startswith("sha256="):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature format"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid signature format",
         )
 
     # Extract the hash from the header
     expected_signature = signature_header[7:]  # Remove 'sha256=' prefix
 
     # Compute HMAC-SHA256
-    mac = hmac.new(secret.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
+    mac = hmac.new(
+        secret.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256
+    )
     computed_signature = mac.hexdigest()
 
     # Compare signatures using constant-time comparison
     if not hmac.compare_digest(computed_signature, expected_signature):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid webhook signature",
         )
 
     return True
 
 
 async def get_webhook_signature(
-    x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256")
+    x_hub_signature_256: Optional[str] = Header(
+        None, alias="X-Hub-Signature-256"
+    )
 ) -> Optional[str]:
     """Dependency to extract webhook signature from headers"""
     return x_hub_signature_256

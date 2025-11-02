@@ -65,17 +65,25 @@ class Job(Base):
     )
 
     # Progress tracking
-    progress: Mapped[int] = mapped_column(Integer, default=0)  # 0-100 percentage
+    progress: Mapped[int] = mapped_column(
+        Integer, default=0
+    )  # 0-100 percentage
     current_step: Mapped[Optional[str]] = mapped_column(
         String(255), nullable=True
     )  # Current operation description
 
     # Input parameters
-    parameters: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # Job input parameters
+    parameters: Mapped[Optional[dict]] = mapped_column(
+        JSON, nullable=True
+    )  # Job input parameters
 
     # Results
-    result: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # Job result data
-    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Error message if failed
+    result: Mapped[Optional[dict]] = mapped_column(
+        JSON, nullable=True
+    )  # Job result data
+    error: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True
+    )  # Error message if failed
     traceback: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
     )  # Full traceback for debugging
@@ -84,16 +92,26 @@ class Job(Base):
     created_by: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )  # User who created the job
-    tags: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)  # Custom tags for filtering
+    tags: Mapped[Optional[dict]] = mapped_column(
+        JSON, default=dict
+    )  # Custom tags for filtering
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )
+    started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="jobs")
-    user: Mapped[Optional["User"]] = relationship("User", back_populates="jobs")
+    project: Mapped["Project"] = relationship("Project", back_populates="jobs")  # noqa: F821
+    user: Mapped[Optional["User"]] = relationship(  # noqa: F821
+        "User", back_populates="jobs"  # noqa: F821
+    )
 
     # Indexes for common queries
     __table_args__ = (
@@ -162,8 +180,14 @@ class Job(Base):
             "error": self.error,
             "tags": self.tags,
             "created_by": self.created_by,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
+            "created_at": self.created_at.isoformat()
+            if self.created_at
+            else None,
+            "started_at": self.started_at.isoformat()
+            if self.started_at
+            else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "duration_seconds": self.duration_seconds,
         }

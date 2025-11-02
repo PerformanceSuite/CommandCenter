@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
     max_retries=0,  # Retries handled by WebhookService
     acks_late=True,
 )
-def deliver_webhook(self, delivery_id: int, attempt_number: int = 1) -> Dict[str, Any]:
+def deliver_webhook(
+    self, delivery_id: int, attempt_number: int = 1
+) -> Dict[str, Any]:
     """
     Deliver a webhook to external system with retry logic.
 
@@ -37,7 +39,9 @@ def deliver_webhook(self, delivery_id: int, attempt_number: int = 1) -> Dict[str
     """
     try:
         # Use sync wrapper for async function
-        result = asyncio.run(_deliver_webhook_async(delivery_id, attempt_number))
+        result = asyncio.run(
+            _deliver_webhook_async(delivery_id, attempt_number)
+        )
         return result
     except Exception as e:
         logger.exception(f"Error in deliver_webhook task: {e}")
@@ -49,7 +53,9 @@ def deliver_webhook(self, delivery_id: int, attempt_number: int = 1) -> Dict[str
         }
 
 
-async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[str, Any]:
+async def _deliver_webhook_async(
+    delivery_id: int, attempt_number: int
+) -> Dict[str, Any]:
     """
     Async implementation of webhook delivery.
 
@@ -64,12 +70,13 @@ async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[
         service = WebhookService(db)
 
         try:
-            success = await service.deliver_webhook(delivery_id, attempt_number)
+            success = await service.deliver_webhook(
+                delivery_id, attempt_number
+            )
 
             if success:
                 logger.info(
-                    f"Webhook delivery {delivery_id} completed successfully "
-                    f"(attempt {attempt_number})"
+                    f"Webhook delivery {delivery_id} completed successfully (attempt {attempt_number})"
                 )
                 return {
                     "status": "success",
@@ -77,7 +84,9 @@ async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[
                     "attempt_number": attempt_number,
                 }
             else:
-                logger.warning(f"Webhook delivery {delivery_id} failed (attempt {attempt_number})")
+                logger.warning(
+                    f"Webhook delivery {delivery_id} failed (attempt {attempt_number})"
+                )
                 return {
                     "status": "failed",
                     "delivery_id": delivery_id,
@@ -115,7 +124,9 @@ def create_and_deliver_webhook(
     """
     try:
         result = asyncio.run(
-            _create_and_deliver_webhook_async(config_id, project_id, event_type, payload)
+            _create_and_deliver_webhook_async(
+                config_id, project_id, event_type, payload
+            )
         )
         return result
     except Exception as e:
@@ -168,7 +179,9 @@ async def _create_and_deliver_webhook_async(
                 }
 
             # Immediately attempt delivery
-            success = await service.deliver_webhook(delivery.id, attempt_number=1)
+            success = await service.deliver_webhook(
+                delivery.id, attempt_number=1
+            )
 
             return {
                 "status": "success" if success else "failed",
@@ -185,7 +198,9 @@ async def _create_and_deliver_webhook_async(
     name="app.tasks.webhook_tasks.process_pending_deliveries",
     max_retries=0,
 )
-def process_pending_deliveries(self, max_deliveries: int = 100) -> Dict[str, Any]:
+def process_pending_deliveries(
+    self, max_deliveries: int = 100
+) -> Dict[str, Any]:
     """
     Process pending webhook deliveries (scheduled retries).
 
@@ -209,7 +224,9 @@ def process_pending_deliveries(self, max_deliveries: int = 100) -> Dict[str, Any
         }
 
 
-async def _process_pending_deliveries_async(max_deliveries: int) -> Dict[str, Any]:
+async def _process_pending_deliveries_async(
+    max_deliveries: int,
+) -> Dict[str, Any]:
     """
     Async implementation of process pending deliveries.
 
@@ -235,7 +252,9 @@ async def _process_pending_deliveries_async(max_deliveries: int) -> Dict[str, An
                     "failed": 0,
                 }
 
-            logger.info(f"Processing {len(pending)} pending webhook deliveries")
+            logger.info(
+                f"Processing {len(pending)} pending webhook deliveries"
+            )
 
             # Process each delivery
             successful = 0
@@ -251,7 +270,9 @@ async def _process_pending_deliveries_async(max_deliveries: int) -> Dict[str, An
                     else:
                         failed += 1
                 except Exception as e:
-                    logger.exception(f"Error processing webhook delivery {delivery.id}: {e}")
+                    logger.exception(
+                        f"Error processing webhook delivery {delivery.id}: {e}"
+                    )
                     failed += 1
 
             logger.info(

@@ -7,10 +7,9 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from prometheus_client import make_asgi_app
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -20,14 +19,25 @@ from slowapi.errors import RateLimitExceeded
 from app.config import settings
 from app.database import init_db, close_db, get_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
-from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
-from app.routers import research_orchestration, mcp, jobs, batch, schedules, export
-from app.routers import webhooks_ingestion, ingestion_sources
+from app.routers import (
+    webhooks,
+    github_features,
+    rate_limits,
+    research_tasks,
+    projects,
+)
+from app.routers import (
+    research_orchestration,
+    mcp,
+    jobs,
+    batch,
+    schedules,
+    export,
+)
 from app.services import redis_service
-from app.utils.metrics import setup_custom_metrics, error_counter
+from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
 from app.middleware import limiter, add_security_headers, LoggingMiddleware
-from app.middleware.correlation import CorrelationIDMiddleware
 
 
 @asynccontextmanager
@@ -42,7 +52,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     setup_logging(
         log_level=log_level,
-        log_file=log_file if os.getenv("ENVIRONMENT") == "production" else None,
+        log_file=log_file
+        if os.getenv("ENVIRONMENT") == "production"
+        else None,
         json_format=json_logs,
     )
 
@@ -82,9 +94,6 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# Add correlation ID middleware (must be first to ensure all requests get IDs)
-app.add_middleware(CorrelationIDMiddleware)
-
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
@@ -108,7 +117,11 @@ app.add_middleware(
         "DELETE",
         "OPTIONS",
     ],  # Explicit methods
-    allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Accept",
+    ],  # Explicit headers
     max_age=settings.cors_max_age,
 )
 
@@ -163,7 +176,9 @@ async def detailed_health_check(
     if health_status["status"] == "unhealthy":
         status_code = 503
     elif health_status["status"] == "degraded":
-        status_code = 200  # Still return 200 for degraded (e.g., Redis disabled)
+        status_code = (
+            200  # Still return 200 for degraded (e.g., Redis disabled)
+        )
 
     return JSONResponse(
         content=health_status,
@@ -187,7 +202,9 @@ async def root() -> JSONResponse:
 
 # Include routers
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
-app.include_router(projects.router, prefix=settings.api_v1_prefix)  # Project isolation
+app.include_router(
+    projects.router, prefix=settings.api_v1_prefix
+)  # Project isolation
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(research_tasks.router, prefix=settings.api_v1_prefix)
@@ -199,24 +216,13 @@ app.include_router(github_features.router, prefix=settings.api_v1_prefix)
 app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
 app.include_router(mcp.router)  # MCP (Model Context Protocol) endpoints
 app.include_router(jobs.router)  # Jobs API for async task management
-app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
+app.include_router(
+    batch.router
+)  # Batch operations API for bulk analysis/import/export
 app.include_router(schedules.router)  # Schedule management for recurring tasks
-app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
-app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
-app.include_router(ingestion_sources.router)  # Ingestion sources management API
-
-
-# Test endpoints for observability (only in dev/test environments)
-if settings.debug or os.getenv("ENVIRONMENT") in ["development", "test"]:
-    @app.get("/api/v1/trigger-test-error")
-    async def trigger_test_error():
-        """Test endpoint that raises an exception for error tracking verification.
-
-        This endpoint is only available in development/test environments.
-        Used to verify error tracking, correlation IDs, and metrics.
-        """
-        raise ValueError("Test error for observability verification")
-
+app.include_router(
+    export.router
+)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()
@@ -225,48 +231,15 @@ app.mount("/metrics", metrics_app)
 
 # Global exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Enhanced global exception handler with correlation tracking and metrics.
-
-    This handler:
-    1. Extracts correlation ID from request state
-    2. Increments error counter metric with labels
-    3. Logs structured error with correlation ID
-    4. Returns error response with correlation ID
-    """
-    # Get logger
-    logger = logging.getLogger(__name__)
-
-    # Extract correlation ID from request state
-    request_id = getattr(request.state, "request_id", "unknown")
-
-    # Increment error metric with labels
-    error_counter.labels(
-        endpoint=request.url.path,
-        status_code="500",
-        error_type=type(exc).__name__
-    ).inc()
-
-    # Structured error logging with correlation context
-    logger.error(
-        "Unhandled exception",
-        extra={
-            "request_id": request_id,
-            "endpoint": request.url.path,
-            "method": request.method,
-            "error_type": type(exc).__name__,
-            "error_message": str(exc),
-            "user_id": getattr(request.state, "user_id", None),
-        },
-        exc_info=True  # Include stack trace
-    )
-
+async def global_exception_handler(request, exc):
+    """Global exception handler for unhandled errors"""
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
-            "detail": str(exc) if settings.debug else "An unexpected error occurred",
-            "request_id": request_id,  # Include correlation ID in response
+            "detail": str(exc)
+            if settings.debug
+            else "An unexpected error occurred",
         },
     )
 

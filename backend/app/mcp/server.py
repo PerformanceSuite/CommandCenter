@@ -71,20 +71,46 @@ class MCPServer:
 
     def _register_handlers(self) -> None:
         """Register core MCP method handlers."""
-        self._connection_manager.register_handler("initialize", self._handle_initialize)
-        self._connection_manager.register_handler("resources/list", self._handle_list_resources)
-        self._connection_manager.register_handler("resources/read", self._handle_read_resource)
-        self._connection_manager.register_handler("tools/list", self._handle_list_tools)
-        self._connection_manager.register_handler("tools/call", self._handle_call_tool)
-        self._connection_manager.register_handler("prompts/list", self._handle_list_prompts)
-        self._connection_manager.register_handler("prompts/get", self._handle_get_prompt)
+        self._connection_manager.register_handler(
+            "initialize", self._handle_initialize
+        )
+        self._connection_manager.register_handler(
+            "resources/list", self._handle_list_resources
+        )
+        self._connection_manager.register_handler(
+            "resources/read", self._handle_read_resource
+        )
+        self._connection_manager.register_handler(
+            "tools/list", self._handle_list_tools
+        )
+        self._connection_manager.register_handler(
+            "tools/call", self._handle_call_tool
+        )
+        self._connection_manager.register_handler(
+            "prompts/list", self._handle_list_prompts
+        )
+        self._connection_manager.register_handler(
+            "prompts/get", self._handle_get_prompt
+        )
         # Context management handlers
-        self._connection_manager.register_handler("context/set", self._handle_context_set)
-        self._connection_manager.register_handler("context/get", self._handle_context_get)
-        self._connection_manager.register_handler("context/has", self._handle_context_has)
-        self._connection_manager.register_handler("context/delete", self._handle_context_delete)
-        self._connection_manager.register_handler("context/clear", self._handle_context_clear)
-        self._connection_manager.register_handler("context/list", self._handle_context_list)
+        self._connection_manager.register_handler(
+            "context/set", self._handle_context_set
+        )
+        self._connection_manager.register_handler(
+            "context/get", self._handle_context_get
+        )
+        self._connection_manager.register_handler(
+            "context/has", self._handle_context_has
+        )
+        self._connection_manager.register_handler(
+            "context/delete", self._handle_context_delete
+        )
+        self._connection_manager.register_handler(
+            "context/clear", self._handle_context_clear
+        )
+        self._connection_manager.register_handler(
+            "context/list", self._handle_context_list
+        )
 
     # Provider management
     def register_resource_provider(self, provider: ResourceProvider) -> None:
@@ -478,7 +504,9 @@ class MCPServer:
             raise InvalidParamsError("Context key parameter required")
 
         exists = session.has_context(key)
-        self._logger.debug(f"Session {session.session_id} check context: {key} = {exists}")
+        self._logger.debug(
+            f"Session {session.session_id} check context: {key} = {exists}"
+        )
 
         return {"key": key, "exists": exists}
 
@@ -507,7 +535,9 @@ class MCPServer:
             raise InvalidParamsError("Context key parameter required")
 
         deleted = session.delete_context(key)
-        self._logger.debug(f"Session {session.session_id} delete context: {key} = {deleted}")
+        self._logger.debug(
+            f"Session {session.session_id} delete context: {key} = {deleted}"
+        )
 
         return {"success": deleted, "key": key}
 
@@ -547,12 +577,16 @@ class MCPServer:
             Dictionary of all context
         """
         context = session.get_all_context()
-        self._logger.debug(f"Session {session.session_id} list context: {len(context)} items")
+        self._logger.debug(
+            f"Session {session.session_id} list context: {len(context)} items"
+        )
 
         return {"context": context, "count": len(context)}
 
     # Session management
-    async def create_session(self, client_info: Optional[Dict[str, Any]] = None) -> MCPSession:
+    async def create_session(
+        self, client_info: Optional[Dict[str, Any]] = None
+    ) -> MCPSession:
         """
         Create new client session.
 
@@ -573,7 +607,9 @@ class MCPServer:
         """
         await self._connection_manager.close_session(session_id)
 
-    async def handle_message(self, session_id: str, message: str) -> Optional[str]:
+    async def handle_message(
+        self, session_id: str, message: str
+    ) -> Optional[str]:
         """
         Handle incoming message for a session.
 
@@ -584,7 +620,9 @@ class MCPServer:
         Returns:
             Response message (or None for notifications)
         """
-        return await self._connection_manager.handle_request(session_id, message)
+        return await self._connection_manager.handle_request(
+            session_id, message
+        )
 
     # Utility methods
     def get_capabilities(self) -> MCPCapabilities:

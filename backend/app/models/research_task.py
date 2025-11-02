@@ -47,10 +47,14 @@ class ResearchTask(Base):
 
     # Foreign keys
     technology_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("technologies.id", ondelete="CASCADE"), nullable=True
+        Integer,
+        ForeignKey("technologies.id", ondelete="CASCADE"),
+        nullable=True,
     )
     repository_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("repositories.id", ondelete="CASCADE"), nullable=True
+        Integer,
+        ForeignKey("repositories.id", ondelete="CASCADE"),
+        nullable=True,
     )
 
     # Task details
@@ -61,14 +65,22 @@ class ResearchTask(Base):
     )
 
     # Research artifacts
-    uploaded_documents: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    uploaded_documents: Mapped[Optional[list]] = mapped_column(
+        JSON, nullable=True
+    )
     user_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     findings: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Task metadata
-    assigned_to: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    assigned_to: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    due_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     # Progress tracking
     progress_percentage: Mapped[int] = mapped_column(default=0)  # 0-100
@@ -77,21 +89,27 @@ class ResearchTask(Base):
 
     # Additional metadata
     # Note: 'metadata_' to avoid conflict with SQLAlchemy's reserved 'metadata'
-    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="research_tasks")
-    technology: Mapped[Optional["Technology"]] = relationship(
-        "Technology", back_populates="research_tasks"
+    project: Mapped["Project"] = relationship(  # noqa: F821
+        "Project", back_populates="research_tasks"  # noqa: F821
     )
-    repository: Mapped[Optional["Repository"]] = relationship(
-        "Repository", back_populates="research_tasks"
+    technology: Mapped[Optional["Technology"]] = relationship(  # noqa: F821
+        "Technology", back_populates="research_tasks"  # noqa: F821
+    )
+    repository: Mapped[Optional["Repository"]] = relationship(  # noqa: F821
+        "Repository", back_populates="research_tasks"  # noqa: F821
     )
 
     def __repr__(self) -> str:

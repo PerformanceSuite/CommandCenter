@@ -31,7 +31,9 @@ class WebSocketTransport:
             app: Optional FastAPI app instance (creates new if not provided)
         """
         self.server = server
-        self.app = app or FastAPI(title=f"MCP WebSocket Server: {server.server_info.name}")
+        self.app = app or FastAPI(
+            title=f"MCP WebSocket Server: {server.server_info.name}"
+        )
         self._running = False
         self._logger = logger
         self._active_connections: Dict[str, WebSocket] = {}
@@ -80,17 +82,23 @@ class WebSocketTransport:
                             continue
 
                         # Handle message
-                        response = await self.server.handle_message(session_id, message)
+                        response = await self.server.handle_message(
+                            session_id, message
+                        )
 
                         # Send response (if not a notification)
                         if response:
                             await websocket.send_text(response)
 
                     except WebSocketDisconnect:
-                        self._logger.info(f"WebSocket disconnected: {session_id}")
+                        self._logger.info(
+                            f"WebSocket disconnected: {session_id}"
+                        )
                         break
                     except Exception as e:
-                        self._logger.exception(f"Error processing message: {e}")
+                        self._logger.exception(
+                            f"Error processing message: {e}"
+                        )
                         # Send error response
                         error_response = {
                             "jsonrpc": "2.0",
@@ -169,7 +177,9 @@ class WebSocketTransport:
                 await websocket.close()
                 await self.server.close_session(session_id)
             except Exception as e:
-                self._logger.error(f"Error closing connection {session_id}: {e}")
+                self._logger.error(
+                    f"Error closing connection {session_id}: {e}"
+                )
 
         self._active_connections.clear()
 

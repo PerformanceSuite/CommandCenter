@@ -67,14 +67,19 @@ class GemfileParser(BaseParser):
 
             # Parse gem declarations
             # Match patterns: gem 'name', 'version' or gem 'name', version: 'version'
-            gem_match = re.match(r"gem\s+['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]+)['\"])?", line)
+            gem_match = re.match(
+                r"gem\s+['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]+)['\"])?",
+                line,
+            )
             if gem_match:
                 name = gem_match.group(1)
                 version = gem_match.group(2) or "unknown"
 
                 # If no explicit version, try to find version constraint
                 if version == "unknown":
-                    version_match = re.search(r"['\"]~>\s*([0-9.]+)['\"]", line)
+                    version_match = re.search(
+                        r"['\"]~>\s*([0-9.]+)['\"]", line
+                    )
                     if version_match:
                         version = version_match.group(1)
 
@@ -99,7 +104,9 @@ class GemfileParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
+    async def _enrich_with_latest_versions(
+        self, dependencies: List[Dependency]
+    ) -> None:
         """
         Fetch latest versions from RubyGems.
 
@@ -109,14 +116,18 @@ class GemfileParser(BaseParser):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for dep in dependencies:
                 try:
-                    latest = await self.get_latest_version(dep.name, client=client)
+                    latest = await self.get_latest_version(
+                        dep.name, client=client
+                    )
                     dep.latest_version = latest
                     dep.is_outdated = latest != dep.version
                 except Exception:
                     # Silently fail for missing/private gems
                     pass
 
-    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
+    async def get_latest_version(
+        self, package_name: str, client: httpx.AsyncClient = None
+    ) -> str:
         """
         Fetch latest version from RubyGems.
 

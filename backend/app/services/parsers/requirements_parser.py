@@ -46,7 +46,11 @@ class RequirementsParser(BaseParser):
                 continue
 
             content = await self._read_file_async(req_path)
-            dep_type = DependencyType.DEV if "dev" in config_file else DependencyType.RUNTIME
+            dep_type = (
+                DependencyType.DEV
+                if "dev" in config_file
+                else DependencyType.RUNTIME
+            )
 
             for line in content.splitlines():
                 line = line.strip()
@@ -60,7 +64,9 @@ class RequirementsParser(BaseParser):
                     continue
 
                 # Parse package specification
-                match = re.match(r"([a-zA-Z0-9\-_.]+)(==|>=|<=|>|<|~=)([0-9.]+)", line)
+                match = re.match(
+                    r"([a-zA-Z0-9\-_.]+)(==|>=|<=|>|<|~=)([0-9.]+)", line
+                )
                 if match:
                     name = match.group(1)
                     version = match.group(3)
@@ -93,7 +99,9 @@ class RequirementsParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
+    async def _enrich_with_latest_versions(
+        self, dependencies: List[Dependency]
+    ) -> None:
         """
         Fetch latest versions from PyPI.
 
@@ -103,14 +111,18 @@ class RequirementsParser(BaseParser):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for dep in dependencies:
                 try:
-                    latest = await self.get_latest_version(dep.name, client=client)
+                    latest = await self.get_latest_version(
+                        dep.name, client=client
+                    )
                     dep.latest_version = latest
                     dep.is_outdated = latest != dep.version
                 except Exception:
                     # Silently fail for missing/private packages
                     pass
 
-    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
+    async def get_latest_version(
+        self, package_name: str, client: httpx.AsyncClient = None
+    ) -> str:
         """
         Fetch latest version from PyPI.
 

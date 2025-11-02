@@ -20,7 +20,9 @@ from app.services import RepositoryService
 router = APIRouter(prefix="/repositories", tags=["repositories"])
 
 
-def get_repository_service(db: AsyncSession = Depends(get_db)) -> RepositoryService:
+def get_repository_service(
+    db: AsyncSession = Depends(get_db),
+) -> RepositoryService:
     """Dependency to get repository service instance"""
     return RepositoryService(db)
 
@@ -29,8 +31,12 @@ def get_repository_service(db: AsyncSession = Depends(get_db)) -> RepositoryServ
 async def list_repositories(
     skip: int = 0,
     limit: int = 100,
-    owner: Optional[str] = Query(None, description="Filter by repository owner"),
-    language: Optional[str] = Query(None, description="Filter by programming language"),
+    owner: Optional[str] = Query(
+        None, description="Filter by repository owner"
+    ),
+    language: Optional[str] = Query(
+        None, description="Filter by programming language"
+    ),
     service: RepositoryService = Depends(get_repository_service),
 ) -> List[Repository]:
     """List all repositories with optional filters"""
@@ -39,13 +45,16 @@ async def list_repositories(
 
 @router.get("/{repository_id}", response_model=RepositoryResponse)
 async def get_repository(
-    repository_id: int, service: RepositoryService = Depends(get_repository_service)
+    repository_id: int,
+    service: RepositoryService = Depends(get_repository_service),
 ) -> Repository:
     """Get repository by ID"""
     return await service.get_repository(repository_id)
 
 
-@router.post("/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_repository(
     repository_data: RepositoryCreate,
     service: RepositoryService = Depends(get_repository_service),
@@ -66,7 +75,8 @@ async def update_repository(
 
 @router.delete("/{repository_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_repository(
-    repository_id: int, service: RepositoryService = Depends(get_repository_service)
+    repository_id: int,
+    service: RepositoryService = Depends(get_repository_service),
 ) -> None:
     """Delete repository"""
     await service.delete_repository(repository_id)

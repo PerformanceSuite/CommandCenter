@@ -13,35 +13,28 @@ from .base import BaseRepository
 class TechnologyRepository(BaseRepository[Technology]):
     """Technology data access layer"""
 
-    def __init__(self):
-        super().__init__(Technology)
+    def __init__(self, db: AsyncSession):
+        super().__init__(Technology, db)
 
-    async def get_by_title(self, db: AsyncSession, title: str) -> Optional[Technology]:
+    async def get_by_title(self, title: str) -> Optional[Technology]:
         """
         Get technology by title
 
         Args:
-            db: The database session
             title: Technology title
 
         Returns:
             Technology or None if not found
         """
-        result = await db.execute(select(Technology).where(Technology.title == title))
-        return result.scalar_one_or_none()
+        return await self.find_one(title=title)
 
     async def list_by_domain(
-        self,
-        db: AsyncSession,
-        domain: TechnologyDomain,
-        skip: int = 0,
-        limit: int = 100,
+        self, domain: TechnologyDomain, skip: int = 0, limit: int = 100
     ) -> List[Technology]:
         """
         List technologies by domain
 
         Args:
-            db: The database session
             domain: Technology domain
             skip: Number of records to skip
             limit: Maximum number of records to return
@@ -49,27 +42,24 @@ class TechnologyRepository(BaseRepository[Technology]):
         Returns:
             List of technologies
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Technology)
             .where(Technology.domain == domain)
             .offset(skip)
             .limit(limit)
-            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
+            .order_by(
+                Technology.priority.desc(), Technology.relevance_score.desc()
+            )
         )
         return list(result.scalars().all())
 
     async def list_by_status(
-        self,
-        db: AsyncSession,
-        status: TechnologyStatus,
-        skip: int = 0,
-        limit: int = 100,
+        self, status: TechnologyStatus, skip: int = 0, limit: int = 100
     ) -> List[Technology]:
         """
         List technologies by status
 
         Args:
-            db: The database session
             status: Technology status
             skip: Number of records to skip
             limit: Maximum number of records to return
@@ -77,7 +67,7 @@ class TechnologyRepository(BaseRepository[Technology]):
         Returns:
             List of technologies
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Technology)
             .where(Technology.status == status)
             .offset(skip)
@@ -88,7 +78,6 @@ class TechnologyRepository(BaseRepository[Technology]):
 
     async def list_with_filters(
         self,
-        db: AsyncSession,
         skip: int = 0,
         limit: int = 100,
         search_term: Optional[str] = None,
@@ -99,7 +88,6 @@ class TechnologyRepository(BaseRepository[Technology]):
         List technologies with optional filters (consolidates all list/search methods)
 
         Args:
-            db: The database session
             skip: Number of records to skip
             limit: Maximum number of records to return
             search_term: Optional search term for title, description, tags
@@ -133,7 +121,7 @@ class TechnologyRepository(BaseRepository[Technology]):
 
         # Get total count
         count_query = select(func.count()).select_from(query.subquery())
-        total_result = await db.execute(count_query)
+        total_result = await self.db.execute(count_query)
         total = total_result.scalar() or 0
 
         # Apply pagination and ordering
@@ -147,14 +135,13 @@ class TechnologyRepository(BaseRepository[Technology]):
             )
         )
 
-        result = await db.execute(query)
+        result = await self.db.execute(query)
         technologies = list(result.scalars().all())
 
         return technologies, total
 
     async def search(
         self,
-        db: AsyncSession,
         search_term: str,
         domain: Optional[TechnologyDomain] = None,
         status: Optional[TechnologyStatus] = None,
@@ -165,7 +152,6 @@ class TechnologyRepository(BaseRepository[Technology]):
         Search technologies with filters (delegates to list_with_filters)
 
         Args:
-            db: The database session
             search_term: Search term for title, description, tags
             domain: Optional domain filter
             status: Optional status filter
@@ -176,7 +162,6 @@ class TechnologyRepository(BaseRepository[Technology]):
             Tuple of (list of technologies, total count)
         """
         return await self.list_with_filters(
-            db=db,
             skip=skip,
             limit=limit,
             search_term=search_term,
@@ -185,53 +170,50 @@ class TechnologyRepository(BaseRepository[Technology]):
         )
 
     async def get_high_priority(
-        self, db: AsyncSession, min_priority: int = 4, limit: int = 10
+        self, min_priority: int = 4, limit: int = 10
     ) -> List[Technology]:
         """
         Get high priority technologies
 
         Args:
-            db: The database session
             min_priority: Minimum priority level
             limit: Maximum number of records to return
 
         Returns:
             List of high priority technologies
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Technology)
             .where(Technology.priority >= min_priority)
-            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
+            .order_by(
+                Technology.priority.desc(), Technology.relevance_score.desc()
+            )
             .limit(limit)
         )
         return list(result.scalars().all())
 
-    async def count_by_status(self, db: AsyncSession) -> dict[str, int]:
+    async def count_by_status(self) -> dict[str, int]:
         """
         Get count of technologies grouped by status
-
-        Args:
-            db: The database session
 
         Returns:
             Dictionary mapping status to count
         """
-        result = await db.execute(
-            select(Technology.status, func.count(Technology.id)).group_by(Technology.status)
-        )
-        return {status.value: count for status, count in result}
+        counts = {}
+        for status in TechnologyStatus:
+            count = await self.count(status=status)
+            counts[status.value] = count
+        return counts
 
-    async def count_by_domain(self, db: AsyncSession) -> dict[str, int]:
+    async def count_by_domain(self) -> dict[str, int]:
         """
         Get count of technologies grouped by domain
-
-        Args:
-            db: The database session
 
         Returns:
             Dictionary mapping domain to count
         """
-        result = await db.execute(
-            select(Technology.domain, func.count(Technology.id)).group_by(Technology.domain)
-        )
-        return {domain.value: count for domain, count in result}
+        counts = {}
+        for domain in TechnologyDomain:
+            count = await self.count(domain=domain)
+            counts[domain.value] = count
+        return counts

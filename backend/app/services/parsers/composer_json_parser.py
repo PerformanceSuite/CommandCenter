@@ -99,7 +99,9 @@ class ComposerJsonParser(BaseParser):
         cleaned = cleaned.split("|")[0].strip()
         return cleaned
 
-    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
+    async def _enrich_with_latest_versions(
+        self, dependencies: List[Dependency]
+    ) -> None:
         """
         Fetch latest versions from Packagist.
 
@@ -109,14 +111,18 @@ class ComposerJsonParser(BaseParser):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for dep in dependencies:
                 try:
-                    latest = await self.get_latest_version(dep.name, client=client)
+                    latest = await self.get_latest_version(
+                        dep.name, client=client
+                    )
                     dep.latest_version = latest
                     dep.is_outdated = latest != dep.version
                 except Exception:
                     # Silently fail for missing/private packages
                     pass
 
-    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
+    async def get_latest_version(
+        self, package_name: str, client: httpx.AsyncClient = None
+    ) -> str:
         """
         Fetch latest version from Packagist.
 
@@ -142,7 +148,11 @@ class ComposerJsonParser(BaseParser):
         packages = data.get("packages", {}).get(package_name, [])
         if packages:
             # Versions are ordered, first one is latest
-            versions = [p["version"] for p in packages if not p["version"].startswith("dev-")]
+            versions = [
+                p["version"]
+                for p in packages
+                if not p["version"].startswith("dev-")
+            ]
             if versions:
                 return versions[0].lstrip("v")
 

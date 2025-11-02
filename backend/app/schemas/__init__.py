@@ -83,13 +83,6 @@ from app.schemas.schedule import (
     ScheduleHealthIssue,
     ScheduleHealthReport,
 )
-from app.schemas.ingestion import (
-    IngestionSourceBase,
-    IngestionSourceCreate,
-    IngestionSourceUpdate,
-    IngestionSourceResponse,
-    IngestionSourceList,
-)
 
 __all__ = [
     "ProjectCreate",
@@ -155,9 +148,4 @@ __all__ = [
     "ScheduleStatistics",
     "ScheduleHealthIssue",
     "ScheduleHealthReport",
-    "IngestionSourceBase",
-    "IngestionSourceCreate",
-    "IngestionSourceUpdate",
-    "IngestionSourceResponse",
-    "IngestionSourceList",
 ]

@@ -255,11 +255,18 @@ async def list_resources(db: Session = Depends(get_db)):
         import json
 
         request_message = json.dumps(
-            {"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "resources/list",
+                "params": {},
+            }
         )
 
         # Handle request
-        response = await server.handle_message(session.session_id, request_message)
+        response = await server.handle_message(
+            session.session_id, request_message
+        )
 
         if response:
             response_data = json.loads(response)
@@ -296,7 +303,9 @@ async def list_tools(db: Session = Depends(get_db)):
         )
 
         # Handle request
-        response = await server.handle_message(session.session_id, request_message)
+        response = await server.handle_message(
+            session.session_id, request_message
+        )
 
         if response:
             response_data = json.loads(response)
@@ -333,7 +342,9 @@ async def list_prompts(db: Session = Depends(get_db)):
         )
 
         # Handle request
-        response = await server.handle_message(session.session_id, request_message)
+        response = await server.handle_message(
+            session.session_id, request_message
+        )
 
         if response:
             response_data = json.loads(response)
@@ -349,9 +360,13 @@ async def list_prompts(db: Session = Depends(get_db)):
 async def initialize_mcp_server():
     """Initialize MCP server on application startup."""
     from app.database import AsyncSessionLocal as async_session
-    from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
+    from app.mcp.providers.commandcenter_resources import (
+        CommandCenterResourceProvider,
+    )
     from app.mcp.providers.commandcenter_tools import CommandCenterToolProvider
-    from app.mcp.providers.commandcenter_prompts import CommandCenterPromptProvider
+    from app.mcp.providers.commandcenter_prompts import (
+        CommandCenterPromptProvider,
+    )
 
     server = get_mcp_server()
 

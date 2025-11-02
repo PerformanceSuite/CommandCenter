@@ -10,9 +10,15 @@ from pydantic import BaseModel, Field, field_validator
 class ScheduleBase(BaseModel):
     """Base schedule schema with common fields."""
 
-    name: str = Field(..., min_length=1, max_length=255, description="Schedule name")
-    description: Optional[str] = Field(None, max_length=512, description="Schedule description")
-    task_type: str = Field(..., min_length=1, max_length=50, description="Task type to execute")
+    name: str = Field(
+        ..., min_length=1, max_length=255, description="Schedule name"
+    )
+    description: Optional[str] = Field(
+        None, max_length=512, description="Schedule description"
+    )
+    task_type: str = Field(
+        ..., min_length=1, max_length=50, description="Task type to execute"
+    )
     task_parameters: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Task-specific parameters"
     )
@@ -29,11 +35,19 @@ class ScheduleBase(BaseModel):
         None, gt=0, description="Interval in seconds (for custom intervals)"
     )
     timezone: str = Field(
-        default="UTC", max_length=50, description="IANA timezone for schedule execution"
+        default="UTC",
+        max_length=50,
+        description="IANA timezone for schedule execution",
     )
-    start_time: Optional[datetime] = Field(None, description="When to start executing")
-    end_time: Optional[datetime] = Field(None, description="When to stop executing")
-    enabled: bool = Field(default=True, description="Whether schedule is enabled")
+    start_time: Optional[datetime] = Field(
+        None, description="When to start executing"
+    )
+    end_time: Optional[datetime] = Field(
+        None, description="When to stop executing"
+    )
+    enabled: bool = Field(
+        default=True, description="Whether schedule is enabled"
+    )
     tags: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Custom tags for filtering"
     )
@@ -42,7 +56,14 @@ class ScheduleBase(BaseModel):
     @classmethod
     def validate_frequency(cls, v: str) -> str:
         """Validate frequency value."""
-        valid_frequencies = ["once", "hourly", "daily", "weekly", "monthly", "cron"]
+        valid_frequencies = [
+            "once",
+            "hourly",
+            "daily",
+            "weekly",
+            "monthly",
+            "cron",
+        ]
         if v not in valid_frequencies:
             raise ValueError(
                 f"Invalid frequency '{v}'. Must be one of: {', '.join(valid_frequencies)}"
@@ -51,7 +72,9 @@ class ScheduleBase(BaseModel):
 
     @field_validator("end_time")
     @classmethod
-    def validate_end_time(cls, v: Optional[datetime], info) -> Optional[datetime]:
+    def validate_end_time(
+        cls, v: Optional[datetime], info
+    ) -> Optional[datetime]:
         """Validate end_time is after start_time."""
         if v and info.data.get("start_time") and v <= info.data["start_time"]:
             raise ValueError("end_time must be after start_time")
@@ -62,7 +85,9 @@ class ScheduleCreate(ScheduleBase):
     """Schema for creating a new schedule."""
 
     project_id: int = Field(..., gt=0, description="Project ID")
-    created_by: Optional[int] = Field(None, gt=0, description="User ID who created schedule")
+    created_by: Optional[int] = Field(
+        None, gt=0, description="User ID who created schedule"
+    )
 
 
 class ScheduleUpdate(BaseModel):
@@ -86,7 +111,14 @@ class ScheduleUpdate(BaseModel):
     def validate_frequency(cls, v: Optional[str]) -> Optional[str]:
         """Validate frequency value."""
         if v is not None:
-            valid_frequencies = ["once", "hourly", "daily", "weekly", "monthly", "cron"]
+            valid_frequencies = [
+                "once",
+                "hourly",
+                "daily",
+                "weekly",
+                "monthly",
+                "cron",
+            ]
             if v not in valid_frequencies:
                 raise ValueError(
                     f"Invalid frequency '{v}'. Must be one of: {', '.join(valid_frequencies)}"

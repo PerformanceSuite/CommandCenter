@@ -2,7 +2,6 @@
 Research task business logic service
 Handles research task operations with transaction management
 """
-
 import os
 import uuid
 from pathlib import Path
@@ -59,9 +58,13 @@ class ResearchService:
             List of research tasks
         """
         if technology_id:
-            return await self.repo.list_by_technology(technology_id, skip, limit)
+            return await self.repo.list_by_technology(
+                technology_id, skip, limit
+            )
         elif repository_id:
-            return await self.repo.list_by_repository(repository_id, skip, limit)
+            return await self.repo.list_by_repository(
+                repository_id, skip, limit
+            )
         elif status_filter:
             return await self.repo.list_by_status(status_filter, skip, limit)
         elif assigned_to:
@@ -92,7 +95,9 @@ class ResearchService:
 
         return task
 
-    async def create_research_task(self, task_data: ResearchTaskCreate) -> ResearchTask:
+    async def create_research_task(
+        self, task_data: ResearchTaskCreate
+    ) -> ResearchTask:
         """
         Create new research task
 
@@ -107,7 +112,9 @@ class ResearchService:
         """
         # Validate foreign key references
         if task_data.technology_id:
-            technology = await self.tech_repo.get_by_id(task_data.technology_id)
+            technology = await self.tech_repo.get_by_id(
+                task_data.technology_id
+            )
             if not technology:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -115,7 +122,9 @@ class ResearchService:
                 )
 
         if task_data.repository_id:
-            repository = await self.repo_repo.get_by_id(task_data.repository_id)
+            repository = await self.repo_repo.get_by_id(
+                task_data.repository_id
+            )
             if not repository:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -152,7 +161,9 @@ class ResearchService:
         update_dict = task_data.model_dump(exclude_unset=True)
 
         if "technology_id" in update_dict and update_dict["technology_id"]:
-            technology = await self.tech_repo.get_by_id(update_dict["technology_id"])
+            technology = await self.tech_repo.get_by_id(
+                update_dict["technology_id"]
+            )
             if not technology:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -160,7 +171,9 @@ class ResearchService:
                 )
 
         if "repository_id" in update_dict and update_dict["repository_id"]:
-            repository = await self.repo_repo.get_by_id(update_dict["repository_id"])
+            repository = await self.repo_repo.get_by_id(
+                update_dict["repository_id"]
+            )
             if not repository:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -189,7 +202,9 @@ class ResearchService:
         await self.repo.delete(task)
         await self.db.commit()
 
-    async def update_status(self, task_id: int, new_status: TaskStatus) -> ResearchTask:
+    async def update_status(
+        self, task_id: int, new_status: TaskStatus
+    ) -> ResearchTask:
         """
         Update task status
 
@@ -219,7 +234,9 @@ class ResearchService:
 
         return task
 
-    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
+    async def update_progress(
+        self, task_id: int, progress_percentage: int
+    ) -> ResearchTask:
         """
         Update task progress
 
@@ -254,7 +271,9 @@ class ResearchService:
 
         return task
 
-    async def assign_task(self, task_id: int, assigned_to: str) -> ResearchTask:
+    async def assign_task(
+        self, task_id: int, assigned_to: str
+    ) -> ResearchTask:
         """
         Assign task to user
 
@@ -298,7 +317,9 @@ class ResearchService:
 
         return task
 
-    async def upload_document_to_task(self, task_id: int, file: UploadFile) -> ResearchTask:
+    async def upload_document_to_task(
+        self, task_id: int, file: UploadFile
+    ) -> ResearchTask:
         """
         Upload a document and associate it with a research task.
 
@@ -334,7 +355,9 @@ class ResearchService:
             }
         )
 
-        updated_task = await self.repo.update(task, uploaded_documents=uploaded_documents)
+        updated_task = await self.repo.update(
+            task, uploaded_documents=uploaded_documents
+        )
         await self.db.commit()
         await self.db.refresh(updated_task)
 
@@ -352,7 +375,9 @@ class ResearchService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
+    async def get_upcoming_tasks(
+        self, days: int = 7, limit: int = 100
+    ) -> List[ResearchTask]:
         """
         Get upcoming tasks
 
@@ -366,7 +391,9 @@ class ResearchService:
         return await self.repo.get_upcoming(days, limit)
 
     async def get_statistics(
-        self, technology_id: Optional[int] = None, repository_id: Optional[int] = None
+        self,
+        technology_id: Optional[int] = None,
+        repository_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Get research task statistics
@@ -387,9 +414,11 @@ class ResearchService:
             "overdue_count": len(overdue),
             "upcoming_count": len(upcoming),
             "overdue_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in overdue[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date}
+                for t in overdue[:5]
             ],
             "upcoming_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in upcoming[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date}
+                for t in upcoming[:5]
             ],
         }

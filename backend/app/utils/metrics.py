@@ -43,11 +43,15 @@ active_research_tasks = Gauge(
 )
 
 database_connection_pool = Gauge(
-    "commandcenter_db_connection_pool_size", "Database connection pool size", ["state"]
+    "commandcenter_db_connection_pool_size",
+    "Database connection pool size",
+    ["state"],
 )
 
 cache_operations = Counter(
-    "commandcenter_cache_operations_total", "Cache operations", ["operation", "result"]
+    "commandcenter_cache_operations_total",
+    "Cache operations",
+    ["operation", "result"],
 )
 
 api_key_usage = Counter(
@@ -101,13 +105,6 @@ job_queue_size = Gauge(
     ["status"],
 )
 
-# Error tracking metrics
-error_counter = Counter(
-    "commandcenter_errors_total",
-    "Total errors by endpoint and type",
-    ["endpoint", "status_code", "error_type"],
-)
-
 # Application info
 app_info = Info("commandcenter_app", "Command Center application information")
 
@@ -120,7 +117,13 @@ def setup_custom_metrics(app: FastAPI):
         app: FastAPI application instance
     """
     # Set application info
-    app_info.info({"version": app.version, "title": app.title, "environment": "production"})
+    app_info.info(
+        {
+            "version": app.version,
+            "title": app.title,
+            "environment": "production",
+        }
+    )
 
     # Initialize gauges
     active_research_tasks.set(0)
@@ -168,7 +171,9 @@ def track_batch_operation(operation_type: str, success: bool = True):
 def track_batch_items(operation_type: str, count: int, success: bool = True):
     """Track batch items processed"""
     status = "success" if success else "error"
-    batch_items_processed.labels(operation_type=operation_type, status=status).inc(count)
+    batch_items_processed.labels(
+        operation_type=operation_type, status=status
+    ).inc(count)
 
 
 def track_job_operation(job_type: str, success: bool = True):
@@ -177,7 +182,9 @@ def track_job_operation(job_type: str, success: bool = True):
     job_operations.labels(job_type=job_type, status=status).inc()
 
 
-def update_job_queue_sizes(pending: int = 0, running: int = 0, completed: int = 0, failed: int = 0):
+def update_job_queue_sizes(
+    pending: int = 0, running: int = 0, completed: int = 0, failed: int = 0
+):
     """Update job queue size gauges"""
     job_queue_size.labels(status="pending").set(pending)
     job_queue_size.labels(status="running").set(running)

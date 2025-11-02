@@ -19,7 +19,9 @@ from app.services import TechnologyService
 router = APIRouter(prefix="/technologies", tags=["technologies"])
 
 
-def get_technology_service(db: AsyncSession = Depends(get_db)) -> TechnologyService:
+def get_technology_service(
+    db: AsyncSession = Depends(get_db),
+) -> TechnologyService:
     """Dependency to get technology service instance"""
     return TechnologyService(db)
 
@@ -52,13 +54,16 @@ async def list_technologies(
 
 @router.get("/{technology_id}", response_model=TechnologyResponse)
 async def get_technology(
-    technology_id: int, service: TechnologyService = Depends(get_technology_service)
+    technology_id: int,
+    service: TechnologyService = Depends(get_technology_service),
 ) -> Technology:
     """Get technology by ID"""
     return await service.get_technology(technology_id)
 
 
-@router.post("/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_technology(
     technology_data: TechnologyCreate,
     service: TechnologyService = Depends(get_technology_service),
@@ -79,7 +84,8 @@ async def update_technology(
 
 @router.delete("/{technology_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_technology(
-    technology_id: int, service: TechnologyService = Depends(get_technology_service)
+    technology_id: int,
+    service: TechnologyService = Depends(get_technology_service),
 ) -> None:
     """Delete technology"""
     await service.delete_technology(technology_id)

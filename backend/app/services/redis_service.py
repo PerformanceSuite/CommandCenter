@@ -29,13 +29,17 @@ class RedisService:
                 logger.warning("Redis URL not configured, caching disabled")
                 return
 
-            self.redis_client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+            self.redis_client = redis.from_url(
+                redis_url, encoding="utf-8", decode_responses=True
+            )
             # Test connection
             await self.redis_client.ping()
             self.enabled = True
             logger.info("Redis connection established")
         except Exception as e:
-            logger.warning(f"Failed to connect to Redis: {e}. Caching disabled.")
+            logger.warning(
+                f"Failed to connect to Redis: {e}. Caching disabled."
+            )
             self.enabled = False
 
     async def disconnect(self):
@@ -66,7 +70,9 @@ class RedisService:
             logger.error(f"Redis GET error for key {key}: {e}")
             return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(
+        self, key: str, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """
         Set value in cache
 
@@ -135,7 +141,9 @@ class RedisService:
                 return await self.redis_client.delete(*keys)
             return 0
         except Exception as e:
-            logger.error(f"Redis DELETE_PATTERN error for pattern {pattern}: {e}")
+            logger.error(
+                f"Redis DELETE_PATTERN error for pattern {pattern}: {e}"
+            )
             return 0
 
     async def exists(self, key: str) -> bool:

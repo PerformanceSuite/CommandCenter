@@ -13,50 +13,48 @@ from .base import BaseRepository
 class RepositoryRepository(BaseRepository[Repository]):
     """Repository data access layer"""
 
-    def __init__(self):
-        super().__init__(Repository)
+    def __init__(self, db: AsyncSession):
+        super().__init__(Repository, db)
 
-    async def get_by_full_name(self, db: AsyncSession, full_name: str) -> Optional[Repository]:
+    async def get_by_full_name(self, full_name: str) -> Optional[Repository]:
         """
         Get repository by full name (owner/name)
 
         Args:
-            db: The database session
             full_name: Repository full name
 
         Returns:
             Repository or None if not found
         """
-        owner, name = full_name.split("/")
-        return await self.get_by_owner_and_name(db, owner=owner, name=name)
+        return await self.find_one(full_name=full_name)
 
     async def get_by_owner_and_name(
-        self, db: AsyncSession, owner: str, name: str
+        self, owner: str, name: str
     ) -> Optional[Repository]:
         """
         Get repository by owner and name
 
         Args:
-            db: The database session
             owner: Repository owner
             name: Repository name
 
         Returns:
             Repository or None if not found
         """
-        result = await db.execute(
-            select(Repository).where(Repository.owner == owner, Repository.name == name)
+        result = await self.db.execute(
+            select(Repository).where(
+                Repository.owner == owner, Repository.name == name
+            )
         )
         return result.scalar_one_or_none()
 
     async def list_by_owner(
-        self, db: AsyncSession, owner: str, skip: int = 0, limit: int = 100
+        self, owner: str, skip: int = 0, limit: int = 100
     ) -> List[Repository]:
         """
         List repositories by owner
 
         Args:
-            db: The database session
             owner: Repository owner
             skip: Number of records to skip
             limit: Maximum number of records to return
@@ -64,7 +62,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         Returns:
             List of repositories
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Repository)
             .where(Repository.owner == owner)
             .offset(skip)
@@ -74,13 +72,12 @@ class RepositoryRepository(BaseRepository[Repository]):
         return list(result.scalars().all())
 
     async def search_by_language(
-        self, db: AsyncSession, language: str, skip: int = 0, limit: int = 100
+        self, language: str, skip: int = 0, limit: int = 100
     ) -> List[Repository]:
         """
         Search repositories by programming language
 
         Args:
-            db: The database session
             language: Programming language
             skip: Number of records to skip
             limit: Maximum number of records to return
@@ -88,7 +85,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         Returns:
             List of repositories
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Repository)
             .where(Repository.language == language)
             .offset(skip)
@@ -97,18 +94,17 @@ class RepositoryRepository(BaseRepository[Repository]):
         )
         return list(result.scalars().all())
 
-    async def get_recently_synced(self, db: AsyncSession, limit: int = 10) -> List[Repository]:
+    async def get_recently_synced(self, limit: int = 10) -> List[Repository]:
         """
         Get recently synced repositories
 
         Args:
-            db: The database session
             limit: Maximum number of records to return
 
         Returns:
             List of repositories
         """
-        result = await db.execute(
+        result = await self.db.execute(
             select(Repository)
             .where(Repository.last_synced_at.isnot(None))
             .order_by(Repository.last_synced_at.desc())

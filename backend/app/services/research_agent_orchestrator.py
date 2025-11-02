@@ -349,7 +349,9 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 "model": response["model"],
                 "provider": response["provider"],
                 "usage": response["usage"],
-                "execution_time_seconds": (datetime.utcnow() - self.start_time).total_seconds(),
+                "execution_time_seconds": (
+                    datetime.utcnow() - self.start_time
+                ).total_seconds(),
             }
 
             self.result = result
@@ -405,7 +407,9 @@ class ResearchAgentOrchestrator:
             agent = ResearchAgent(
                 role=AgentRole(task_def["role"]),
                 model=task_def.get("model", self.default_model),
-                provider=AIProvider(task_def.get("provider", self.default_provider.value)),
+                provider=AIProvider(
+                    task_def.get("provider", self.default_provider.value)
+                ),
                 temperature=task_def.get("temperature", 0.7),
                 max_tokens=task_def.get("max_tokens", 4096),
             )
@@ -420,7 +424,10 @@ class ResearchAgentOrchestrator:
 
         # Launch all agents
         results = await asyncio.gather(
-            *[execute_with_semaphore(agent, prompt) for agent, prompt in agents],
+            *[
+                execute_with_semaphore(agent, prompt)
+                for agent, prompt in agents
+            ],
             return_exceptions=True,
         )
 
@@ -430,7 +437,10 @@ class ResearchAgentOrchestrator:
             if isinstance(result, Exception):
                 logger.error(f"Agent {agents[i][0].role} failed: {result}")
                 successful_results.append(
-                    {"error": str(result), "agent_role": agents[i][0].role.value}
+                    {
+                        "error": str(result),
+                        "agent_role": agents[i][0].role.value,
+                    }
                 )
             else:
                 successful_results.append(result)
@@ -438,7 +448,9 @@ class ResearchAgentOrchestrator:
         return successful_results
 
     async def technology_deep_dive(
-        self, technology_name: str, research_questions: Optional[List[str]] = None
+        self,
+        technology_name: str,
+        research_questions: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Comprehensive technology research using multiple agents
@@ -484,68 +496,15 @@ class ResearchAgentOrchestrator:
             "technology": technology_name,
             "timestamp": datetime.utcnow().isoformat(),
             "research_findings": results,
-            "summary": await self._generate_summary(results, technology_name),
+            "summary": self._generate_summary(results),
         }
 
         return report
 
-    async def _generate_summary(
-        self, results: List[Dict[str, Any]], technology_name: str = "technology"
-    ) -> str:
-        """
-        Generate executive summary from agent results using AI
-
-        Args:
-            results: List of agent research findings
-            technology_name: Name of technology being researched
-
-        Returns:
-            Concise executive summary
-        """
-        # Extract findings from results
-        findings_text = []
-        for i, result in enumerate(results, 1):
-            if "error" in result:
-                findings_text.append(
-                    f"Agent {i} ({result.get('agent_role', 'unknown')}): FAILED - {result['error']}"
-                )
-            else:
-                # Extract agent role from metadata
-                role = result.get("_metadata", {}).get("role", f"agent_{i}")
-                # Get the main content (could be JSON or raw text)
-                content = json.dumps(result, indent=2) if isinstance(result, dict) else str(result)
-                findings_text.append(f"=== {role.upper()} FINDINGS ===\n{content}\n")
-
-        combined_findings = "\n\n".join(findings_text)
-
-        # Create summarization prompt
-        prompt = f"""You are reviewing research findings about {technology_name}.
-
-Below are findings from multiple specialized research agents. Generate a concise executive summary (3-5 sentences) that:
-1. Highlights the most important insights
-2. Notes any critical limitations or concerns
-3. Provides a clear recommendation (adopt/trial/assess/hold)
-
-RESEARCH FINDINGS:
-{combined_findings}
-
-Generate ONLY the executive summary (3-5 sentences). Be direct and actionable."""
-
-        try:
-            # Use economy tier for summarization (cost-effective)
-            response = await ai_router.chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,  # Lower temperature for consistent summaries
-                max_tokens=500,  # Short summary
-            )
-
-            return response["content"].strip()
-
-        except Exception as e:
-            logger.error(f"Failed to generate AI summary: {e}")
-            # Fallback to basic summary
-            successful_count = sum(1 for r in results if "error" not in r)
-            return f"Research completed with {successful_count}/{len(results)} successful agents. See individual findings for details."
+    def _generate_summary(self, results: List[Dict[str, Any]]) -> str:
+        """Generate executive summary from agent results"""
+        # TODO: Use AI to generate summary from all agent findings
+        return f"Research completed with {len(results)} agents. See individual findings for details."
 
 
 # Global orchestrator instance

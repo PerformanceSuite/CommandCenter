@@ -6,7 +6,11 @@ Implements HTTP-based communication for MCP protocol using FastAPI.
 
 import asyncio
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+)
 from fastapi.responses import JSONResponse
 
 from app.mcp.server import MCPServer
@@ -32,7 +36,9 @@ class HTTPTransport:
             app: Optional FastAPI app instance (creates new if not provided)
         """
         self.server = server
-        self.app = app or FastAPI(title=f"MCP Server: {server.server_info.name}")
+        self.app = app or FastAPI(
+            title=f"MCP Server: {server.server_info.name}"
+        )
         self._running = False
         self._logger = logger
 
@@ -59,7 +65,9 @@ class HTTPTransport:
 
                 try:
                     # Handle message
-                    response = await self.server.handle_message(session.session_id, message)
+                    response = await self.server.handle_message(
+                        session.session_id, message
+                    )
 
                     if not response:
                         # Notification - no response

@@ -25,20 +25,26 @@ class ProjectAnalysis(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Project identification
-    project_path: Mapped[str] = mapped_column(String(1024), nullable=False, index=True, unique=True)
+    project_path: Mapped[str] = mapped_column(
+        String(1024), nullable=False, index=True, unique=True
+    )
 
     # Analysis results (stored as JSONB for flexibility)
     detected_technologies: Mapped[Optional[dict]] = mapped_column(
         JSON, nullable=True, doc="List of detected technologies with metadata"
     )
     dependencies: Mapped[Optional[dict]] = mapped_column(
-        JSON, nullable=True, doc="List of dependencies with version information"
+        JSON,
+        nullable=True,
+        doc="List of dependencies with version information",
     )
     code_metrics: Mapped[Optional[dict]] = mapped_column(
         JSON, nullable=True, doc="Code structure and complexity metrics"
     )
     research_gaps: Mapped[Optional[dict]] = mapped_column(
-        JSON, nullable=True, doc="Identified research gaps and upgrade opportunities"
+        JSON,
+        nullable=True,
+        doc="Identified research gaps and upgrade opportunities",
     )
 
     # Analysis metadata
@@ -49,14 +55,19 @@ class ProjectAnalysis(Base):
         doc="Analysis logic version for cache invalidation",
     )
     analysis_duration_ms: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, doc="Analysis duration in milliseconds"
+        Integer,
+        nullable=False,
+        default=0,
+        doc="Analysis duration in milliseconds",
     )
 
     # Timestamps
     analyzed_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, index=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

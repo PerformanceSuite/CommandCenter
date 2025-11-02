@@ -5,7 +5,15 @@ IngestionSource model for automated knowledge ingestion
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from enum import Enum
-from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Boolean, JSON
+from sqlalchemy import (
+    String,
+    Text,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Boolean,
+    JSON,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -47,7 +55,9 @@ class IngestionSource(Base):
     )
 
     # Source configuration
-    type: Mapped[SourceType] = mapped_column(String(50), nullable=False, index=True)
+    type: Mapped[SourceType] = mapped_column(
+        String(50), nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # URL or path
@@ -61,22 +71,34 @@ class IngestionSource(Base):
     priority: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
 
     # Enable/disable
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False
+    )
 
     # Additional configuration (JSON)
-    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSON, nullable=True
+    )
 
     # Status tracking
     status: Mapped[SourceStatus] = mapped_column(
         String(50), default=SourceStatus.PENDING, nullable=False
     )
-    last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    last_success: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_run: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
+    last_success: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Metrics
-    documents_ingested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    documents_ingested: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
+    error_count: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False
+    )
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -89,7 +111,9 @@ class IngestionSource(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="ingestion_sources")
+    project: Mapped["Project"] = relationship(  # noqa: F821
+        "Project", back_populates="ingestion_sources"  # noqa: F821
+    )
 
     def __repr__(self) -> str:
         return f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"

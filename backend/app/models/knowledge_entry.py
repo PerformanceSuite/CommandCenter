@@ -28,7 +28,9 @@ class KnowledgeEntry(Base):
 
     # Foreign key to technology
     technology_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("technologies.id", ondelete="CASCADE"), nullable=True
+        Integer,
+        ForeignKey("technologies.id", ondelete="CASCADE"),
+        nullable=True,
     )
 
     # Content
@@ -37,15 +39,23 @@ class KnowledgeEntry(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Source tracking
-    source_file: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    source_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    source_file: Mapped[Optional[str]] = mapped_column(
+        String(512), nullable=True
+    )
+    source_url: Mapped[Optional[str]] = mapped_column(
+        String(512), nullable=True
+    )
     source_type: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True
     )  # pdf, html, manual, etc.
 
     # Vector database reference
-    vector_db_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    embedding_model: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    vector_db_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    embedding_model: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
 
     # Metadata
     page_number: Mapped[Optional[int]] = mapped_column(nullable=True)
@@ -56,15 +66,19 @@ class KnowledgeEntry(Base):
     relevance_score: Mapped[Optional[float]] = mapped_column(nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="knowledge_entries")
-    technology: Mapped[Optional["Technology"]] = relationship(
-        "Technology", back_populates="knowledge_entries"
+    project: Mapped["Project"] = relationship(  # noqa: F821
+        "Project", back_populates="knowledge_entries"  # noqa: F821
+    )
+    technology: Mapped[Optional["Technology"]] = relationship(  # noqa: F821
+        "Technology", back_populates="knowledge_entries"  # noqa: F821
     )
 
     def __repr__(self) -> str:

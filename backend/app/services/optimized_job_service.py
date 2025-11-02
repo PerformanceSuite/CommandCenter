@@ -155,7 +155,9 @@ class OptimizedJobService:
             "count": len(jobs),
         }
 
-    async def get_statistics_optimized(self, project_id: Optional[int] = None) -> Dict[str, Any]:
+    async def get_statistics_optimized(
+        self, project_id: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Get job statistics with optimized query.
         Uses aggregation functions instead of loading all records.
@@ -172,16 +174,28 @@ class OptimizedJobService:
         # Single query for all counts using conditional aggregation
         query = select(
             func.count(Job.id).label("total"),
-            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label("pending"),
-            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label("running"),
-            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label("completed"),
-            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label("failed"),
-            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label("cancelled"),
+            func.sum(
+                func.cast(Job.status == JobStatus.PENDING, Integer)
+            ).label("pending"),
+            func.sum(
+                func.cast(Job.status == JobStatus.RUNNING, Integer)
+            ).label("running"),
+            func.sum(
+                func.cast(Job.status == JobStatus.COMPLETED, Integer)
+            ).label("completed"),
+            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label(
+                "failed"
+            ),
+            func.sum(
+                func.cast(Job.status == JobStatus.CANCELLED, Integer)
+            ).label("cancelled"),
             func.avg(
                 func.case(
                     (
                         Job.status == JobStatus.COMPLETED,
-                        func.extract("epoch", Job.completed_at - Job.started_at),
+                        func.extract(
+                            "epoch", Job.completed_at - Job.started_at
+                        ),
                     ),
                     else_=None,
                 )
@@ -195,7 +209,9 @@ class OptimizedJobService:
         completed = stats.completed or 0
         failed = stats.failed or 0
         success_rate = (
-            (completed / (completed + failed) * 100) if (completed + failed) > 0 else None
+            (completed / (completed + failed) * 100)
+            if (completed + failed) > 0
+            else None
         )
 
         return {
@@ -251,11 +267,15 @@ class OptimizedJobService:
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(
                     self._executor,
-                    lambda: celery_app.control.revoke(job.celery_task_id, terminate=True),
+                    lambda: celery_app.control.revoke(
+                        job.celery_task_id, terminate=True
+                    ),
                 )
             except Exception as e:
                 # Log error but don't fail the cancellation
-                print(f"Failed to revoke Celery task {job.celery_task_id}: {e}")
+                print(
+                    f"Failed to revoke Celery task {job.celery_task_id}: {e}"
+                )
 
         # Update job status
         job.status = JobStatus.CANCELLED
@@ -266,7 +286,9 @@ class OptimizedJobService:
 
         return job
 
-    async def batch_update_status(self, job_ids: List[int], status: str) -> int:
+    async def batch_update_status(
+        self, job_ids: List[int], status: str
+    ) -> int:
         """
         Batch update job statuses for efficiency.
 
@@ -286,11 +308,10 @@ class OptimizedJobService:
             .where(Job.id.in_(job_ids))
             .values(
                 status=status,
-                completed_at=(
-                    datetime.utcnow()
-                    if status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
-                    else None
-                ),
+                completed_at=datetime.utcnow()
+                if status
+                in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
+                else None,
             )
         )
 
@@ -299,7 +320,9 @@ class OptimizedJobService:
 
         return result.rowcount
 
-    async def get_jobs_by_celery_ids(self, celery_task_ids: List[str]) -> Dict[str, Job]:
+    async def get_jobs_by_celery_ids(
+        self, celery_task_ids: List[str]
+    ) -> Dict[str, Job]:
         """
         Get multiple jobs by their Celery task IDs in a single query.
 
@@ -312,7 +335,9 @@ class OptimizedJobService:
         if not celery_task_ids:
             return {}
 
-        result = await self.db.execute(select(Job).where(Job.celery_task_id.in_(celery_task_ids)))
+        result = await self.db.execute(
+            select(Job).where(Job.celery_task_id.in_(celery_task_ids))
+        )
         jobs = result.scalars().all()
 
         return {job.celery_task_id: job for job in jobs}

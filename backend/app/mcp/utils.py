@@ -52,7 +52,9 @@ class MCPException(Exception):
 class ParseError(MCPException):
     """JSON parsing error (-32700)."""
 
-    def __init__(self, message: str = "Parse error", data: Optional[Any] = None):
+    def __init__(
+        self, message: str = "Parse error", data: Optional[Any] = None
+    ):
         """Initialize parse error."""
         super().__init__(-32700, message, data)
 
@@ -60,7 +62,9 @@ class ParseError(MCPException):
 class InvalidRequestError(MCPException):
     """Invalid request structure error (-32600)."""
 
-    def __init__(self, message: str = "Invalid Request", data: Optional[Any] = None):
+    def __init__(
+        self, message: str = "Invalid Request", data: Optional[Any] = None
+    ):
         """Initialize invalid request error."""
         super().__init__(-32600, message, data)
 
@@ -68,7 +72,12 @@ class InvalidRequestError(MCPException):
 class MethodNotFoundError(MCPException):
     """Method not found error (-32601)."""
 
-    def __init__(self, method: str, message: Optional[str] = None, data: Optional[Any] = None):
+    def __init__(
+        self,
+        method: str,
+        message: Optional[str] = None,
+        data: Optional[Any] = None,
+    ):
         """
         Initialize method not found error.
 
@@ -85,7 +94,9 @@ class MethodNotFoundError(MCPException):
 class InvalidParamsError(MCPException):
     """Invalid method parameters error (-32602)."""
 
-    def __init__(self, message: str = "Invalid params", data: Optional[Any] = None):
+    def __init__(
+        self, message: str = "Invalid params", data: Optional[Any] = None
+    ):
         """Initialize invalid params error."""
         super().__init__(-32602, message, data)
 
@@ -93,7 +104,9 @@ class InvalidParamsError(MCPException):
 class InternalError(MCPException):
     """Internal error (-32603)."""
 
-    def __init__(self, message: str = "Internal error", data: Optional[Any] = None):
+    def __init__(
+        self, message: str = "Internal error", data: Optional[Any] = None
+    ):
         """Initialize internal error."""
         super().__init__(-32603, message, data)
 
@@ -101,7 +114,12 @@ class InternalError(MCPException):
 class ResourceNotFoundError(MCPException):
     """Resource not found error (-32001)."""
 
-    def __init__(self, uri: str, message: Optional[str] = None, data: Optional[Any] = None):
+    def __init__(
+        self,
+        uri: str,
+        message: Optional[str] = None,
+        data: Optional[Any] = None,
+    ):
         """
         Initialize resource not found error.
 
@@ -118,7 +136,12 @@ class ResourceNotFoundError(MCPException):
 class ToolNotFoundError(MCPException):
     """Tool not found error (-32002)."""
 
-    def __init__(self, tool_name: str, message: Optional[str] = None, data: Optional[Any] = None):
+    def __init__(
+        self,
+        tool_name: str,
+        message: Optional[str] = None,
+        data: Optional[Any] = None,
+    ):
         """
         Initialize tool not found error.
 

@@ -16,7 +16,9 @@ from app.tasks import celery_app
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(bind=True, name="app.tasks.scheduled_tasks.dispatch_due_schedules")
+@celery_app.task(
+    bind=True, name="app.tasks.scheduled_tasks.dispatch_due_schedules"
+)
 def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
     """
     Find and execute all schedules that are due for execution.
@@ -42,7 +44,9 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_dispatcher():
         """Inner async function to run the dispatcher."""
@@ -60,7 +64,9 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
                 # Execute each due schedule
                 for schedule in due_schedules:
                     try:
-                        logger.info(f"Executing schedule {schedule.id} ({schedule.name})")
+                        logger.info(
+                            f"Executing schedule {schedule.id} ({schedule.name})"
+                        )
                         job = await service.execute_schedule(schedule.id)
 
                         dispatched.append(
@@ -69,11 +75,9 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
                                 "schedule_name": schedule.name,
                                 "job_id": job.id,
                                 "task_type": schedule.task_type,
-                                "next_run": (
-                                    schedule.next_run_at.isoformat()
-                                    if schedule.next_run_at
-                                    else None
-                                ),
+                                "next_run": schedule.next_run_at.isoformat()
+                                if schedule.next_run_at
+                                else None,
                             }
                         )
 
@@ -128,7 +132,9 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
     return loop.run_until_complete(run_dispatcher())
 
 
-@celery_app.task(bind=True, name="app.tasks.scheduled_tasks.cleanup_expired_schedules")
+@celery_app.task(
+    bind=True, name="app.tasks.scheduled_tasks.cleanup_expired_schedules"
+)
 def cleanup_expired_schedules(self) -> Dict[str, Any]:
     """
     Disable schedules that have passed their end_time.
@@ -154,7 +160,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_cleanup():
         """Inner async function to run the cleanup."""
@@ -166,7 +174,7 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                 result = await session.execute(
                     select(Schedule).where(
                         and_(
-                            Schedule.enabled.is_(True),
+                            Schedule.enabled == True,
                             Schedule.end_time.isnot(None),
                             Schedule.end_time <= now,
                         )
@@ -190,7 +198,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                         }
                     )
 
-                    logger.info(f"Disabled expired schedule {schedule.id} ({schedule.name})")
+                    logger.info(
+                        f"Disabled expired schedule {schedule.id} ({schedule.name})"
+                    )
 
                 await session.commit()
 
@@ -200,7 +210,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                     "schedules": disabled_schedules,
                 }
 
-                logger.info(f"Schedule cleanup completed: {disabled_count} schedules disabled")
+                logger.info(
+                    f"Schedule cleanup completed: {disabled_count} schedules disabled"
+                )
 
                 return result
 
@@ -213,7 +225,9 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
     return loop.run_until_complete(run_cleanup())
 
 
-@celery_app.task(bind=True, name="app.tasks.scheduled_tasks.monitor_schedule_health")
+@celery_app.task(
+    bind=True, name="app.tasks.scheduled_tasks.monitor_schedule_health"
+)
 def monitor_schedule_health(self) -> Dict[str, Any]:
     """
     Monitor schedule execution health and alert on issues.
@@ -242,7 +256,9 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_monitor():
         """Inner async function to run the monitor."""
@@ -252,7 +268,9 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 issues = []
 
                 # Get all enabled schedules
-                result = await session.execute(select(Schedule).where(Schedule.enabled.is_(True)))
+                result = await session.execute(
+                    select(Schedule).where(Schedule.enabled == True)
+                )
                 schedules = result.scalars().all()
 
                 for schedule in schedules:
@@ -276,7 +294,10 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                     if schedule.last_run_at:
                         time_since_run = now - schedule.last_run_at
                         # Alert if hasn't run in 7 days (for non-once schedules)
-                        if schedule.frequency != "once" and time_since_run > timedelta(days=7):
+                        if (
+                            schedule.frequency != "once"
+                            and time_since_run > timedelta(days=7)
+                        ):
                             issues.append(
                                 {
                                     "schedule_id": schedule.id,
@@ -297,15 +318,12 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                         # Check if multiple recent failures
                         recent_failure_threshold = schedule.run_count - 3
                         if schedule.success_count <= recent_failure_threshold:
-                            error_text = (
-                                schedule.last_error[:100] if schedule.last_error else "Unknown"
-                            )
                             issues.append(
                                 {
                                     "schedule_id": schedule.id,
                                     "schedule_name": schedule.name,
                                     "issue_type": "consecutive_failures",
-                                    "details": f"Last error: {error_text}",
+                                    "details": f"Last error: {schedule.last_error[:100] if schedule.last_error else 'Unknown'}",
                                     "severity": "critical",
                                 }
                             )
@@ -330,16 +348,22 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 }
 
                 if critical:
-                    logger.warning(f"Found {len(critical)} critical schedule issues")
+                    logger.warning(
+                        f"Found {len(critical)} critical schedule issues"
+                    )
                 elif warnings:
                     logger.info(f"Found {len(warnings)} schedule warnings")
 
-                logger.info(f"Schedule health monitoring completed: {len(issues)} total issues")
+                logger.info(
+                    f"Schedule health monitoring completed: {len(issues)} total issues"
+                )
 
                 return result
 
             except Exception as e:
-                logger.error(f"Schedule health monitoring failed: {e}", exc_info=True)
+                logger.error(
+                    f"Schedule health monitoring failed: {e}", exc_info=True
+                )
                 raise
 
     # Run the async monitor
@@ -347,7 +371,9 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
     return loop.run_until_complete(run_monitor())
 
 
-@celery_app.task(bind=True, name="app.tasks.scheduled_tasks.execute_single_schedule")
+@celery_app.task(
+    bind=True, name="app.tasks.scheduled_tasks.execute_single_schedule"
+)
 def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
     """
     Execute a single schedule manually or via Celery Beat.
@@ -377,7 +403,9 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def run_execution():
         """Inner async function to run the execution."""
@@ -389,7 +417,9 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
                 job = await service.execute_schedule(schedule_id)
 
                 # Get updated schedule for stats
-                result = await session.execute(select(Schedule).where(Schedule.id == schedule_id))
+                result = await session.execute(
+                    select(Schedule).where(Schedule.id == schedule_id)
+                )
                 schedule = result.scalar_one_or_none()
 
                 # Record success
@@ -404,19 +434,22 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
                     "schedule_name": schedule.name if schedule else None,
                     "job_id": job.id,
                     "status": "success",
-                    "next_run": (
-                        schedule.next_run_at.isoformat()
-                        if schedule and schedule.next_run_at
-                        else None
-                    ),
+                    "next_run": schedule.next_run_at.isoformat()
+                    if schedule and schedule.next_run_at
+                    else None,
                 }
 
-                logger.info(f"Successfully executed schedule {schedule_id}, created job {job.id}")
+                logger.info(
+                    f"Successfully executed schedule {schedule_id}, created job {job.id}"
+                )
 
                 return result_data
 
             except Exception as e:
-                logger.error(f"Failed to execute schedule {schedule_id}: {e}", exc_info=True)
+                logger.error(
+                    f"Failed to execute schedule {schedule_id}: {e}",
+                    exc_info=True,
+                )
 
                 # Record failure
                 await service.record_execution_result(

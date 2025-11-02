@@ -262,7 +262,9 @@ class ToolProvider(BaseProvider):
         """
 
     @abstractmethod
-    async def call_tool(self, name: str, arguments: Dict[str, Any]) -> ToolResult:
+    async def call_tool(
+        self, name: str, arguments: Dict[str, Any]
+    ) -> ToolResult:
         """
         Execute tool with given arguments.
 

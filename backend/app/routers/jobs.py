@@ -73,11 +73,15 @@ manager = ConnectionManager()
 
 @router.get("", response_model=JobListResponse)
 async def list_jobs(
-    project_id: Optional[int] = Query(None, description="Filter by project ID"),
+    project_id: Optional[int] = Query(
+        None, description="Filter by project ID"
+    ),
     status_filter: Optional[str] = Query(None, description="Filter by status"),
     job_type: Optional[str] = Query(None, description="Filter by job type"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Maximum number of records"
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -104,7 +108,9 @@ async def list_jobs(
     )
 
 
-@router.post("", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=JobResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_job(
     job_data: JobCreate,
     db: AsyncSession = Depends(get_db),
@@ -280,7 +286,9 @@ async def get_job_progress(
 
 @router.get("/active/list", response_model=JobListResponse)
 async def list_active_jobs(
-    project_id: Optional[int] = Query(None, description="Filter by project ID"),
+    project_id: Optional[int] = Query(
+        None, description="Filter by project ID"
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -301,7 +309,9 @@ async def list_active_jobs(
 
 @router.get("/statistics/summary", response_model=JobStatisticsResponse)
 async def get_job_statistics(
-    project_id: Optional[int] = Query(None, description="Filter by project ID"),
+    project_id: Optional[int] = Query(
+        None, description="Filter by project ID"
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """

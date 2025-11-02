@@ -30,16 +30,6 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: Optional[str] = None
 
-    # Knowledge base settings (KnowledgeBeast v0.1.0)
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
-    EMBEDDING_DIMENSION: int = 384
-    KNOWLEDGE_COLLECTION_PREFIX: str = "commandcenter"
-
-    # Connection pool settings for KnowledgeBeast PostgresBackend
-    KB_POOL_MIN_SIZE: int = 2
-    KB_POOL_MAX_SIZE: int = 10
-    KB_POOL_TIMEOUT: int = 30
-
     # GitHub Integration
     github_token: Optional[str] = None
     github_default_org: Optional[str] = None
@@ -84,11 +74,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ENCRYPT_TOKENS: bool = Field(
-        default=True, description="Whether to encrypt GitHub tokens in database"
+        default=True,
+        description="Whether to encrypt GitHub tokens in database",
     )
 
     # CORS
-    cors_origins: str | list[str] = Field(
+    cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"],
         description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)",
     )
@@ -96,7 +87,8 @@ class Settings(BaseSettings):
         default=True, description="Allow credentials in CORS requests"
     )
     cors_max_age: int = Field(
-        default=600, description="Maximum age (seconds) for CORS preflight cache"
+        default=600,
+        description="Maximum age (seconds) for CORS preflight cache",
     )
 
     # API Settings
@@ -133,7 +125,10 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
 
     @field_validator("cors_origins", mode="before")
@@ -150,17 +145,13 @@ class Settings(BaseSettings):
                 return [parsed]
             except json.JSONDecodeError:
                 # Fallback: treat as comma-separated list
-                return [origin.strip() for origin in v.split(",") if origin.strip()]
+                return [
+                    origin.strip() for origin in v.split(",") if origin.strip()
+                ]
         return v
 
-    def get_postgres_url(self, for_asyncpg: bool = False) -> str:
-        """
-        Construct PostgreSQL URL from components
-
-        Args:
-            for_asyncpg: If True, return asyncpg format (postgresql://),
-                        otherwise return SQLAlchemy format (postgresql+asyncpg://)
-        """
+    def get_postgres_url(self) -> str:
+        """Construct PostgreSQL URL from components"""
         if all(
             [
                 self.postgres_user,
@@ -169,16 +160,11 @@ class Settings(BaseSettings):
                 self.postgres_db,
             ]
         ):
-            scheme = "postgresql" if for_asyncpg else "postgresql+asyncpg"
             return (
-                f"{scheme}://{self.postgres_user}:{self.postgres_password}"
+                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
                 f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
             )
-        # Strip +asyncpg if for_asyncpg and database_url contains it
-        url = self.database_url
-        if for_asyncpg and "+asyncpg" in url:
-            url = url.replace("postgresql+asyncpg://", "postgresql://")
-        return url
+        return self.database_url
 
 
 # Global settings instance

@@ -1,9 +1,15 @@
 """
 Research Task management endpoints
 """
-
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status, Query, UploadFile, File
+from fastapi import (
+    APIRouter,
+    Depends,
+    status,
+    Query,
+    UploadFile,
+    File,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -18,7 +24,9 @@ from app.services import ResearchService
 router = APIRouter(prefix="/research-tasks", tags=["research-tasks"])
 
 
-def get_research_service(db: AsyncSession = Depends(get_db)) -> ResearchService:
+def get_research_service(
+    db: AsyncSession = Depends(get_db),
+) -> ResearchService:
     """Dependency to get research service instance"""
     return ResearchService(db)
 
@@ -55,7 +63,11 @@ async def get_research_task(
     return ResearchTaskResponse.model_validate(task)
 
 
-@router.post("/", response_model=ResearchTaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=ResearchTaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_research_task(
     task_data: ResearchTaskCreate,
     service: ResearchService = Depends(get_research_service),
@@ -118,7 +130,9 @@ async def upload_document(
 
 
 @router.get("/{task_id}/documents")
-async def list_documents(task_id: int, service: ResearchService = Depends(get_research_service)):
+async def list_documents(
+    task_id: int, service: ResearchService = Depends(get_research_service)
+):
     """List documents for a research task"""
     task = await service.get_research_task(task_id)
     return {"documents": task.uploaded_documents or []}
