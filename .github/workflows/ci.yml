@@ -90,11 +90,11 @@ jobs:
         continue-on-error: false
 
       # Type checking with MyPy
-      # Ensures type hints are used correctly
+      # Ensures type hints are used correctly (29 known errors, gradually improving)
       - name: Run MyPy (type checking)
         working-directory: backend
-        run: mypy app/ --ignore-missing-imports --no-strict-optional
-        continue-on-error: true  # Keep lenient for now, many type hints missing
+        run: mypy app/
+        continue-on-error: false
 
       # Security scanning with Bandit
       # Detects common security issues in Python code
