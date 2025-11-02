@@ -8,6 +8,7 @@ as code using Dagger's Python SDK. No docker-compose.yml needed.
 import logging
 from dataclasses import dataclass
 from typing import Optional
+from datetime import datetime
 
 import dagger
 
@@ -210,6 +211,149 @@ class CommandCenterStack:
             raise RuntimeError(f"Service {service_name} not found in registry. "
                              f"Has start() been called?")
         return self._service_containers[service_name]
+
+    async def check_postgres_health(self) -> dict:
+        """
+        Check PostgreSQL health using pg_isready.
+
+        Returns:
+            Dict with health status
+        """
+        try:
+            container = self._service_containers.get("postgres")
+            if not container:
+                return {"healthy": False, "service": "postgres", "error": "Container not found"}
+
+            # Execute pg_isready command
+            result = await container.with_exec([
+                "pg_isready", "-U", "commandcenter"
+            ]).stdout()
+
+            healthy = "accepting connections" in result
+            return {
+                "healthy": healthy,
+                "service": "postgres",
+                "message": result.strip()
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "service": "postgres",
+                "error": str(e)
+            }
+
+    async def check_redis_health(self) -> dict:
+        """
+        Check Redis health using redis-cli ping.
+
+        Returns:
+            Dict with health status
+        """
+        try:
+            container = self._service_containers.get("redis")
+            if not container:
+                return {"healthy": False, "service": "redis", "error": "Container not found"}
+
+            # Execute redis-cli ping
+            result = await container.with_exec([
+                "redis-cli", "ping"
+            ]).stdout()
+
+            healthy = "PONG" in result
+            return {
+                "healthy": healthy,
+                "service": "redis",
+                "message": result.strip()
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "service": "redis",
+                "error": str(e)
+            }
+
+    async def check_backend_health(self) -> dict:
+        """
+        Check backend health via HTTP /health endpoint.
+
+        Returns:
+            Dict with health status
+        """
+        try:
+            container = self._service_containers.get("backend")
+            if not container:
+                return {"healthy": False, "service": "backend", "error": "Container not found"}
+
+            # Execute curl to health endpoint
+            result = await container.with_exec([
+                "curl", "-f", "http://localhost:8000/health"
+            ]).stdout()
+
+            healthy = "ok" in result.lower() or "healthy" in result.lower()
+            return {
+                "healthy": healthy,
+                "service": "backend",
+                "message": result.strip()
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "service": "backend",
+                "error": str(e)
+            }
+
+    async def check_frontend_health(self) -> dict:
+        """
+        Check frontend health via HTTP request to root.
+
+        Returns:
+            Dict with health status
+        """
+        try:
+            container = self._service_containers.get("frontend")
+            if not container:
+                return {"healthy": False, "service": "frontend", "error": "Container not found"}
+
+            # Execute curl to root path
+            result = await container.with_exec([
+                "curl", "-f", "http://localhost:3000/"
+            ]).stdout()
+
+            # If curl succeeds (exit 0), consider healthy
+            healthy = len(result) > 0
+            return {
+                "healthy": healthy,
+                "service": "frontend",
+                "message": "HTTP 200 OK" if healthy else "No response"
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "service": "frontend",
+                "error": str(e)
+            }
+
+    async def health_status(self) -> dict:
+        """
+        Get aggregated health status for all services.
+
+        Returns:
+            Dict with overall health and per-service status
+        """
+        services = {}
+
+        services["postgres"] = await self.check_postgres_health()
+        services["redis"] = await self.check_redis_health()
+        services["backend"] = await self.check_backend_health()
+        services["frontend"] = await self.check_frontend_health()
+
+        overall_healthy = all(svc["healthy"] for svc in services.values())
+
+        return {
+            "overall_healthy": overall_healthy,
+            "services": services,
+            "timestamp": str(datetime.now())
+        }
 
     async def stop(self) -> dict:
         """Stop all CommandCenter containers"""
