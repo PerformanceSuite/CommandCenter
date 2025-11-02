@@ -18,6 +18,10 @@ import enum
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.technology import Technology
+    from app.models.repository import Repository
 
 class TaskStatus(str, enum.Enum):
     """Research task status"""
@@ -28,17 +32,12 @@ class TaskStatus(str, enum.Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
-
 class ResearchTask(Base):
     """Research task tracking and documentation"""
 
     __tablename__ = "research_tasks"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -100,3 +99,4 @@ if TYPE_CHECKING:
 
     def __repr__(self) -> str:
         return f"<ResearchTask(id={self.id}, title='{self.title}', status='{self.status.value}')>"
+

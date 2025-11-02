@@ -9,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.technology import Technology
+
 
 class KnowledgeEntry(Base):
     """Knowledge base entries for RAG system"""
@@ -16,10 +20,6 @@ class KnowledgeEntry(Base):
     __tablename__ = "knowledge_entries"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -73,3 +73,5 @@ if TYPE_CHECKING:
 
     def __repr__(self) -> str:
         return f"<KnowledgeEntry(id={self.id}, title='{self.title}', category='{self.category}')>"
+
+

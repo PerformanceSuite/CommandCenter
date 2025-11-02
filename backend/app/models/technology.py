@@ -3,7 +3,7 @@ Technology model for tracking research areas and technologies
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import (
     String,
     Text,
@@ -18,6 +18,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.research_task import ResearchTask
+    from app.models.knowledge_entry import KnowledgeEntry
 
 
 class TechnologyDomain(str, enum.Enum):

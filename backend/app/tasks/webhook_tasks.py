@@ -7,7 +7,7 @@ import asyncio
 from typing import Dict, Any
 
 from app.tasks import celery_app
-from app.database import AsyncSessionLocal
+from app.database import AsyncSessionLocal, get_session_context
 from app.services.webhook_service import WebhookService
 
 

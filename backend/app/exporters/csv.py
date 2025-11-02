@@ -12,6 +12,9 @@ import io
 from app.exporters import BaseExporter
 
 
+# Note: get_column_letter is imported locally in _export_to_excel method where it's used
+
+
 class CSVExporter(BaseExporter):
     """
     Export analysis results to CSV format.

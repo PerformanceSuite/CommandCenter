@@ -10,6 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+
 
 class SourceType(str, Enum):
     """Types of ingestion sources"""
@@ -36,10 +39,6 @@ class IngestionSource(Base):
     __tablename__ = "ingestion_sources"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -97,3 +96,6 @@ if TYPE_CHECKING:
 
     def __repr__(self) -> str:
         return f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"
+
+
+

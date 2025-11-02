@@ -9,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
 
 class IntegrationType:
     """Integration type constants."""
@@ -23,7 +26,6 @@ class IntegrationType:
     NOTION = "notion"
     CUSTOM_WEBHOOK = "custom_webhook"
 
-
 class IntegrationStatus:
     """Integration status constants."""
 
@@ -31,7 +33,6 @@ class IntegrationStatus:
     INACTIVE = "inactive"
     ERROR = "error"
     PENDING = "pending"
-
 
 class Integration(Base):
     """
@@ -44,10 +45,6 @@ class Integration(Base):
     __tablename__ = "integrations"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -138,7 +135,10 @@ if TYPE_CHECKING:
     )
 
     def __repr__(self) -> str:
-        return f"<Integration(id={self.id}, name='{self.name}', type='{self.integration_type}', status='{self.status}')>"
+        return (
+            f"<Integration(id={self.id}, name='{self.name}', "
+            f"type='{self.integration_type}', status='{self.status}')>"
+        )
 
     @property
     def is_healthy(self) -> bool:

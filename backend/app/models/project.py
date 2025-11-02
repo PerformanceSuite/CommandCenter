@@ -10,6 +10,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.database import Base
 
 if TYPE_CHECKING:
+    from app.models.repository import Repository
+    from app.models.technology import Technology
+    from app.models.research_task import ResearchTask
+    from app.models.knowledge_entry import KnowledgeEntry
+    from app.models.webhook import WebhookConfig, WebhookEvent, WebhookDelivery
+    from app.models.github_rate_limit import GitHubRateLimit
+    from app.models.job import Job
+    from app.models.schedule import Schedule
+    from app.models.integration import Integration
     from app.models.ingestion_source import IngestionSource
 
 

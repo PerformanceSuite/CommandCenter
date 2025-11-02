@@ -9,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+
 
 class JobStatus:
     """Job status constants."""
@@ -41,10 +45,6 @@ class Job(Base):
     __tablename__ = "jobs"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -171,3 +171,6 @@ if TYPE_CHECKING:
             "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
             "duration_seconds": self.duration_seconds,
         }
+
+
+

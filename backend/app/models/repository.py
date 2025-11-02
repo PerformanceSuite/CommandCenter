@@ -11,6 +11,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from app.database import Base
 from app.utils.crypto import encrypt_token, decrypt_token
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.research_task import ResearchTask
+    from app.models.webhook import WebhookConfig
+
 
 class Repository(Base):
     """GitHub repository tracking"""
@@ -18,10 +23,6 @@ class Repository(Base):
     __tablename__ = "repositories"
 
     # Primary key
-
-if TYPE_CHECKING:
-    pass  # Imports added for type checking only
-
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -102,3 +103,5 @@ if TYPE_CHECKING:
 
     def __repr__(self) -> str:
         return f"<Repository(id={self.id}, full_name='{self.full_name}')>"
+
+

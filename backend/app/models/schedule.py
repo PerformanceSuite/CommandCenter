@@ -3,12 +3,15 @@ Schedule model for recurring task execution.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, DateTime, JSON, Integer, Boolean, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
 
 class ScheduleFrequency:
     """Schedule frequency constants."""
@@ -19,7 +22,6 @@ class ScheduleFrequency:
     WEEKLY = "weekly"
     MONTHLY = "monthly"
     CRON = "cron"
-
 
 class Schedule(Base):
     """

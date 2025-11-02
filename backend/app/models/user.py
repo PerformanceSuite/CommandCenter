@@ -3,12 +3,17 @@ User model for authentication and authorization
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from email_validator import validate_email, EmailNotValidError
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.job import Job
+    from app.models.schedule import Schedule
+    from app.models.integration import Integration
 
 
 class User(Base):
