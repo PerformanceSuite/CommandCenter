@@ -16,6 +16,19 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class ResourceLimits:
+    """Resource limits for CommandCenter containers"""
+    postgres_cpu: float = 1.0
+    postgres_memory_mb: int = 2048
+    redis_cpu: float = 0.5
+    redis_memory_mb: int = 512
+    backend_cpu: float = 1.0
+    backend_memory_mb: int = 1024
+    frontend_cpu: float = 0.5
+    frontend_memory_mb: int = 512
+
+
+@dataclass
 class CommandCenterConfig:
     """Configuration for a CommandCenter instance"""
     project_name: str
@@ -26,6 +39,12 @@ class CommandCenterConfig:
     redis_port: int
     db_password: str
     secret_key: str
+    resource_limits: ResourceLimits = None
+
+    def __post_init__(self):
+        """Set defaults after initialization"""
+        if self.resource_limits is None:
+            self.resource_limits = ResourceLimits()
 
 
 class CommandCenterStack:
@@ -51,9 +70,11 @@ class CommandCenterStack:
             await self._connection.__aexit__(exc_type, exc_val, exc_tb)
 
     async def build_postgres(self) -> dagger.Container:
-        """Build PostgreSQL container"""
+        """Build PostgreSQL container with resource limits"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
+
+        limits = self.config.resource_limits
 
         return (
             self.client.container()
@@ -62,23 +83,31 @@ class CommandCenterStack:
             .with_env_variable("POSTGRES_PASSWORD", self.config.db_password)
             .with_env_variable("POSTGRES_DB", "commandcenter")
             .with_exposed_port(5432)
+            .with_resource_limit("cpu", str(limits.postgres_cpu))
+            .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
         )
 
     async def build_redis(self) -> dagger.Container:
-        """Build Redis container"""
+        """Build Redis container with resource limits"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
+
+        limits = self.config.resource_limits
 
         return (
             self.client.container()
             .from_("redis:7-alpine")
             .with_exposed_port(6379)
+            .with_resource_limit("cpu", str(limits.redis_cpu))
+            .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
         )
 
     async def build_backend(self, postgres_host: str, redis_host: str) -> dagger.Container:
-        """Build CommandCenter backend container"""
+        """Build CommandCenter backend container with resource limits"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
+
+        limits = self.config.resource_limits
 
         # Mount project directory as read-only volume
         project_dir = self.client.host().directory(self.config.project_path)
@@ -102,12 +131,16 @@ class CommandCenterStack:
             # Run backend
             .with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
             .with_exposed_port(8000)
+            .with_resource_limit("cpu", str(limits.backend_cpu))
+            .with_resource_limit("memory", f"{limits.backend_memory_mb}m")
         )
 
     async def build_frontend(self, backend_url: str) -> dagger.Container:
-        """Build CommandCenter frontend container"""
+        """Build CommandCenter frontend container with resource limits"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
+
+        limits = self.config.resource_limits
 
         return (
             self.client.container()
@@ -120,6 +153,8 @@ class CommandCenterStack:
             # Run frontend dev server
             .with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"])
             .with_exposed_port(3000)
+            .with_resource_limit("cpu", str(limits.frontend_cpu))
+            .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
         )
 
     async def start(self) -> dict:
