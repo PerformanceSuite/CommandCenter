@@ -234,7 +234,7 @@ async def execute_batch_analysis_job(
         await service.update_job(
             job_id=job_id,
             progress=progress,
-            current_step=f"Analyzing repository {i+1}/{total}",
+            current_step=f"Analyzing repository {i + 1}/{total}",
         )
 
         # TODO: Implement actual analysis
