@@ -166,7 +166,7 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                 result = await session.execute(
                     select(Schedule).where(
                         and_(
-                            Schedule.enabled == True,
+                            Schedule.enabled.is_(True),
                             Schedule.end_time.isnot(None),
                             Schedule.end_time <= now,
                         )
@@ -252,7 +252,7 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 issues = []
 
                 # Get all enabled schedules
-                result = await session.execute(select(Schedule).where(Schedule.enabled == True))
+                result = await session.execute(select(Schedule).where(Schedule.enabled.is_(True)))
                 schedules = result.scalars().all()
 
                 for schedule in schedules:
@@ -297,12 +297,15 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                         # Check if multiple recent failures
                         recent_failure_threshold = schedule.run_count - 3
                         if schedule.success_count <= recent_failure_threshold:
+                            error_text = (
+                                schedule.last_error[:100] if schedule.last_error else "Unknown"
+                            )
                             issues.append(
                                 {
                                     "schedule_id": schedule.id,
                                     "schedule_name": schedule.name,
                                     "issue_type": "consecutive_failures",
-                                    "details": f"Last error: {schedule.last_error[:100] if schedule.last_error else 'Unknown'}",
+                                    "details": f"Last error: {error_text}",
                                     "severity": "critical",
                                 }
                             )
