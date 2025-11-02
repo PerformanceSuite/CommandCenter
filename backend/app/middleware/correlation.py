@@ -2,12 +2,17 @@
 
 This middleware ensures every request has a unique correlation ID that can be
 used to trace requests across services, logs, and metrics.
+
+Phase C Enhancement: Propagates correlation ID to database queries via context variable
 """
 
 import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+# Import context variable for database query comments
+from app.database import request_id_context
 
 
 class CorrelationIDMiddleware(BaseHTTPMiddleware):
@@ -50,6 +55,10 @@ class CorrelationIDMiddleware(BaseHTTPMiddleware):
 
         # Store in request state for access by handlers
         request.state.request_id = correlation_id
+
+        # Phase C: Set context variable for database query comment injection
+        # This allows SQLAlchemy event listener to add correlation ID to SQL queries
+        request_id_context.set(correlation_id)
 
         # Process request
         response = await call_next(request)
