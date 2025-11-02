@@ -21,7 +21,6 @@ class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
 
 
-
 class OptimizedDatabaseConfig:
     """
     Optimized database configuration with connection pooling

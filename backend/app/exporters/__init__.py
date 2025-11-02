@@ -108,15 +108,12 @@ class ExportError(Exception):
     """Base exception for export errors."""
 
 
-
 class UnsupportedFormatError(ExportError):
     """Raised when export format is not supported."""
 
 
-
 class ExportDataError(ExportError):
     """Raised when export data is invalid or incomplete."""
-
 
 
 __all__ = [

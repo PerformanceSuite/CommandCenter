@@ -22,15 +22,12 @@ class IntegrationError(Exception):
     """Base exception for integration errors."""
 
 
-
 class IntegrationAuthError(IntegrationError):
     """Authentication/authorization error."""
 
 
-
 class IntegrationRateLimitError(IntegrationError):
     """Rate limit exceeded."""
-
 
 
 class BaseIntegration(ABC):

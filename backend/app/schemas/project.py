@@ -19,7 +19,6 @@ class ProjectCreate(ProjectBase):
     """Schema for creating a new project"""
 
 
-
 class ProjectUpdate(BaseModel):
     """Schema for updating an existing project"""
 

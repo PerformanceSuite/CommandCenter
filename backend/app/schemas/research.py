@@ -28,7 +28,6 @@ class ResearchTaskCreate(ResearchTaskBase):
     """Schema for creating a research task"""
 
 
-
 class ResearchTaskUpdate(BaseModel):
     """Schema for updating a research task"""
 
@@ -60,7 +59,6 @@ class ResearchTaskInDB(ResearchTaskBase):
 
 class ResearchTaskResponse(ResearchTaskInDB):
     """Schema for research task API response"""
-
 
 
 class KnowledgeEntryBase(BaseModel):
@@ -111,7 +109,6 @@ class KnowledgeEntryInDB(KnowledgeEntryBase):
 
 class KnowledgeEntryResponse(KnowledgeEntryInDB):
     """Schema for knowledge entry API response"""
-
 
 
 class KnowledgeSearchRequest(BaseModel):
