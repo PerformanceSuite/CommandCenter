@@ -531,3 +531,43 @@ Created 6 GitHub issues tracking all failing tests:
 2. Complete PR #72: Fix forward refs, re-enable strict Flake8
 3. Begin Phase C: Observability Layer (Prometheus, logging, tracing)
 
+
+## Session: 2025-11-01 23:08 PST (Phase C Week 1)
+**Duration**: ~2.5 hours
+**Branch**: phase-c-observability (worktree)
+**Context**: 129k/200k tokens (64.5%)
+
+### Work Completed:
+- ✅ Set up Phase C isolated worktree with unique ports
+- ✅ Task 1.1: Created Correlation ID Middleware (UUID generation + header extraction)
+- ✅ Task 1.2: Registered middleware in FastAPI main.py
+- ✅ Task 1.3: Added error_counter Prometheus metric
+- ✅ Task 1.4: Enhanced global exception handler with correlation tracking
+- ✅ Task 1.5: Wrote 10 unit tests for middleware
+- ✅ Task 1.6: Wrote 6 integration tests for error flow
+- ✅ Task 1.7: Wrote 4 performance benchmark tests
+- ⏸️  Task 1.8: Deployment partially complete (docker-compose .env blocker)
+- ✅ Fixed 2 critical bugs: lxml version conflict + LoggingMiddleware overwriting IDs
+- ✅ Committed progress: bef0a1f (Week 1) + 906776b (bug fixes)
+
+### Key Decisions:
+- Followed exact plan from Phase C design document (32 tasks over 4 weeks)
+- Pin lxml < 5.0.0 for newspaper4k compatibility
+- Fixed pre-existing LoggingMiddleware bug (always generated new UUID)
+- Deferred full Task 1.8 verification to next session (docker-compose .env issue)
+
+### Blockers/Issues:
+- docker-compose not reading worktree .env properly (port conflicts)
+- Plan lacks contingency strategies for real-world hiccups
+- Need to add "Contingency & Troubleshooting" section to Phase C plan
+
+### Next Steps:
+1. Resolve docker-compose .env loading (10-15 min fix)
+2. Complete Task 1.8 verification (custom request ID preservation, tests)
+3. Add contingency section to Phase C plan
+4. Begin Week 2: Database Observability (Tasks 2.1-2.7)
+
+### Files Changed:
+- New: correlation.py, test_correlation.py, test_error_tracking.py, test_middleware_overhead.py
+- Modified: main.py, metrics.py, logging.py, requirements.txt, middleware/__init__.py
+- Total: 744 insertions, 13 deletions across 12 files
