@@ -31,6 +31,7 @@ async def test_postgres_container_has_resource_limits(mock_config):
 
     # Setup mock chain
     mock_container.from_ = MagicMock(return_value=mock_container)
+    mock_container.with_user = MagicMock(return_value=mock_container)
     mock_container.with_env_variable = MagicMock(return_value=mock_container)
     mock_container.with_exposed_port = MagicMock(return_value=mock_container)
     mock_container.with_resource_limit = MagicMock(return_value=mock_container)
