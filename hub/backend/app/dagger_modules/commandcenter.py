@@ -406,6 +406,63 @@ class CommandCenterStack:
             "timestamp": str(datetime.now())
         }
 
+    @retry_with_backoff(max_attempts=3, initial_delay=2.0)
+    async def restart_service(self, service_name: str) -> dict:
+        """
+        Restart a specific service container.
+
+        Args:
+            service_name: Name of service to restart (postgres, redis, backend, frontend)
+
+        Returns:
+            Dict with restart status
+
+        Raises:
+            ValueError: If service_name is invalid
+            RuntimeError: If service not found in registry
+        """
+        if service_name not in self.VALID_SERVICES:
+            raise ValueError(f"Invalid service name: {service_name}. "
+                           f"Must be one of {self.VALID_SERVICES}")
+
+        if not self.client:
+            raise RuntimeError("Dagger client not initialized")
+
+        # Verify service exists in registry
+        if service_name not in self._service_containers:
+            raise RuntimeError(f"Service {service_name} not found in registry. "
+                             f"Has start() been called?")
+
+        logger.info(f"Restarting service: {service_name}")
+
+        # Rebuild the container based on service type
+        if service_name == "postgres":
+            new_container = await self.build_postgres()
+        elif service_name == "redis":
+            new_container = await self.build_redis()
+        elif service_name == "backend":
+            # Backend needs postgres and redis hostnames
+            new_container = await self.build_backend("postgres", "redis")
+        elif service_name == "frontend":
+            # Frontend needs backend URL
+            new_container = await self.build_frontend(f"http://backend:{self.config.backend_port}")
+        else:
+            raise ValueError(f"Unhandled service: {service_name}")
+
+        # Update registry with new container
+        self._service_containers[service_name] = new_container
+
+        # Start as service
+        _ = new_container.as_service()
+
+        logger.info(f"Service {service_name} restarted successfully")
+
+        return {
+            "success": True,
+            "service": service_name,
+            "message": f"Service {service_name} restarted successfully"
+        }
+
     async def stop(self) -> dict:
         """Stop all CommandCenter containers"""
         # Dagger containers are ephemeral and automatically cleaned up
