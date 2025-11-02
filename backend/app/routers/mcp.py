@@ -381,8 +381,6 @@ async def initialize_mcp_server():
 # Shutdown event handler
 async def shutdown_mcp_server():
     """Shutdown MCP server on application shutdown."""
-    global _mcp_server
-
     if _mcp_server:
         await _mcp_server.shutdown()
         logger.info("MCP server shutdown complete")
