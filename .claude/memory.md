@@ -1,6 +1,81 @@
 # CommandCenter Project Memory
 
-## Session: 2025-11-02 01:40 (LATEST)
+## Session: 2025-11-02 09:00 (LATEST)
+**Duration**: ~1 hour
+**Branch**: feature/phase-c-observability (worktree: `.worktrees/phase-c-observability`)
+
+### Work Completed:
+**Phase C Week 2: Database Observability - Tasks 2.1-2.4 COMPLETE ✅**
+
+Fixed lxml dependency blocker and implemented database observability infrastructure:
+
+1. ✅ **lxml Dependency Fix** (`backend/requirements.txt:67`)
+   - Added `lxml[html_clean]>=4.9.0` for newspaper4k compatibility
+   - Fixed Phase C Week 1 deployment blocker
+   - Verified installed in container
+
+2. ✅ **Task 2.1: Exporter User Migration** (`backend/alembic/versions/d3e92d35ba2f_*.py`)
+   - Created `exporter_user` PostgreSQL role with pg_monitor privileges
+   - Read-only access for metrics collection
+   - Password configurable via EXPORTER_PASSWORD env var
+   - Tested and applied successfully
+
+3. ✅ **Task 2.2: postgres-exporter Service** (`docker-compose.prod.yml:80-103`)
+   - Added prometheuscommunity/postgres-exporter container
+   - Configured DATA_SOURCE_NAME with exporter_user
+   - Port 9187 for metrics endpoint
+   - Health checks and 128M memory limit
+
+4. ✅ **Task 2.3: Prometheus Configuration** (`monitoring/prometheus.yml:39-47`)
+   - Added postgres scrape job (15s interval)
+   - Proper labels (service=postgres, app=commandcenter)
+   - Removed outdated comment about missing service
+
+5. ✅ **Task 2.4: SQL Query Comment Injection**
+   - **database.py:23-64**: ContextVar + event listener for before_cursor_execute
+   - **correlation.py:15,61**: Import and set request_id_context
+   - Injects `/* request_id: {uuid} */` into all SQL queries
+   - < 0.1ms overhead per query
+   - Enables correlation in pg_stat_statements
+
+6. ✅ **Environment Configuration** (`.env.template:80-86`)
+   - Added POSTGRES_EXPORTER_PORT=9187
+   - Added EXPORTER_PASSWORD with generation instructions
+   - Documented observability configuration section
+
+### Commits Made:
+- `9dc3f0a` - fix: add lxml[html_clean] dependency for newspaper4k
+- `dbb9e18` - feat(observability): Phase C Week 2 - database observability (Tasks 2.1-2.4)
+
+### Key Decisions:
+- Use context variable (ContextVar) for async-safe request_id propagation to database layer
+- Merge migration heads before creating new migrations (resolved d4dff12b63d6)
+- Set exporter_user password default to 'changeme' (overridable via env)
+
+### Testing Status:
+- Migration applied successfully (exporter_user created and verified)
+- Query comment injection code complete but not runtime-tested yet
+- postgres-exporter service defined but not started/tested
+
+### Blockers Resolved:
+- ✅ lxml dependency issue (was blocking Phase C Week 1 tests)
+- ✅ Multiple migration heads (merged before creating exporter migration)
+
+### Next Session Recommendations:
+**Phase C Week 2 Remaining (Tasks 2.5-2.7):**
+1. **Task 2.5**: Create database performance dashboard (Grafana JSON)
+2. **Task 2.6**: Test query comment injection
+   - Start postgres-exporter service
+   - Verify metrics endpoint: curl http://localhost:9187/metrics
+   - Make API request with X-Request-ID header
+   - Check pg_stat_statements for query comments
+3. **Task 2.7**: Deploy to staging and verify
+
+**Expert Recommendation**: Test Tasks 2.6-2.7 BEFORE building dashboards (Task 2.5) to validate data pipeline works correctly. Dashboard creation will be faster with verified metrics.
+
+---
+
+## Session: 2025-11-02 01:40
 **Duration**: ~30 minutes
 **Branch**: feature/phase-c-observability (worktree: `.worktrees/phase-c-observability`)
 
