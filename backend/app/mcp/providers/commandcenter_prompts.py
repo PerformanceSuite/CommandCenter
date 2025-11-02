@@ -208,7 +208,7 @@ class CommandCenterPromptProvider(PromptProvider):
         messages = [
             PromptMessage(
                 role="system",
-                content=f"""You are a project analyst for CommandCenter, an R&D management system.
+                content="""You are a project analyst for CommandCenter, an R&D management system.
 Your role is to provide insightful analysis of projects, identifying strengths, gaps, and opportunities.""",
             ),
             PromptMessage(

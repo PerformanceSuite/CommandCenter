@@ -3,7 +3,7 @@ IngestionSource model for automated knowledge ingestion
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import TYPE_CHECKING, Optional, Dict, Any
 from enum import Enum
 from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Boolean, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -36,6 +36,10 @@ class IngestionSource(Base):
     __tablename__ = "ingestion_sources"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation

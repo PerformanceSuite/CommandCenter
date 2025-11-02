@@ -310,6 +310,7 @@ class ExcelExporter(CSVExporter):
         """
         try:
             from openpyxl import Workbook
+            from openpyxl.utils import get_column_letter
         except ImportError:
             raise ImportError(
                 "openpyxl is required for Excel export. Install with: pip install openpyxl"

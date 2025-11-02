@@ -3,7 +3,7 @@ KnowledgeEntry model for RAG knowledge base entries
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, Text, DateTime, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,6 +16,10 @@ class KnowledgeEntry(Base):
     __tablename__ = "knowledge_entries"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation

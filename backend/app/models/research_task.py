@@ -3,7 +3,7 @@ ResearchTask model for tracking research activities
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import (
     String,
     Text,
@@ -35,6 +35,10 @@ class ResearchTask(Base):
     __tablename__ = "research_tasks"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation

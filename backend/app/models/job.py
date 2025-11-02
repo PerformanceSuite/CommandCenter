@@ -3,7 +3,7 @@ Job model for tracking async task execution.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, DateTime, JSON, Text, Integer, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,6 +41,10 @@ class Job(Base):
     __tablename__ = "jobs"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
