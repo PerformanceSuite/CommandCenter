@@ -76,13 +76,14 @@ async def db_session(async_session: AsyncSession) -> AsyncGenerator[AsyncSession
 @pytest.fixture(scope="function")
 async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Async client for testing FastAPI endpoints"""
+    from httpx import ASGITransport
 
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
     app.dependency_overrides.clear()
@@ -212,3 +213,20 @@ async def authenticated_client(async_client: AsyncClient, test_user, db_session:
     tokens = create_token_pair(test_user.id, test_user.email)
     async_client.headers["Authorization"] = f"Bearer {tokens['access_token']}"
     return async_client
+
+
+# Sample project fixture for ingestion tests
+@pytest.fixture
+async def sample_project(db_session: AsyncSession):
+    """Create a sample project for testing"""
+    from app.models.project import Project
+
+    project = Project(
+        name="Test Project",
+        owner="testowner",
+        description="Project for testing"
+    )
+    db_session.add(project)
+    await db_session.commit()
+    await db_session.refresh(project)
+    return project

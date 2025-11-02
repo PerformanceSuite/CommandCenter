@@ -68,9 +68,7 @@ class InvalidRequestError(MCPException):
 class MethodNotFoundError(MCPException):
     """Method not found error (-32601)."""
 
-    def __init__(
-        self, method: str, message: Optional[str] = None, data: Optional[Any] = None
-    ):
+    def __init__(self, method: str, message: Optional[str] = None, data: Optional[Any] = None):
         """
         Initialize method not found error.
 
@@ -103,9 +101,7 @@ class InternalError(MCPException):
 class ResourceNotFoundError(MCPException):
     """Resource not found error (-32001)."""
 
-    def __init__(
-        self, uri: str, message: Optional[str] = None, data: Optional[Any] = None
-    ):
+    def __init__(self, uri: str, message: Optional[str] = None, data: Optional[Any] = None):
         """
         Initialize resource not found error.
 
@@ -122,9 +118,7 @@ class ResourceNotFoundError(MCPException):
 class ToolNotFoundError(MCPException):
     """Tool not found error (-32002)."""
 
-    def __init__(
-        self, tool_name: str, message: Optional[str] = None, data: Optional[Any] = None
-    ):
+    def __init__(self, tool_name: str, message: Optional[str] = None, data: Optional[Any] = None):
         """
         Initialize tool not found error.
 

@@ -1,0 +1,29 @@
+{
+  "schema": "cc.event@1.0",
+  "topic": "mrktzr.compliance.check.passed",
+  "timestamp": "2025-11-01T22:45:00Z",
+  "source": "veria",
+  "env": "prod",
+  "severity": "info",
+  "version": "1.0.0",
+  "payload": {
+    "checkId": "kyc-23fdd1",
+    "orgId": "org:acme",
+    "jurisdiction": "US",
+    "ruleSet": [
+      "KYC_BASIC",
+      "AML_LIGHT"
+    ],
+    "status": "passed",
+    "checkedBy": "veria",
+    "timestamp": "2025-11-01T22:45:00Z"
+  },
+  "links": {
+    "snapshot": "snapshots/prod/mrktzr/compliance/2025/11/01/kyc-23fdd1.json"
+  },
+  "signature": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-007",
+    "signer": "veria-checker"
+  }
+}

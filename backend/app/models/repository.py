@@ -3,7 +3,7 @@ Repository model for tracking GitHub repositories
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, DateTime, JSON, Text, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -18,6 +18,10 @@ class Repository(Base):
     __tablename__ = "repositories"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -68,12 +72,8 @@ class Repository(Base):
     # Last sync information
     last_commit_sha: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     last_commit_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_commit_author: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
-    last_commit_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    last_commit_author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    last_commit_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Repository stats

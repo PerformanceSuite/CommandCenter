@@ -5,7 +5,7 @@ Code structure analyzer using AST and file metrics
 import ast
 import asyncio
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 from app.schemas.project_analysis import CodeMetrics
 
@@ -329,9 +329,7 @@ class CodeAnalyzer:
         # AST-based complexity score (if available)
         ast_score = 0
         if ast_metrics["analyzed_files"] > 0:
-            avg_file_complexity = (
-                ast_metrics["total_complexity"] / ast_metrics["analyzed_files"]
-            )
+            avg_file_complexity = ast_metrics["total_complexity"] / ast_metrics["analyzed_files"]
             # Normalize: avg complexity of 5-10 is typical, 20+ is high
             ast_score = min(avg_file_complexity / 20 * 25, 25)  # Max 25 points
 

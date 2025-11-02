@@ -19,7 +19,6 @@ from app.config import settings
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
-    pass
 
 
 class OptimizedDatabaseConfig:
@@ -32,7 +31,7 @@ class OptimizedDatabaseConfig:
         self,
         database_url: str,
         read_replica_urls: Optional[List[str]] = None,
-        debug: bool = False
+        debug: bool = False,
     ):
         """
         Initialize optimized database configuration.
@@ -52,10 +51,11 @@ class OptimizedDatabaseConfig:
         self.write_engine = self._create_engine(database_url, is_write=True)
 
         # Create read engines for replicas
-        self.read_engines = [
-            self._create_engine(url, is_write=False)
-            for url in self.read_replica_urls
-        ] if self.read_replica_urls else [self.write_engine]
+        self.read_engines = (
+            [self._create_engine(url, is_write=False) for url in self.read_replica_urls]
+            if self.read_replica_urls
+            else [self.write_engine]
+        )
 
         # Create session factories
         self.write_session_factory = async_sessionmaker(
@@ -105,17 +105,17 @@ class OptimizedDatabaseConfig:
             database_url,
             echo=self.debug,
             poolclass=AsyncAdaptedQueuePool,
-            pool_size=pool_size,           # Base number of connections
-            max_overflow=max_overflow,     # Additional connections under load
-            pool_timeout=30,                # Timeout waiting for connection
-            pool_recycle=3600,              # Recycle connections after 1 hour
-            pool_pre_ping=True,             # Verify connections before use
+            pool_size=pool_size,  # Base number of connections
+            max_overflow=max_overflow,  # Additional connections under load
+            pool_timeout=30,  # Timeout waiting for connection
+            pool_recycle=3600,  # Recycle connections after 1 hour
+            pool_pre_ping=True,  # Verify connections before use
             connect_args={
                 "server_settings": {
                     "application_name": f"commandcenter_{'write' if is_write else 'read'}",
-                    "jit": "off"            # Disable JIT for more predictable performance
+                    "jit": "off",  # Disable JIT for more predictable performance
                 },
-                "command_timeout": 60,      # Command timeout
+                "command_timeout": 60,  # Command timeout
                 "prepared_statement_cache_size": 0,  # Disable prepared statements cache
             },
             future=True,
@@ -187,11 +187,9 @@ def get_db_config() -> OptimizedDatabaseConfig:
     if _db_config is None:
         # Parse read replica URLs from environment (comma-separated)
         read_replicas = []
-        if hasattr(settings, 'read_replica_urls') and settings.read_replica_urls:
+        if hasattr(settings, "read_replica_urls") and settings.read_replica_urls:
             read_replicas = [
-                url.strip()
-                for url in settings.read_replica_urls.split(',')
-                if url.strip()
+                url.strip() for url in settings.read_replica_urls.split(",") if url.strip()
             ]
 
         _db_config = OptimizedDatabaseConfig(

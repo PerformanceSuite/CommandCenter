@@ -162,9 +162,7 @@ class RepositoryService:
         await self.repo.delete(repository)
         await self.db.commit()
 
-    async def sync_repository(
-        self, repository_id: int, force: bool = False
-    ) -> Dict[str, Any]:
+    async def sync_repository(self, repository_id: int, force: bool = False) -> Dict[str, Any]:
         """
         Sync repository with GitHub
 
@@ -181,9 +179,7 @@ class RepositoryService:
         repository = await self.get_repository(repository_id)
 
         # Initialize async GitHub service
-        async with GitHubAsyncService(
-            access_token=repository.access_token
-        ) as github_service:
+        async with GitHubAsyncService(access_token=repository.access_token) as github_service:
             try:
                 # Sync with GitHub
                 sync_info = await github_service.sync_repository(

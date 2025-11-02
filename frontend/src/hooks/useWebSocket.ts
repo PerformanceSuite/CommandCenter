@@ -13,7 +13,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
   const [error, setError] = useState<Error | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectAttemptsRef = useRef(0);
 
   const {

@@ -79,15 +79,9 @@ class Schedule(Base):
     # Status tracking
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     last_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    next_run_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True, index=True
-    )
-    run_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Total number of executions
-    success_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Successful executions
+    next_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    run_count: Mapped[int] = mapped_column(Integer, default=0)  # Total number of executions
+    success_count: Mapped[int] = mapped_column(Integer, default=0)  # Successful executions
     failure_count: Mapped[int] = mapped_column(Integer, default=0)  # Failed executions
 
     # Celery Beat integration
@@ -102,9 +96,7 @@ class Schedule(Base):
     created_by: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    tags: Mapped[Optional[dict]] = mapped_column(
-        JSON, default=dict
-    )  # Custom tags for filtering
+    tags: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)  # Custom tags for filtering
 
     # Audit logging
     last_error: Mapped[Optional[str]] = mapped_column(
@@ -207,8 +199,8 @@ class Schedule(Base):
             "success_rate": self.success_rate,
             "is_active": self.is_active,
             "last_error": self.last_error,
-            "last_success_at": self.last_success_at.isoformat() if self.last_success_at else None,
-            "last_failure_at": self.last_failure_at.isoformat() if self.last_failure_at else None,
+            "last_success_at": (self.last_success_at.isoformat() if self.last_success_at else None),
+            "last_failure_at": (self.last_failure_at.isoformat() if self.last_failure_at else None),
             "created_by": self.created_by,
             "tags": self.tags,
             "created_at": self.created_at.isoformat() if self.created_at else None,

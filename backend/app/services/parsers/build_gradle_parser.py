@@ -83,9 +83,7 @@ class BuildGradleParser(BaseParser):
 
                 name = f"{group_id}:{artifact_id}"
                 dep_type = (
-                    DependencyType.DEV
-                    if "test" in config_type.lower()
-                    else DependencyType.RUNTIME
+                    DependencyType.DEV if "test" in config_type.lower() else DependencyType.RUNTIME
                 )
 
                 dependencies.append(
@@ -126,9 +124,7 @@ class BuildGradleParser(BaseParser):
 
                 name = f"{group_id}:{artifact_id}"
                 dep_type = (
-                    DependencyType.DEV
-                    if "test" in config_type.lower()
-                    else DependencyType.RUNTIME
+                    DependencyType.DEV if "test" in config_type.lower() else DependencyType.RUNTIME
                 )
 
                 dependencies.append(
@@ -143,9 +139,7 @@ class BuildGradleParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from Maven Central.
 
@@ -162,9 +156,7 @@ class BuildGradleParser(BaseParser):
                     # Silently fail for missing/private artifacts
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from Maven Central.
 

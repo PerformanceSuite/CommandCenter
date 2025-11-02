@@ -3,7 +3,7 @@ Integration model for third-party service connections.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String, DateTime, JSON, Text, Integer, Boolean, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -44,6 +44,10 @@ class Integration(Base):
     __tablename__ = "integrations"
 
     # Primary key
+
+if TYPE_CHECKING:
+    pass  # Imports added for type checking only
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Foreign key to project for isolation
@@ -79,12 +83,8 @@ class Integration(Base):
     )  # Encrypted API key
 
     # Token expiration
-    token_expires_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    token_refreshed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    token_refreshed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Configuration
     config: Mapped[Optional[dict]] = mapped_column(
@@ -107,26 +107,18 @@ class Integration(Base):
     last_sync_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     last_error_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    error_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Consecutive errors
-    success_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Successful operations
+    error_count: Mapped[int] = mapped_column(Integer, default=0)  # Consecutive errors
+    success_count: Mapped[int] = mapped_column(Integer, default=0)  # Successful operations
 
     # Rate limiting
     rate_limit_remaining: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    rate_limit_reset_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    rate_limit_reset_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Metadata
     created_by: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    tags: Mapped[Optional[dict]] = mapped_column(
-        JSON, default=dict
-    )  # Custom tags for filtering
+    tags: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)  # Custom tags for filtering
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -135,12 +127,8 @@ class Integration(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="integrations"
-    )
-    user: Mapped[Optional["User"]] = relationship(
-        "User", back_populates="integrations"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="integrations")
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="integrations")
 
     # Indexes for common queries
     __table_args__ = (
@@ -226,19 +214,15 @@ class Integration(Base):
             "is_healthy": self.is_healthy,
             "is_token_expired": self.is_token_expired,
             "needs_refresh": self.needs_refresh,
-            "last_sync_at": self.last_sync_at.isoformat() if self.last_sync_at else None,
+            "last_sync_at": (self.last_sync_at.isoformat() if self.last_sync_at else None),
             "last_error": self.last_error,
-            "last_error_at": (
-                self.last_error_at.isoformat() if self.last_error_at else None
-            ),
+            "last_error_at": (self.last_error_at.isoformat() if self.last_error_at else None),
             "error_count": self.error_count,
             "success_count": self.success_count,
             "success_rate": self.success_rate,
             "rate_limit_remaining": self.rate_limit_remaining,
             "rate_limit_reset_at": (
-                self.rate_limit_reset_at.isoformat()
-                if self.rate_limit_reset_at
-                else None
+                self.rate_limit_reset_at.isoformat() if self.rate_limit_reset_at else None
             ),
             "config": self.config,
             "webhook_url": self.webhook_url,
@@ -255,9 +239,7 @@ class Integration(Base):
                 {
                     "credentials": self.credentials,
                     "token_expires_at": (
-                        self.token_expires_at.isoformat()
-                        if self.token_expires_at
-                        else None
+                        self.token_expires_at.isoformat() if self.token_expires_at else None
                     ),
                 }
             )

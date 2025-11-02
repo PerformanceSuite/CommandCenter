@@ -5,7 +5,6 @@ Implements WebSocket-based communication for MCP protocol.
 """
 
 import asyncio
-import json
 from typing import Dict, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -63,11 +62,13 @@ class WebSocketTransport:
                 self._logger.info(f"WebSocket connected: {session_id}")
 
                 # Send connection confirmation
-                await websocket.send_json({
-                    "type": "connection",
-                    "session_id": session_id,
-                    "message": "Connected to MCP server"
-                })
+                await websocket.send_json(
+                    {
+                        "type": "connection",
+                        "session_id": session_id,
+                        "message": "Connected to MCP server",
+                    }
+                )
 
                 # Message loop
                 while True:
@@ -79,9 +80,7 @@ class WebSocketTransport:
                             continue
 
                         # Handle message
-                        response = await self.server.handle_message(
-                            session_id, message
-                        )
+                        response = await self.server.handle_message(session_id, message)
 
                         # Send response (if not a notification)
                         if response:
@@ -99,8 +98,8 @@ class WebSocketTransport:
                             "error": {
                                 "code": -32603,
                                 "message": "Internal error",
-                                "data": str(e)
-                            }
+                                "data": str(e),
+                            },
                         }
                         await websocket.send_json(error_response)
 
@@ -214,9 +213,7 @@ class WebSocketTransport:
             try:
                 await websocket.send_json(message)
             except Exception as e:
-                self._logger.error(
-                    f"Error broadcasting to {session_id}: {e}"
-                )
+                self._logger.error(f"Error broadcasting to {session_id}: {e}")
                 disconnected.append(session_id)
 
         # Cleanup disconnected clients

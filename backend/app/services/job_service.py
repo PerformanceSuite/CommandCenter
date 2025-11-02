@@ -9,7 +9,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 
-from app.models import Job, JobStatus, JobType
+from app.models import Job, JobStatus
 from celery.result import AsyncResult
 
 
@@ -103,9 +103,7 @@ class JobService:
         Returns:
             Job or None if not found
         """
-        result = await self.db.execute(
-            select(Job).where(Job.celery_task_id == celery_task_id)
-        )
+        result = await self.db.execute(select(Job).where(Job.celery_task_id == celery_task_id))
         return result.scalar_one_or_none()
 
     async def create_job(
@@ -316,9 +314,7 @@ class JobService:
 
         return progress_info
 
-    async def get_active_jobs(
-        self, project_id: Optional[int] = None
-    ) -> List[Job]:
+    async def get_active_jobs(self, project_id: Optional[int] = None) -> List[Job]:
         """
         Get all active (pending or running) jobs.
 
@@ -384,9 +380,7 @@ class JobService:
                 "cancelled": cancelled,
             },
             "success_rate": (
-                (completed / (completed + failed) * 100)
-                if (completed + failed) > 0
-                else None
+                (completed / (completed + failed) * 100) if (completed + failed) > 0 else None
             ),
             "average_duration_seconds": avg_duration,
             "active_jobs": pending + running,

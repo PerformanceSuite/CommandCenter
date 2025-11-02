@@ -133,9 +133,7 @@ class MCPProtocolHandler:
 
         try:
             request = JSONRPCRequest.model_validate(data)
-            self._logger.debug(
-                f"Parsed request: method={request.method}, id={request.id}"
-            )
+            self._logger.debug(f"Parsed request: method={request.method}, id={request.id}")
             return request
         except Exception as e:
             self._logger.error(f"Request validation error: {e}")
@@ -179,9 +177,7 @@ class MCPProtocolHandler:
         """
         error = JSONRPCError(code=code, message=message, data=data)
         response = JSONRPCResponse(id=request_id, error=error)
-        self._logger.debug(
-            f"Created error response for request {request_id}: {code} - {message}"
-        )
+        self._logger.debug(f"Created error response for request {request_id}: {code} - {message}")
         return response
 
     def create_parse_error(self) -> JSONRPCResponse:

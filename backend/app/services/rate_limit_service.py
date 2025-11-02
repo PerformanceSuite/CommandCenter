@@ -4,7 +4,7 @@ GitHub API rate limiting service with tracking and exponential backoff
 
 import logging
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Dict, Any, Callable
 from functools import wraps
 import hashlib
@@ -18,7 +18,6 @@ from tenacity import (
     before_sleep_log,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.models import GitHubRateLimit
 
@@ -92,9 +91,7 @@ class RateLimitService:
             logger.error(f"Failed to get rate limit status: {e}")
             raise
 
-    async def store_rate_limit_status(
-        self, db: AsyncSession, token: Optional[str] = None
-    ) -> None:
+    async def store_rate_limit_status(self, db: AsyncSession, token: Optional[str] = None) -> None:
         """
         Store current rate limit status in database
 
@@ -162,9 +159,7 @@ class RateLimitService:
             now = datetime.utcnow()
 
             if reset_time > now:
-                wait_seconds = (
-                    reset_time - now
-                ).total_seconds() + 1  # Add 1 second buffer
+                wait_seconds = (reset_time - now).total_seconds() + 1  # Add 1 second buffer
                 logger.warning(
                     f"Rate limit exceeded for {resource_type}. "
                     f"Waiting {wait_seconds:.0f} seconds until reset."
@@ -193,9 +188,7 @@ def with_rate_limit_retry(max_attempts: int = 3, min_wait: int = 1, max_wait: in
         @retry(
             stop=stop_after_attempt(max_attempts),
             wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
-            retry=retry_if_exception_type(
-                (GithubException, RateLimitExceededException)
-            ),
+            retry=retry_if_exception_type((GithubException, RateLimitExceededException)),
             before_sleep=before_sleep_log(logger, logging.WARNING),
             reraise=True,
         )

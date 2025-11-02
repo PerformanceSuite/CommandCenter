@@ -120,7 +120,7 @@ class HackerNewsService:
         keywords: List[str],
         since_hours: int = 168,  # Last week
         min_score: int = 10,
-        limit: int = 50
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
         Search HackerNews for stories matching keywords
@@ -162,10 +162,7 @@ class HackerNewsService:
             return []
 
     async def monitor_technologies(
-        self,
-        technology_names: List[str],
-        since_hours: int = 168,
-        min_score: int = 20
+        self, technology_names: List[str], since_hours: int = 168, min_score: int = 20
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Monitor HackerNews for mentions of specific technologies
@@ -185,7 +182,7 @@ class HackerNewsService:
                 keywords=[tech_name],
                 since_hours=since_hours,
                 min_score=min_score,
-                limit=20
+                limit=20,
             )
             results[tech_name] = stories
 
@@ -230,9 +227,7 @@ class HackerNewsService:
         }
 
     async def calculate_relevance_score(
-        self,
-        story_title: str,
-        technology_keywords: List[str]
+        self, story_title: str, technology_keywords: List[str]
     ) -> float:
         """
         Calculate relevance score for a story based on technology keywords

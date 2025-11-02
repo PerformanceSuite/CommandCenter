@@ -22,26 +22,18 @@ class BatchAnalyzeRequest(BaseModel):
     notify_on_complete: Optional[bool] = Field(
         default=True, description="Send notification when batch completes"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchExportRequest(BaseModel):
     """Schema for batch export request."""
 
-    analysis_ids: List[int] = Field(
-        ..., description="List of analysis IDs to export", min_length=1
-    )
-    format: str = Field(
-        ..., description="Export format (sarif, markdown, html, csv, json)"
-    )
+    analysis_ids: List[int] = Field(..., description="List of analysis IDs to export", min_length=1)
+    format: str = Field(..., description="Export format (sarif, markdown, html, csv, json)")
     parameters: Optional[Dict[str, Any]] = Field(
         default=None, description="Format-specific export parameters"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchImportRequest(BaseModel):
@@ -54,9 +46,7 @@ class BatchImportRequest(BaseModel):
     merge_strategy: Optional[str] = Field(
         default="skip", description="Conflict resolution (skip, overwrite, merge)"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchJobResponse(BaseModel):
@@ -67,18 +57,12 @@ class BatchJobResponse(BaseModel):
     job_id: int = Field(..., description="Batch job ID")
     job_type: str = Field(..., description="Type of batch operation")
     total_items: int = Field(..., description="Total number of items in batch")
-    completed_items: int = Field(
-        default=0, description="Number of completed items"
-    )
+    completed_items: int = Field(default=0, description="Number of completed items")
     failed_items: int = Field(default=0, description="Number of failed items")
     status: str = Field(..., description="Overall batch status")
     progress: int = Field(..., description="Progress percentage (0-100)")
-    started_at: Optional[datetime] = Field(
-        default=None, description="Batch start timestamp"
-    )
-    completed_at: Optional[datetime] = Field(
-        default=None, description="Batch completion timestamp"
-    )
+    started_at: Optional[datetime] = Field(default=None, description="Batch start timestamp")
+    completed_at: Optional[datetime] = Field(default=None, description="Batch completion timestamp")
     results: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="Individual item results"
     )
@@ -89,9 +73,7 @@ class BatchAnalyzeResponse(BatchJobResponse):
     """Schema for batch analyze response with analysis-specific fields."""
 
     repository_ids: List[int] = Field(..., description="Repository IDs being analyzed")
-    celery_task_id: Optional[str] = Field(
-        default=None, description="Celery task UUID"
-    )
+    celery_task_id: Optional[str] = Field(default=None, description="Celery task UUID")
 
 
 class BatchExportResponse(BatchJobResponse):

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commandcenter.dev/schemas/event.schema.json",
+  "title": "CommandCenter Event",
+  "type": "object",
+  "required": ["schema", "topic", "timestamp", "payload"],
+  "properties": {
+    "schema": { "const": "cc.event@1.0" },
+    "topic": { "type": "string", "pattern": "^[a-z0-9._-]+(\\*)?$", "description": "Mesh-Bus topic, e.g., tools.graphvis.started" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "source": { "type": "string", "description": "Tool or hub emitting the event." },
+    "env": { "type": "string", "enum": ["dev", "staging", "prod"] },
+    "severity": { "type": "string", "enum": ["info", "warning", "error", "critical"] },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "payload": { "type": "object" },
+    "links": {
+      "type": "object",
+      "properties": {
+        "logs": { "type": "string", "format": "uri" },
+        "traces": { "type": "string", "format": "uri" },
+        "snapshot": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": true
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "alg": { "type": "string" },
+        "sig": { "type": "string" },
+        "signer": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

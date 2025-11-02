@@ -19,6 +19,7 @@ from app.config import settings
 try:
     from knowledgebeast.backends.postgres import PostgresBackend
     from sentence_transformers import SentenceTransformer
+
     RAG_AVAILABLE = True
 except ImportError:
     RAG_AVAILABLE = False
@@ -86,10 +87,7 @@ class RAGService:
             logger.info(f"Initialized backend for collection '{self.collection_name}'")
 
     async def query(
-        self,
-        question: str,
-        category: Optional[str] = None,
-        k: int = 5
+        self, question: str, category: Optional[str] = None, k: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Query the knowledge base using hybrid search (vector + keyword)
@@ -128,7 +126,7 @@ class RAGService:
             query_text=question,
             top_k=k,
             alpha=0.7,
-            where=where
+            where=where,
         )
 
         # Format results to match expected API
@@ -144,10 +142,7 @@ class RAGService:
         ]
 
     async def add_document(
-        self,
-        content: str,
-        metadata: Dict[str, Any],
-        chunk_size: int = 1000
+        self, content: str, metadata: Dict[str, Any], chunk_size: int = 1000
     ) -> int:
         """
         Add a document to the knowledge base
@@ -182,16 +177,13 @@ class RAGService:
         embeddings = embeddings_array.tolist()
 
         # Prepare IDs and metadata for each chunk
-        source = metadata.get('source', 'unknown')
+        source = metadata.get("source", "unknown")
         ids = [f"{source}_{i}" for i in range(len(chunks))]
         metadatas = [metadata.copy() for _ in chunks]
 
         # Add to backend
         await self.backend.add_documents(
-            ids=ids,
-            embeddings=embeddings,
-            documents=chunks,
-            metadatas=metadatas
+            ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas
         )
 
         logger.info(
@@ -215,9 +207,7 @@ class RAGService:
             await self.initialize()
 
         # Delete using metadata filter
-        count = await self.backend.delete_documents(
-            where={"source": source}
-        )
+        count = await self.backend.delete_documents(where={"source": source})
 
         if count > 0:
             logger.info(
@@ -243,7 +233,7 @@ class RAGService:
 
         # Get all documents and extract unique categories
         # This could be optimized with a custom SQL query in production
-        stats = await self.backend.get_statistics()
+        await self.backend.get_statistics()
 
         # For now, return empty list - would need custom query to extract from metadata
         # This can be enhanced in PostgresBackend later

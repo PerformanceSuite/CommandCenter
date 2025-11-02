@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commandcenter.dev/schemas/snapshot.schema.json",
+  "title": "CommandCenter Snapshot",
+  "type": "object",
+  "required": ["schema", "tool", "kind", "timestamp", "payload"],
+  "properties": {
+    "schema": { "const": "cc.snapshot@1.0" },
+    "tool": { "type": "string" },
+    "kind": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "env": { "type": "string", "enum": ["dev", "staging", "prod"] },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "jobId": { "type": "string" }
+      }
+    },
+    "payload": { "type": "object" },
+    "hash": { "type": "string", "pattern": "^sha(256|512)-[A-Za-z0-9+/=]+$" },
+    "signing": {
+      "type": "object",
+      "properties": {
+        "alg": { "type": "string" },
+        "sig": { "type": "string" },
+        "signer": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

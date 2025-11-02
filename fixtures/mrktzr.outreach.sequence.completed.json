@@ -1,0 +1,30 @@
+{
+  "schema": "cc.event@1.0",
+  "topic": "mrktzr.outreach.sequence.completed",
+  "timestamp": "2025-11-01T22:58:10Z",
+  "source": "mrktzr.outreach",
+  "env": "prod",
+  "severity": "info",
+  "version": "1.3.2",
+  "payload": {
+    "sequenceId": "seq-221f4a",
+    "orgId": "org:acme",
+    "steps": 4,
+    "currentStep": 4,
+    "channel": "email",
+    "templateId": "tpl-compliance-intro",
+    "sentAt": "2025-11-01T20:05:00Z",
+    "replyReceived": true,
+    "replyTimestamp": "2025-11-01T21:40:00Z",
+    "actor": "automation",
+    "consent": "valid"
+  },
+  "links": {
+    "logs": "https://hub.local/outreach/logs/seq-221f4a"
+  },
+  "signature": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-006",
+    "signer": "mrktzr-outreach"
+  }
+}
