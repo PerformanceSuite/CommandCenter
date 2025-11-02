@@ -380,6 +380,7 @@ class ExcelExporter(CSVExporter):
             wb: openpyxl Workbook instance
         """
         from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
 
         ws = wb.create_sheet("Technologies")
 
@@ -409,6 +410,7 @@ class ExcelExporter(CSVExporter):
             wb: openpyxl Workbook instance
         """
         from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
 
         ws = wb.create_sheet("Dependencies")
 
@@ -480,6 +482,7 @@ class ExcelExporter(CSVExporter):
             wb: openpyxl Workbook instance
         """
         from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
 
         ws = wb.create_sheet("Research Gaps")
 
