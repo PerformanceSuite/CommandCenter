@@ -31,7 +31,11 @@ class TechnologyRepository(BaseRepository[Technology]):
         return result.scalar_one_or_none()
 
     async def list_by_domain(
-        self, db: AsyncSession, domain: TechnologyDomain, skip: int = 0, limit: int = 100
+        self,
+        db: AsyncSession,
+        domain: TechnologyDomain,
+        skip: int = 0,
+        limit: int = 100,
     ) -> List[Technology]:
         """
         List technologies by domain
@@ -55,7 +59,11 @@ class TechnologyRepository(BaseRepository[Technology]):
         return list(result.scalars().all())
 
     async def list_by_status(
-        self, db: AsyncSession, status: TechnologyStatus, skip: int = 0, limit: int = 100
+        self,
+        db: AsyncSession,
+        status: TechnologyStatus,
+        skip: int = 0,
+        limit: int = 100,
     ) -> List[Technology]:
         """
         List technologies by status
@@ -209,8 +217,7 @@ class TechnologyRepository(BaseRepository[Technology]):
             Dictionary mapping status to count
         """
         result = await db.execute(
-            select(Technology.status, func.count(Technology.id))
-            .group_by(Technology.status)
+            select(Technology.status, func.count(Technology.id)).group_by(Technology.status)
         )
         return {status.value: count for status, count in result}
 
@@ -225,7 +232,6 @@ class TechnologyRepository(BaseRepository[Technology]):
             Dictionary mapping domain to count
         """
         result = await db.execute(
-            select(Technology.domain, func.count(Technology.id))
-            .group_by(Technology.domain)
+            select(Technology.domain, func.count(Technology.id)).group_by(Technology.domain)
         )
         return {domain.value: count for domain, count in result}

@@ -74,8 +74,6 @@ class RepositoryInDB(RepositoryBase):
 class RepositoryResponse(RepositoryInDB):
     """Schema for repository API response"""
 
-    pass
-
 
 class RepositorySyncRequest(BaseModel):
     """Schema for repository sync request"""

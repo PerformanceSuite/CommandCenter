@@ -22,7 +22,11 @@ from app.schemas.job import JobResponse
 router = APIRouter(prefix="/api/v1/batch", tags=["batch"])
 
 
-@router.post("/analyze", response_model=BatchAnalyzeResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/analyze",
+    response_model=BatchAnalyzeResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def batch_analyze(
     request: BatchAnalyzeRequest,
     db: AsyncSession = Depends(get_db),

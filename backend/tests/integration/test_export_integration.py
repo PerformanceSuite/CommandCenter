@@ -115,6 +115,7 @@ class TestExportIntegration:
         # More robust check for http:// URLs
         if "http://" in html_content:
             import re
+
             urls = re.findall(r'http://[^\s"\']+', html_content)
             for url in urls:
                 assert "localhost" in url or "127.0.0.1" in url, f"External URL found: {url}"
@@ -292,9 +293,7 @@ class TestExportIntegration:
         invalid_project_id = 99999
 
         # Test SARIF export with invalid project
-        response = await async_client.get(
-            f"/api/v1/export/sarif?project_id={invalid_project_id}"
-        )
+        response = await async_client.get(f"/api/v1/export/sarif?project_id={invalid_project_id}")
 
         # Should return 404 or 400
         assert response.status_code in [400, 404]
@@ -311,9 +310,7 @@ class TestExportIntegration:
         # Make multiple rapid requests
         responses = []
         for _ in range(15):  # Exceed 10/minute limit
-            response = await async_client.get(
-                f"/api/v1/export/json?project_id={project_id}"
-            )
+            response = await async_client.get(f"/api/v1/export/json?project_id={project_id}")
             responses.append(response)
 
         # Check if rate limiting is active
@@ -335,9 +332,7 @@ class TestExportIntegration:
         project_id = test_analysis_data["project_id"]
 
         # Test JSON export (smallest, most predictable)
-        response = await async_client.get(
-            f"/api/v1/export/json?project_id={project_id}"
-        )
+        response = await async_client.get(f"/api/v1/export/json?project_id={project_id}")
 
         assert response.status_code == 200
         assert "content-length" in response.headers
@@ -364,9 +359,7 @@ class TestExportIntegration:
 
         for export_type, expected_headers in export_types.items():
             response = await async_client.get(
-                f"/api/v1/export/csv?"
-                f"project_id={project_id}&"
-                f"export_type={export_type}"
+                f"/api/v1/export/csv?" f"project_id={project_id}&" f"export_type={export_type}"
             )
 
             assert response.status_code == 200
@@ -374,9 +367,7 @@ class TestExportIntegration:
 
             # Validate expected headers are present
             for header in expected_headers:
-                assert (
-                    header in csv_content
-                ), f"Missing header '{header}' in {export_type} export"
+                assert header in csv_content, f"Missing header '{header}' in {export_type} export"
 
     @pytest.mark.asyncio
     async def test_excel_sheet_formatting(
@@ -387,9 +378,7 @@ class TestExportIntegration:
         """Test Excel export includes proper formatting."""
         project_id = test_analysis_data["project_id"]
 
-        response = await async_client.get(
-            f"/api/v1/export/excel?project_id={project_id}"
-        )
+        response = await async_client.get(f"/api/v1/export/excel?project_id={project_id}")
 
         assert response.status_code == 200
 
@@ -419,10 +408,7 @@ class TestExportIntegration:
         project_id = test_analysis_data["project_id"]
 
         # Create multiple concurrent export requests
-        tasks = [
-            async_client.get(f"/api/v1/export/json?project_id={project_id}")
-            for _ in range(5)
-        ]
+        tasks = [async_client.get(f"/api/v1/export/json?project_id={project_id}") for _ in range(5)]
 
         responses = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -441,9 +427,7 @@ class TestExportIntegration:
         project_id = test_project.id
 
         # Export from project with no analysis data
-        response = await async_client.get(
-            f"/api/v1/export/json?project_id={project_id}"
-        )
+        response = await async_client.get(f"/api/v1/export/json?project_id={project_id}")
 
         # Should succeed but return minimal data
         assert response.status_code in [200, 404]

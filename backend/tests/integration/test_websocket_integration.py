@@ -148,9 +148,7 @@ class TestWebSocketIntegration:
             # Connect two clients to the same job
             with client.websocket_connect(
                 f"/api/v1/jobs/ws/{test_job.id}"
-            ) as ws1, client.websocket_connect(
-                f"/api/v1/jobs/ws/{test_job.id}"
-            ) as ws2:
+            ) as ws1, client.websocket_connect(f"/api/v1/jobs/ws/{test_job.id}") as ws2:
                 # Both should receive initial connection
                 data1 = ws1.receive_json()
                 data2 = ws2.receive_json()
@@ -170,9 +168,7 @@ class TestWebSocketIntegration:
         with TestClient(app) as client:
             with client.websocket_connect(
                 f"/api/v1/jobs/ws/{test_job.id}"
-            ) as ws1, client.websocket_connect(
-                f"/api/v1/jobs/ws/{test_job.id}"
-            ) as ws2:
+            ) as ws1, client.websocket_connect(f"/api/v1/jobs/ws/{test_job.id}") as ws2:
                 # Clear initial connection messages
                 ws1.receive_json()
                 ws2.receive_json()
@@ -384,9 +380,9 @@ class TestConnectionManager:
         manager.disconnect(job_id, mock_ws)
 
         # Should be removed
-        assert job_id not in manager.active_connections or len(
-            manager.active_connections[job_id]
-        ) == 0
+        assert (
+            job_id not in manager.active_connections or len(manager.active_connections[job_id]) == 0
+        )
 
     @pytest.mark.asyncio
     async def test_connection_manager_broadcast(self):
@@ -453,9 +449,7 @@ class TestWebSocketPerformance:
         # Create and close multiple connections
         with TestClient(app) as client:
             for _ in range(10):
-                with client.websocket_connect(
-                    f"/api/v1/jobs/ws/{test_job.id}"
-                ) as websocket:
+                with client.websocket_connect(f"/api/v1/jobs/ws/{test_job.id}") as websocket:
                     websocket.receive_json()
                 # Connection should be cleaned up after context exit
 

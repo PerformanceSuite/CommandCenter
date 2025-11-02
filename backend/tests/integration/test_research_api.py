@@ -14,9 +14,7 @@ from backend.tests.utils.factories import ProjectFactory, TechnologyFactory, Rep
 class TestResearchAPI:
     """Test Research Task API endpoints"""
 
-    async def test_create_research_task(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_create_research_task(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test creating a research task"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(db=db_session, project_id=project.id)
@@ -41,9 +39,7 @@ class TestResearchAPI:
         assert data["technology_id"] == tech.id
         assert "id" in data
 
-    async def test_list_research_tasks(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_list_research_tasks(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test listing research tasks"""
         project = await ProjectFactory.create(db_session)
 
@@ -120,18 +116,14 @@ class TestResearchAPI:
         # Update status
         update_data = {"status": "completed"}
 
-        response = await async_client.patch(
-            f"/research-tasks/{task.id}", json=update_data
-        )
+        response = await async_client.patch(f"/research-tasks/{task.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "completed"
         assert data["title"] == "Task to Update"  # Unchanged
 
-    async def test_delete_research_task(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_delete_research_task(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test deleting a research task"""
         project = await ProjectFactory.create(db_session)
 
@@ -220,9 +212,7 @@ class TestResearchAPI:
         await db_session.commit()
 
         # Filter by high priority
-        response = await async_client.get(
-            f"/research-tasks/?project_id={project.id}&priority=high"
-        )
+        response = await async_client.get(f"/research-tasks/?project_id={project.id}&priority=high")
 
         assert response.status_code == 200
         data = response.json()

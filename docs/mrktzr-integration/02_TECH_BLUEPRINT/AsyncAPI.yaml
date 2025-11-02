@@ -1,0 +1,91 @@
+asyncapi: 2.6.0
+info:
+  title: CC↔MR Event Contracts
+  version: 1.0.0
+servers:
+  nats:
+    url: nats://mesh-bus:4222
+    protocol: nats
+channels:
+  cc.insight.ready:
+    description: New topic briefs exported by CC
+    subscribe:
+      message:
+        name: InsightReady
+        payload:
+          $ref: '#/components/schemas/TopicBrief'
+  mr.campaign.event:
+    description: Campaign lifecycle and delivery events from MR
+    publish:
+      message:
+        name: CampaignEvent
+        payload:
+          $ref: '#/components/schemas/CampaignEvent'
+  mr.analytics.metric:
+    description: Aggregated engagement metrics emitted by MR
+    publish:
+      message:
+        name: EngagementMetric
+        payload:
+          $ref: '#/components/schemas/EngagementMetric'
+components:
+  schemas:
+    TopicBrief:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        summary: { type: string }
+        topics:
+          type: array
+          items: { type: string }
+        keywords:
+          type: array
+          items: { type: string }
+        persona_hints:
+          type: array
+          items:
+            type: object
+            properties:
+              persona_id: { type: string }
+              name: { type: string }
+              brand_voice: { type: string }
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string }
+              title: { type: string }
+              snippet: { type: string }
+              score: { type: number }
+        guidance:
+          type: object
+          properties:
+            tone: { type: string }
+            calls_to_action:
+              type: array
+              items: { type: string }
+            channel_recos:
+              type: array
+              items: { type: string }
+            compliance_notes: { type: string }
+    CampaignEvent:
+      type: object
+      required: [id, campaign_id, type, ts]
+      properties:
+        id: { type: string, format: uuid }
+        campaign_id: { type: string }
+        post_id: { type: string }
+        type: { type: string, enum: [CREATED, SCHEDULED, PUBLISHED, FAILED, RETRYING] }
+        ts: { type: string, format: date-time }
+        details: { type: object, additionalProperties: true }
+    EngagementMetric:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        campaign_id: { type: string }
+        post_id: { type: string }
+        channel: { type: string }
+        ts: { type: string, format: date-time }
+        metrics: { type: object, additionalProperties: true }

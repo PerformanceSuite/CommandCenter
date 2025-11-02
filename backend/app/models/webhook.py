@@ -32,32 +32,24 @@ class WebhookConfig(Base):
     )
 
     # Webhook details
-    webhook_id: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True
-    )  # GitHub webhook ID
+    webhook_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # GitHub webhook ID
     webhook_url: Mapped[str] = mapped_column(String(512), nullable=False)
     secret: Mapped[str] = mapped_column(
         String(512), nullable=False
     )  # Webhook secret for verification
 
     # Event types
-    events: Mapped[dict] = mapped_column(
-        JSON, default=list
-    )  # List of subscribed events
+    events: Mapped[dict] = mapped_column(JSON, default=list)  # List of subscribed events
 
     # Status
     active: Mapped[bool] = mapped_column(Boolean, default=True)
-    last_delivery_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    last_delivery_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Delivery configuration (Phase 2 enhancements)
     delivery_mode: Mapped[str] = mapped_column(
         String(20), nullable=False, default="async"
     )  # async, sync, batch
-    retry_count: Mapped[int] = mapped_column(
-        Integer, default=3
-    )  # Number of retry attempts
+    retry_count: Mapped[int] = mapped_column(Integer, default=3)  # Number of retry attempts
     retry_delay_seconds: Mapped[int] = mapped_column(
         Integer, default=300
     )  # Delay between retries (5 minutes)
@@ -77,12 +69,8 @@ class WebhookConfig(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="webhook_configs"
-    )
-    repository: Mapped["Repository"] = relationship(
-        "Repository", back_populates="webhook_configs"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="webhook_configs")
+    repository: Mapped["Repository"] = relationship("Repository", back_populates="webhook_configs")
     events_received: Mapped[list["WebhookEvent"]] = relationship(
         "WebhookEvent", back_populates="config", cascade="all, delete-orphan"
     )
@@ -127,9 +115,7 @@ class WebhookEvent(Base):
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Repository info (denormalized for easier querying)
-    repository_full_name: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
+    repository_full_name: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
 
     # Processing status
     processed: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -140,9 +126,7 @@ class WebhookEvent(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="webhook_events"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="webhook_events")
     config: Mapped[Optional["WebhookConfig"]] = relationship(
         "WebhookConfig", back_populates="events_received"
     )
@@ -179,12 +163,8 @@ class WebhookDelivery(Base):
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Delivery details
-    target_url: Mapped[str] = mapped_column(
-        String(512), nullable=False
-    )  # URL to deliver to
-    attempt_number: Mapped[int] = mapped_column(
-        Integer, default=1
-    )  # Retry attempt (1-based)
+    target_url: Mapped[str] = mapped_column(String(512), nullable=False)  # URL to deliver to
+    attempt_number: Mapped[int] = mapped_column(Integer, default=1)  # Retry attempt (1-based)
 
     # Status
     status: Mapped[str] = mapped_column(
@@ -208,12 +188,8 @@ class WebhookDelivery(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="webhook_deliveries"
-    )
-    config: Mapped["WebhookConfig"] = relationship(
-        "WebhookConfig", back_populates="deliveries"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="webhook_deliveries")
+    config: Mapped["WebhookConfig"] = relationship("WebhookConfig", back_populates="deliveries")
 
     def __repr__(self) -> str:
         return f"<WebhookDelivery(id={self.id}, event_type='{self.event_type}', status='{self.status}', attempt={self.attempt_number})>"
@@ -250,9 +226,7 @@ class GitHubRateLimit(Base):
     checked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="github_rate_limits"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="github_rate_limits")
 
     def __repr__(self) -> str:
         return f"<GitHubRateLimit(resource_type='{self.resource_type}', remaining={self.remaining}/{self.limit})>"

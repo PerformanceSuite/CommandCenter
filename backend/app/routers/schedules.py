@@ -301,9 +301,7 @@ async def execute_schedule(
         # If force is True, execute regardless of schedule state
         if request and request.force:
             # Get schedule
-            result = await db.execute(
-                select(Schedule).where(Schedule.id == schedule_id)
-            )
+            result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
             schedule = result.scalar_one_or_none()
 
             if not schedule:

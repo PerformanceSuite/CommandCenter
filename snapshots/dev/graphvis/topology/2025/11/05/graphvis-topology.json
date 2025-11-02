@@ -1,0 +1,41 @@
+{
+  "schema": "cc.snapshot@1.0",
+  "tool": "graphvis",
+  "kind": "graphvis.topology",
+  "timestamp": "2025-11-05T00:00:00Z",
+  "env": "dev",
+  "provenance": {
+    "sources": [
+      "hub.discovery"
+    ],
+    "jobId": "seed-dg-0001"
+  },
+  "payload": {
+    "summary": "Seed topology snapshot for schema validation.",
+    "nodes": [
+      {
+        "id": "hub",
+        "label": "CommandCenter Hub",
+        "status": "ok"
+      },
+      {
+        "id": "graphvis",
+        "label": "GraphVis Tool",
+        "status": "ok"
+      }
+    ],
+    "edges": [
+      {
+        "source": "hub",
+        "target": "graphvis",
+        "type": "dependency"
+      }
+    ]
+  },
+  "hash": "sha256-SEEDPLACEHOLDERHASH",
+  "signing": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-SEED",
+    "signer": "seed-runner"
+  }
+}

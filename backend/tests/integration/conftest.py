@@ -35,9 +35,7 @@ async def test_project(db_session: AsyncSession) -> Project:
 
 
 @pytest.fixture(scope="function")
-async def test_repository(
-    db_session: AsyncSession, test_project: Project
-) -> Repository:
+async def test_repository(db_session: AsyncSession, test_project: Project) -> Repository:
     """Create a test repository."""
     repository = Repository(
         project_id=test_project.id,
@@ -58,9 +56,7 @@ async def test_repository(
 
 
 @pytest.fixture(scope="function")
-async def test_technology(
-    db_session: AsyncSession, test_project: Project
-) -> Technology:
+async def test_technology(db_session: AsyncSession, test_project: Project) -> Technology:
     """Create a test technology."""
     technology = Technology(
         project_id=test_project.id,
@@ -77,9 +73,7 @@ async def test_technology(
 
 
 @pytest.fixture(scope="function")
-async def test_job(
-    db_session: AsyncSession, test_project: Project
-) -> Job:
+async def test_job(db_session: AsyncSession, test_project: Project) -> Job:
     """Create a test job."""
     job = Job(
         project_id=test_project.id,
@@ -182,6 +176,7 @@ def celery_config() -> Dict[str, Any]:
 def mock_celery_task(mocker: Any):
     """Mock Celery task execution for testing."""
     from unittest.mock import MagicMock
+
     mock_task = mocker.MagicMock()
     mock_task.delay.return_value.id = "test-task-id-123"
     mock_task.delay.return_value.state = "PENDING"

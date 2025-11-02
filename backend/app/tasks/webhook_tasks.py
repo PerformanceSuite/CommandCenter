@@ -9,6 +9,7 @@ from typing import Dict, Any
 from app.tasks import celery_app
 from app.database import AsyncSessionLocal
 from app.services.webhook_service import WebhookService
+from app.mcp.connection import get_session_context
 
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,8 @@ async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[
 
             if success:
                 logger.info(
-                    f"Webhook delivery {delivery_id} completed successfully (attempt {attempt_number})"
+                    f"Webhook delivery {delivery_id} completed successfully "
+                    f"(attempt {attempt_number})"
                 )
                 return {
                     "status": "success",
@@ -75,9 +77,7 @@ async def _deliver_webhook_async(delivery_id: int, attempt_number: int) -> Dict[
                     "attempt_number": attempt_number,
                 }
             else:
-                logger.warning(
-                    f"Webhook delivery {delivery_id} failed (attempt {attempt_number})"
-                )
+                logger.warning(f"Webhook delivery {delivery_id} failed (attempt {attempt_number})")
                 return {
                     "status": "failed",
                     "delivery_id": delivery_id,
@@ -251,9 +251,7 @@ async def _process_pending_deliveries_async(max_deliveries: int) -> Dict[str, An
                     else:
                         failed += 1
                 except Exception as e:
-                    logger.exception(
-                        f"Error processing webhook delivery {delivery.id}: {e}"
-                    )
+                    logger.exception(f"Error processing webhook delivery {delivery.id}: {e}")
                     failed += 1
 
             logger.info(

@@ -5,10 +5,9 @@ Generates CSV files that can be imported into Excel, Google Sheets, etc.
 Multiple sheets exported as separate CSV files or ZIP archive.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 import csv
 import io
-from datetime import datetime
 
 from app.exporters import BaseExporter
 
@@ -65,25 +64,29 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Technology",
-            "Version",
-            "Category",
-            "Confidence (%)",
-            "Description",
-            "Source File",
-        ])
+        writer.writerow(
+            [
+                "Technology",
+                "Version",
+                "Category",
+                "Confidence (%)",
+                "Description",
+                "Source File",
+            ]
+        )
 
         # Data rows
         for tech in self._get_technology_list():
-            writer.writerow([
-                tech.get("name", ""),
-                tech.get("version", ""),
-                tech.get("category", ""),
-                tech.get("confidence", ""),
-                tech.get("description", ""),
-                tech.get("source_file", ""),
-            ])
+            writer.writerow(
+                [
+                    tech.get("name", ""),
+                    tech.get("version", ""),
+                    tech.get("category", ""),
+                    tech.get("confidence", ""),
+                    tech.get("description", ""),
+                    tech.get("source_file", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -98,30 +101,34 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Package",
-            "Current Version",
-            "Latest Version",
-            "Status",
-            "Severity",
-            "Package Manager",
-            "File",
-        ])
+        writer.writerow(
+            [
+                "Package",
+                "Current Version",
+                "Latest Version",
+                "Status",
+                "Severity",
+                "Package Manager",
+                "File",
+            ]
+        )
 
         # Data rows
         for dep in self._get_dependency_list():
             is_outdated = dep.get("is_outdated", False) or dep.get("needs_update", False)
             status = "Outdated" if is_outdated else "Current"
 
-            writer.writerow([
-                dep.get("name", ""),
-                dep.get("current_version", ""),
-                dep.get("latest_version", ""),
-                status,
-                dep.get("severity", ""),
-                dep.get("package_manager", ""),
-                dep.get("file", ""),
-            ])
+            writer.writerow(
+                [
+                    dep.get("name", ""),
+                    dep.get("current_version", ""),
+                    dep.get("latest_version", ""),
+                    status,
+                    dep.get("severity", ""),
+                    dep.get("package_manager", ""),
+                    dep.get("file", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -168,25 +175,29 @@ class CSVExporter(BaseExporter):
         writer = csv.writer(output)
 
         # Header
-        writer.writerow([
-            "Title",
-            "Description",
-            "Category",
-            "Priority",
-            "Estimated Effort",
-            "Recommendation",
-        ])
+        writer.writerow(
+            [
+                "Title",
+                "Description",
+                "Category",
+                "Priority",
+                "Estimated Effort",
+                "Recommendation",
+            ]
+        )
 
         # Data rows
         for gap in self._get_research_gaps_list():
-            writer.writerow([
-                gap.get("title", ""),
-                gap.get("description", ""),
-                gap.get("category", ""),
-                gap.get("priority", ""),
-                gap.get("estimated_effort", ""),
-                gap.get("recommendation", ""),
-            ])
+            writer.writerow(
+                [
+                    gap.get("title", ""),
+                    gap.get("description", ""),
+                    gap.get("category", ""),
+                    gap.get("priority", ""),
+                    gap.get("estimated_effort", ""),
+                    gap.get("recommendation", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -225,13 +236,15 @@ class CSVExporter(BaseExporter):
         writer.writerow(["DETECTED TECHNOLOGIES"])
         writer.writerow(["Technology", "Version", "Category", "Confidence (%)", "Description"])
         for tech in technologies:
-            writer.writerow([
-                tech.get("name", ""),
-                tech.get("version", ""),
-                tech.get("category", ""),
-                tech.get("confidence", ""),
-                tech.get("description", ""),
-            ])
+            writer.writerow(
+                [
+                    tech.get("name", ""),
+                    tech.get("version", ""),
+                    tech.get("category", ""),
+                    tech.get("confidence", ""),
+                    tech.get("description", ""),
+                ]
+            )
         writer.writerow([])
 
         # Dependencies section
@@ -240,13 +253,15 @@ class CSVExporter(BaseExporter):
         for dep in dependencies:
             is_outdated = dep.get("is_outdated", False)
             status = "Outdated" if is_outdated else "Current"
-            writer.writerow([
-                dep.get("name", ""),
-                dep.get("current_version", ""),
-                dep.get("latest_version", ""),
-                status,
-                dep.get("severity", ""),
-            ])
+            writer.writerow(
+                [
+                    dep.get("name", ""),
+                    dep.get("current_version", ""),
+                    dep.get("latest_version", ""),
+                    status,
+                    dep.get("severity", ""),
+                ]
+            )
         writer.writerow([])
 
         # Metrics section
@@ -262,13 +277,15 @@ class CSVExporter(BaseExporter):
         writer.writerow(["RESEARCH GAPS"])
         writer.writerow(["Title", "Description", "Category", "Priority", "Recommendation"])
         for gap in research_gaps:
-            writer.writerow([
-                gap.get("title", ""),
-                gap.get("description", ""),
-                gap.get("category", ""),
-                gap.get("priority", ""),
-                gap.get("recommendation", ""),
-            ])
+            writer.writerow(
+                [
+                    gap.get("title", ""),
+                    gap.get("description", ""),
+                    gap.get("category", ""),
+                    gap.get("priority", ""),
+                    gap.get("recommendation", ""),
+                ]
+            )
 
         return output.getvalue()
 
@@ -293,8 +310,6 @@ class ExcelExporter(CSVExporter):
         """
         try:
             from openpyxl import Workbook
-            from openpyxl.styles import Font, Fill, PatternFill, Alignment
-            from openpyxl.utils import get_column_letter
         except ImportError:
             raise ImportError(
                 "openpyxl is required for Excel export. Install with: pip install openpyxl"
@@ -488,9 +503,7 @@ class ExcelExporter(CSVExporter):
             ws.column_dimensions[get_column_letter(col)].width = 25
 
 
-def export_to_csv(
-    project_analysis: Dict[str, Any], export_type: str = "combined"
-) -> str:
+def export_to_csv(project_analysis: Dict[str, Any], export_type: str = "combined") -> str:
     """
     Convenience function to export analysis to CSV format.
 

@@ -82,9 +82,7 @@ class StdioTransport:
                         continue
 
                     # Handle message
-                    response = await self.server.handle_message(
-                        self._session_id, message
-                    )
+                    response = await self.server.handle_message(self._session_id, message)
 
                     # Write response to stdout (if not a notification)
                     if response:

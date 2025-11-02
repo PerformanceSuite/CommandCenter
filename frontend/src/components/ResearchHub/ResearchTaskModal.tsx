@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Upload, Download, FileText } from 'lucide-react';
 import type { ResearchTask, ResearchTaskUpdate } from '../../types/researchTask';
+import { TaskStatus } from '../../types/researchTask';
 import { useUpdateResearchTask, useUploadDocument } from '../../hooks/useResearchTasks';
 
 interface ResearchTaskModalProps {

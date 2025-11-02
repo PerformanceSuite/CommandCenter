@@ -3,7 +3,7 @@ Repository management endpoints
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -45,9 +45,7 @@ async def get_repository(
     return await service.get_repository(repository_id)
 
 
-@router.post(
-    "/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_repository(
     repository_data: RepositoryCreate,
     service: RepositoryService = Depends(get_repository_service),

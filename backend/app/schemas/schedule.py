@@ -11,12 +11,8 @@ class ScheduleBase(BaseModel):
     """Base schedule schema with common fields."""
 
     name: str = Field(..., min_length=1, max_length=255, description="Schedule name")
-    description: Optional[str] = Field(
-        None, max_length=512, description="Schedule description"
-    )
-    task_type: str = Field(
-        ..., min_length=1, max_length=50, description="Task type to execute"
-    )
+    description: Optional[str] = Field(None, max_length=512, description="Schedule description")
+    task_type: str = Field(..., min_length=1, max_length=50, description="Task type to execute")
     task_parameters: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Task-specific parameters"
     )
@@ -25,7 +21,9 @@ class ScheduleBase(BaseModel):
         description="Schedule frequency (once, hourly, daily, weekly, monthly, cron)",
     )
     cron_expression: Optional[str] = Field(
-        None, max_length=100, description="Cron expression (required if frequency='cron')"
+        None,
+        max_length=100,
+        description="Cron expression (required if frequency='cron')",
     )
     interval_seconds: Optional[int] = Field(
         None, gt=0, description="Interval in seconds (for custom intervals)"
@@ -33,9 +31,7 @@ class ScheduleBase(BaseModel):
     timezone: str = Field(
         default="UTC", max_length=50, description="IANA timezone for schedule execution"
     )
-    start_time: Optional[datetime] = Field(
-        None, description="When to start executing"
-    )
+    start_time: Optional[datetime] = Field(None, description="When to start executing")
     end_time: Optional[datetime] = Field(None, description="When to stop executing")
     enabled: bool = Field(default=True, description="Whether schedule is enabled")
     tags: Optional[Dict[str, Any]] = Field(

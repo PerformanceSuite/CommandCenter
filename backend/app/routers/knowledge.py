@@ -12,8 +12,6 @@ import json
 from app.database import get_db
 from app.models.knowledge_entry import KnowledgeEntry
 from app.schemas import (
-    KnowledgeEntryCreate,
-    KnowledgeEntryResponse,
     KnowledgeSearchRequest,
     KnowledgeSearchResult,
 )
@@ -98,9 +96,7 @@ async def query_knowledge_base(
     try:
         # Query using RAG service (hybrid search with alpha=0.7)
         results = await rag_service.query(
-            question=request.query,
-            category=request.category,
-            k=request.limit
+            question=request.query, category=request.category, k=request.limit
         )
 
         # Format results
@@ -134,9 +130,7 @@ async def query_knowledge_base(
         )
 
 
-@router.post(
-    "/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED
-)
+@router.post("/documents", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
 async def add_document(
     file: UploadFile = File(...),
     category: str = Form(...),
@@ -174,13 +168,9 @@ async def add_document(
         if file_extension == "pdf":
             processed_content = await docling_service.process_pdf(content)
         elif file_extension in ["md", "markdown"]:
-            processed_content = await docling_service.process_markdown(
-                content.decode("utf-8")
-            )
+            processed_content = await docling_service.process_markdown(content.decode("utf-8"))
         elif file_extension in ["txt", "text"]:
-            processed_content = await docling_service.process_text(
-                content.decode("utf-8")
-            )
+            processed_content = await docling_service.process_text(content.decode("utf-8"))
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -197,9 +187,7 @@ async def add_document(
         }
 
         # Add to vector database (uses injected service with correct repository_id)
-        chunks_added = await rag_service.add_document(
-            content=processed_content, metadata=metadata
-        )
+        chunks_added = await rag_service.add_document(content=processed_content, metadata=metadata)
 
         # Create knowledge entry in database
         knowledge_entry = KnowledgeEntry(
@@ -254,9 +242,7 @@ async def delete_document(
         repository_id: Repository ID for multi-tenant isolation
     """
     # Get knowledge entry
-    result = await db.execute(
-        select(KnowledgeEntry).where(KnowledgeEntry.id == document_id)
-    )
+    result = await db.execute(select(KnowledgeEntry).where(KnowledgeEntry.id == document_id))
     knowledge_entry = result.scalar_one_or_none()
 
     if not knowledge_entry:
@@ -360,7 +346,7 @@ async def list_collections(db: AsyncSession = Depends(get_db)) -> List[str]:
 @router.get("/categories", response_model=List[str])
 async def list_categories(
     repository_id: int = 1,  # Repository ID for multi-tenant isolation
-    rag_service: RAGService = Depends(get_rag_service)
+    rag_service: RAGService = Depends(get_rag_service),
 ) -> List[str]:
     """
     List all categories in the knowledge base

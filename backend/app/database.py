@@ -19,8 +19,6 @@ from app.config import settings
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
 
-    pass
-
 
 # Create async engine
 engine: AsyncEngine = create_async_engine(

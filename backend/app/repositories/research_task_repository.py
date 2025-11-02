@@ -138,7 +138,9 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         )
         return list(result.scalars().all())
 
-    async def get_upcoming(self, db: AsyncSession, days: int = 7, limit: int = 100) -> List[ResearchTask]:
+    async def get_upcoming(
+        self, db: AsyncSession, days: int = 7, limit: int = 100
+    ) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -177,13 +179,15 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             Dictionary mapping status to count
         """
         result = await db.execute(
-            select(ResearchTask.status, func.count(ResearchTask.id))
-            .group_by(ResearchTask.status)
+            select(ResearchTask.status, func.count(ResearchTask.id)).group_by(ResearchTask.status)
         )
         return {status.value: count for status, count in result}
 
     async def get_statistics(
-        self, db: AsyncSession, technology_id: Optional[int] = None, repository_id: Optional[int] = None
+        self,
+        db: AsyncSession,
+        technology_id: Optional[int] = None,
+        repository_id: Optional[int] = None,
     ) -> dict:
         """
         Get task statistics

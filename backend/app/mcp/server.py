@@ -4,13 +4,10 @@ MCP Server base implementation.
 Provides the base MCPServer class that all MCP servers inherit from.
 """
 
-import asyncio
-import logging
 from typing import Any, Dict, List, Optional
 
 from app.mcp.config import (
     MCPCapabilities,
-    MCPClientCapabilities,
     MCPInitializeParams,
     MCPInitializeResult,
     MCPServerConfig,
@@ -75,30 +72,18 @@ class MCPServer:
     def _register_handlers(self) -> None:
         """Register core MCP method handlers."""
         self._connection_manager.register_handler("initialize", self._handle_initialize)
-        self._connection_manager.register_handler(
-            "resources/list", self._handle_list_resources
-        )
-        self._connection_manager.register_handler(
-            "resources/read", self._handle_read_resource
-        )
+        self._connection_manager.register_handler("resources/list", self._handle_list_resources)
+        self._connection_manager.register_handler("resources/read", self._handle_read_resource)
         self._connection_manager.register_handler("tools/list", self._handle_list_tools)
         self._connection_manager.register_handler("tools/call", self._handle_call_tool)
-        self._connection_manager.register_handler(
-            "prompts/list", self._handle_list_prompts
-        )
-        self._connection_manager.register_handler(
-            "prompts/get", self._handle_get_prompt
-        )
+        self._connection_manager.register_handler("prompts/list", self._handle_list_prompts)
+        self._connection_manager.register_handler("prompts/get", self._handle_get_prompt)
         # Context management handlers
         self._connection_manager.register_handler("context/set", self._handle_context_set)
         self._connection_manager.register_handler("context/get", self._handle_context_get)
         self._connection_manager.register_handler("context/has", self._handle_context_has)
-        self._connection_manager.register_handler(
-            "context/delete", self._handle_context_delete
-        )
-        self._connection_manager.register_handler(
-            "context/clear", self._handle_context_clear
-        )
+        self._connection_manager.register_handler("context/delete", self._handle_context_delete)
+        self._connection_manager.register_handler("context/clear", self._handle_context_clear)
         self._connection_manager.register_handler("context/list", self._handle_context_list)
 
     # Provider management
@@ -567,9 +552,7 @@ class MCPServer:
         return {"context": context, "count": len(context)}
 
     # Session management
-    async def create_session(
-        self, client_info: Optional[Dict[str, Any]] = None
-    ) -> MCPSession:
+    async def create_session(self, client_info: Optional[Dict[str, Any]] = None) -> MCPSession:
         """
         Create new client session.
 

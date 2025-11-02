@@ -6,7 +6,11 @@ Provides integrations with:
 - Generic: Base classes for custom integrations
 """
 
-from app.integrations.base import BaseIntegration, IntegrationError, IntegrationAuthError
+from app.integrations.base import (
+    BaseIntegration,
+    IntegrationError,
+    IntegrationAuthError,
+)
 from app.integrations.github_integration import GitHubIntegration
 
 __all__ = [

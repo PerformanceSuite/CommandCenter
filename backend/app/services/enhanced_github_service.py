@@ -3,7 +3,6 @@ Enhanced GitHub service with rate limiting, caching, and advanced features
 """
 
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 import logging
 from github import Github, GithubException, Repository as GithubRepo
 
@@ -136,12 +135,8 @@ class EnhancedGitHubService:
                         "title": pr.title,
                         "state": pr.state,
                         "user": pr.user.login if pr.user else None,
-                        "created_at": (
-                            pr.created_at.isoformat() if pr.created_at else None
-                        ),
-                        "updated_at": (
-                            pr.updated_at.isoformat() if pr.updated_at else None
-                        ),
+                        "created_at": (pr.created_at.isoformat() if pr.created_at else None),
+                        "updated_at": (pr.updated_at.isoformat() if pr.updated_at else None),
                         "merged": pr.merged,
                         "mergeable": pr.mergeable,
                         "head": pr.head.ref if pr.head else None,
@@ -198,15 +193,9 @@ class EnhancedGitHubService:
                         "state": issue.state,
                         "user": issue.user.login if issue.user else None,
                         "labels": [label.name for label in issue.labels],
-                        "created_at": (
-                            issue.created_at.isoformat() if issue.created_at else None
-                        ),
-                        "updated_at": (
-                            issue.updated_at.isoformat() if issue.updated_at else None
-                        ),
-                        "closed_at": (
-                            issue.closed_at.isoformat() if issue.closed_at else None
-                        ),
+                        "created_at": (issue.created_at.isoformat() if issue.created_at else None),
+                        "updated_at": (issue.updated_at.isoformat() if issue.updated_at else None),
+                        "closed_at": (issue.closed_at.isoformat() if issue.closed_at else None),
                         "html_url": issue.html_url,
                         "comments": issue.comments,
                     }
@@ -315,14 +304,10 @@ class EnhancedGitHubService:
                         "path": workflow.path,
                         "state": workflow.state,
                         "created_at": (
-                            workflow.created_at.isoformat()
-                            if workflow.created_at
-                            else None
+                            workflow.created_at.isoformat() if workflow.created_at else None
                         ),
                         "updated_at": (
-                            workflow.updated_at.isoformat()
-                            if workflow.updated_at
-                            else None
+                            workflow.updated_at.isoformat() if workflow.updated_at else None
                         ),
                         "url": workflow.html_url,
                         "badge_url": workflow.badge_url,

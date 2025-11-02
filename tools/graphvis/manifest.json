@@ -1,0 +1,73 @@
+{
+  "schema": "cc.tool/manifest@1.0",
+  "id": "graphvis",
+  "name": "GraphVis",
+  "description": "Topology visualization and system map for CommandCenter.",
+  "version": "1.0.0",
+  "entry": {
+    "web": {
+      "path": "apps/web",
+      "port": 43110,
+      "start": "pnpm dev"
+    },
+    "api": {
+      "path": "apps/api",
+      "port": 44110,
+      "start": "pnpm start"
+    }
+  },
+  "api": {
+    "routes": [
+      {
+        "method": "GET",
+        "path": "/api/health"
+      },
+      {
+        "method": "GET",
+        "path": "/api/summary"
+      }
+    ],
+    "rpc": {
+      "meshBus": true,
+      "topics": [
+        "tools.graphvis.*"
+      ]
+    }
+  },
+  "permissions": {
+    "meshBus": [
+      "publish:tools.graphvis.*",
+      "subscribe:hub.*"
+    ],
+    "filesystem": [
+      "snapshots/graphvis/*"
+    ],
+    "secrets": [],
+    "net": [
+      "outbound:veria.internal"
+    ]
+  },
+  "categories": [
+    "Visualization",
+    "Monitoring"
+  ],
+  "observability": {
+    "otel": true,
+    "metrics": [
+      "uptime",
+      "latency_p95",
+      "error_rate"
+    ]
+  },
+  "snapshots": {
+    "producer": true,
+    "kinds": [
+      "graphvis.topology"
+    ]
+  },
+  "compat": {
+    "hub": ">=1.0.0",
+    "meshBus": ">=0.2.0",
+    "dagger": ">=0.9.0"
+  }
+}

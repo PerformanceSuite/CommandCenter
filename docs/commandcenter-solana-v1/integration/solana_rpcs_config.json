@@ -1,0 +1,14 @@
+{
+  "endpoints": [
+    {
+      "name": "public-mainnet",
+      "http": "https://api.mainnet-beta.solana.com",
+      "ws": "wss://api.mainnet-beta.solana.com"
+    },
+    {
+      "name": "public-helius",
+      "http": "https://rpc.helius.xyz/?api-key=5fb1b2f4-aa87612-a07c-4b6c-876f-7e7f593d0bf0",
+      "ws": "wss://rpc.helius.xyz/?api-key=5fb1b2f4-aa87612-a07c-4b6c-876f-7e7f593d0bf0"
+    }
+  ]
+}

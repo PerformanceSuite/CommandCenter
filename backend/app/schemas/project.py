@@ -18,8 +18,6 @@ class ProjectBase(BaseModel):
 class ProjectCreate(ProjectBase):
     """Schema for creating a new project"""
 
-    pass
-
 
 class ProjectUpdate(BaseModel):
     """Schema for updating an existing project"""

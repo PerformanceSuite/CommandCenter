@@ -106,9 +106,7 @@ class PackageJsonParser(BaseParser):
         cleaned = cleaned.split(" - ")[0].strip()
         return cleaned
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from npm registry in batch.
 
@@ -126,9 +124,7 @@ class PackageJsonParser(BaseParser):
                     # Silently fail for missing/private packages
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from npm registry.
 

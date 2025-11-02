@@ -122,7 +122,7 @@ describe('DashboardView', () => {
 
     // We can't fully test navigation without checking the actual navigation,
     // but we can verify the buttons are clickable
-    const repoButton = screen.getByText('Total Repositories').closest('button');
+    const repoButton = screen.getByText('Total Repositories').closest('[role="button"]');
     expect(repoButton).toBeInTheDocument();
   });
 

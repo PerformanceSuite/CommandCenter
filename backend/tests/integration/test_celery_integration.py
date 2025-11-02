@@ -87,9 +87,7 @@ class TestCeleryJobIntegration:
 
         with patch("app.services.job_service.execute_job", mock_celery_task):
             # Dispatch job with 10 second delay
-            response = await async_client.post(
-                f"/api/v1/jobs/{job_id}/dispatch?delay_seconds=10"
-            )
+            response = await async_client.post(f"/api/v1/jobs/{job_id}/dispatch?delay_seconds=10")
 
             assert response.status_code == 200
             job = response.json()

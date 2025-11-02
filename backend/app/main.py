@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,7 @@ from app.database import init_db, close_db, get_db
 from app.routers import auth, repositories, technologies, dashboard, knowledge
 from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
 from app.routers import research_orchestration, mcp, jobs, batch, schedules, export
+from app.routers import webhooks_ingestion, ingestion_sources
 from app.services import redis_service
 from app.utils.metrics import setup_custom_metrics
 from app.utils.logging import setup_logging
@@ -196,6 +197,8 @@ app.include_router(jobs.router)  # Jobs API for async task management
 app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
 app.include_router(schedules.router)  # Schedule management for recurring tasks
 app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
+app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
+app.include_router(ingestion_sources.router)  # Ingestion sources management API
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()

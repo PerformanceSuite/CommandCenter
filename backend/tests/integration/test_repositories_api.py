@@ -38,10 +38,7 @@ class TestRepositoriesAPI:
         """Test repository listing with pagination"""
         # Create multiple repositories
         for i in range(5):
-            await create_test_repository(
-                db_session,
-                full_name=f"owner/repo{i}"
-            )
+            await create_test_repository(db_session, full_name=f"owner/repo{i}")
 
         # Test limit
         response = await async_client.get("/repositories/?limit=2")
@@ -79,7 +76,7 @@ class TestRepositoriesAPI:
             "owner": "testowner",
             "name": "testrepo",
             "description": "Test repository",
-            "is_private": False
+            "is_private": False,
         }
 
         response = await async_client.post("/repositories/", json=data)
@@ -98,11 +95,7 @@ class TestRepositoriesAPI:
         await create_test_repository(db_session, full_name="owner/repo")
 
         # Try to create duplicate
-        data = {
-            "owner": "owner",
-            "name": "repo",
-            "description": "Duplicate"
-        }
+        data = {"owner": "owner", "name": "repo", "description": "Duplicate"}
 
         response = await async_client.post("/repositories/", json=data)
 
@@ -111,10 +104,7 @@ class TestRepositoriesAPI:
 
     async def test_create_repository_invalid_name(self, async_client: AsyncClient):
         """Test creating repository with invalid name"""
-        data = {
-            "owner": "-invalid",
-            "name": "testrepo"
-        }
+        data = {"owner": "-invalid", "name": "testrepo"}
 
         response = await async_client.post("/repositories/", json=data)
 
@@ -124,15 +114,9 @@ class TestRepositoriesAPI:
         """Test updating repository"""
         repo = await create_test_repository(db_session)
 
-        update_data = {
-            "description": "Updated description",
-            "is_private": True
-        }
+        update_data = {"description": "Updated description", "is_private": True}
 
-        response = await async_client.patch(
-            f"/repositories/{repo.id}",
-            json=update_data
-        )
+        response = await async_client.patch(f"/repositories/{repo.id}", json=update_data)
 
         assert response.status_code == 200
         updated = response.json()
@@ -143,10 +127,7 @@ class TestRepositoriesAPI:
         """Test updating non-existent repository"""
         update_data = {"description": "Updated"}
 
-        response = await async_client.patch(
-            "/repositories/999",
-            json=update_data
-        )
+        response = await async_client.patch("/repositories/999", json=update_data)
 
         assert response.status_code == 404
 
@@ -184,20 +165,15 @@ class TestRepositoriesAPI:
             "changes_detected": True,
             "stars": 150,
             "forks": 20,
-            "language": "Python"
+            "language": "Python",
         }
 
-        mock_github_service = mocker.patch(
-            "app.routers.repositories.GitHubService"
-        )
+        mock_github_service = mocker.patch("app.routers.repositories.GitHubService")
         mock_instance = mock_github_service.return_value
         mock_instance.sync_repository = mocker.AsyncMock(return_value=mock_sync_info)
 
         sync_request = {"force": False}
-        response = await async_client.post(
-            f"/repositories/{repo.id}/sync",
-            json=sync_request
-        )
+        response = await async_client.post(f"/repositories/{repo.id}/sync", json=sync_request)
 
         assert response.status_code == 200
         data = response.json()
@@ -209,36 +185,23 @@ class TestRepositoriesAPI:
     async def test_sync_repository_not_found(self, async_client: AsyncClient):
         """Test syncing non-existent repository"""
         sync_request = {"force": False}
-        response = await async_client.post(
-            "/repositories/999/sync",
-            json=sync_request
-        )
+        response = await async_client.post("/repositories/999/sync", json=sync_request)
 
         assert response.status_code == 404
 
     async def test_sync_repository_github_error(
-        self,
-        async_client: AsyncClient,
-        db_session,
-        mocker
+        self, async_client: AsyncClient, db_session, mocker
     ):
         """Test sync repository with GitHub error"""
         repo = await create_test_repository(db_session)
 
         # Mock GitHub service to raise error
-        mock_github_service = mocker.patch(
-            "app.routers.repositories.GitHubService"
-        )
+        mock_github_service = mocker.patch("app.routers.repositories.GitHubService")
         mock_instance = mock_github_service.return_value
-        mock_instance.sync_repository = mocker.AsyncMock(
-            side_effect=Exception("GitHub API error")
-        )
+        mock_instance.sync_repository = mocker.AsyncMock(side_effect=Exception("GitHub API error"))
 
         sync_request = {"force": False}
-        response = await async_client.post(
-            f"/repositories/{repo.id}/sync",
-            json=sync_request
-        )
+        response = await async_client.post(f"/repositories/{repo.id}/sync", json=sync_request)
 
         assert response.status_code == 500
         assert "Failed to sync" in response.json()["detail"]

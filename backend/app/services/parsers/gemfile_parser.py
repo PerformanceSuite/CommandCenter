@@ -67,9 +67,7 @@ class GemfileParser(BaseParser):
 
             # Parse gem declarations
             # Match patterns: gem 'name', 'version' or gem 'name', version: 'version'
-            gem_match = re.match(
-                r"gem\s+['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]+)['\"])?", line
-            )
+            gem_match = re.match(r"gem\s+['\"]([^'\"]+)['\"](?:\s*,\s*['\"]([^'\"]+)['\"])?", line)
             if gem_match:
                 name = gem_match.group(1)
                 version = gem_match.group(2) or "unknown"
@@ -101,9 +99,7 @@ class GemfileParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from RubyGems.
 
@@ -120,9 +116,7 @@ class GemfileParser(BaseParser):
                     # Silently fail for missing/private gems
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from RubyGems.
 

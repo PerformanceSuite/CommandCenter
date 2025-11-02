@@ -72,8 +72,10 @@ describe('useRepositories', () => {
     const createdRepo = await result.current.createRepository({ name: 'new-repo' });
 
     expect(createdRepo).toEqual(newRepo);
-    expect(result.current.repositories).toHaveLength(2);
-    expect(result.current.repositories[1]).toEqual(newRepo);
+    await waitFor(() => {
+      expect(result.current.repositories).toHaveLength(2);
+      expect(result.current.repositories[1]).toEqual(newRepo);
+    });
     expect(api.createRepository).toHaveBeenCalledWith({ name: 'new-repo' });
   });
 
@@ -94,8 +96,10 @@ describe('useRepositories', () => {
     const updated = await result.current.updateRepository('1', { name: 'updated-repo1' });
 
     expect(updated).toEqual(updatedRepo1);
-    expect(result.current.repositories[0]).toEqual(updatedRepo1);
-    expect(result.current.repositories[1]).toEqual(repo2);
+    await waitFor(() => {
+      expect(result.current.repositories[0]).toEqual(updatedRepo1);
+      expect(result.current.repositories[1]).toEqual(repo2);
+    });
     expect(api.updateRepository).toHaveBeenCalledWith('1', { name: 'updated-repo1' });
   });
 
@@ -114,8 +118,10 @@ describe('useRepositories', () => {
 
     await result.current.deleteRepository('1');
 
-    expect(result.current.repositories).toHaveLength(1);
-    expect(result.current.repositories[0]).toEqual(repo2);
+    await waitFor(() => {
+      expect(result.current.repositories).toHaveLength(1);
+      expect(result.current.repositories[0]).toEqual(repo2);
+    });
     expect(api.deleteRepository).toHaveBeenCalledWith('1');
   });
 

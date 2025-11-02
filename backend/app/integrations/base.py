@@ -7,7 +7,7 @@ Provides common functionality for OAuth, webhooks, rate limiting, and error hand
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -20,17 +20,14 @@ logger = logging.getLogger(__name__)
 
 class IntegrationError(Exception):
     """Base exception for integration errors."""
-    pass
 
 
 class IntegrationAuthError(IntegrationError):
     """Authentication/authorization error."""
-    pass
 
 
 class IntegrationRateLimitError(IntegrationError):
     """Rate limit exceeded."""
-    pass
 
 
 class BaseIntegration(ABC):
@@ -219,7 +216,9 @@ class BaseIntegration(ABC):
             "error_count": integration.error_count,
             "success_count": integration.success_count,
             "success_rate": integration.success_rate,
-            "last_sync_at": integration.last_sync_at.isoformat() if integration.last_sync_at else None,
+            "last_sync_at": (
+                integration.last_sync_at.isoformat() if integration.last_sync_at else None
+            ),
             "last_error": integration.last_error,
         }
 
@@ -251,11 +250,7 @@ class BaseIntegration(ABC):
         import hmac
         import hashlib
 
-        expected = hmac.new(
-            secret.encode(),
-            payload,
-            hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
         return hmac.compare_digest(signature, expected)
 
@@ -270,7 +265,6 @@ class BaseIntegration(ABC):
         Raises:
             IntegrationError: If connection fails
         """
-        pass
 
     @abstractmethod
     async def get_display_name(self) -> str:
@@ -280,7 +274,6 @@ class BaseIntegration(ABC):
         Returns:
             Display name (e.g., "GitHub: username/repo")
         """
-        pass
 
 
 class WebhookIntegration(BaseIntegration):
@@ -305,7 +298,6 @@ class WebhookIntegration(BaseIntegration):
         Raises:
             IntegrationError: If processing fails
         """
-        pass
 
     @abstractmethod
     def get_webhook_secret(self) -> str:
@@ -315,7 +307,6 @@ class WebhookIntegration(BaseIntegration):
         Returns:
             Webhook secret
         """
-        pass
 
 
 class OAuthIntegration(BaseIntegration):
@@ -337,7 +328,6 @@ class OAuthIntegration(BaseIntegration):
         Returns:
             Authorization URL
         """
-        pass
 
     @abstractmethod
     async def exchange_code_for_token(self, code: str, redirect_uri: str) -> Dict[str, Any]:
@@ -354,4 +344,3 @@ class OAuthIntegration(BaseIntegration):
         Raises:
             IntegrationAuthError: If exchange fails
         """
-        pass

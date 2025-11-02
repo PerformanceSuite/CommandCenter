@@ -4,10 +4,16 @@ MCP (Model Context Protocol) API endpoints.
 Provides HTTP and WebSocket endpoints for MCP server access.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Dict, Any
 
 from app.database import get_db
 from app.mcp.server import MCPServer
@@ -144,7 +150,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
         # Send connection confirmation
         await websocket.send_json(
-            {"type": "connection", "session_id": session_id, "message": "Connected to MCP server"}
+            {
+                "type": "connection",
+                "session_id": session_id,
+                "message": "Connected to MCP server",
+            }
         )
 
         # Message loop
@@ -172,7 +182,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 error_response = {
                     "jsonrpc": "2.0",
                     "id": None,
-                    "error": {"code": -32603, "message": "Internal error", "data": str(e)},
+                    "error": {
+                        "code": -32603,
+                        "message": "Internal error",
+                        "data": str(e),
+                    },
                 }
                 await websocket.send_json(error_response)
 
@@ -240,7 +254,9 @@ async def list_resources(db: Session = Depends(get_db)):
         # Build JSON-RPC request
         import json
 
-        request_message = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}})
+        request_message = json.dumps(
+            {"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}
+        )
 
         # Handle request
         response = await server.handle_message(session.session_id, request_message)
@@ -275,7 +291,9 @@ async def list_tools(db: Session = Depends(get_db)):
         # Build JSON-RPC request
         import json
 
-        request_message = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+        request_message = json.dumps(
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+        )
 
         # Handle request
         response = await server.handle_message(session.session_id, request_message)
@@ -310,7 +328,9 @@ async def list_prompts(db: Session = Depends(get_db)):
         # Build JSON-RPC request
         import json
 
-        request_message = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "prompts/list", "params": {}})
+        request_message = json.dumps(
+            {"jsonrpc": "2.0", "id": 1, "method": "prompts/list", "params": {}}
+        )
 
         # Handle request
         response = await server.handle_message(session.session_id, request_message)

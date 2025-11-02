@@ -173,9 +173,7 @@ class ProjectAnalyzer:
         """
         return await self.gap_analyzer.analyze(dependencies, technologies)
 
-    async def _get_cached_analysis(
-        self, project_path: str
-    ) -> Optional[ProjectAnalysisResult]:
+    async def _get_cached_analysis(self, project_path: str) -> Optional[ProjectAnalysisResult]:
         """
         Get cached analysis if available and valid.
 
@@ -241,9 +239,7 @@ class ProjectAnalyzer:
         # Convert result to database model
         analysis = ProjectAnalysis(
             project_path=result.project_path,
-            detected_technologies={
-                "items": [tech.model_dump() for tech in result.technologies]
-            },
+            detected_technologies={"items": [tech.model_dump() for tech in result.technologies]},
             dependencies={"items": [dep.model_dump() for dep in result.dependencies]},
             code_metrics=result.code_metrics.model_dump(),
             research_gaps={"items": [gap.model_dump() for gap in result.research_gaps]},
@@ -253,9 +249,7 @@ class ProjectAnalyzer:
         )
 
         # Upsert (update if exists, insert if not)
-        stmt = select(ProjectAnalysis).where(
-            ProjectAnalysis.project_path == result.project_path
-        )
+        stmt = select(ProjectAnalysis).where(ProjectAnalysis.project_path == result.project_path)
         existing_result = await self.db.execute(stmt)
         existing = existing_result.scalar_one_or_none()
 
@@ -292,9 +286,7 @@ class ProjectAnalyzer:
             ComposerJsonParser(),
         ]
 
-    async def get_analysis_by_id(
-        self, analysis_id: int
-    ) -> Optional[ProjectAnalysisResult]:
+    async def get_analysis_by_id(self, analysis_id: int) -> Optional[ProjectAnalysisResult]:
         """
         Get analysis by ID.
 

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Technology, TechnologyDomain, TechnologyStatus
 from app.repositories import TechnologyRepository
-from app.schemas import TechnologyCreate, TechnologyUpdate, TechnologyResponse
+from app.schemas import TechnologyCreate, TechnologyUpdate
 
 
 class TechnologyService:
@@ -90,7 +90,9 @@ class TechnologyService:
         """
         return await self.repo.get_by_title(title)
 
-    async def create_technology(self, technology_data: TechnologyCreate, project_id: int = 1) -> Technology:
+    async def create_technology(
+        self, technology_data: TechnologyCreate, project_id: int = 1
+    ) -> Technology:
         """
         Create new technology
 
@@ -120,6 +122,7 @@ class TechnologyService:
         """
         # Log security warning when using default project_id
         import logging
+
         logger = logging.getLogger(__name__)
 
         if project_id == 1:
@@ -146,7 +149,7 @@ class TechnologyService:
 
         # Create technology with project_id
         tech_data = technology_data.model_dump()
-        tech_data['project_id'] = project_id
+        tech_data["project_id"] = project_id
         technology = await self.repo.create(**tech_data)
 
         await self.db.commit()
@@ -211,9 +214,7 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(
-        self, technology_id: int, new_status: TechnologyStatus
-    ) -> Technology:
+    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
         """
         Update technology status
 
@@ -235,9 +236,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(
-        self, technology_id: int, new_priority: int
-    ) -> Technology:
+    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
         """
         Update technology priority
 
@@ -265,9 +264,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(
-        self, technology_id: int, new_score: int
-    ) -> Technology:
+    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
         """
         Update technology relevance score
 

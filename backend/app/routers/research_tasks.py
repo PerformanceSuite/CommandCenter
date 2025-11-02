@@ -1,12 +1,9 @@
 """
 Research Task management endpoints
 """
-import os
-import uuid
-from pathlib import Path
-from datetime import datetime
+
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, status, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -58,9 +55,7 @@ async def get_research_task(
     return ResearchTaskResponse.model_validate(task)
 
 
-@router.post(
-    "/", response_model=ResearchTaskResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=ResearchTaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_research_task(
     task_data: ResearchTaskCreate,
     service: ResearchService = Depends(get_research_service),
@@ -123,9 +118,7 @@ async def upload_document(
 
 
 @router.get("/{task_id}/documents")
-async def list_documents(
-    task_id: int, service: ResearchService = Depends(get_research_service)
-):
+async def list_documents(task_id: int, service: ResearchService = Depends(get_research_service)):
     """List documents for a research task"""
     task = await service.get_research_task(task_id)
     return {"documents": task.uploaded_documents or []}

@@ -5,7 +5,7 @@ GitHub webhook signature verification utilities
 import hmac
 import hashlib
 from typing import Optional
-from fastapi import HTTPException, Header, Request, status
+from fastapi import HTTPException, Header, status
 
 
 def verify_github_signature(

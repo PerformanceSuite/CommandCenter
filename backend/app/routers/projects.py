@@ -34,8 +34,7 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 # Security: Allowed directories for project analysis
 # Configure via environment variable or use defaults
 ALLOWED_ANALYSIS_DIRS = os.getenv(
-    "ALLOWED_ANALYSIS_DIRS",
-    "/projects,/repositories,/tmp/analysis,/workspace"
+    "ALLOWED_ANALYSIS_DIRS", "/projects,/repositories,/tmp/analysis,/workspace"
 ).split(",")
 ALLOWED_ANALYSIS_DIRS = [Path(d.strip()) for d in ALLOWED_ANALYSIS_DIRS if d.strip()]
 
@@ -75,8 +74,7 @@ def validate_project_path(path: str) -> Path:
     if not is_allowed:
         allowed_str = ", ".join(str(d) for d in ALLOWED_ANALYSIS_DIRS)
         raise ValueError(
-            f"Path '{path}' is not within allowed analysis directories. "
-            f"Allowed: {allowed_str}"
+            f"Path '{path}' is not within allowed analysis directories. " f"Allowed: {allowed_str}"
         )
 
     return project_path
@@ -275,7 +273,7 @@ async def analyze_project(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid project path: {str(e)}"
+            detail=f"Invalid project path: {str(e)}",
         )
 
     analyzer = ProjectAnalyzer(db)
@@ -322,7 +320,9 @@ async def get_analysis(
     summary="Get analysis statistics",
     description="Get aggregate statistics across all project analyses",
 )
-async def get_analysis_statistics(db: AsyncSession = Depends(get_db)) -> AnalysisStatistics:
+async def get_analysis_statistics(
+    db: AsyncSession = Depends(get_db),
+) -> AnalysisStatistics:
     """Get analysis statistics"""
     from app.models.project_analysis import ProjectAnalysis
 

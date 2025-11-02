@@ -3,7 +3,6 @@ Webhook service for managing outbound webhook deliveries.
 """
 
 import logging
-import asyncio
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
@@ -12,7 +11,6 @@ from sqlalchemy import select, and_, or_
 import httpx
 
 from app.models import WebhookConfig, WebhookDelivery
-from app.utils.webhook_verification import verify_github_signature
 
 
 logger = logging.getLogger(__name__)
@@ -93,9 +91,7 @@ class WebhookService:
 
         # Check event filtering
         if not self._should_deliver_event(config, event_type):
-            logger.info(
-                f"Skipping delivery for event {event_type} - not in subscription list"
-            )
+            logger.info(f"Skipping delivery for event {event_type} - not in subscription list")
             return None
 
         # Validate payload
@@ -161,9 +157,7 @@ class WebhookService:
 
         if not config:
             logger.error(f"Webhook config {delivery.config_id} not found")
-            await self._mark_delivery_failed(
-                delivery, "Webhook configuration not found"
-            )
+            await self._mark_delivery_failed(delivery, "Webhook configuration not found")
             return False
 
         # Update attempt number and status
@@ -232,26 +226,20 @@ class WebhookService:
             duration_ms = int((time.time() - start_time) * 1000)
             delivery.duration_ms = duration_ms
             error_msg = f"Timeout after {duration_ms}ms: {str(e)}"
-            return await self._handle_delivery_failure(
-                delivery, config, error_msg, attempt_number
-            )
+            return await self._handle_delivery_failure(delivery, config, error_msg, attempt_number)
 
         except httpx.RequestError as e:
             duration_ms = int((time.time() - start_time) * 1000)
             delivery.duration_ms = duration_ms
             error_msg = f"Request error: {str(e)}"
-            return await self._handle_delivery_failure(
-                delivery, config, error_msg, attempt_number
-            )
+            return await self._handle_delivery_failure(delivery, config, error_msg, attempt_number)
 
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)
             delivery.duration_ms = duration_ms
             error_msg = f"Unexpected error: {str(e)}"
             logger.exception(f"Unexpected error delivering webhook {delivery.id}")
-            return await self._handle_delivery_failure(
-                delivery, config, error_msg, attempt_number
-            )
+            return await self._handle_delivery_failure(delivery, config, error_msg, attempt_number)
 
     async def _handle_delivery_failure(
         self,
@@ -278,9 +266,7 @@ class WebhookService:
         # Check if we should retry
         if attempt_number < config.retry_count:
             # Schedule retry with exponential backoff
-            delay_seconds = self._calculate_retry_delay(
-                attempt_number, config.retry_delay_seconds
-            )
+            delay_seconds = self._calculate_retry_delay(attempt_number, config.retry_delay_seconds)
             delivery.status = DeliveryStatus.RETRYING
             delivery.scheduled_for = datetime.utcnow() + timedelta(seconds=delay_seconds)
 
@@ -301,14 +287,10 @@ class WebhookService:
             config.total_deliveries += 1
             await self.db.commit()
 
-            logger.error(
-                f"Webhook delivery {delivery.id} exhausted all retries: {error_msg}"
-            )
+            logger.error(f"Webhook delivery {delivery.id} exhausted all retries: {error_msg}")
             return False
 
-    async def _mark_delivery_failed(
-        self, delivery: WebhookDelivery, error_msg: str
-    ) -> None:
+    async def _mark_delivery_failed(self, delivery: WebhookDelivery, error_msg: str) -> None:
         """
         Mark a delivery as permanently failed.
 
@@ -321,9 +303,7 @@ class WebhookService:
         delivery.completed_at = datetime.utcnow()
         await self.db.commit()
 
-    def _calculate_retry_delay(
-        self, attempt_number: int, base_delay_seconds: int
-    ) -> int:
+    def _calculate_retry_delay(self, attempt_number: int, base_delay_seconds: int) -> int:
         """
         Calculate retry delay with exponential backoff.
 
@@ -395,9 +375,7 @@ class WebhookService:
 
         return True
 
-    async def get_pending_deliveries(
-        self, max_deliveries: int = 100
-    ) -> List[WebhookDelivery]:
+    async def get_pending_deliveries(self, max_deliveries: int = 100) -> List[WebhookDelivery]:
         """
         Get pending webhook deliveries that are ready for delivery.
 
@@ -424,9 +402,7 @@ class WebhookService:
 
         return result.scalars().all()
 
-    async def get_delivery_statistics(
-        self, config_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_delivery_statistics(self, config_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get webhook delivery statistics.
 
