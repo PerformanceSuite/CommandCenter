@@ -7,9 +7,10 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from prometheus_client import make_asgi_app
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -23,9 +24,10 @@ from app.routers import webhooks, github_features, rate_limits, research_tasks, 
 from app.routers import research_orchestration, mcp, jobs, batch, schedules, export
 from app.routers import webhooks_ingestion, ingestion_sources
 from app.services import redis_service
-from app.utils.metrics import setup_custom_metrics
+from app.utils.metrics import setup_custom_metrics, error_counter
 from app.utils.logging import setup_logging
 from app.middleware import limiter, add_security_headers, LoggingMiddleware
+from app.middleware.correlation import CorrelationIDMiddleware
 
 
 @asynccontextmanager
@@ -79,6 +81,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+# Add correlation ID middleware (must be first to ensure all requests get IDs)
+app.add_middleware(CorrelationIDMiddleware)
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
@@ -200,6 +205,19 @@ app.include_router(export.router)  # Export API for analysis results (SARIF, HTM
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 
+
+# Test endpoints for observability (only in dev/test environments)
+if settings.debug or os.getenv("ENVIRONMENT") in ["development", "test"]:
+    @app.get("/api/v1/trigger-test-error")
+    async def trigger_test_error():
+        """Test endpoint that raises an exception for error tracking verification.
+
+        This endpoint is only available in development/test environments.
+        Used to verify error tracking, correlation IDs, and metrics.
+        """
+        raise ValueError("Test error for observability verification")
+
+
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
@@ -207,13 +225,48 @@ app.mount("/metrics", metrics_app)
 
 # Global exception handler
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """Global exception handler for unhandled errors"""
+async def global_exception_handler(request: Request, exc: Exception):
+    """Enhanced global exception handler with correlation tracking and metrics.
+
+    This handler:
+    1. Extracts correlation ID from request state
+    2. Increments error counter metric with labels
+    3. Logs structured error with correlation ID
+    4. Returns error response with correlation ID
+    """
+    # Get logger
+    logger = logging.getLogger(__name__)
+
+    # Extract correlation ID from request state
+    request_id = getattr(request.state, "request_id", "unknown")
+
+    # Increment error metric with labels
+    error_counter.labels(
+        endpoint=request.url.path,
+        status_code="500",
+        error_type=type(exc).__name__
+    ).inc()
+
+    # Structured error logging with correlation context
+    logger.error(
+        "Unhandled exception",
+        extra={
+            "request_id": request_id,
+            "endpoint": request.url.path,
+            "method": request.method,
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+            "user_id": getattr(request.state, "user_id", None),
+        },
+        exc_info=True  # Include stack trace
+    )
+
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
             "detail": str(exc) if settings.debug else "An unexpected error occurred",
+            "request_id": request_id,  # Include correlation ID in response
         },
     )
 

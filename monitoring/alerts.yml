@@ -124,3 +124,92 @@ groups:
         annotations:
           summary: "Container {{ $labels.name }} high memory usage"
           description: "Container memory usage is above 85% (current: {{ $value }}%)"
+
+  # Phase C: Enhanced Observability Alerts
+  - name: phase_c_alerts
+    interval: 30s
+    rules:
+      # Error tracking alerts
+      - alert: HighErrorRate
+        expr: |
+          (rate(commandcenter_errors_total[5m]) / rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Database observability alerts
+      - alert: DatabasePoolExhausted
+        expr: |
+          (pg_stat_database_numbackends{datname="commandcenter"} / pg_settings_max_connections) > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Pool utilization is {{ $value | humanizePercentage }} (threshold: 90%)"
+
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95, rate(pg_stat_statements_mean_exec_time_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "P95 query latency is {{ $value }}s (threshold: 1s)"
+
+      # API performance alerts
+      - alert: SlowAPIResponses
+        expr: |
+          histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API P95 latency above threshold"
+          description: "P95 latency is {{ $value }}s (threshold: 1s)"
+
+      # Celery worker alerts
+      - alert: CeleryWorkerDown
+        expr: |
+          celery_workers_active < 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No Celery workers active"
+          description: "Background job processing is stopped"
+
+      - alert: CeleryHighFailureRate
+        expr: |
+          (rate(celery_task_failures_total[5m]) / rate(celery_tasks_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Celery task failure rate"
+          description: "Task failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: CeleryQueueBacklog
+        expr: |
+          celery_queue_depth > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Large Celery queue backlog"
+          description: "Queue depth is {{ $value }} tasks (threshold: 100)"
+
+      # Disk space alert (Phase C specific threshold)
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space below 10%"
+          description: "Available: {{ $value | humanizePercentage }}"

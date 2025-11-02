@@ -36,13 +36,15 @@ scrape_configs:
           app: 'commandcenter'
     scrape_interval: 10s
 
-  # PostgreSQL Database
+  # PostgreSQL Database (Phase C - Database Observability)
   - job_name: 'postgres'
+    metrics_path: '/metrics'
     static_configs:
       - targets: ['postgres-exporter:9187']
         labels:
           service: 'postgres'
-    # Note: You would need to add postgres_exporter service to docker-compose
+          app: 'commandcenter'
+    scrape_interval: 15s
 
   # Redis Cache
   - job_name: 'redis'
