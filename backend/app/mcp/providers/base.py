@@ -223,7 +223,6 @@ class ResourceProvider(BaseProvider):
         Raises:
             MCPException: If listing fails
         """
-        pass
 
     @abstractmethod
     async def read_resource(self, uri: str) -> ResourceContent:
@@ -240,7 +239,6 @@ class ResourceProvider(BaseProvider):
             ResourceNotFoundError: If resource doesn't exist
             MCPException: If reading fails
         """
-        pass
 
 
 class ToolProvider(BaseProvider):
@@ -262,7 +260,6 @@ class ToolProvider(BaseProvider):
         Raises:
             MCPException: If listing fails
         """
-        pass
 
     @abstractmethod
     async def call_tool(self, name: str, arguments: Dict[str, Any]) -> ToolResult:
@@ -281,7 +278,6 @@ class ToolProvider(BaseProvider):
             InvalidParamsError: If arguments are invalid
             MCPException: If execution fails
         """
-        pass
 
 
 class PromptProvider(BaseProvider):
@@ -302,7 +298,6 @@ class PromptProvider(BaseProvider):
         Raises:
             MCPException: If listing fails
         """
-        pass
 
     @abstractmethod
     async def get_prompt(
@@ -323,4 +318,3 @@ class PromptProvider(BaseProvider):
             InvalidParamsError: If arguments are invalid
             MCPException: If rendering fails
         """
-        pass

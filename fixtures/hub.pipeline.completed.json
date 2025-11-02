@@ -1,0 +1,30 @@
+{
+  "schema": "cc.event@1.0",
+  "topic": "hub.pipeline.completed",
+  "timestamp": "2025-11-01T23:40:01Z",
+  "source": "hub",
+  "env": "staging",
+  "severity": "info",
+  "version": "1.0.0",
+  "payload": {
+    "pipeline": "all-tools.deploy",
+    "env": "staging",
+    "trigger": "manual",
+    "initiator": "daniel.connolly",
+    "toolIds": [
+      "graphvis",
+      "mrktzr"
+    ],
+    "jobId": "pipe-832ef0",
+    "duration_s": 142
+  },
+  "links": {
+    "logs": "https://hub.local/pipelines/pipe-832ef0/logs",
+    "snapshot": "snapshots/staging/pipelines/all-tools.deploy/2025-11-01.json"
+  },
+  "signature": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-003",
+    "signer": "hub-runner"
+  }
+}

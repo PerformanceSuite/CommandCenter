@@ -15,7 +15,7 @@ import logging
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
-from openai import OpenAI, AsyncOpenAI
+from openai import AsyncOpenAI
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class AIProvider(str, Enum):
     """Supported AI providers"""
+
     OPENROUTER = "openrouter"
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
@@ -32,6 +33,7 @@ class AIProvider(str, Enum):
 
 class ModelTier(str, Enum):
     """Model cost tiers for budget management"""
+
     PREMIUM = "premium"  # Claude Opus, GPT-4, Gemini Ultra
     STANDARD = "standard"  # Claude Sonnet, GPT-4 Turbo, Gemini Pro
     ECONOMY = "economy"  # Claude Haiku, GPT-3.5, Gemini Flash
@@ -191,7 +193,7 @@ class AIRouterService:
         if settings.openrouter_api_key:
             self._clients[AIProvider.OPENROUTER] = AsyncOpenAI(
                 api_key=settings.openrouter_api_key,
-                base_url="https://openrouter.ai/api/v1"
+                base_url="https://openrouter.ai/api/v1",
             )
             logger.info("✅ OpenRouter client initialized")
 
@@ -199,6 +201,7 @@ class AIRouterService:
         if settings.anthropic_api_key:
             try:
                 from anthropic import AsyncAnthropic
+
                 self._clients[AIProvider.ANTHROPIC] = AsyncAnthropic(
                     api_key=settings.anthropic_api_key
                 )
@@ -208,15 +211,14 @@ class AIRouterService:
 
         # OpenAI direct client
         if settings.openai_api_key:
-            self._clients[AIProvider.OPENAI] = AsyncOpenAI(
-                api_key=settings.openai_api_key
-            )
+            self._clients[AIProvider.OPENAI] = AsyncOpenAI(api_key=settings.openai_api_key)
             logger.info("✅ OpenAI client initialized")
 
         # Google AI client
         if settings.google_api_key:
             try:
                 import google.generativeai as genai
+
                 genai.configure(api_key=settings.google_api_key)
                 self._clients[AIProvider.GOOGLE] = genai
                 logger.info("✅ Google AI client initialized")
@@ -234,7 +236,7 @@ class AIRouterService:
         temperature: float = 0.7,
         max_tokens: int = 4096,
         fallback_providers: Optional[List[AIProvider]] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Send chat completion request with automatic fallback
@@ -266,7 +268,7 @@ class AIRouterService:
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                **kwargs
+                **kwargs,
             )
         except Exception as e:
             logger.warning(f"⚠️  Primary provider {provider} failed: {e}")
@@ -281,7 +283,7 @@ class AIRouterService:
                         model=model,
                         temperature=temperature,
                         max_tokens=max_tokens,
-                        **kwargs
+                        **kwargs,
                     )
                 except Exception as fallback_error:
                     logger.warning(f"⚠️  Fallback provider {fallback} failed: {fallback_error}")
@@ -297,7 +299,7 @@ class AIRouterService:
         model: str,
         temperature: float,
         max_tokens: int,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Execute completion request for specific provider
@@ -316,7 +318,7 @@ class AIRouterService:
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                **kwargs
+                **kwargs,
             )
 
             return {
@@ -338,7 +340,7 @@ class AIRouterService:
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                **kwargs
+                **kwargs,
             )
 
             return {
@@ -361,7 +363,7 @@ class AIRouterService:
                 generation_config={
                     "temperature": temperature,
                     "max_output_tokens": max_tokens,
-                }
+                },
             )
 
             return {
@@ -373,7 +375,9 @@ class AIRouterService:
                     "total_tokens": response.usage_metadata.total_token_count,
                 },
                 "provider": provider.value,
-                "finish_reason": response.candidates[0].finish_reason.name if response.candidates else "STOP",
+                "finish_reason": (
+                    response.candidates[0].finish_reason.name if response.candidates else "STOP"
+                ),
             }
 
         else:
@@ -390,13 +394,16 @@ class AIRouterService:
         Returns:
             Dict with 'provider', 'tier', 'context_window', 'cost_per_1m_tokens'
         """
-        return self.MODEL_INFO.get(model, {
-            "provider": "unknown",
-            "tier": "standard",
-            "context_window": 4096,
-            "cost_per_1m_input_tokens": 0.0,
-            "cost_per_1m_output_tokens": 0.0,
-        })
+        return self.MODEL_INFO.get(
+            model,
+            {
+                "provider": "unknown",
+                "tier": "standard",
+                "context_window": 4096,
+                "cost_per_1m_input_tokens": 0.0,
+                "cost_per_1m_output_tokens": 0.0,
+            },
+        )
 
 
 # Global AI router instance

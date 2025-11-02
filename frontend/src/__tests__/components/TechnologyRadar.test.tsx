@@ -96,9 +96,9 @@ describe('TechnologyRadar (RadarView)', () => {
 
     renderWithMemoryRouter(<RadarView />);
 
-    // Check that domains are rendered
+    // Check that domains are rendered (using getAllByText since multiple elements may have the same text)
     expect(screen.getByText(/ai ml/i)).toBeInTheDocument();
-    expect(screen.getByText(/backend/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/backend/i).length).toBeGreaterThan(0);
   });
 
   it('displays empty state when no technologies exist', () => {

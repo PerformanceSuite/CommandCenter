@@ -4,7 +4,16 @@ Technology model for tracking research areas and technologies
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Text, Enum as SQLEnum, DateTime, ForeignKey, Integer, Float, JSON
+from sqlalchemy import (
+    String,
+    Text,
+    Enum as SQLEnum,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Float,
+    JSON,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
@@ -130,8 +139,12 @@ class Technology(Base):
     cost_monthly_usd: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Dependencies and relationships
-    dependencies: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # {"tech_id": "relationship"}
-    alternatives: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Comma-separated tech IDs
+    dependencies: Mapped[Optional[dict]] = mapped_column(
+        JSON, nullable=True
+    )  # {"tech_id": "relationship"}
+    alternatives: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True
+    )  # Comma-separated tech IDs
 
     # Monitoring and alerts
     last_hn_mention: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

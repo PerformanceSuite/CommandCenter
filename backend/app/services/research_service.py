@@ -2,6 +2,7 @@
 Research task business logic service
 Handles research task operations with transaction management
 """
+
 import os
 import uuid
 from pathlib import Path
@@ -218,9 +219,7 @@ class ResearchService:
 
         return task
 
-    async def update_progress(
-        self, task_id: int, progress_percentage: int
-    ) -> ResearchTask:
+    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
         """
         Update task progress
 
@@ -299,9 +298,7 @@ class ResearchService:
 
         return task
 
-    async def upload_document_to_task(
-        self, task_id: int, file: UploadFile
-    ) -> ResearchTask:
+    async def upload_document_to_task(self, task_id: int, file: UploadFile) -> ResearchTask:
         """
         Upload a document and associate it with a research task.
 
@@ -337,9 +334,7 @@ class ResearchService:
             }
         )
 
-        updated_task = await self.repo.update(
-            task, uploaded_documents=uploaded_documents
-        )
+        updated_task = await self.repo.update(task, uploaded_documents=uploaded_documents)
         await self.db.commit()
         await self.db.refresh(updated_task)
 
@@ -357,9 +352,7 @@ class ResearchService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(
-        self, days: int = 7, limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks
 
@@ -394,11 +387,9 @@ class ResearchService:
             "overdue_count": len(overdue),
             "upcoming_count": len(upcoming),
             "overdue_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date}
-                for t in overdue[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in overdue[:5]
             ],
             "upcoming_tasks": [
-                {"id": t.id, "title": t.title, "due_date": t.due_date}
-                for t in upcoming[:5]
+                {"id": t.id, "title": t.title, "due_date": t.due_date} for t in upcoming[:5]
             ],
         }

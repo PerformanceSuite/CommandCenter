@@ -27,8 +27,6 @@ class ResearchTaskBase(BaseModel):
 class ResearchTaskCreate(ResearchTaskBase):
     """Schema for creating a research task"""
 
-    pass
-
 
 class ResearchTaskUpdate(BaseModel):
     """Schema for updating a research task"""
@@ -61,8 +59,6 @@ class ResearchTaskInDB(ResearchTaskBase):
 
 class ResearchTaskResponse(ResearchTaskInDB):
     """Schema for research task API response"""
-
-    pass
 
 
 class KnowledgeEntryBase(BaseModel):
@@ -114,8 +110,6 @@ class KnowledgeEntryInDB(KnowledgeEntryBase):
 class KnowledgeEntryResponse(KnowledgeEntryInDB):
     """Schema for knowledge entry API response"""
 
-    pass
-
 
 class KnowledgeSearchRequest(BaseModel):
     """Schema for knowledge base search request"""
@@ -151,10 +145,14 @@ class ResearchTaskListResponse(BaseModel):
 # Research Agent Orchestration Schemas (Phase 2)
 # ============================================================================
 
+
 class AgentTaskRequest(BaseModel):
     """Request schema for individual agent task"""
 
-    role: str = Field(..., description="Agent role: technology_scout, deep_researcher, comparator, integrator, monitor")
+    role: str = Field(
+        ...,
+        description="Agent role: technology_scout, deep_researcher, comparator, integrator, monitor",
+    )
     prompt: str = Field(..., min_length=1)
     model: Optional[str] = None
     provider: Optional[str] = None

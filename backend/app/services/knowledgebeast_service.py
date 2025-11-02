@@ -12,8 +12,7 @@ Features:
 - Backward compatibility with existing RAG API
 """
 
-from typing import List, Dict, Any, Optional, Union
-from pathlib import Path
+from typing import List, Dict, Any, Optional
 import time
 import logging
 
@@ -71,8 +70,7 @@ class KnowledgeBeastService:
         """
         if not KNOWLEDGEBEAST_AVAILABLE:
             raise ImportError(
-                "KnowledgeBeast not installed. "
-                "Install with: pip install knowledgebeast>=2.3.2"
+                "KnowledgeBeast not installed. " "Install with: pip install knowledgebeast>=2.3.2"
             )
 
         self.project_id = project_id
@@ -101,7 +99,7 @@ class KnowledgeBeastService:
                 self.repository,
                 model_name=self.embedding_model,
                 alpha=0.7,  # 70% vector, 30% keyword
-                cache_size=1000
+                cache_size=1000,
             )
 
             logger.info(f"KnowledgeBeast initialized successfully for project {self.project_id}")
@@ -154,7 +152,9 @@ class KnowledgeBeastService:
                 degraded = False
             else:  # hybrid (default)
                 # search_hybrid returns: Tuple[List[Tuple[doc_id, doc, score]], degraded_mode]
-                raw_results, degraded = self.query_engine.search_hybrid(question, alpha=alpha, top_k=k)
+                raw_results, degraded = self.query_engine.search_hybrid(
+                    question, alpha=alpha, top_k=k
+                )
 
             # Format results to match CommandCenter schema
             formatted_results = self._format_results(raw_results)
@@ -217,11 +217,11 @@ class KnowledgeBeastService:
 
                 # Create document data structure
                 doc_data = {
-                    'name': metadata.get('title', metadata.get('source', 'Untitled')),
-                    'content': chunk,
-                    'path': metadata.get('source', 'unknown'),
-                    'category': metadata.get('category', 'unknown'),
-                    'metadata': metadata
+                    "name": metadata.get("title", metadata.get("source", "Untitled")),
+                    "content": chunk,
+                    "path": metadata.get("source", "unknown"),
+                    "category": metadata.get("category", "unknown"),
+                    "metadata": metadata,
                 }
 
                 # Add to repository (this is what HybridQueryEngine uses)
@@ -260,7 +260,10 @@ class KnowledgeBeastService:
             doc_ids_to_delete = []
 
             for doc_id, doc_data in self.repository.documents.items():
-                if doc_data.get('path') == source or doc_data.get('metadata', {}).get('source') == source:
+                if (
+                    doc_data.get("path") == source
+                    or doc_data.get("metadata", {}).get("source") == source
+                ):
                     doc_ids_to_delete.append(doc_id)
 
             if doc_ids_to_delete:
@@ -294,7 +297,7 @@ class KnowledgeBeastService:
             # Extract unique categories from repository
             categories = set()
             for doc_data in self.repository.documents.values():
-                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category')
+                category = doc_data.get("category") or doc_data.get("metadata", {}).get("category")
                 if category:
                     categories.add(category)
 
@@ -325,7 +328,9 @@ class KnowledgeBeastService:
             # Get category breakdown
             categories = {}
             for doc_data in self.repository.documents.values():
-                category = doc_data.get('category') or doc_data.get('metadata', {}).get('category', 'unknown')
+                category = doc_data.get("category") or doc_data.get("metadata", {}).get(
+                    "category", "unknown"
+                )
                 categories[category] = categories.get(category, 0) + 1
 
             return {
@@ -399,7 +404,9 @@ class KnowledgeBeastService:
                             "content": doc_data.get("content", ""),
                             "metadata": metadata,
                             "score": float(score),
-                            "category": doc_data.get("category", metadata.get("category", "unknown")),
+                            "category": doc_data.get(
+                                "category", metadata.get("category", "unknown")
+                            ),
                             "source": doc_data.get("path", metadata.get("source", "unknown")),
                             "title": doc_data.get("name", metadata.get("title", "Untitled")),
                         }

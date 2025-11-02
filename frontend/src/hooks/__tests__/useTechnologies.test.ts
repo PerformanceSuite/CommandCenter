@@ -87,7 +87,12 @@ describe('useTechnologies', () => {
       };
 
       // Setup initial state
-      vi.mocked(api.getTechnologies).mockResolvedValue([existingTech]);
+      vi.mocked(api.getTechnologies).mockResolvedValue({
+        items: [existingTech],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      });
       vi.mocked(api.createTechnology).mockRejectedValue(new Error('Network error'));
 
       const { result } = renderHook(() => useTechnologies(), { wrapper });
@@ -116,7 +121,12 @@ describe('useTechnologies', () => {
       const originalTech = { ...mockTechnology, id: 1, title: 'Original Title' };
       const updateData: TechnologyUpdate = { title: 'Updated Title' };
 
-      vi.mocked(api.getTechnologies).mockResolvedValue([originalTech]);
+      vi.mocked(api.getTechnologies).mockResolvedValue({
+        items: [originalTech],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      });
       vi.mocked(api.updateTechnology).mockRejectedValue(new Error('Update failed'));
 
       const { result } = renderHook(() => useTechnologies(), { wrapper });
@@ -145,7 +155,12 @@ describe('useTechnologies', () => {
       const tech1 = { ...mockTechnology, id: 1 };
       const tech2 = { ...mockTechnology, id: 2, title: 'Tech 2' };
 
-      vi.mocked(api.getTechnologies).mockResolvedValue([tech1, tech2]);
+      vi.mocked(api.getTechnologies).mockResolvedValue({
+        items: [tech1, tech2],
+        total: 2,
+        page: 1,
+        page_size: 20,
+      });
       vi.mocked(api.deleteTechnology).mockRejectedValue(new Error('Delete failed'));
 
       const { result } = renderHook(() => useTechnologies(), { wrapper });
@@ -175,7 +190,12 @@ describe('useTechnologies', () => {
       const tech1 = { ...mockTechnology, id: 1 };
       const updateData: TechnologyUpdate = { title: 'Updated Title' };
 
-      vi.mocked(api.getTechnologies).mockResolvedValue([tech1]);
+      vi.mocked(api.getTechnologies).mockResolvedValue({
+        items: [tech1],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      });
 
       // Mock slow update to test race condition
       vi.mocked(api.updateTechnology).mockImplementation(
@@ -212,7 +232,12 @@ describe('useTechnologies', () => {
   describe('Type Safety', () => {
     it('should maintain proper TypeScript types for context', async () => {
       const tech = { ...mockTechnology, id: 1 };
-      vi.mocked(api.getTechnologies).mockResolvedValue([tech]);
+      vi.mocked(api.getTechnologies).mockResolvedValue({
+        items: [tech],
+        total: 1,
+        page: 1,
+        page_size: 20,
+      });
 
       const { result } = renderHook(() => useTechnologies(), { wrapper });
 

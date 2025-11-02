@@ -9,7 +9,7 @@ This module provides the generic job execution framework that:
 """
 
 import traceback
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime
 
 from app.tasks import celery_app
@@ -40,7 +40,11 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
     Raises:
         Exception: Any unhandled exception during execution
     """
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
     from app.config import settings
     from app.services.job_service import JobService
     import asyncio
@@ -65,29 +69,17 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
 
                 # Dispatch to appropriate handler based on job type
                 if job_type == JobType.ANALYSIS:
-                    result = await execute_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_analysis_job(self, job_id, parameters, service)
                 elif job_type == JobType.EXPORT:
-                    result = await execute_export_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_export_job(self, job_id, parameters, service)
                 elif job_type == JobType.BATCH_ANALYSIS:
-                    result = await execute_batch_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_batch_analysis_job(self, job_id, parameters, service)
                 elif job_type == JobType.BATCH_EXPORT:
-                    result = await execute_batch_export_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_batch_export_job(self, job_id, parameters, service)
                 elif job_type == JobType.WEBHOOK_DELIVERY:
-                    result = await execute_webhook_delivery_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_webhook_delivery_job(self, job_id, parameters, service)
                 elif job_type == JobType.SCHEDULED_ANALYSIS:
-                    result = await execute_scheduled_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_scheduled_analysis_job(self, job_id, parameters, service)
                 else:
                     raise ValueError(f"Unknown job type: {job_type}")
 
@@ -151,6 +143,7 @@ async def execute_analysis_job(
     # TODO: Implement actual analysis logic
     # For now, simulate work
     import asyncio
+
     await asyncio.sleep(2)
 
     await service.update_job(
@@ -195,7 +188,7 @@ async def execute_export_job(
         dict: Export results
     """
     export_format = parameters.get("format", "json")
-    filters = parameters.get("filters", {})
+    parameters.get("filters", {})
 
     await service.update_job(
         job_id=job_id,
@@ -205,6 +198,7 @@ async def execute_export_job(
 
     # TODO: Implement actual export logic
     import asyncio
+
     await asyncio.sleep(3)
 
     return {
@@ -245,6 +239,7 @@ async def execute_batch_analysis_job(
 
         # TODO: Implement actual analysis
         import asyncio
+
         await asyncio.sleep(1)
 
         results.append({"repository_id": repo_id, "status": "completed"})
@@ -280,6 +275,7 @@ async def execute_batch_export_job(
 
     # TODO: Implement actual batch export logic
     import asyncio
+
     await asyncio.sleep(2)
 
     return {
@@ -305,7 +301,7 @@ async def execute_webhook_delivery_job(
         dict: Delivery results
     """
     webhook_url = parameters.get("url")
-    payload = parameters.get("payload", {})
+    parameters.get("payload", {})
 
     await service.update_job(
         job_id=job_id,
@@ -315,6 +311,7 @@ async def execute_webhook_delivery_job(
 
     # TODO: Implement actual webhook delivery
     import asyncio
+
     await asyncio.sleep(1)
 
     return {
@@ -350,6 +347,7 @@ async def execute_scheduled_analysis_job(
 
     # TODO: Implement scheduled analysis logic
     import asyncio
+
     await asyncio.sleep(2)
 
     return {

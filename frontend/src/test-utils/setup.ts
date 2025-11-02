@@ -28,7 +28,7 @@ beforeAll(() => {
   });
 
   // Mock IntersectionObserver
-  global.IntersectionObserver = class IntersectionObserver {
+  globalThis.IntersectionObserver = class IntersectionObserver {
     constructor() {}
     disconnect() {}
     observe() {}
@@ -36,25 +36,25 @@ beforeAll(() => {
       return [];
     }
     unobserve() {}
-  } as unknown as IntersectionObserver;
+  } as any;
 
   // Mock ResizeObserver
-  global.ResizeObserver = class ResizeObserver {
+  globalThis.ResizeObserver = class ResizeObserver {
     constructor() {}
     disconnect() {}
     observe() {}
     unobserve() {}
-  } as unknown as typeof ResizeObserver;
+  } as any;
 
   // Mock window.scrollTo
-  window.scrollTo = vi.fn();
+  window.scrollTo = vi.fn() as any;
 
   // Mock console methods to reduce noise in tests
-  global.console = {
+  globalThis.console = {
     ...console,
     error: vi.fn(),
     warn: vi.fn(),
-  };
+  } as any;
 });
 
 afterAll(() => {

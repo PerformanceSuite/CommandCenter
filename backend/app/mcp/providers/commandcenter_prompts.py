@@ -197,9 +197,7 @@ class CommandCenterPromptProvider(PromptProvider):
             raise PromptNotFoundError(name)
 
     # Prompt handlers
-    async def _prompt_analyze_project(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_analyze_project(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate project analysis prompt."""
         if "project_name" not in arguments:
             raise InvalidParamsError("project_name is required")
@@ -245,9 +243,7 @@ Use the CommandCenter resources (commandcenter://projects/{project_name}) to gat
 
         return PromptResult(messages=messages)
 
-    async def _prompt_evaluate_technology(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_evaluate_technology(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate technology evaluation prompt."""
         if "technology_name" not in arguments:
             raise InvalidParamsError("technology_name is required")
@@ -373,7 +369,9 @@ Review type: {review_type}
 
 Focus areas for {review_type} review:
 
-""" + ("""
+"""
+                + (
+                    """
 **Security Review:**
 - Input validation and sanitization
 - Authentication and authorization
@@ -381,28 +379,47 @@ Focus areas for {review_type} review:
 - Dependency vulnerabilities
 - SQL injection risks
 - XSS prevention
-""" if review_type == "security" else "") + ("""
+"""
+                    if review_type == "security"
+                    else ""
+                )
+                + (
+                    """
 **Performance Review:**
 - Database query optimization
 - Caching strategies
 - Algorithm efficiency
 - Resource utilization
 - Load handling capabilities
-""" if review_type == "performance" else "") + ("""
+"""
+                    if review_type == "performance"
+                    else ""
+                )
+                + (
+                    """
 **Architecture Review:**
 - Separation of concerns
 - SOLID principles
 - Design patterns usage
 - Scalability considerations
 - Maintainability
-""" if review_type == "architecture" else "") + ("""
+"""
+                    if review_type == "architecture"
+                    else ""
+                )
+                + (
+                    """
 **General Review:**
 - Code quality and readability
 - Test coverage
 - Documentation
 - Error handling
 - Best practices adherence
-""" if review_type == "general" else "") + f"""
+"""
+                    if review_type == "general"
+                    else ""
+                )
+                + f"""
 
 Provide:
 1. **Strengths** - What's done well
@@ -416,9 +433,7 @@ Access repository data via commandcenter://repositories/{repository_name}""",
 
         return PromptResult(messages=messages)
 
-    async def _prompt_generate_report(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_generate_report(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate report generation prompt."""
         if "report_type" not in arguments:
             raise InvalidParamsError("report_type is required")
@@ -469,9 +484,7 @@ Gather data from CommandCenter resources (commandcenter://overview, commandcente
 
         return PromptResult(messages=messages)
 
-    async def _prompt_prioritize_tasks(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_prioritize_tasks(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate task prioritization prompt."""
         criteria = arguments.get("criteria", "impact")
 
@@ -511,9 +524,7 @@ Retrieve current tasks from commandcenter://research/tasks and provide a priorit
 
         return PromptResult(messages=messages)
 
-    async def _prompt_architecture_review(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_architecture_review(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate architecture review prompt."""
         if "system_name" not in arguments:
             raise InvalidParamsError("system_name is required")

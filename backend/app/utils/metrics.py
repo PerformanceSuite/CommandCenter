@@ -113,9 +113,7 @@ def setup_custom_metrics(app: FastAPI):
         app: FastAPI application instance
     """
     # Set application info
-    app_info.info(
-        {"version": app.version, "title": app.title, "environment": "production"}
-    )
+    app_info.info({"version": app.version, "title": app.title, "environment": "production"})
 
     # Initialize gauges
     active_research_tasks.set(0)

@@ -109,9 +109,7 @@ class GoModParser(BaseParser):
 
         return None
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from Go proxy.
 
@@ -128,9 +126,7 @@ class GoModParser(BaseParser):
                     # Silently fail for missing/private modules
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from Go proxy.
 

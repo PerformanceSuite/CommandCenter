@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph CC[CommandCenter]
+    CC_Ingest[Ingestion: RSS, GitHub, Docs, FS]
+    CC_RAG[KnowledgeBeast RAG]
+    CC_Habit[Habit Coach]
+    CC_API[(CC REST/GraphQL API)]
+    CC_Obs[(Prometheus/OTel)]
+  end
+
+  subgraph MR[MRKTZR]
+    MR_Content[Content Svc]
+    MR_Persona[Persona/Avatar Svc]
+    MR_Scheduler[Scheduler Svc]
+    MR_Channels[Channels Svc]
+    MR_Analytics[Analytics Svc]
+    MR_API[(MR REST/API GW)]
+    MR_Obs[(Prometheus/OTel)]
+  end
+
+  CC_RAG -->|/insights/export| CC_API
+  CC_API -->|Topic briefs, trends, citations| MR_Content
+  MR_Content --> MR_Scheduler --> MR_Channels
+  MR_Channels -->|Publish| Social[(X/LinkedIn/YouTube/...)]
+  Social -->|Engagement events| MR_Analytics
+  MR_Analytics -->|/metrics/export| MR_API
+  MR_API -->|POST /cc/analytics/intake| CC_API
+  CC_Habit -->|Proactive triggers| MR_Content
+  CC_Obs --- MR_Obs

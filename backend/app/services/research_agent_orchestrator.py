@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 import json
 
-from app.services.ai_router import ai_router, AIProvider, ModelTier
+from app.services.ai_router import ai_router, AIProvider
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class AgentRole(str, Enum):
     """Research agent roles"""
+
     TECHNOLOGY_SCOUT = "technology_scout"  # Discover new technologies
     DEEP_RESEARCHER = "deep_researcher"  # Comprehensive technology analysis
     COMPARATOR = "comparator"  # Compare technologies side-by-side
@@ -34,6 +35,7 @@ class AgentRole(str, Enum):
 
 class ResearchAgentStatus(str, Enum):
     """Agent execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -53,7 +55,7 @@ class ResearchAgent:
         model: str,
         provider: AIProvider,
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
     ):
         self.role = role
         self.model = model
@@ -114,7 +116,6 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
 }
 ```
             """.strip(),
-
             AgentRole.DEEP_RESEARCHER: """
 ## Your Role: Deep Researcher
 
@@ -169,7 +170,6 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
 }
 ```
             """.strip(),
-
             AgentRole.COMPARATOR: """
 ## Your Role: Technology Comparator
 
@@ -216,7 +216,6 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
 }
 ```
             """.strip(),
-
             AgentRole.INTEGRATOR: """
 ## Your Role: Integration Feasibility Assessor
 
@@ -256,7 +255,6 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
 }
 ```
             """.strip(),
-
             AgentRole.MONITOR: """
 ## Your Role: Technology Monitor
 
@@ -322,7 +320,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
             system_prompt = self.get_system_prompt()
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": task_prompt}
+                {"role": "user", "content": task_prompt},
             ]
 
             # Call AI provider
@@ -331,7 +329,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 model=self.model,
                 provider=self.provider,
                 temperature=self.temperature,
-                max_tokens=self.max_tokens
+                max_tokens=self.max_tokens,
             )
 
             # Parse JSON response
@@ -342,7 +340,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 # If not valid JSON, wrap in generic structure
                 result = {
                     "raw_response": content,
-                    "parse_error": "Agent returned non-JSON response"
+                    "parse_error": "Agent returned non-JSON response",
                 }
 
             # Add metadata
@@ -351,7 +349,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 "model": response["model"],
                 "provider": response["provider"],
                 "usage": response["usage"],
-                "execution_time_seconds": (datetime.utcnow() - self.start_time).total_seconds()
+                "execution_time_seconds": (datetime.utcnow() - self.start_time).total_seconds(),
             }
 
             self.result = result
@@ -383,9 +381,7 @@ class ResearchAgentOrchestrator:
         self.default_provider = AIProvider(settings.default_ai_provider)
 
     async def launch_parallel_research(
-        self,
-        tasks: List[Dict[str, Any]],
-        max_concurrent: int = 3
+        self, tasks: List[Dict[str, Any]], max_concurrent: int = 3
     ) -> List[Dict[str, Any]]:
         """
         Launch multiple research agents in parallel
@@ -411,7 +407,7 @@ class ResearchAgentOrchestrator:
                 model=task_def.get("model", self.default_model),
                 provider=AIProvider(task_def.get("provider", self.default_provider.value)),
                 temperature=task_def.get("temperature", 0.7),
-                max_tokens=task_def.get("max_tokens", 4096)
+                max_tokens=task_def.get("max_tokens", 4096),
             )
             agents.append((agent, task_def["prompt"]))
 
@@ -425,7 +421,7 @@ class ResearchAgentOrchestrator:
         # Launch all agents
         results = await asyncio.gather(
             *[execute_with_semaphore(agent, prompt) for agent, prompt in agents],
-            return_exceptions=True
+            return_exceptions=True,
         )
 
         # Filter out exceptions and return results
@@ -433,19 +429,16 @@ class ResearchAgentOrchestrator:
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 logger.error(f"Agent {agents[i][0].role} failed: {result}")
-                successful_results.append({
-                    "error": str(result),
-                    "agent_role": agents[i][0].role.value
-                })
+                successful_results.append(
+                    {"error": str(result), "agent_role": agents[i][0].role.value}
+                )
             else:
                 successful_results.append(result)
 
         return successful_results
 
     async def technology_deep_dive(
-        self,
-        technology_name: str,
-        research_questions: Optional[List[str]] = None
+        self, technology_name: str, research_questions: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Comprehensive technology research using multiple agents
@@ -461,25 +454,27 @@ class ResearchAgentOrchestrator:
         tasks = [
             {
                 "role": "deep_researcher",
-                "prompt": f"Conduct comprehensive research on {technology_name}. Include technical analysis, performance benchmarks, integration assessment, and cost analysis."
+                "prompt": f"Conduct comprehensive research on {technology_name}. Include technical analysis, performance benchmarks, integration assessment, and cost analysis.",
             },
             {
                 "role": "integrator",
-                "prompt": f"Evaluate integration feasibility for {technology_name} in a full-stack web application (FastAPI backend, React frontend). Identify blockers and create implementation roadmap."
+                "prompt": f"Evaluate integration feasibility for {technology_name} in a full-stack web application (FastAPI backend, React frontend). Identify blockers and create implementation roadmap.",
             },
             {
                 "role": "monitor",
-                "prompt": f"Provide current monitoring report for {technology_name}. Check HackerNews mentions, GitHub activity, recent releases, and any security alerts from the last 7 days."
-            }
+                "prompt": f"Provide current monitoring report for {technology_name}. Check HackerNews mentions, GitHub activity, recent releases, and any security alerts from the last 7 days.",
+            },
         ]
 
         # Add custom research questions if provided
         if research_questions:
             for question in research_questions:
-                tasks.append({
-                    "role": "deep_researcher",
-                    "prompt": f"Research {technology_name}: {question}"
-                })
+                tasks.append(
+                    {
+                        "role": "deep_researcher",
+                        "prompt": f"Research {technology_name}: {question}",
+                    }
+                )
 
         # Execute research
         results = await self.launch_parallel_research(tasks, max_concurrent=3)
@@ -489,12 +484,14 @@ class ResearchAgentOrchestrator:
             "technology": technology_name,
             "timestamp": datetime.utcnow().isoformat(),
             "research_findings": results,
-            "summary": await self._generate_summary(results, technology_name)
+            "summary": await self._generate_summary(results, technology_name),
         }
 
         return report
 
-    async def _generate_summary(self, results: List[Dict[str, Any]], technology_name: str = "technology") -> str:
+    async def _generate_summary(
+        self, results: List[Dict[str, Any]], technology_name: str = "technology"
+    ) -> str:
         """
         Generate executive summary from agent results using AI
 
@@ -509,7 +506,9 @@ class ResearchAgentOrchestrator:
         findings_text = []
         for i, result in enumerate(results, 1):
             if "error" in result:
-                findings_text.append(f"Agent {i} ({result.get('agent_role', 'unknown')}): FAILED - {result['error']}")
+                findings_text.append(
+                    f"Agent {i} ({result.get('agent_role', 'unknown')}): FAILED - {result['error']}"
+                )
             else:
                 # Extract agent role from metadata
                 role = result.get("_metadata", {}).get("role", f"agent_{i}")
@@ -537,7 +536,7 @@ Generate ONLY the executive summary (3-5 sentences). Be direct and actionable.""
             response = await ai_router.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,  # Lower temperature for consistent summaries
-                max_tokens=500  # Short summary
+                max_tokens=500,  # Short summary
             )
 
             return response["content"].strip()

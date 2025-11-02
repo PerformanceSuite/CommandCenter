@@ -62,9 +62,7 @@ class KnowledgeEntry(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="knowledge_entries"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="knowledge_entries")
     technology: Mapped[Optional["Technology"]] = relationship(
         "Technology", back_populates="knowledge_entries"
     )

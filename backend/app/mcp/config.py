@@ -75,9 +75,7 @@ class MCPServerConfig(BaseModel):
         """Validate configuration after initialization."""
         if self.transport in ["http", "websocket"]:
             if not self.host or not self.port:
-                raise ValueError(
-                    f"Host and port required for {self.transport} transport"
-                )
+                raise ValueError(f"Host and port required for {self.transport} transport")
 
 
 class MCPClientCapabilities(BaseModel):

@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import type { Repository } from '../types/repository';
 import type { Technology } from '../types/technology';
+import { TechnologyDomain, TechnologyStatus } from '../types/technology';
 import type { ResearchEntry } from '../types/research';
 
 // Mock data generators
@@ -10,19 +11,9 @@ export const mockRepository = (overrides: Partial<Repository> = {}): Repository 
   name: 'testrepo',
   full_name: 'testowner/testrepo',
   description: 'Test repository',
-  url: 'https://github.com/testowner/testrepo',
-  clone_url: 'https://github.com/testowner/testrepo.git',
-  default_branch: 'main',
   is_private: false,
   is_active: true,
-  github_id: 12345,
-  stars: 100,
-  forks: 10,
-  language: 'Python',
-  created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
   last_synced_at: '2024-01-01T00:00:00Z',
-  last_commit_sha: 'abc123',
   ...overrides,
 });
 
@@ -30,27 +21,42 @@ export const mockTechnology = (overrides: Partial<Technology> = {}): Technology 
   id: 1,
   title: 'Python',
   vendor: 'PSF',
-  domain: 'ai-ml',
-  status: 'discovery',
+  domain: TechnologyDomain.AI_ML,
+  status: TechnologyStatus.DISCOVERY,
   relevance_score: 80,
   priority: 4,
   description: 'A high-level programming language',
+  notes: null,
+  use_cases: null,
   documentation_url: 'https://python.org',
   repository_url: 'https://github.com/python/cpython',
+  website_url: null,
   tags: 'language,backend',
+  latency_ms: null,
+  throughput_qps: null,
+  integration_difficulty: null,
+  integration_time_estimate_days: null,
+  maturity_level: null,
+  stability_score: null,
+  cost_tier: null,
+  cost_monthly_usd: null,
+  dependencies: null,
+  alternatives: null,
+  last_hn_mention: null,
+  hn_score_avg: null,
+  github_stars: null,
+  github_last_commit: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
 export const mockResearchTask = (overrides: Partial<ResearchEntry> = {}): ResearchEntry => ({
-  id: 1,
+  id: '1',
   title: 'Research FastAPI',
-  description: 'Investigate FastAPI best practices',
-  status: 'pending',
-  priority: 'high',
-  repository_id: 1,
-  technology_id: 1,
+  source: 'manual',
+  summary: 'Investigate FastAPI best practices',
+  tags: ['fastapi', 'python'],
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,

@@ -1,0 +1,12 @@
+agent:
+  id: solana-monitor
+  role: Execution Layer Compliance Agent
+  inputs:
+    - rpc_stream: solana_mainnet
+  actions:
+    - detect_latency_anomalies
+    - verify_transaction_finality
+    - flag_regulatory_violations
+  rules:
+    finality_timeout_ms: 6000
+    max_slot_drift: 50

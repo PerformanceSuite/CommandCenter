@@ -65,7 +65,6 @@ class WebhookPayload(BaseModel):
 
     # GitHub sends various payloads depending on event type
     # This is a flexible schema that accepts any structure
-    pass
 
     class Config:
         extra = "allow"

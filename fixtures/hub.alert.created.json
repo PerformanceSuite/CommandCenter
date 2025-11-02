@@ -1,0 +1,29 @@
+{
+  "schema": "cc.event@1.0",
+  "topic": "hub.alert.created",
+  "timestamp": "2025-11-01T23:22:09Z",
+  "source": "hub.monitor",
+  "env": "staging",
+  "severity": "warning",
+  "version": "1.0.0",
+  "payload": {
+    "id": "alert-939f5a",
+    "severity": "warning",
+    "source": "tools.graphvis.health",
+    "summary": "GraphVis latency high",
+    "description": "p95 latency > 2s for last 5 minutes.",
+    "recommendation": "Check Dagger network I/O settings.",
+    "linkedEvents": [
+      "tools.graphvis.health.degraded"
+    ],
+    "assignee": "ToolOps",
+    "tags": [
+      "performance"
+    ]
+  },
+  "signature": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-004",
+    "signer": "hub.monitor"
+  }
+}

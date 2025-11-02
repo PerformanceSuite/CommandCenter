@@ -5,8 +5,7 @@ Implements SARIF 2.1.0 specification for GitHub code scanning integration.
 Reference: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 """
 
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List
 import hashlib
 
 from app.exporters import BaseExporter
@@ -177,16 +176,20 @@ class SARIFExporter(BaseExporter):
         if "files" in metrics:
             for file_info in metrics.get("files", []):
                 if isinstance(file_info, dict) and "path" in file_info:
-                    artifacts.append({
-                        "location": {"uri": self._path_to_uri(file_info["path"])},
-                        "length": file_info.get("size", -1),
-                    })
+                    artifacts.append(
+                        {
+                            "location": {"uri": self._path_to_uri(file_info["path"])},
+                            "length": file_info.get("size", -1),
+                        }
+                    )
 
         # If no specific files, add project root
         if not artifacts:
-            artifacts.append({
-                "location": {"uri": self._path_to_uri(self.project_path)},
-            })
+            artifacts.append(
+                {
+                    "location": {"uri": self._path_to_uri(self.project_path)},
+                }
+            )
 
         return artifacts
 
@@ -232,15 +235,11 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC004",
             "level": self.SARIF_LEVEL_NONE,
             "kind": self.SARIF_KIND_PASS,
-            "message": {
-                "text": f"Detected {name} {version} (confidence: {confidence}%)"
-            },
+            "message": {"text": f"Detected {name} {version} (confidence: {confidence}%)"},
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
@@ -273,9 +272,7 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC001",
             "level": self.SARIF_LEVEL_WARNING,
             "kind": self.SARIF_KIND_REVIEW,
-            "message": {
-                "text": f"Dependency '{name}' is outdated: {current} → {latest} available"
-            },
+            "message": {"text": f"Dependency '{name}' is outdated: {current} → {latest} available"},
             "locations": [
                 {
                     "physicalLocation": {
@@ -318,15 +315,11 @@ class SARIFExporter(BaseExporter):
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
-            "fingerprints": {
-                "commandCenter/v1": self._generate_fingerprint(f"gap-{title}")
-            },
+            "fingerprints": {"commandCenter/v1": self._generate_fingerprint(f"gap-{title}")},
             "properties": {
                 "category": category,
                 "priority": gap.get("priority", 3),
@@ -374,7 +367,9 @@ class SARIFExporter(BaseExporter):
         return hashlib.sha256(key.encode()).hexdigest()[:16]
 
 
-def export_to_sarif(project_analysis: Dict[str, Any], tool_name: str = "CommandCenter") -> Dict[str, Any]:
+def export_to_sarif(
+    project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"
+) -> Dict[str, Any]:
     """
     Convenience function to export analysis to SARIF format.
 

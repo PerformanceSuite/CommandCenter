@@ -5,13 +5,10 @@ Batch service for bulk operations on repositories, technologies, and analyses.
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from datetime import datetime
 
 from app.models.job import Job
 from app.models.repository import Repository
-from app.models.technology import Technology
 from app.services.job_service import JobService
-from app.tasks.job_tasks import execute_job
 
 
 class BatchService:
@@ -53,10 +50,7 @@ class BatchService:
         """
         # Validate repositories exist and belong to project
         stmt = select(Repository).where(
-            and_(
-                Repository.id.in_(repository_ids),
-                Repository.project_id == project_id
-            )
+            and_(Repository.id.in_(repository_ids), Repository.project_id == project_id)
         )
         result = await self.db.execute(stmt)
         repositories = result.scalars().all()
@@ -112,9 +106,7 @@ class BatchService:
         # Validate format
         valid_formats = {"sarif", "markdown", "html", "csv", "json"}
         if format not in valid_formats:
-            raise ValueError(
-                f"Invalid export format '{format}'. Must be one of: {valid_formats}"
-            )
+            raise ValueError(f"Invalid export format '{format}'. Must be one of: {valid_formats}")
 
         # Prepare batch parameters
         batch_params = {
@@ -161,8 +153,7 @@ class BatchService:
         valid_strategies = {"skip", "overwrite", "merge"}
         if merge_strategy not in valid_strategies:
             raise ValueError(
-                f"Invalid merge strategy '{merge_strategy}'. "
-                f"Must be one of: {valid_strategies}"
+                f"Invalid merge strategy '{merge_strategy}'. " f"Must be one of: {valid_strategies}"
             )
 
         # Validate technology data (basic validation)
@@ -170,9 +161,7 @@ class BatchService:
         for i, tech in enumerate(technologies):
             missing = required_fields - set(tech.keys())
             if missing:
-                raise ValueError(
-                    f"Technology at index {i} missing required fields: {missing}"
-                )
+                raise ValueError(f"Technology at index {i} missing required fields: {missing}")
 
         # Prepare batch parameters
         batch_params = {
@@ -193,9 +182,7 @@ class BatchService:
 
         return job
 
-    async def get_batch_statistics(
-        self, project_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_batch_statistics(self, project_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get statistics for batch operations.
 

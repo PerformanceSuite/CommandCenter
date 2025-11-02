@@ -27,7 +27,6 @@ class BaseParser(ABC):
         Returns:
             Parser identifier string
         """
-        pass
 
     @property
     @abstractmethod
@@ -38,7 +37,6 @@ class BaseParser(ABC):
         Returns:
             List of configuration file names to detect
         """
-        pass
 
     @property
     @abstractmethod
@@ -49,7 +47,6 @@ class BaseParser(ABC):
         Returns:
             Language identifier string
         """
-        pass
 
     def can_parse(self, project_path: Path) -> bool:
         """
@@ -81,7 +78,6 @@ class BaseParser(ABC):
             FileNotFoundError: If config files don't exist
             ValueError: If config files are malformed
         """
-        pass
 
     async def get_latest_version(self, package_name: str) -> str:
         """
@@ -99,9 +95,7 @@ class BaseParser(ABC):
             NotImplementedError: If registry lookup not implemented
             httpx.HTTPError: If registry request fails
         """
-        raise NotImplementedError(
-            f"{self.name} parser does not implement latest version lookup"
-        )
+        raise NotImplementedError(f"{self.name} parser does not implement latest version lookup")
 
     async def _read_file_async(self, file_path: Path) -> str:
         """

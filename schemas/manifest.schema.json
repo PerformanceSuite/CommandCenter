@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commandcenter.dev/schemas/manifest.schema.json",
+  "title": "CommandCenter Tool Manifest",
+  "type": "object",
+  "required": ["schema", "id", "version", "entry", "permissions", "categories"],
+  "properties": {
+    "schema": { "const": "cc.tool/manifest@1.0" },
+    "id": { "type": "string", "pattern": "^[a-z0-9-_]+$", "description": "Unique tool identifier (slug-style)." },
+    "name": { "type": "string", "description": "Human-readable name." },
+    "description": { "type": "string" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "Semver-compatible version." },
+    "entry": {
+      "type": "object",
+      "properties": {
+        "web": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1024 },
+            "start": { "type": "string" }
+          },
+          "required": ["path", "port"]
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1024 },
+            "start": { "type": "string" }
+          },
+          "required": ["path", "port"]
+        },
+        "cli": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "command": { "type": "string" }
+          },
+          "required": ["command"]
+        }
+      },
+      "minProperties": 1
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+              "path": { "type": "string" }
+            },
+            "required": ["method", "path"]
+          }
+        },
+        "rpc": {
+          "type": "object",
+          "properties": {
+            "meshBus": { "type": "boolean" },
+            "topics": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9._*]+$" } }
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "meshBus": { "type": "array", "items": { "type": "string" } },
+        "filesystem": { "type": "array", "items": { "type": "string" } },
+        "secrets": { "type": "array", "items": { "type": "string" } },
+        "net": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["meshBus"]
+    },
+    "categories": {
+      "type": "array",
+      "items": { "enum": ["Visualization", "Maintenance", "Monitoring", "Automation"] },
+      "minItems": 1
+    },
+    "observability": {
+      "type": "object",
+      "properties": {
+        "otel": { "type": "boolean" },
+        "metrics": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "snapshots": {
+      "type": "object",
+      "properties": {
+        "producer": { "type": "boolean" },
+        "consumer": { "type": "boolean" },
+        "kinds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "compat": {
+      "type": "object",
+      "properties": {
+        "hub": { "type": "string" },
+        "meshBus": { "type": "string" },
+        "dagger": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

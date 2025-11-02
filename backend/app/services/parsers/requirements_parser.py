@@ -46,9 +46,7 @@ class RequirementsParser(BaseParser):
                 continue
 
             content = await self._read_file_async(req_path)
-            dep_type = (
-                DependencyType.DEV if "dev" in config_file else DependencyType.RUNTIME
-            )
+            dep_type = DependencyType.DEV if "dev" in config_file else DependencyType.RUNTIME
 
             for line in content.splitlines():
                 line = line.strip()
@@ -95,9 +93,7 @@ class RequirementsParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from PyPI.
 
@@ -114,9 +110,7 @@ class RequirementsParser(BaseParser):
                     # Silently fail for missing/private packages
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from PyPI.
 

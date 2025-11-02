@@ -12,7 +12,6 @@ Provides endpoints to export analysis in multiple formats:
 from fastapi import APIRouter, HTTPException, Query, Depends, Response, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
-from typing import Optional
 from enum import Enum
 import json
 import logging
@@ -22,7 +21,6 @@ from app.models.project_analysis import ProjectAnalysis
 from app.exporters.sarif import export_to_sarif
 from app.exporters.html import export_to_html
 from app.exporters.csv import export_to_csv, export_to_excel
-from app.exporters import ExportFormat, UnsupportedFormatError, ExportDataError
 from app.middleware import limiter
 
 router = APIRouter(prefix="/api/v1/export", tags=["Export"])
@@ -31,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class CSVExportType(str, Enum):
     """Valid CSV export types."""
+
     COMBINED = "combined"
     TECHNOLOGIES = "technologies"
     DEPENDENCIES = "dependencies"
@@ -40,6 +39,7 @@ class CSVExportType(str, Enum):
 
 class ExportFormatEnum(str, Enum):
     """Valid export formats for batch operations."""
+
     SARIF = "sarif"
     HTML = "html"
     CSV = "csv"
@@ -60,7 +60,7 @@ def _get_analysis_data(analysis: ProjectAnalysis) -> dict:
     return {
         "id": analysis.id,
         "project_path": analysis.project_path,
-        "analyzed_at": analysis.analyzed_at.isoformat() if analysis.analyzed_at else None,
+        "analyzed_at": (analysis.analyzed_at.isoformat() if analysis.analyzed_at else None),
         "analysis_version": analysis.analysis_version,
         "analysis_duration_ms": analysis.analysis_duration_ms,
         "detected_technologies": analysis.detected_technologies or {},
@@ -113,9 +113,11 @@ async def export_analysis_sarif(
         sarif_data = export_to_sarif(analysis_data)
 
         sarif_json = json.dumps(sarif_data, indent=2)
-        content_length = len(sarif_json.encode('utf-8'))
+        content_length = len(sarif_json.encode("utf-8"))
 
-        logger.info(f"SARIF export successful for analysis {analysis_id}, size: {content_length} bytes")
+        logger.info(
+            f"SARIF export successful for analysis {analysis_id}, size: {content_length} bytes"
+        )
 
         return JSONResponse(
             content=sarif_data,
@@ -127,9 +129,7 @@ async def export_analysis_sarif(
 
     except Exception as e:
         logger.error(f"SARIF export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export SARIF: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export SARIF: {str(e)}")
 
 
 @router.get("/{analysis_id}/html")
@@ -171,9 +171,11 @@ async def export_analysis_html(
     try:
         analysis_data = _get_analysis_data(analysis)
         html_content = export_to_html(analysis_data)
-        content_length = len(html_content.encode('utf-8'))
+        content_length = len(html_content.encode("utf-8"))
 
-        logger.info(f"HTML export successful for analysis {analysis_id}, size: {content_length} bytes")
+        logger.info(
+            f"HTML export successful for analysis {analysis_id}, size: {content_length} bytes"
+        )
 
         return HTMLResponse(
             content=html_content,
@@ -185,9 +187,7 @@ async def export_analysis_html(
 
     except Exception as e:
         logger.error(f"HTML export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export HTML: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export HTML: {str(e)}")
 
 
 @router.get("/{analysis_id}/csv")
@@ -227,9 +227,11 @@ async def export_analysis_csv(
     try:
         analysis_data = _get_analysis_data(analysis)
         csv_content = export_to_csv(analysis_data, export_type.value)
-        content_length = len(csv_content.encode('utf-8'))
+        content_length = len(csv_content.encode("utf-8"))
 
-        logger.info(f"CSV export ({export_type.value}) successful for analysis {analysis_id}, size: {content_length} bytes")
+        logger.info(
+            f"CSV export ({export_type.value}) successful for analysis {analysis_id}, size: {content_length} bytes"
+        )
 
         return Response(
             content=csv_content,
@@ -242,9 +244,7 @@ async def export_analysis_csv(
 
     except Exception as e:
         logger.error(f"CSV export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export CSV: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export CSV: {str(e)}")
 
 
 @router.get("/{analysis_id}/excel")
@@ -291,7 +291,9 @@ async def export_analysis_excel(
         excel_bytes = export_to_excel(analysis_data)
         content_length = len(excel_bytes)
 
-        logger.info(f"Excel export successful for analysis {analysis_id}, size: {content_length} bytes")
+        logger.info(
+            f"Excel export successful for analysis {analysis_id}, size: {content_length} bytes"
+        )
 
         return Response(
             content=excel_bytes,
@@ -310,9 +312,7 @@ async def export_analysis_excel(
         )
     except Exception as e:
         logger.error(f"Excel export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export Excel: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export Excel: {str(e)}")
 
 
 @router.get("/{analysis_id}/json")
@@ -354,9 +354,11 @@ async def export_analysis_json(
 
         # Calculate content length
         json_str = json.dumps(analysis_data, indent=2 if pretty else None)
-        content_length = len(json_str.encode('utf-8'))
+        content_length = len(json_str.encode("utf-8"))
 
-        logger.info(f"JSON export successful for analysis {analysis_id}, size: {content_length} bytes")
+        logger.info(
+            f"JSON export successful for analysis {analysis_id}, size: {content_length} bytes"
+        )
 
         return JSONResponse(
             content=analysis_data,
@@ -368,9 +370,7 @@ async def export_analysis_json(
 
     except Exception as e:
         logger.error(f"JSON export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export JSON: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export JSON: {str(e)}")
 
 
 @router.get("/formats")
@@ -391,7 +391,12 @@ async def get_available_formats() -> dict:
                 "endpoint": "/export/{analysis_id}/sarif",
                 "mime_type": "application/json",
                 "description": "Static Analysis Results Interchange Format (GitHub code scanning compatible)",
-                "use_cases": ["GitHub Code Scanning", "GitLab SAST", "Azure DevOps", "IDE integration"],
+                "use_cases": [
+                    "GitHub Code Scanning",
+                    "GitLab SAST",
+                    "Azure DevOps",
+                    "IDE integration",
+                ],
                 "rate_limit": "10/minute",
             },
             {
@@ -400,7 +405,12 @@ async def get_available_formats() -> dict:
                 "endpoint": "/export/{analysis_id}/html",
                 "mime_type": "text/html",
                 "description": "Self-contained interactive HTML report with charts",
-                "use_cases": ["Sharing reports", "Presentations", "Archiving", "Offline viewing"],
+                "use_cases": [
+                    "Sharing reports",
+                    "Presentations",
+                    "Archiving",
+                    "Offline viewing",
+                ],
                 "rate_limit": "10/minute",
             },
             {
@@ -409,9 +419,19 @@ async def get_available_formats() -> dict:
                 "endpoint": "/export/{analysis_id}/csv?export_type={type}",
                 "mime_type": "text/csv",
                 "description": "Spreadsheet-friendly CSV data",
-                "use_cases": ["Excel/Google Sheets", "Data analysis", "Custom processing"],
+                "use_cases": [
+                    "Excel/Google Sheets",
+                    "Data analysis",
+                    "Custom processing",
+                ],
                 "parameters": {
-                    "export_type": ["technologies", "dependencies", "metrics", "gaps", "combined"]
+                    "export_type": [
+                        "technologies",
+                        "dependencies",
+                        "metrics",
+                        "gaps",
+                        "combined",
+                    ]
                 },
                 "rate_limit": "10/minute",
             },
@@ -421,7 +441,11 @@ async def get_available_formats() -> dict:
                 "endpoint": "/export/{analysis_id}/excel",
                 "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "description": "Multi-sheet Excel workbook with formatting",
-                "use_cases": ["Professional reports", "Executive summaries", "Data analysis"],
+                "use_cases": [
+                    "Professional reports",
+                    "Executive summaries",
+                    "Data analysis",
+                ],
                 "requires": "openpyxl library",
                 "rate_limit": "10/minute",
             },

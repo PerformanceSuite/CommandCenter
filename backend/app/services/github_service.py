@@ -4,7 +4,6 @@ GitHub integration service for repository management
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-import httpx
 from github import Github, GithubException, Repository as GithubRepo
 
 from app.config import settings
@@ -44,9 +43,7 @@ class GitHubService:
                 return False
             raise
 
-    async def list_user_repos(
-        self, username: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    async def list_user_repos(self, username: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         List repositories for a user
 
@@ -179,9 +176,7 @@ class GitHubService:
         except GithubException as e:
             raise Exception(f"Failed to get repository info: {e}")
 
-    async def search_repositories(
-        self, query: str, max_results: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def search_repositories(self, query: str, max_results: int = 10) -> List[Dict[str, Any]]:
         """
         Search for repositories on GitHub
 

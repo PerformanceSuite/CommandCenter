@@ -11,7 +11,6 @@ Provides endpoints for multi-agent research workflow:
 import logging
 import uuid
 from datetime import datetime
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -29,14 +28,12 @@ from app.schemas.research import (
     AgentResult,
     AgentResultMetadata,
     MonitoringAlert,
-    ModelInfo,
 )
 from app.services.research_agent_orchestrator import (
     research_orchestrator,
-    AgentRole,
 )
 from app.services.hackernews_service import HackerNewsService
-from app.services.ai_router import ai_router, AIProvider, ModelTier
+from app.services.ai_router import ai_router, AIProvider
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
@@ -100,22 +97,26 @@ async def technology_deep_dive(
                     results.append(result)
 
                 # Update task record
-                research_tasks[task_id].update({
-                    "status": "completed",
-                    "completed_at": datetime.utcnow(),
-                    "results": results,
-                    "summary": report.get("summary"),
-                })
+                research_tasks[task_id].update(
+                    {
+                        "status": "completed",
+                        "completed_at": datetime.utcnow(),
+                        "results": results,
+                        "summary": report.get("summary"),
+                    }
+                )
 
                 logger.info(f"✅ Deep dive completed for {request.technology_name}: {task_id}")
 
             except Exception as e:
                 logger.error(f"❌ Deep dive failed for {request.technology_name}: {e}")
-                research_tasks[task_id].update({
-                    "status": "failed",
-                    "completed_at": datetime.utcnow(),
-                    "error": str(e),
-                })
+                research_tasks[task_id].update(
+                    {
+                        "status": "failed",
+                        "completed_at": datetime.utcnow(),
+                        "error": str(e),
+                    }
+                )
 
         # Add to background tasks
         background_tasks.add_task(run_deep_dive)
@@ -182,14 +183,16 @@ async def launch_multi_agent_research(
                 # Convert request to orchestrator format
                 tasks = []
                 for task_req in request.tasks:
-                    tasks.append({
-                        "role": task_req.role,
-                        "prompt": task_req.prompt,
-                        "model": task_req.model,
-                        "provider": task_req.provider,
-                        "temperature": task_req.temperature,
-                        "max_tokens": task_req.max_tokens,
-                    })
+                    tasks.append(
+                        {
+                            "role": task_req.role,
+                            "prompt": task_req.prompt,
+                            "model": task_req.model,
+                            "provider": task_req.provider,
+                            "temperature": task_req.temperature,
+                            "max_tokens": task_req.max_tokens,
+                        }
+                    )
 
                 # Execute research
                 findings = await research_orchestrator.launch_parallel_research(
@@ -209,22 +212,26 @@ async def launch_multi_agent_research(
                     results.append(result)
 
                 # Update task record
-                research_tasks[task_id].update({
-                    "status": "completed",
-                    "completed_at": datetime.utcnow(),
-                    "results": results,
-                    "summary": f"Completed {len(results)} agent tasks",
-                })
+                research_tasks[task_id].update(
+                    {
+                        "status": "completed",
+                        "completed_at": datetime.utcnow(),
+                        "results": results,
+                        "summary": f"Completed {len(results)} agent tasks",
+                    }
+                )
 
                 logger.info(f"✅ Multi-agent research completed: {task_id}")
 
             except Exception as e:
                 logger.error(f"❌ Multi-agent research failed: {e}")
-                research_tasks[task_id].update({
-                    "status": "failed",
-                    "completed_at": datetime.utcnow(),
-                    "error": str(e),
-                })
+                research_tasks[task_id].update(
+                    {
+                        "status": "failed",
+                        "completed_at": datetime.utcnow(),
+                        "error": str(e),
+                    }
+                )
 
         background_tasks.add_task(run_agents)
 
@@ -261,9 +268,7 @@ async def monitor_technology(
     """
     try:
         # Get technology from database
-        result = await db.execute(
-            select(Technology).filter(Technology.id == technology_id)
-        )
+        result = await db.execute(select(Technology).filter(Technology.id == technology_id))
         technology = result.scalar_one_or_none()
 
         if not technology:
@@ -287,7 +292,11 @@ async def monitor_technology(
                 hn_service = HackerNewsService()
                 hn_report = await hn_service.monitor_technology(
                     technology_name=technology.title,
-                    keywords=[technology.title, technology.vendor] if technology.vendor else [technology.title],
+                    keywords=(
+                        [technology.title, technology.vendor]
+                        if technology.vendor
+                        else [technology.title]
+                    ),
                     days_back=request.days_back,
                 )
                 monitoring_data["hackernews"] = hn_report
@@ -352,13 +361,15 @@ async def get_available_models():
             # Get models for this provider from ai_router.MODEL_INFO
             for model_id, model_info in ai_router.MODEL_INFO.items():
                 if model_info["provider"] == provider.value:
-                    provider_models.append({
-                        "model_id": model_id,
-                        "tier": model_info["tier"],  # Already a string in MODEL_INFO
-                        "cost_per_1m_tokens": model_info.get("cost_per_1m_tokens"),
-                        "max_tokens": model_info.get("max_tokens", 4096),
-                        "description": model_info.get("description"),
-                    })
+                    provider_models.append(
+                        {
+                            "model_id": model_id,
+                            "tier": model_info["tier"],  # Already a string in MODEL_INFO
+                            "cost_per_1m_tokens": model_info.get("cost_per_1m_tokens"),
+                            "max_tokens": model_info.get("max_tokens", 4096),
+                            "description": model_info.get("description"),
+                        }
+                    )
 
             providers_data[provider.value] = provider_models
 
@@ -382,7 +393,9 @@ async def get_research_summary():
     """
     try:
         total_tasks = len(research_tasks)
-        completed_tasks = sum(1 for task in research_tasks.values() if task["status"] == "completed")
+        completed_tasks = sum(
+            1 for task in research_tasks.values() if task["status"] == "completed"
+        )
         failed_tasks = sum(1 for task in research_tasks.values() if task["status"] == "failed")
 
         # Count total agents deployed

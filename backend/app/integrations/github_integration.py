@@ -15,7 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from github import Github, GithubException
 
-from app.integrations.base import WebhookIntegration, IntegrationError, IntegrationAuthError
+from app.integrations.base import (
+    WebhookIntegration,
+    IntegrationError,
+)
 from app.models.research_task import ResearchTask
 from app.models.integration import IntegrationType
 from app.services.github_service import GitHubService
@@ -171,7 +174,7 @@ class GitHubIntegration(WebhookIntegration):
             task = await self.sync_issue_to_task(
                 issue_number=issue["number"],
                 issue_data=issue,
-                repository=payload.get("repository", {})
+                repository=payload.get("repository", {}),
             )
             return {
                 "status": "synced",
@@ -324,9 +327,7 @@ class GitHubIntegration(WebhookIntegration):
             Issue data including issue number and URL
         """
         # Get task
-        result = await self.db.execute(
-            select(ResearchTask).where(ResearchTask.id == task_id)
-        )
+        result = await self.db.execute(select(ResearchTask).where(ResearchTask.id == task_id))
         task = result.scalar_one_or_none()
 
         if not task:
@@ -365,12 +366,14 @@ class GitHubIntegration(WebhookIntegration):
 
         # Update task with issue reference
         task.tags = task_tags or {}
-        task.tags.update({
-            "github_issue": issue.number,
-            "github_repo": f"{owner}/{repo}",
-            "github_url": issue.html_url,
-            "synced_to": "github",
-        })
+        task.tags.update(
+            {
+                "github_issue": issue.number,
+                "github_repo": f"{owner}/{repo}",
+                "github_url": issue.html_url,
+                "synced_to": "github",
+            }
+        )
         await self.db.commit()
 
         self._logger.info(f"Created issue #{issue.number} from task {task_id}")
@@ -470,7 +473,7 @@ class GitHubIntegration(WebhookIntegration):
             List of column data
         """
         try:
-            client = await self._get_github_client()
+            await self._get_github_client()
             # Note: PyGithub doesn't have direct project column access
             # Would need to use GitHub GraphQL API for full project support
             raise NotImplementedError("Project columns require GraphQL API")
