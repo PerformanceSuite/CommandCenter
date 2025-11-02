@@ -32,9 +32,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/schedules", tags=["schedules"])
 
 
-@router.post(
-    "", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
 async def create_schedule(
     schedule: ScheduleCreate,
     db: AsyncSession = Depends(get_db),
@@ -71,16 +69,12 @@ async def create_schedule(
             tags=schedule.tags,
         )
 
-        logger.info(
-            f"Created schedule {created.id} for project {schedule.project_id}"
-        )
+        logger.info(f"Created schedule {created.id} for project {schedule.project_id}")
         return ScheduleResponse.model_validate(created)
 
     except ValueError as e:
         logger.warning(f"Invalid schedule creation: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to create schedule: {e}", exc_info=True)
         raise HTTPException(
@@ -91,12 +85,8 @@ async def create_schedule(
 
 @router.get("", response_model=ScheduleListResponse)
 async def list_schedules(
-    project_id: Optional[int] = Query(
-        None, description="Filter by project ID"
-    ),
-    enabled: Optional[bool] = Query(
-        None, description="Filter by enabled status"
-    ),
+    project_id: Optional[int] = Query(None, description="Filter by project ID"),
+    enabled: Optional[bool] = Query(None, description="Filter by enabled status"),
     task_type: Optional[str] = Query(None, description="Filter by task type"),
     frequency: Optional[str] = Query(None, description="Filter by frequency"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -142,11 +132,7 @@ async def list_schedules(
 
         # Apply pagination
         offset = (page - 1) * page_size
-        query = (
-            query.offset(offset)
-            .limit(page_size)
-            .order_by(Schedule.created_at.desc())
-        )
+        query = query.offset(offset).limit(page_size).order_by(Schedule.created_at.desc())
 
         # Execute query
         result = await db.execute(query)
@@ -190,9 +176,7 @@ async def get_schedule(
         HTTPException: If schedule not found
     """
     try:
-        result = await db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -206,9 +190,7 @@ async def get_schedule(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to get schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get schedule",
@@ -241,22 +223,16 @@ async def update_schedule(
         # Convert to dict and remove None values
         update_dict = updates.model_dump(exclude_unset=True)
 
-        updated = await service.update_schedule(
-            schedule_id=schedule_id, **update_dict
-        )
+        updated = await service.update_schedule(schedule_id=schedule_id, **update_dict)
 
         logger.info(f"Updated schedule {schedule_id}")
         return ScheduleResponse.model_validate(updated)
 
     except ValueError as e:
         logger.warning(f"Invalid schedule update: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Failed to update schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to update schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update schedule",
@@ -286,13 +262,9 @@ async def delete_schedule(
 
     except ValueError as e:
         logger.warning(f"Schedule deletion failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Failed to delete schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to delete schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete schedule",
@@ -329,9 +301,7 @@ async def execute_schedule(
         # If force is True, execute regardless of schedule state
         if request and request.force:
             # Get schedule
-            result = await db.execute(
-                select(Schedule).where(Schedule.id == schedule_id)
-            )
+            result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
             schedule = result.scalar_one_or_none()
 
             if not schedule:
@@ -357,14 +327,10 @@ async def execute_schedule(
             job = await service.execute_schedule(schedule_id)
 
         # Get updated schedule
-        result = await db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
-        logger.info(
-            f"Manually executed schedule {schedule_id}, created job {job.id}"
-        )
+        logger.info(f"Manually executed schedule {schedule_id}, created job {job.id}")
 
         return ScheduleExecutionResponse(
             schedule_id=schedule_id,
@@ -377,15 +343,11 @@ async def execute_schedule(
 
     except ValueError as e:
         logger.warning(f"Schedule execution failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to execute schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to execute schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to execute schedule",
@@ -394,9 +356,7 @@ async def execute_schedule(
 
 @router.get("/statistics/summary", response_model=ScheduleStatistics)
 async def get_schedule_statistics(
-    project_id: Optional[int] = Query(
-        None, description="Filter by project ID"
-    ),
+    project_id: Optional[int] = Query(None, description="Filter by project ID"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -425,9 +385,7 @@ async def get_schedule_statistics(
 
 @router.get("/due/list", response_model=List[ScheduleResponse])
 async def list_due_schedules(
-    limit: int = Query(
-        100, ge=1, le=500, description="Maximum schedules to return"
-    ),
+    limit: int = Query(100, ge=1, le=500, description="Maximum schedules to return"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -474,21 +432,15 @@ async def enable_schedule(
     """
     try:
         service = ScheduleService(db)
-        updated = await service.update_schedule(
-            schedule_id=schedule_id, enabled=True
-        )
+        updated = await service.update_schedule(schedule_id=schedule_id, enabled=True)
 
         logger.info(f"Enabled schedule {schedule_id}")
         return ScheduleResponse.model_validate(updated)
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Failed to enable schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to enable schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to enable schedule",
@@ -515,21 +467,15 @@ async def disable_schedule(
     """
     try:
         service = ScheduleService(db)
-        updated = await service.update_schedule(
-            schedule_id=schedule_id, enabled=False
-        )
+        updated = await service.update_schedule(schedule_id=schedule_id, enabled=False)
 
         logger.info(f"Disabled schedule {schedule_id}")
         return ScheduleResponse.model_validate(updated)
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        logger.error(
-            f"Failed to disable schedule {schedule_id}: {e}", exc_info=True
-        )
+        logger.error(f"Failed to disable schedule {schedule_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to disable schedule",

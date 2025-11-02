@@ -130,9 +130,7 @@ async def upload_document(
 
 
 @router.get("/{task_id}/documents")
-async def list_documents(
-    task_id: int, service: ResearchService = Depends(get_research_service)
-):
+async def list_documents(task_id: int, service: ResearchService = Depends(get_research_service)):
     """List documents for a research task"""
     task = await service.get_research_task(task_id)
     return {"documents": task.uploaded_documents or []}

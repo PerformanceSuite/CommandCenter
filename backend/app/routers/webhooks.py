@@ -69,9 +69,7 @@ async def receive_github_webhook(
         if repository_full_name:
             # Try to find repository and its webhook config
             result = await db.execute(
-                select(Repository).where(
-                    Repository.full_name == repository_full_name
-                )
+                select(Repository).where(Repository.full_name == repository_full_name)
             )
             repo = result.scalar_one_or_none()
 
@@ -79,26 +77,20 @@ async def receive_github_webhook(
                 result = await db.execute(
                     select(WebhookConfig)
                     .where(WebhookConfig.repository_id == repo.id)
-                    .where(WebhookConfig.active == True)
+                    .where(WebhookConfig.active is True)
                 )
                 webhook_config = result.scalar_one_or_none()
 
         # Verify signature if we have a webhook config
         if webhook_config:
-            verify_github_signature(
-                body, webhook_config.secret, x_hub_signature_256
-            )
+            verify_github_signature(body, webhook_config.secret, x_hub_signature_256)
 
         # Record webhook event receipt
-        metrics_service.record_webhook_event(
-            x_github_event, repository_full_name or "unknown"
-        )
+        metrics_service.record_webhook_event(x_github_event, repository_full_name or "unknown")
 
         # Check if event already processed (idempotency)
         result = await db.execute(
-            select(WebhookEvent).where(
-                WebhookEvent.delivery_id == x_github_delivery
-            )
+            select(WebhookEvent).where(WebhookEvent.delivery_id == x_github_delivery)
         )
         existing_event = result.scalar_one_or_none()
 
@@ -133,9 +125,7 @@ async def receive_github_webhook(
         duration = time.time() - start_time
         metrics_service.record_webhook_processed(x_github_event, duration)
 
-        logger.info(
-            f"Successfully processed webhook event {x_github_delivery} ({x_github_event})"
-        )
+        logger.info(f"Successfully processed webhook event {x_github_delivery} ({x_github_event})")
 
         return {
             "status": "success",
@@ -178,9 +168,7 @@ async def process_webhook_event(event: WebhookEvent, db: AsyncSession):
     except Exception as e:
         event.error = str(e)
         await db.commit()
-        logger.error(
-            f"Failed to process webhook event {event.delivery_id}: {e}"
-        )
+        logger.error(f"Failed to process webhook event {event.delivery_id}: {e}")
 
 
 async def process_push_event(event: WebhookEvent, db: AsyncSession):
@@ -191,9 +179,7 @@ async def process_push_event(event: WebhookEvent, db: AsyncSession):
     # Find repository and trigger sync
     if event.repository_full_name:
         result = await db.execute(
-            select(Repository).where(
-                Repository.full_name == event.repository_full_name
-            )
+            select(Repository).where(Repository.full_name == event.repository_full_name)
         )
         repo = result.scalar_one_or_none()
 
@@ -205,9 +191,7 @@ async def process_push_event(event: WebhookEvent, db: AsyncSession):
                 repo.last_commit_message = commit.get("message")
                 repo.last_commit_author = commit.get("author", {}).get("name")
                 repo.last_commit_date = (
-                    datetime.fromisoformat(
-                        commit.get("timestamp").replace("Z", "+00:00")
-                    )
+                    datetime.fromisoformat(commit.get("timestamp").replace("Z", "+00:00"))
                     if commit.get("timestamp")
                     else None
                 )
@@ -220,9 +204,7 @@ async def process_pr_event(event: WebhookEvent, db: AsyncSession):
     """Process pull request webhook event"""
     payload = event.payload
     action = payload.get("action")
-    logger.info(
-        f"Processing PR event ({action}) for {event.repository_full_name}"
-    )
+    logger.info(f"Processing PR event ({action}) for {event.repository_full_name}")
 
     # You can add custom logic here, e.g., auto-label PRs, trigger reviews, etc.
 
@@ -231,9 +213,7 @@ async def process_issue_event(event: WebhookEvent, db: AsyncSession):
     """Process issue webhook event"""
     payload = event.payload
     action = payload.get("action")
-    logger.info(
-        f"Processing issue event ({action}) for {event.repository_full_name}"
-    )
+    logger.info(f"Processing issue event ({action}) for {event.repository_full_name}")
 
     # You can add custom logic here, e.g., auto-label issues, notifications, etc.
 
@@ -257,9 +237,7 @@ async def create_webhook_config(
         Created webhook configuration
     """
     # Verify repository exists
-    result = await db.execute(
-        select(Repository).where(Repository.id == config_data.repository_id)
-    )
+    result = await db.execute(select(Repository).where(Repository.id == config_data.repository_id))
     repository = result.scalar_one_or_none()
 
     if not repository:
@@ -270,9 +248,7 @@ async def create_webhook_config(
 
     # Check if webhook config already exists
     result = await db.execute(
-        select(WebhookConfig).where(
-            WebhookConfig.repository_id == config_data.repository_id
-        )
+        select(WebhookConfig).where(WebhookConfig.repository_id == config_data.repository_id)
     )
     existing = result.scalar_one_or_none()
 
@@ -322,9 +298,7 @@ async def list_webhook_configs(
 
 
 @router.get("/configs/{config_id}", response_model=WebhookConfigResponse)
-async def get_webhook_config(
-    config_id: int, db: AsyncSession = Depends(get_db)
-) -> WebhookConfig:
+async def get_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> WebhookConfig:
     """
     Get webhook configuration by ID
 
@@ -335,9 +309,7 @@ async def get_webhook_config(
     Returns:
         Webhook configuration
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
@@ -366,9 +338,7 @@ async def update_webhook_config(
     Returns:
         Updated webhook configuration
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
@@ -389,9 +359,7 @@ async def update_webhook_config(
 
 
 @router.delete("/configs/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_webhook_config(
-    config_id: int, db: AsyncSession = Depends(get_db)
-) -> None:
+async def delete_webhook_config(config_id: int, db: AsyncSession = Depends(get_db)) -> None:
     """
     Delete webhook configuration
 
@@ -399,9 +367,7 @@ async def delete_webhook_config(
         config_id: Webhook configuration ID
         db: Database session
     """
-    result = await db.execute(
-        select(WebhookConfig).where(WebhookConfig.id == config_id)
-    )
+    result = await db.execute(select(WebhookConfig).where(WebhookConfig.id == config_id))
     config = result.scalar_one_or_none()
 
     if not config:
@@ -441,16 +407,12 @@ async def list_webhook_events(
         query = query.where(WebhookEvent.event_type == event_type)
 
     if repository_full_name:
-        query = query.where(
-            WebhookEvent.repository_full_name == repository_full_name
-        )
+        query = query.where(WebhookEvent.repository_full_name == repository_full_name)
 
     if processed is not None:
         query = query.where(WebhookEvent.processed == processed)
 
-    result = await db.execute(
-        query.order_by(desc(WebhookEvent.received_at)).limit(limit)
-    )
+    result = await db.execute(query.order_by(desc(WebhookEvent.received_at)).limit(limit))
     return result.scalars().all()
 
 
@@ -543,9 +505,7 @@ async def list_webhook_deliveries(
     # Apply pagination
     offset = (page - 1) * page_size
     result = await db.execute(
-        query.order_by(desc(WebhookDelivery.created_at))
-        .limit(page_size)
-        .offset(offset)
+        query.order_by(desc(WebhookDelivery.created_at)).limit(page_size).offset(offset)
     )
     deliveries = result.scalars().all()
 
@@ -557,9 +517,7 @@ async def list_webhook_deliveries(
     }
 
 
-@router.get(
-    "/deliveries/{delivery_id}", response_model=WebhookDeliveryResponse
-)
+@router.get("/deliveries/{delivery_id}", response_model=WebhookDeliveryResponse)
 async def get_webhook_delivery(
     delivery_id: int, db: AsyncSession = Depends(get_db)
 ) -> WebhookDelivery:
@@ -573,9 +531,7 @@ async def get_webhook_delivery(
     Returns:
         Webhook delivery
     """
-    result = await db.execute(
-        select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
-    )
+    result = await db.execute(select(WebhookDelivery).where(WebhookDelivery.id == delivery_id))
     delivery = result.scalar_one_or_none()
 
     if not delivery:
@@ -587,9 +543,7 @@ async def get_webhook_delivery(
     return delivery
 
 
-@router.post(
-    "/deliveries/{delivery_id}/retry", status_code=status.HTTP_202_ACCEPTED
-)
+@router.post("/deliveries/{delivery_id}/retry", status_code=status.HTTP_202_ACCEPTED)
 async def retry_webhook_delivery(
     delivery_id: int, db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
@@ -604,9 +558,7 @@ async def retry_webhook_delivery(
         Retry status
     """
     # Fetch delivery
-    result = await db.execute(
-        select(WebhookDelivery).where(WebhookDelivery.id == delivery_id)
-    )
+    result = await db.execute(select(WebhookDelivery).where(WebhookDelivery.id == delivery_id))
     delivery = result.scalar_one_or_none()
 
     if not delivery:

@@ -21,7 +21,6 @@ class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
 
 
-
 class OptimizedDatabaseConfig:
     """
     Optimized database configuration with connection pooling
@@ -53,10 +52,7 @@ class OptimizedDatabaseConfig:
 
         # Create read engines for replicas
         self.read_engines = (
-            [
-                self._create_engine(url, is_write=False)
-                for url in self.read_replica_urls
-            ]
+            [self._create_engine(url, is_write=False) for url in self.read_replica_urls]
             if self.read_replica_urls
             else [self.write_engine]
         )
@@ -81,9 +77,7 @@ class OptimizedDatabaseConfig:
             for engine in self.read_engines
         ]
 
-    def _create_engine(
-        self, database_url: str, is_write: bool = False
-    ) -> AsyncEngine:
+    def _create_engine(self, database_url: str, is_write: bool = False) -> AsyncEngine:
         """
         Create optimized async engine with proper pooling.
 
@@ -154,9 +148,7 @@ class OptimizedDatabaseConfig:
         # Round-robin selection of read replica
         async with self._lock:
             session_factory = self.read_session_factories[self._read_index]
-            self._read_index = (self._read_index + 1) % len(
-                self.read_session_factories
-            )
+            self._read_index = (self._read_index + 1) % len(self.read_session_factories)
 
         async with session_factory() as session:
             try:
@@ -195,14 +187,9 @@ def get_db_config() -> OptimizedDatabaseConfig:
     if _db_config is None:
         # Parse read replica URLs from environment (comma-separated)
         read_replicas = []
-        if (
-            hasattr(settings, "read_replica_urls")
-            and settings.read_replica_urls
-        ):
+        if hasattr(settings, "read_replica_urls") and settings.read_replica_urls:
             read_replicas = [
-                url.strip()
-                for url in settings.read_replica_urls.split(",")
-                if url.strip()
+                url.strip() for url in settings.read_replica_urls.split(",") if url.strip()
             ]
 
         _db_config = OptimizedDatabaseConfig(

@@ -122,9 +122,7 @@ class GitHubIntegration(WebhookIntegration):
 
         return secret
 
-    async def handle_webhook(
-        self, event_type: str, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def handle_webhook(self, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle GitHub webhook event.
 
@@ -148,9 +146,7 @@ class GitHubIntegration(WebhookIntegration):
             elif event_type == "push":
                 return await self._handle_push_webhook(payload)
             else:
-                self._logger.warning(
-                    f"Unhandled webhook event type: {event_type}"
-                )
+                self._logger.warning(f"Unhandled webhook event type: {event_type}")
                 return {"status": "ignored", "event_type": event_type}
 
         except Exception as e:
@@ -158,9 +154,7 @@ class GitHubIntegration(WebhookIntegration):
             await self.record_error(error_msg)
             raise IntegrationError(error_msg)
 
-    async def _handle_issues_webhook(
-        self, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_issues_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle issues webhook (opened, closed, edited).
 
@@ -190,9 +184,7 @@ class GitHubIntegration(WebhookIntegration):
 
         elif action == "closed":
             # Mark task as done
-            task = await self._find_task_by_issue(
-                issue["number"], payload["repository"]["id"]
-            )
+            task = await self._find_task_by_issue(issue["number"], payload["repository"]["id"])
             if task:
                 task.status = "done"
                 await self.db.commit()
@@ -200,9 +192,7 @@ class GitHubIntegration(WebhookIntegration):
 
         return {"status": "processed", "action": action}
 
-    async def _handle_pull_request_webhook(
-        self, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_pull_request_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle pull_request webhook.
 
@@ -219,9 +209,7 @@ class GitHubIntegration(WebhookIntegration):
 
         if action in ["opened", "synchronize", "reopened"]:
             # Trigger PR analysis
-            self._logger.info(
-                f"PR {pr['number']} {action}, triggering analysis"
-            )
+            self._logger.info(f"PR {pr['number']} {action}, triggering analysis")
             # This would integrate with analysis service
             return {
                 "status": "analysis_triggered",
@@ -231,9 +219,7 @@ class GitHubIntegration(WebhookIntegration):
 
         return {"status": "processed", "action": action}
 
-    async def _handle_push_webhook(
-        self, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _handle_push_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle push webhook.
 
@@ -250,9 +236,7 @@ class GitHubIntegration(WebhookIntegration):
 
         # Only process pushes to default branch
         if ref == f"refs/heads/{repo.get('default_branch')}":
-            self._logger.info(
-                f"Push to default branch in {repo.get('full_name')}, syncing repo"
-            )
+            self._logger.info(f"Push to default branch in {repo.get('full_name')}, syncing repo")
             return {
                 "status": "sync_triggered",
                 "repository": repo.get("full_name"),
@@ -285,23 +269,17 @@ class GitHubIntegration(WebhookIntegration):
         integration = await self.load()
 
         # Check if task already exists for this issue
-        existing_task = await self._find_task_by_issue(
-            issue_number, repository["id"]
-        )
+        existing_task = await self._find_task_by_issue(issue_number, repository["id"])
 
         if existing_task:
             # Update existing task
             existing_task.title = issue_data["title"]
             existing_task.description = issue_data.get("body", "")
-            existing_task.status = self._map_issue_state_to_task_status(
-                issue_data["state"]
-            )
+            existing_task.status = self._map_issue_state_to_task_status(issue_data["state"])
             existing_task.updated_at = datetime.utcnow()
             await self.db.commit()
             await self.db.refresh(existing_task)
-            self._logger.info(
-                f"Updated task {existing_task.id} from issue #{issue_number}"
-            )
+            self._logger.info(f"Updated task {existing_task.id} from issue #{issue_number}")
             return existing_task
 
         # Create new task
@@ -310,9 +288,7 @@ class GitHubIntegration(WebhookIntegration):
             title=issue_data["title"],
             description=issue_data.get("body", ""),
             status=self._map_issue_state_to_task_status(issue_data["state"]),
-            priority=self._extract_priority_from_labels(
-                issue_data.get("labels", [])
-            ),
+            priority=self._extract_priority_from_labels(issue_data.get("labels", [])),
             tags={
                 "github_issue": issue_number,
                 "github_repo_id": repository["id"],
@@ -351,9 +327,7 @@ class GitHubIntegration(WebhookIntegration):
             Issue data including issue number and URL
         """
         # Get task
-        result = await self.db.execute(
-            select(ResearchTask).where(ResearchTask.id == task_id)
-        )
+        result = await self.db.execute(select(ResearchTask).where(ResearchTask.id == task_id))
         task = result.scalar_one_or_none()
 
         if not task:
@@ -374,9 +348,7 @@ class GitHubIntegration(WebhookIntegration):
                 body=task.description or "",
                 state=self._map_task_status_to_issue_state(task.status),
             )
-            self._logger.info(
-                f"Updated issue #{existing_issue_number} from task {task_id}"
-            )
+            self._logger.info(f"Updated issue #{existing_issue_number} from task {task_id}")
 
             return {
                 "issue_number": existing_issue_number,
@@ -441,9 +413,7 @@ class GitHubIntegration(WebhookIntegration):
             return "closed"
         return "open"
 
-    def _extract_priority_from_labels(
-        self, labels: List[Dict[str, Any]]
-    ) -> str:
+    def _extract_priority_from_labels(self, labels: List[Dict[str, Any]]) -> str:
         """Extract priority from GitHub labels."""
         label_names = [label.get("name", "").lower() for label in labels]
 
@@ -463,9 +433,7 @@ class GitHubIntegration(WebhookIntegration):
 
     # GitHub Projects Integration
 
-    async def list_projects(
-        self, owner: str, repo: str
-    ) -> List[Dict[str, Any]]:
+    async def list_projects(self, owner: str, repo: str) -> List[Dict[str, Any]]:
         """
         List GitHub Projects for a repository.
 
@@ -494,9 +462,7 @@ class GitHubIntegration(WebhookIntegration):
         except GithubException as e:
             raise IntegrationError(f"Failed to list projects: {e}")
 
-    async def get_project_columns(
-        self, project_id: int
-    ) -> List[Dict[str, Any]]:
+    async def get_project_columns(self, project_id: int) -> List[Dict[str, Any]]:
         """
         Get columns for a GitHub Project.
 

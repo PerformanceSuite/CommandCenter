@@ -78,9 +78,7 @@ class TechnologyService:
 
         return technology
 
-    async def get_technology_by_title(
-        self, title: str
-    ) -> Optional[Technology]:
+    async def get_technology_by_title(self, title: str) -> Optional[Technology]:
         """
         Get technology by title
 
@@ -195,9 +193,7 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(
-        self, technology_id: int, new_status: TechnologyStatus
-    ) -> Technology:
+    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
         """
         Update technology status
 
@@ -219,9 +215,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(
-        self, technology_id: int, new_priority: int
-    ) -> Technology:
+    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
         """
         Update technology priority
 
@@ -249,9 +243,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(
-        self, technology_id: int, new_score: int
-    ) -> Technology:
+    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
         """
         Update technology relevance score
 
@@ -272,9 +264,7 @@ class TechnologyService:
             )
 
         technology = await self.get_technology(technology_id)
-        technology = await self.repo.update(
-            technology, relevance_score=new_score
-        )
+        technology = await self.repo.update(technology, relevance_score=new_score)
 
         await self.db.commit()
         await self.db.refresh(technology)
@@ -306,9 +296,7 @@ class TechnologyService:
         total = await self.repo.count()
         by_status = await self.repo.count_by_status()
         by_domain = await self.repo.count_by_domain()
-        high_priority = await self.repo.get_high_priority(
-            min_priority=4, limit=5
-        )
+        high_priority = await self.repo.get_high_priority(min_priority=4, limit=5)
 
         return {
             "total": total,

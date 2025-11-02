@@ -30,12 +30,8 @@ class BaseExporter(ABC):
         """
         self.analysis = project_analysis
         self.project_path = project_analysis.get("project_path", "unknown")
-        self.analyzed_at = project_analysis.get(
-            "analyzed_at", datetime.utcnow().isoformat()
-        )
-        self.detected_technologies = project_analysis.get(
-            "detected_technologies", {}
-        )
+        self.analyzed_at = project_analysis.get("analyzed_at", datetime.utcnow().isoformat())
+        self.detected_technologies = project_analysis.get("detected_technologies", {})
         self.dependencies = project_analysis.get("dependencies", {})
         self.code_metrics = project_analysis.get("code_metrics", {})
         self.research_gaps = project_analysis.get("research_gaps", {})
@@ -112,15 +108,12 @@ class ExportError(Exception):
     """Base exception for export errors."""
 
 
-
 class UnsupportedFormatError(ExportError):
     """Raised when export format is not supported."""
 
 
-
 class ExportDataError(ExportError):
     """Raised when export data is invalid or incomplete."""
-
 
 
 __all__ = [

@@ -79,9 +79,7 @@ class SARIFExporter(BaseExporter):
                 "commandCenter": {
                     "projectPath": self.project_path,
                     "analyzedAt": self.analyzed_at,
-                    "analysisVersion": self.analysis.get(
-                        "analysis_version", "2.0.0"
-                    ),
+                    "analysisVersion": self.analysis.get("analysis_version", "2.0.0"),
                 }
             },
         }
@@ -184,9 +182,7 @@ class SARIFExporter(BaseExporter):
                 if isinstance(file_info, dict) and "path" in file_info:
                     artifacts.append(
                         {
-                            "location": {
-                                "uri": self._path_to_uri(file_info["path"])
-                            },
+                            "location": {"uri": self._path_to_uri(file_info["path"])},
                             "length": file_info.get("size", -1),
                         }
                     )
@@ -225,9 +221,7 @@ class SARIFExporter(BaseExporter):
 
         return results
 
-    def _create_technology_result(
-        self, tech: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_technology_result(self, tech: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create SARIF result for detected technology.
 
@@ -245,22 +239,16 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC004",
             "level": self.SARIF_LEVEL_NONE,
             "kind": self.SARIF_KIND_PASS,
-            "message": {
-                "text": f"Detected {name} {version} (confidence: {confidence}%)"
-            },
+            "message": {"text": f"Detected {name} {version} (confidence: {confidence}%)"},
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
             "fingerprints": {
-                "commandCenter/v1": self._generate_fingerprint(
-                    f"tech-{name}-{version}"
-                )
+                "commandCenter/v1": self._generate_fingerprint(f"tech-{name}-{version}")
             },
             "properties": {
                 "technology": name,
@@ -288,24 +276,18 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC001",
             "level": self.SARIF_LEVEL_WARNING,
             "kind": self.SARIF_KIND_REVIEW,
-            "message": {
-                "text": f"Dependency '{name}' is outdated: {current} → {latest} available"
-            },
+            "message": {"text": f"Dependency '{name}' is outdated: {current} → {latest} available"},
             "locations": [
                 {
                     "physicalLocation": {
                         "artifactLocation": {
-                            "uri": self._path_to_uri(
-                                dep.get("file", "package.json")
-                            )
+                            "uri": self._path_to_uri(dep.get("file", "package.json"))
                         },
                     }
                 }
             ],
             "fingerprints": {
-                "commandCenter/v1": self._generate_fingerprint(
-                    f"dep-{name}-{current}"
-                )
+                "commandCenter/v1": self._generate_fingerprint(f"dep-{name}-{current}")
             },
             "properties": {
                 "dependency": name,
@@ -315,9 +297,7 @@ class SARIFExporter(BaseExporter):
             },
         }
 
-    def _create_research_gap_result(
-        self, gap: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_research_gap_result(self, gap: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create SARIF result for research gap.
 
@@ -339,15 +319,11 @@ class SARIFExporter(BaseExporter):
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
-            "fingerprints": {
-                "commandCenter/v1": self._generate_fingerprint(f"gap-{title}")
-            },
+            "fingerprints": {"commandCenter/v1": self._generate_fingerprint(f"gap-{title}")},
             "properties": {
                 "category": category,
                 "priority": gap.get("priority", 3),

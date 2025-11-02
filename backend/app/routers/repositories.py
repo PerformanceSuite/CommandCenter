@@ -31,12 +31,8 @@ def get_repository_service(
 async def list_repositories(
     skip: int = 0,
     limit: int = 100,
-    owner: Optional[str] = Query(
-        None, description="Filter by repository owner"
-    ),
-    language: Optional[str] = Query(
-        None, description="Filter by programming language"
-    ),
+    owner: Optional[str] = Query(None, description="Filter by repository owner"),
+    language: Optional[str] = Query(None, description="Filter by programming language"),
     service: RepositoryService = Depends(get_repository_service),
 ) -> List[Repository]:
     """List all repositories with optional filters"""
@@ -52,9 +48,7 @@ async def get_repository(
     return await service.get_repository(repository_id)
 
 
-@router.post(
-    "/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=RepositoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_repository(
     repository_data: RepositoryCreate,
     service: RepositoryService = Depends(get_repository_service),

@@ -88,12 +88,8 @@ class Integration(Base):
     )  # Encrypted API key
 
     # Token expiration
-    token_expires_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    token_refreshed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    token_refreshed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Configuration
     config: Mapped[Optional[dict]] = mapped_column(
@@ -116,40 +112,24 @@ class Integration(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
 
     # Health monitoring
-    last_sync_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    last_sync_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_error_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    error_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Consecutive errors
-    success_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Successful operations
+    last_error_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    error_count: Mapped[int] = mapped_column(Integer, default=0)  # Consecutive errors
+    success_count: Mapped[int] = mapped_column(Integer, default=0)  # Successful operations
 
     # Rate limiting
-    rate_limit_remaining: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True
-    )
-    rate_limit_reset_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    rate_limit_remaining: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    rate_limit_reset_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Metadata
     created_by: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    tags: Mapped[Optional[dict]] = mapped_column(
-        JSON, default=dict
-    )  # Custom tags for filtering
+    tags: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)  # Custom tags for filtering
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -164,9 +144,7 @@ class Integration(Base):
 
     # Indexes for common queries
     __table_args__ = (
-        Index(
-            "idx_integrations_project_type", "project_id", "integration_type"
-        ),
+        Index("idx_integrations_project_type", "project_id", "integration_type"),
         Index("idx_integrations_status", "status"),
         Index("idx_integrations_enabled", "enabled"),
     )
@@ -210,9 +188,7 @@ class Integration(Base):
         """
         if not self.token_expires_at:
             return False
-        time_until_expiry = (
-            self.token_expires_at - datetime.utcnow()
-        ).total_seconds()
+        time_until_expiry = (self.token_expires_at - datetime.utcnow()).total_seconds()
         return time_until_expiry < 3600  # Less than 1 hour
 
     @property
@@ -250,33 +226,23 @@ class Integration(Base):
             "is_healthy": self.is_healthy,
             "is_token_expired": self.is_token_expired,
             "needs_refresh": self.needs_refresh,
-            "last_sync_at": self.last_sync_at.isoformat()
-            if self.last_sync_at
-            else None,
+            "last_sync_at": self.last_sync_at.isoformat() if self.last_sync_at else None,
             "last_error": self.last_error,
-            "last_error_at": (
-                self.last_error_at.isoformat() if self.last_error_at else None
-            ),
+            "last_error_at": (self.last_error_at.isoformat() if self.last_error_at else None),
             "error_count": self.error_count,
             "success_count": self.success_count,
             "success_rate": self.success_rate,
             "rate_limit_remaining": self.rate_limit_remaining,
             "rate_limit_reset_at": (
-                self.rate_limit_reset_at.isoformat()
-                if self.rate_limit_reset_at
-                else None
+                self.rate_limit_reset_at.isoformat() if self.rate_limit_reset_at else None
             ),
             "config": self.config,
             "webhook_url": self.webhook_url,
             "scopes": self.scopes,
             "created_by": self.created_by,
             "tags": self.tags,
-            "created_at": self.created_at.isoformat()
-            if self.created_at
-            else None,
-            "updated_at": self.updated_at.isoformat()
-            if self.updated_at
-            else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
         # Only include sensitive data if explicitly requested
@@ -285,9 +251,7 @@ class Integration(Base):
                 {
                     "credentials": self.credentials,
                     "token_expires_at": (
-                        self.token_expires_at.isoformat()
-                        if self.token_expires_at
-                        else None
+                        self.token_expires_at.isoformat() if self.token_expires_at else None
                     ),
                 }
             )

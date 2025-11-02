@@ -42,9 +42,7 @@ router = APIRouter(prefix="/api/v1/research", tags=["research"])
 research_tasks = {}
 
 
-@router.post(
-    "/technology-deep-dive", response_model=ResearchOrchestrationResponse
-)
+@router.post("/technology-deep-dive", response_model=ResearchOrchestrationResponse)
 async def technology_deep_dive(
     request: TechnologyDeepDiveRequest,
     background_tasks: BackgroundTasks,
@@ -93,9 +91,7 @@ async def technology_deep_dive(
                     metadata = finding.get("_metadata")
                     result = AgentResult(
                         data=finding,
-                        metadata=AgentResultMetadata(**metadata)
-                        if metadata
-                        else None,
+                        metadata=AgentResultMetadata(**metadata) if metadata else None,
                         error=finding.get("error"),
                     )
                     results.append(result)
@@ -110,14 +106,10 @@ async def technology_deep_dive(
                     }
                 )
 
-                logger.info(
-                    f"✅ Deep dive completed for {request.technology_name}: {task_id}"
-                )
+                logger.info(f"✅ Deep dive completed for {request.technology_name}: {task_id}")
 
             except Exception as e:
-                logger.error(
-                    f"❌ Deep dive failed for {request.technology_name}: {e}"
-                )
+                logger.error(f"❌ Deep dive failed for {request.technology_name}: {e}")
                 research_tasks[task_id].update(
                     {
                         "status": "failed",
@@ -203,11 +195,9 @@ async def launch_multi_agent_research(
                     )
 
                 # Execute research
-                findings = (
-                    await research_orchestrator.launch_parallel_research(
-                        tasks=tasks,
-                        max_concurrent=request.max_concurrent,
-                    )
+                findings = await research_orchestrator.launch_parallel_research(
+                    tasks=tasks,
+                    max_concurrent=request.max_concurrent,
                 )
 
                 # Convert to API response format
@@ -216,9 +206,7 @@ async def launch_multi_agent_research(
                     metadata = finding.get("_metadata")
                     result = AgentResult(
                         data=finding,
-                        metadata=AgentResultMetadata(**metadata)
-                        if metadata
-                        else None,
+                        metadata=AgentResultMetadata(**metadata) if metadata else None,
                         error=finding.get("error"),
                     )
                     results.append(result)
@@ -283,9 +271,7 @@ async def monitor_technology(
     """
     try:
         # Get technology from database
-        result = await db.execute(
-            select(Technology).filter(Technology.id == technology_id)
-        )
+        result = await db.execute(select(Technology).filter(Technology.id == technology_id))
         technology = result.scalar_one_or_none()
 
         if not technology:
@@ -347,9 +333,7 @@ async def monitor_technology(
         # Update technology monitoring fields
         if monitoring_data["hackernews"]:
             technology.last_hn_mention = datetime.utcnow()
-            technology.hn_score_avg = monitoring_data["hackernews"].get(
-                "avg_score", 0
-            )
+            technology.hn_score_avg = monitoring_data["hackernews"].get("avg_score", 0)
             await db.commit()
 
         return TechnologyMonitorResponse(**monitoring_data)
@@ -381,12 +365,8 @@ async def get_available_models():
                     provider_models.append(
                         {
                             "model_id": model_id,
-                            "tier": model_info[
-                                "tier"
-                            ],  # Already a string in MODEL_INFO
-                            "cost_per_1m_tokens": model_info.get(
-                                "cost_per_1m_tokens"
-                            ),
+                            "tier": model_info["tier"],  # Already a string in MODEL_INFO
+                            "cost_per_1m_tokens": model_info.get("cost_per_1m_tokens"),
                             "max_tokens": model_info.get("max_tokens", 4096),
                             "description": model_info.get("description"),
                         }
@@ -415,13 +395,9 @@ async def get_research_summary():
     try:
         total_tasks = len(research_tasks)
         completed_tasks = sum(
-            1
-            for task in research_tasks.values()
-            if task["status"] == "completed"
+            1 for task in research_tasks.values() if task["status"] == "completed"
         )
-        failed_tasks = sum(
-            1 for task in research_tasks.values() if task["status"] == "failed"
-        )
+        failed_tasks = sum(1 for task in research_tasks.values() if task["status"] == "failed")
 
         # Count total agents deployed
         agents_deployed = 0
@@ -432,20 +408,11 @@ async def get_research_summary():
             if task.get("results"):
                 agents_deployed += len(task["results"])
                 for result in task["results"]:
-                    if (
-                        result.metadata
-                        and result.metadata.execution_time_seconds
-                    ):
-                        total_execution_time += (
-                            result.metadata.execution_time_seconds
-                        )
+                    if result.metadata and result.metadata.execution_time_seconds:
+                        total_execution_time += result.metadata.execution_time_seconds
                         execution_count += 1
 
-        avg_execution_time = (
-            total_execution_time / execution_count
-            if execution_count > 0
-            else 0.0
-        )
+        avg_execution_time = total_execution_time / execution_count if execution_count > 0 else 0.0
 
         # TODO: Calculate actual cost from usage data
         total_cost_usd = 0.0

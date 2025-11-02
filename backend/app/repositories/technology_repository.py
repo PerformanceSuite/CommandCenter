@@ -47,9 +47,7 @@ class TechnologyRepository(BaseRepository[Technology]):
             .where(Technology.domain == domain)
             .offset(skip)
             .limit(limit)
-            .order_by(
-                Technology.priority.desc(), Technology.relevance_score.desc()
-            )
+            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
         )
         return list(result.scalars().all())
 
@@ -169,9 +167,7 @@ class TechnologyRepository(BaseRepository[Technology]):
             status=status,
         )
 
-    async def get_high_priority(
-        self, min_priority: int = 4, limit: int = 10
-    ) -> List[Technology]:
+    async def get_high_priority(self, min_priority: int = 4, limit: int = 10) -> List[Technology]:
         """
         Get high priority technologies
 
@@ -185,9 +181,7 @@ class TechnologyRepository(BaseRepository[Technology]):
         result = await self.db.execute(
             select(Technology)
             .where(Technology.priority >= min_priority)
-            .order_by(
-                Technology.priority.desc(), Technology.relevance_score.desc()
-            )
+            .order_by(Technology.priority.desc(), Technology.relevance_score.desc())
             .limit(limit)
         )
         return list(result.scalars().all())

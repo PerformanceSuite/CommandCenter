@@ -53,7 +53,6 @@ class TechnologyCreate(TechnologyBase):
     """Schema for creating a technology"""
 
 
-
 class TechnologyUpdate(BaseModel):
     """Schema for updating a technology"""
 
@@ -100,7 +99,6 @@ class TechnologyInDB(TechnologyBase):
 
 class TechnologyResponse(TechnologyInDB):
     """Schema for technology API response"""
-
 
 
 class TechnologyListResponse(BaseModel):

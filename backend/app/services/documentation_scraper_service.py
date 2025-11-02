@@ -94,27 +94,19 @@ class DocumentationScraperService:
 
                 # Block loopback addresses (127.0.0.0/8, ::1)
                 if ip.is_loopback:
-                    raise ValueError(
-                        f"Access to loopback address {ip} is not allowed"
-                    )
+                    raise ValueError(f"Access to loopback address {ip} is not allowed")
 
                 # Block cloud metadata endpoint (169.254.169.254) - check before link-local
                 if str(ip) == "169.254.169.254":
-                    raise ValueError(
-                        "Access to cloud metadata endpoint is not allowed"
-                    )
+                    raise ValueError("Access to cloud metadata endpoint is not allowed")
 
                 # Block link-local addresses (169.254.0.0/16, fe80::/10)
                 if ip.is_link_local:
-                    raise ValueError(
-                        f"Access to link-local address {ip} is not allowed"
-                    )
+                    raise ValueError(f"Access to link-local address {ip} is not allowed")
 
                 # Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
                 if ip.is_private:
-                    raise ValueError(
-                        f"Access to private IP address {ip} is not allowed"
-                    )
+                    raise ValueError(f"Access to private IP address {ip} is not allowed")
 
             except socket.gaierror:
                 # If hostname cannot be resolved, allow it (will fail naturally on request)
@@ -177,9 +169,7 @@ class DocumentationScraperService:
         if not self.robots_parser:
             # Initialize robots parser
             parsed_url = urlparse(url)
-            robots_url = (
-                f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
-            )
+            robots_url = f"{parsed_url.scheme}://{parsed_url.netloc}/robots.txt"
 
             self.robots_parser = RobotFileParser()
             self.robots_parser.set_url(robots_url)
@@ -189,9 +179,7 @@ class DocumentationScraperService:
                 self.logger.warning(f"Could not read robots.txt: {e}")
                 return True  # Allow if robots.txt not available
 
-        return self.robots_parser.can_fetch(
-            "CommandCenter Documentation Bot", url
-        )
+        return self.robots_parser.can_fetch("CommandCenter Documentation Bot", url)
 
     async def scrape_page(self, url: str) -> Optional[DocumentationPage]:
         """
@@ -241,28 +229,18 @@ class DocumentationScraperService:
                 main_content = soup.body
 
             # Extract text content
-            content = (
-                main_content.get_text(separator="\n", strip=True)
-                if main_content
-                else ""
-            )
+            content = main_content.get_text(separator="\n", strip=True) if main_content else ""
 
             # Extract headings
             headings = (
-                [
-                    h.get_text(strip=True)
-                    for h in main_content.find_all(["h1", "h2", "h3", "h4"])
-                ]
+                [h.get_text(strip=True) for h in main_content.find_all(["h1", "h2", "h3", "h4"])]
                 if main_content
                 else []
             )
 
             # Extract code blocks
             code_blocks = (
-                [
-                    code.get_text()
-                    for code in main_content.find_all(["code", "pre"])
-                ]
+                [code.get_text() for code in main_content.find_all(["code", "pre"])]
                 if main_content
                 else []
             )
@@ -340,9 +318,7 @@ class DocumentationScraperService:
         visited: Set[str] = set()
         to_visit = [(start_url, 0)]  # (url, depth)
 
-        base_url = (
-            f"{urlparse(start_url).scheme}://{urlparse(start_url).netloc}"
-        )
+        base_url = f"{urlparse(start_url).scheme}://{urlparse(start_url).netloc}"
 
         while to_visit and len(pages) < max_pages:
             current_url, depth = to_visit.pop(0)

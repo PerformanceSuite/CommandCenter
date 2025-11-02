@@ -36,9 +36,7 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 ALLOWED_ANALYSIS_DIRS = os.getenv(
     "ALLOWED_ANALYSIS_DIRS", "/projects,/repositories,/tmp/analysis,/workspace"
 ).split(",")
-ALLOWED_ANALYSIS_DIRS = [
-    Path(d.strip()) for d in ALLOWED_ANALYSIS_DIRS if d.strip()
-]
+ALLOWED_ANALYSIS_DIRS = [Path(d.strip()) for d in ALLOWED_ANALYSIS_DIRS if d.strip()]
 
 
 def validate_project_path(path: str) -> Path:
@@ -76,8 +74,7 @@ def validate_project_path(path: str) -> Path:
     if not is_allowed:
         allowed_str = ", ".join(str(d) for d in ALLOWED_ANALYSIS_DIRS)
         raise ValueError(
-            f"Path '{path}' is not within allowed analysis directories. "
-            f"Allowed: {allowed_str}"
+            f"Path '{path}' is not within allowed analysis directories. " f"Allowed: {allowed_str}"
         )
 
     return project_path
@@ -90,16 +87,12 @@ def validate_project_path(path: str) -> Path:
     summary="Create a new project",
     description="Create a new isolated project workspace",
 )
-async def create_project(
-    project: ProjectCreate, db: AsyncSession = Depends(get_db)
-) -> Project:
+async def create_project(project: ProjectCreate, db: AsyncSession = Depends(get_db)) -> Project:
     """Create a new project"""
 
     # Check if project with same owner and name already exists
     result = await db.execute(
-        select(Project).filter(
-            Project.owner == project.owner, Project.name == project.name
-        )
+        select(Project).filter(Project.owner == project.owner, Project.name == project.name)
     )
     existing = result.scalar_one_or_none()
 
@@ -136,9 +129,7 @@ async def list_projects(
     summary="Get project by ID",
     description="Retrieve a specific project by its ID",
 )
-async def get_project(
-    project_id: int, db: AsyncSession = Depends(get_db)
-) -> Project:
+async def get_project(project_id: int, db: AsyncSession = Depends(get_db)) -> Project:
     """Get project by ID"""
     result = await db.execute(select(Project).filter(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -156,9 +147,7 @@ async def get_project(
     summary="Get project with statistics",
     description="Retrieve project with entity counts",
 )
-async def get_project_stats(
-    project_id: int, db: AsyncSession = Depends(get_db)
-) -> dict:
+async def get_project_stats(project_id: int, db: AsyncSession = Depends(get_db)) -> dict:
     """Get project with entity counts"""
     result = await db.execute(select(Project).filter(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -170,30 +159,22 @@ async def get_project_stats(
 
     # Get counts for all related entities
     repo_result = await db.execute(
-        select(func.count(Repository.id)).filter(
-            Repository.project_id == project_id
-        )
+        select(func.count(Repository.id)).filter(Repository.project_id == project_id)
     )
     repo_count = repo_result.scalar()
 
     tech_result = await db.execute(
-        select(func.count(Technology.id)).filter(
-            Technology.project_id == project_id
-        )
+        select(func.count(Technology.id)).filter(Technology.project_id == project_id)
     )
     tech_count = tech_result.scalar()
 
     task_result = await db.execute(
-        select(func.count(ResearchTask.id)).filter(
-            ResearchTask.project_id == project_id
-        )
+        select(func.count(ResearchTask.id)).filter(ResearchTask.project_id == project_id)
     )
     task_count = task_result.scalar()
 
     knowledge_result = await db.execute(
-        select(func.count(KnowledgeEntry.id)).filter(
-            KnowledgeEntry.project_id == project_id
-        )
+        select(func.count(KnowledgeEntry.id)).filter(KnowledgeEntry.project_id == project_id)
     )
     knowledge_count = knowledge_result.scalar()
 
@@ -242,9 +223,7 @@ async def update_project(
     summary="Delete project",
     description="Delete a project and ALL associated data (CASCADE DELETE)",
 )
-async def delete_project(
-    project_id: int, db: AsyncSession = Depends(get_db)
-) -> None:
+async def delete_project(project_id: int, db: AsyncSession = Depends(get_db)) -> None:
     """Delete project and all associated data
 
     WARNING: This will CASCADE DELETE all:
@@ -307,9 +286,7 @@ async def analyze_project(
         )
         return result
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -356,9 +333,7 @@ async def get_analysis_statistics(
     total_analyses = total_result.scalar()
 
     # Count unique projects
-    unique_result = await db.execute(
-        select(func.count(ProjectAnalysis.project_path.distinct()))
-    )
+    unique_result = await db.execute(select(func.count(ProjectAnalysis.project_path.distinct())))
     unique_projects = unique_result.scalar()
 
     # Get all analyses to aggregate stats
@@ -377,9 +352,7 @@ async def get_analysis_statistics(
         if analysis.dependencies:
             deps = analysis.dependencies.get("items", [])
             total_deps += len(deps)
-            outdated_deps += sum(
-                1 for dep in deps if dep.get("is_outdated", False)
-            )
+            outdated_deps += sum(1 for dep in deps if dep.get("is_outdated", False))
 
         if analysis.detected_technologies:
             total_techs += len(analysis.detected_technologies.get("items", []))
@@ -387,12 +360,8 @@ async def get_analysis_statistics(
         if analysis.research_gaps:
             gaps = analysis.research_gaps.get("items", [])
             total_gaps += len(gaps)
-            critical_gaps += sum(
-                1 for gap in gaps if gap.get("severity") == "critical"
-            )
-            high_gaps += sum(
-                1 for gap in gaps if gap.get("severity") == "high"
-            )
+            critical_gaps += sum(1 for gap in gaps if gap.get("severity") == "critical")
+            high_gaps += sum(1 for gap in gaps if gap.get("severity") == "high")
 
     return AnalysisStatistics(
         total_analyses=total_analyses,

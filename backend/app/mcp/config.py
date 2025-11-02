@@ -75,9 +75,7 @@ class MCPServerConfig(BaseModel):
         """Validate configuration after initialization."""
         if self.transport in ["http", "websocket"]:
             if not self.host or not self.port:
-                raise ValueError(
-                    f"Host and port required for {self.transport} transport"
-                )
+                raise ValueError(f"Host and port required for {self.transport} transport")
 
 
 class MCPClientCapabilities(BaseModel):
@@ -186,9 +184,7 @@ class MCPServerRegistry:
         """
         return list(self._servers.items())
 
-    def list_by_capability(
-        self, capability: str
-    ) -> List[tuple[str, MCPServerConfig]]:
+    def list_by_capability(self, capability: str) -> List[tuple[str, MCPServerConfig]]:
         """
         List servers supporting specific capability.
 

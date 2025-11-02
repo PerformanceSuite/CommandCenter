@@ -30,9 +30,7 @@ _embeddings_cache: Dict[str, Any] = {}
 class RAGService:
     """Service for knowledge base RAG operations"""
 
-    def __init__(
-        self, db_path: Optional[str] = None, collection_name: str = "default"
-    ):
+    def __init__(self, db_path: Optional[str] = None, collection_name: str = "default"):
         """
         Initialize RAG service
 
@@ -56,9 +54,9 @@ class RAGService:
         # Initialize embeddings (local model - no API costs)
         # Use cached embeddings model to avoid 8+ second reload on each instantiation
         if self.embedding_model_name not in _embeddings_cache:
-            _embeddings_cache[
-                self.embedding_model_name
-            ] = HuggingFaceEmbeddings(model_name=self.embedding_model_name)
+            _embeddings_cache[self.embedding_model_name] = HuggingFaceEmbeddings(
+                model_name=self.embedding_model_name
+            )
         self.embeddings = _embeddings_cache[self.embedding_model_name]
 
         # Initialize vector store with specified collection
@@ -86,9 +84,7 @@ class RAGService:
         filter_dict = {"category": category} if category else None
 
         # Search with similarity scores
-        results = self.vectorstore.similarity_search_with_score(
-            question, k=k, filter=filter_dict
-        )
+        results = self.vectorstore.similarity_search_with_score(question, k=k, filter=filter_dict)
 
         return [
             {
@@ -239,11 +235,7 @@ class RAGService:
         # Import the existing processor
         sys.path.insert(
             0,
-            str(
-                Path(__file__).parent.parent.parent.parent.parent
-                / "tools"
-                / "knowledge-base"
-            ),
+            str(Path(__file__).parent.parent.parent.parent.parent / "tools" / "knowledge-base"),
         )
 
         try:

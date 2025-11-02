@@ -55,9 +55,7 @@ class IngestionSource(Base):
     )
 
     # Source configuration
-    type: Mapped[SourceType] = mapped_column(
-        String(50), nullable=False, index=True
-    )
+    type: Mapped[SourceType] = mapped_column(String(50), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # URL or path
@@ -71,34 +69,22 @@ class IngestionSource(Base):
     priority: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
 
     # Enable/disable
-    enabled: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=False
-    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Additional configuration (JSON)
-    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(
-        JSON, nullable=True
-    )
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
     # Status tracking
     status: Mapped[SourceStatus] = mapped_column(
         String(50), default=SourceStatus.PENDING, nullable=False
     )
-    last_run: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    last_success: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_success: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Metrics
-    documents_ingested: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
-    error_count: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
+    documents_ingested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

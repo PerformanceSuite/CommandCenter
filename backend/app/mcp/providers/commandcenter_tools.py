@@ -338,9 +338,7 @@ class CommandCenterToolProvider(ToolProvider):
 
         return tools
 
-    async def call_tool(
-        self, name: str, arguments: Dict[str, Any]
-    ) -> ToolResult:
+    async def call_tool(self, name: str, arguments: Dict[str, Any]) -> ToolResult:
         """
         Execute tool with given arguments.
 
@@ -392,9 +390,7 @@ class CommandCenterToolProvider(ToolProvider):
             )
 
     # Research task tool handlers
-    async def _create_research_task(
-        self, arguments: Dict[str, Any]
-    ) -> ToolResult:
+    async def _create_research_task(self, arguments: Dict[str, Any]) -> ToolResult:
         """Create a new research task."""
         if "project_id" not in arguments or "title" not in arguments:
             raise InvalidParamsError("project_id and title are required")
@@ -422,9 +418,7 @@ class CommandCenterToolProvider(ToolProvider):
             },
         )
 
-    async def _update_research_task(
-        self, arguments: Dict[str, Any]
-    ) -> ToolResult:
+    async def _update_research_task(self, arguments: Dict[str, Any]) -> ToolResult:
         """Update an existing research task."""
         if "task_id" not in arguments:
             raise InvalidParamsError("task_id is required")
@@ -471,9 +465,7 @@ class CommandCenterToolProvider(ToolProvider):
         """Add a new technology to the radar."""
         required = ["project_id", "title", "domain"]
         if not all(k in arguments for k in required):
-            raise InvalidParamsError(
-                f"Required parameters: {', '.join(required)}"
-            )
+            raise InvalidParamsError(f"Required parameters: {', '.join(required)}")
 
         technology = Technology(
             project_id=arguments["project_id"],
@@ -504,9 +496,7 @@ class CommandCenterToolProvider(ToolProvider):
         """Create a new schedule."""
         required = ["project_id", "name", "task_type", "frequency"]
         if not all(k in arguments for k in required):
-            raise InvalidParamsError(
-                f"Required parameters: {', '.join(required)}"
-            )
+            raise InvalidParamsError(f"Required parameters: {', '.join(required)}")
 
         schedule = await self.schedule_service.create_schedule(
             project_id=arguments["project_id"],
@@ -524,9 +514,7 @@ class CommandCenterToolProvider(ToolProvider):
                 "schedule_id": schedule.id,
                 "name": schedule.name,
                 "frequency": schedule.frequency,
-                "next_run_at": schedule.next_run_at.isoformat()
-                if schedule.next_run_at
-                else None,
+                "next_run_at": schedule.next_run_at.isoformat() if schedule.next_run_at else None,
                 "enabled": schedule.enabled,
                 "message": f"Schedule '{schedule.name}' created successfully",
             },
@@ -537,9 +525,7 @@ class CommandCenterToolProvider(ToolProvider):
         if "schedule_id" not in arguments:
             raise InvalidParamsError("schedule_id is required")
 
-        job = await self.schedule_service.execute_schedule(
-            arguments["schedule_id"]
-        )
+        job = await self.schedule_service.execute_schedule(arguments["schedule_id"])
 
         return ToolResult(
             success=True,
@@ -595,9 +581,7 @@ class CommandCenterToolProvider(ToolProvider):
         """Create a new job."""
         required = ["project_id", "job_type"]
         if not all(k in arguments for k in required):
-            raise InvalidParamsError(
-                f"Required parameters: {', '.join(required)}"
-            )
+            raise InvalidParamsError(f"Required parameters: {', '.join(required)}")
 
         job = await self.job_service.create_job(
             project_id=arguments["project_id"],

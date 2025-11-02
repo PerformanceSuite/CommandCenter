@@ -33,9 +33,7 @@ class RepositoryCreate(RepositoryBase):
     @classmethod
     def validate_token(cls, v: Optional[str]) -> Optional[str]:
         """Validate GitHub token format"""
-        if v and not re.match(
-            r"^(ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36,255}$", v
-        ):
+        if v and not re.match(r"^(ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36,255}$", v):
             raise ValueError("Invalid GitHub token format")
         return v
 
@@ -77,13 +75,10 @@ class RepositoryResponse(RepositoryInDB):
     """Schema for repository API response"""
 
 
-
 class RepositorySyncRequest(BaseModel):
     """Schema for repository sync request"""
 
-    force: bool = Field(
-        default=False, description="Force sync even if recently synced"
-    )
+    force: bool = Field(default=False, description="Force sync even if recently synced")
 
 
 class RepositorySyncResponse(BaseModel):

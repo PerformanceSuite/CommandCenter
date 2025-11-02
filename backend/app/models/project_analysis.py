@@ -25,9 +25,7 @@ class ProjectAnalysis(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     # Project identification
-    project_path: Mapped[str] = mapped_column(
-        String(1024), nullable=False, index=True, unique=True
-    )
+    project_path: Mapped[str] = mapped_column(String(1024), nullable=False, index=True, unique=True)
 
     # Analysis results (stored as JSONB for flexibility)
     detected_technologies: Mapped[Optional[dict]] = mapped_column(
@@ -65,9 +63,7 @@ class ProjectAnalysis(Base):
     analyzed_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=datetime.utcnow, index=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,

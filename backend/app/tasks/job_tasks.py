@@ -51,9 +51,7 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def run_job():
         """Inner async function to run the job."""
@@ -71,29 +69,17 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
 
                 # Dispatch to appropriate handler based on job type
                 if job_type == JobType.ANALYSIS:
-                    result = await execute_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_analysis_job(self, job_id, parameters, service)
                 elif job_type == JobType.EXPORT:
-                    result = await execute_export_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_export_job(self, job_id, parameters, service)
                 elif job_type == JobType.BATCH_ANALYSIS:
-                    result = await execute_batch_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_batch_analysis_job(self, job_id, parameters, service)
                 elif job_type == JobType.BATCH_EXPORT:
-                    result = await execute_batch_export_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_batch_export_job(self, job_id, parameters, service)
                 elif job_type == JobType.WEBHOOK_DELIVERY:
-                    result = await execute_webhook_delivery_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_webhook_delivery_job(self, job_id, parameters, service)
                 elif job_type == JobType.SCHEDULED_ANALYSIS:
-                    result = await execute_scheduled_analysis_job(
-                        self, job_id, parameters, service
-                    )
+                    result = await execute_scheduled_analysis_job(self, job_id, parameters, service)
                 else:
                     raise ValueError(f"Unknown job type: {job_type}")
 
@@ -248,7 +234,7 @@ async def execute_batch_analysis_job(
         await service.update_job(
             job_id=job_id,
             progress=progress,
-            current_step=f"Analyzing repository {i+1}/{total}",
+            current_step=f"Analyzing repository {i + 1}/{total}",
         )
 
         # TODO: Implement actual analysis

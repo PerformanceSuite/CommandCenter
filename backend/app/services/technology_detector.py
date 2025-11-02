@@ -192,9 +192,7 @@ class TechnologyDetector:
         # Deduplicate by name (keep highest confidence)
         return self._deduplicate(technologies)
 
-    async def _detect_from_files(
-        self, project_path: Path
-    ) -> List[DetectedTechnology]:
+    async def _detect_from_files(self, project_path: Path) -> List[DetectedTechnology]:
         """
         Detect technologies from config files.
 
@@ -234,9 +232,7 @@ class TechnologyDetector:
                                         category=rule["category"],
                                         version=version,
                                         confidence=0.95,
-                                        file_path=str(
-                                            file_path.relative_to(project_path)
-                                        ),
+                                        file_path=str(file_path.relative_to(project_path)),
                                     )
                                 )
                                 break  # Found, no need to check other patterns
@@ -247,9 +243,7 @@ class TechnologyDetector:
 
         return technologies
 
-    async def _detect_from_directories(
-        self, project_path: Path
-    ) -> List[DetectedTechnology]:
+    async def _detect_from_directories(self, project_path: Path) -> List[DetectedTechnology]:
         """
         Detect technologies by directory structure.
 
@@ -276,9 +270,7 @@ class TechnologyDetector:
 
         return technologies
 
-    def _deduplicate(
-        self, technologies: List[DetectedTechnology]
-    ) -> List[DetectedTechnology]:
+    def _deduplicate(self, technologies: List[DetectedTechnology]) -> List[DetectedTechnology]:
         """
         Remove duplicate technologies, keeping highest confidence.
 
@@ -290,10 +282,7 @@ class TechnologyDetector:
         """
         seen = {}
         for tech in technologies:
-            if (
-                tech.name not in seen
-                or tech.confidence > seen[tech.name].confidence
-            ):
+            if tech.name not in seen or tech.confidence > seen[tech.name].confidence:
                 seen[tech.name] = tech
         return list(seen.values())
 

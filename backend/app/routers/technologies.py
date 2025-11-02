@@ -61,9 +61,7 @@ async def get_technology(
     return await service.get_technology(technology_id)
 
 
-@router.post(
-    "/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED)
 async def create_technology(
     technology_data: TechnologyCreate,
     service: TechnologyService = Depends(get_technology_service),

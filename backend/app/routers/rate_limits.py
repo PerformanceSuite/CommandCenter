@@ -63,9 +63,7 @@ async def track_rate_limit(
     """
     try:
         rate_limit_service = RateLimitService(github)
-        await rate_limit_service.store_rate_limit_status(
-            db, token=settings.github_token
-        )
+        await rate_limit_service.store_rate_limit_status(db, token=settings.github_token)
 
         return {
             "status": "success",

@@ -10,18 +10,13 @@ from pydantic import BaseModel, Field, ConfigDict
 class ProjectBase(BaseModel):
     """Base Project schema with common fields"""
 
-    name: str = Field(
-        ..., min_length=1, max_length=255, description="Project name"
-    )
-    owner: str = Field(
-        ..., min_length=1, max_length=255, description="Project owner"
-    )
+    name: str = Field(..., min_length=1, max_length=255, description="Project name")
+    owner: str = Field(..., min_length=1, max_length=255, description="Project owner")
     description: Optional[str] = Field(None, description="Project description")
 
 
 class ProjectCreate(ProjectBase):
     """Schema for creating a new project"""
-
 
 
 class ProjectUpdate(BaseModel):

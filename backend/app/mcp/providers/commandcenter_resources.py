@@ -228,9 +228,7 @@ class CommandCenterResourceProvider(ResourceProvider):
                 "id": p.id,
                 "name": p.name,
                 "description": p.description,
-                "created_at": p.created_at.isoformat()
-                if p.created_at
-                else None,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
             }
             for p in projects
         ]
@@ -243,15 +241,11 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_project(self, project_id: int) -> ResourceContent:
         """Read specific project details."""
-        result = await self.db.execute(
-            select(Project).where(Project.id == project_id)
-        )
+        result = await self.db.execute(select(Project).where(Project.id == project_id))
         project = result.scalar_one_or_none()
 
         if not project:
-            raise ResourceNotFoundError(
-                f"commandcenter://projects/{project_id}"
-            )
+            raise ResourceNotFoundError(f"commandcenter://projects/{project_id}")
 
         data = (
             project.to_dict()
@@ -260,9 +254,7 @@ class CommandCenterResourceProvider(ResourceProvider):
                 "id": project.id,
                 "name": project.name,
                 "description": project.description,
-                "created_at": project.created_at.isoformat()
-                if project.created_at
-                else None,
+                "created_at": project.created_at.isoformat() if project.created_at else None,
             }
         )
 
@@ -301,15 +293,11 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_technology(self, tech_id: int) -> ResourceContent:
         """Read specific technology details."""
-        result = await self.db.execute(
-            select(Technology).where(Technology.id == tech_id)
-        )
+        result = await self.db.execute(select(Technology).where(Technology.id == tech_id))
         technology = result.scalar_one_or_none()
 
         if not technology:
-            raise ResourceNotFoundError(
-                f"commandcenter://technologies/{tech_id}"
-            )
+            raise ResourceNotFoundError(f"commandcenter://technologies/{tech_id}")
 
         data = (
             technology.to_dict()
@@ -358,15 +346,11 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_research_task(self, task_id: int) -> ResourceContent:
         """Read specific research task details."""
-        result = await self.db.execute(
-            select(ResearchTask).where(ResearchTask.id == task_id)
-        )
+        result = await self.db.execute(select(ResearchTask).where(ResearchTask.id == task_id))
         task = result.scalar_one_or_none()
 
         if not task:
-            raise ResourceNotFoundError(
-                f"commandcenter://research/tasks/{task_id}"
-            )
+            raise ResourceNotFoundError(f"commandcenter://research/tasks/{task_id}")
 
         data = (
             task.to_dict()
@@ -412,15 +396,11 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_repository(self, repo_id: int) -> ResourceContent:
         """Read specific repository details."""
-        result = await self.db.execute(
-            select(Repository).where(Repository.id == repo_id)
-        )
+        result = await self.db.execute(select(Repository).where(Repository.id == repo_id))
         repository = result.scalar_one_or_none()
 
         if not repository:
-            raise ResourceNotFoundError(
-                f"commandcenter://repositories/{repo_id}"
-            )
+            raise ResourceNotFoundError(f"commandcenter://repositories/{repo_id}")
 
         data = (
             repository.to_dict()
@@ -455,9 +435,7 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_active_schedules(self) -> ResourceContent:
         """Read only active (enabled) schedules."""
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.enabled == True)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.enabled is True))
         schedules = result.scalars().all()
 
         data = [s.to_dict() for s in schedules]
@@ -494,9 +472,7 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_active_jobs(self) -> ResourceContent:
         """Read only active (running/pending) jobs."""
-        result = await self.db.execute(
-            select(Job).where(Job.status.in_(["pending", "running"]))
-        )
+        result = await self.db.execute(select(Job).where(Job.status.in_(["pending", "running"])))
         jobs = result.scalars().all()
 
         data = [
@@ -548,34 +524,18 @@ class CommandCenterResourceProvider(ResourceProvider):
         from sqlalchemy import func
 
         # Get counts
-        projects_count = (
-            await self.db.execute(select(func.count(Project.id)))
-        ).scalar()
-        technologies_count = (
-            await self.db.execute(select(func.count(Technology.id)))
-        ).scalar()
-        tasks_count = (
-            await self.db.execute(select(func.count(ResearchTask.id)))
-        ).scalar()
-        repositories_count = (
-            await self.db.execute(select(func.count(Repository.id)))
-        ).scalar()
-        schedules_count = (
-            await self.db.execute(select(func.count(Schedule.id)))
-        ).scalar()
+        projects_count = (await self.db.execute(select(func.count(Project.id)))).scalar()
+        technologies_count = (await self.db.execute(select(func.count(Technology.id)))).scalar()
+        tasks_count = (await self.db.execute(select(func.count(ResearchTask.id)))).scalar()
+        repositories_count = (await self.db.execute(select(func.count(Repository.id)))).scalar()
+        schedules_count = (await self.db.execute(select(func.count(Schedule.id)))).scalar()
         active_schedules_count = (
-            await self.db.execute(
-                select(func.count(Schedule.id)).where(Schedule.enabled == True)
-            )
+            await self.db.execute(select(func.count(Schedule.id)).where(Schedule.enabled is True))
         ).scalar()
-        jobs_count = (
-            await self.db.execute(select(func.count(Job.id)))
-        ).scalar()
+        jobs_count = (await self.db.execute(select(func.count(Job.id)))).scalar()
         active_jobs_count = (
             await self.db.execute(
-                select(func.count(Job.id)).where(
-                    Job.status.in_(["pending", "running"])
-                )
+                select(func.count(Job.id)).where(Job.status.in_(["pending", "running"]))
             )
         ).scalar()
 

@@ -112,9 +112,7 @@ class FeedScraperService:
                 tags = [tag["term"] for tag in entry["tags"] if "term" in tag]
 
             # Attempt to extract full content
-            content = await self.extract_full_content(
-                url, summary_fallback=summary
-            )
+            content = await self.extract_full_content(url, summary_fallback=summary)
 
             feed_entry = FeedEntry(
                 title=title,
@@ -130,9 +128,7 @@ class FeedScraperService:
         self.logger.info(f"Parsed {len(entries)} entries from feed")
         return entries
 
-    def _extract_full_content_blocking(
-        self, article_url: str, summary_fallback: str = ""
-    ) -> str:
+    def _extract_full_content_blocking(self, article_url: str, summary_fallback: str = "") -> str:
         """
         Extract full article content from URL (blocking I/O).
 
@@ -153,20 +149,14 @@ class FeedScraperService:
             if article.text:
                 return article.text
             else:
-                self.logger.warning(
-                    f"No content extracted from {article_url}, using summary"
-                )
+                self.logger.warning(f"No content extracted from {article_url}, using summary")
                 return summary_fallback
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to extract content from {article_url}: {e}"
-            )
+            self.logger.error(f"Failed to extract content from {article_url}: {e}")
             return summary_fallback
 
-    async def extract_full_content(
-        self, article_url: str, summary_fallback: str = ""
-    ) -> str:
+    async def extract_full_content(self, article_url: str, summary_fallback: str = "") -> str:
         """
         Extract full article content from URL (async-safe).
 

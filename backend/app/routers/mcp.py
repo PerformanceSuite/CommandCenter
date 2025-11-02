@@ -264,9 +264,7 @@ async def list_resources(db: Session = Depends(get_db)):
         )
 
         # Handle request
-        response = await server.handle_message(
-            session.session_id, request_message
-        )
+        response = await server.handle_message(session.session_id, request_message)
 
         if response:
             response_data = json.loads(response)
@@ -303,9 +301,7 @@ async def list_tools(db: Session = Depends(get_db)):
         )
 
         # Handle request
-        response = await server.handle_message(
-            session.session_id, request_message
-        )
+        response = await server.handle_message(session.session_id, request_message)
 
         if response:
             response_data = json.loads(response)
@@ -342,9 +338,7 @@ async def list_prompts(db: Session = Depends(get_db)):
         )
 
         # Handle request
-        response = await server.handle_message(
-            session.session_id, request_message
-        )
+        response = await server.handle_message(session.session_id, request_message)
 
         if response:
             response_data = json.loads(response)

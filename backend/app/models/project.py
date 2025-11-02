@@ -35,9 +35,7 @@ class Project(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -84,9 +82,7 @@ class Project(Base):
     )
 
     # Unique constraint: owner + name must be unique
-    __table_args__ = (
-        UniqueConstraint("owner", "name", name="uq_project_owner_name"),
-    )
+    __table_args__ = (UniqueConstraint("owner", "name", name="uq_project_owner_name"),)
 
     def __repr__(self) -> str:
         return f"<Project(id={self.id}, name='{self.name}', owner='{self.owner}')>"

@@ -56,9 +56,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
 
-def setup_logging(
-    log_level: str = "INFO", log_file: str = None, json_format: bool = True
-) -> None:
+def setup_logging(log_level: str = "INFO", log_file: str = None, json_format: bool = True) -> None:
     """
     Setup structured logging for the application
 
@@ -82,9 +80,7 @@ def setup_logging(
         console_handler.setFormatter(JSONFormatter())
     else:
         console_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
     logger.addHandler(console_handler)

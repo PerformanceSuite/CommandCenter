@@ -111,9 +111,7 @@ class ScheduleService:
         )
         if conflicts:
             conflict_names = [s.name for s in conflicts]
-            logger.warning(
-                f"Schedule conflicts detected with: {', '.join(conflict_names)}"
-            )
+            logger.warning(f"Schedule conflicts detected with: {', '.join(conflict_names)}")
             # Note: We log conflicts but don't block creation
             # Users may want overlapping schedules
 
@@ -149,9 +147,7 @@ class ScheduleService:
         await self.db.commit()
         await self.db.refresh(schedule)
 
-        logger.info(
-            f"Created schedule {schedule.id} ({name}) with next run at {next_run}"
-        )
+        logger.info(f"Created schedule {schedule.id} ({name}) with next run at {next_run}")
 
         return schedule
 
@@ -174,9 +170,7 @@ class ScheduleService:
             ValueError: If schedule not found or validation fails
         """
         # Fetch schedule
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -185,9 +179,7 @@ class ScheduleService:
         # Validate updates
         if "cron_expression" in updates:
             if not self._validate_cron(updates["cron_expression"]):
-                raise ValueError(
-                    f"Invalid cron expression: {updates['cron_expression']}"
-                )
+                raise ValueError(f"Invalid cron expression: {updates['cron_expression']}")
 
         if "timezone" in updates:
             if not self._validate_timezone(updates["timezone"]):
@@ -233,9 +225,7 @@ class ScheduleService:
         Raises:
             ValueError: If schedule not found
         """
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -260,9 +250,7 @@ class ScheduleService:
             ValueError: If schedule not found or not active
         """
         # Fetch schedule
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -317,15 +305,11 @@ class ScheduleService:
             success: Whether execution was successful
             error: Error message if failed
         """
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
-            logger.warning(
-                f"Schedule {schedule_id} not found for result recording"
-            )
+            logger.warning(f"Schedule {schedule_id} not found for result recording")
             return
 
         if success:
@@ -360,7 +344,7 @@ class ScheduleService:
             select(Schedule)
             .where(
                 and_(
-                    Schedule.enabled == True,
+                    Schedule.enabled is True,
                     or_(
                         Schedule.next_run_at.is_(None),
                         Schedule.next_run_at <= now,
@@ -385,9 +369,7 @@ class ScheduleService:
 
         return schedules
 
-    async def get_schedule_statistics(
-        self, project_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_schedule_statistics(self, project_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get schedule statistics.
 
@@ -413,9 +395,7 @@ class ScheduleService:
         total_successes = sum(s.success_count for s in schedules)
         total_failures = sum(s.failure_count for s in schedules)
 
-        success_rate = (
-            (total_successes / total_runs * 100) if total_runs > 0 else 0.0
-        )
+        success_rate = (total_successes / total_runs * 100) if total_runs > 0 else 0.0
 
         # Count by frequency
         frequency_counts = {}
@@ -500,9 +480,7 @@ class ScheduleService:
         # Handle different frequencies
         if frequency == ScheduleFrequency.ONCE:
             # One-time schedule
-            return (
-                start_time if start_time and start_time > from_time else None
-            )
+            return start_time if start_time and start_time > from_time else None
 
         elif frequency == ScheduleFrequency.HOURLY:
             next_run = base_time + timedelta(hours=1)
@@ -512,18 +490,14 @@ class ScheduleService:
         elif frequency == ScheduleFrequency.DAILY:
             next_run = base_time + timedelta(days=1)
             # Align to midnight
-            next_run = next_run.replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
+            next_run = next_run.replace(hour=0, minute=0, second=0, microsecond=0)
 
         elif frequency == ScheduleFrequency.WEEKLY:
             next_run = base_time + timedelta(weeks=1)
             # Align to Monday midnight
             days_until_monday = (7 - base_time.weekday()) % 7 or 7
             next_run = base_time + timedelta(days=days_until_monday)
-            next_run = next_run.replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
+            next_run = next_run.replace(hour=0, minute=0, second=0, microsecond=0)
 
         elif frequency == ScheduleFrequency.MONTHLY:
             # Next month, first day
@@ -560,9 +534,7 @@ class ScheduleService:
             if interval_seconds:
                 next_run = base_time + timedelta(seconds=interval_seconds)
             else:
-                raise ValueError(
-                    f"Invalid frequency or missing interval: {frequency}"
-                )
+                raise ValueError(f"Invalid frequency or missing interval: {frequency}")
 
         # Convert back to UTC
         next_run_utc = next_run.astimezone(pytz.utc).replace(tzinfo=None)
@@ -601,7 +573,7 @@ class ScheduleService:
             and_(
                 Schedule.project_id == project_id,
                 Schedule.task_type == task_type,
-                Schedule.enabled == True,
+                Schedule.enabled is True,
             )
         )
 
@@ -615,16 +587,12 @@ class ScheduleService:
         conflicts = []
         if task_parameters:
             for schedule in schedules:
-                if self._has_parameter_overlap(
-                    task_parameters, schedule.task_parameters
-                ):
+                if self._has_parameter_overlap(task_parameters, schedule.task_parameters):
                     conflicts.append(schedule)
 
         return conflicts
 
-    def _has_parameter_overlap(
-        self, params1: Dict[str, Any], params2: Dict[str, Any]
-    ) -> bool:
+    def _has_parameter_overlap(self, params1: Dict[str, Any], params2: Dict[str, Any]) -> bool:
         """
         Check if two parameter sets overlap.
 

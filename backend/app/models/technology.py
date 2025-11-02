@@ -91,9 +91,7 @@ class Technology(Base):
     )
 
     # Technology identification
-    title: Mapped[str] = mapped_column(
-        String(255), nullable=False, unique=True
-    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     vendor: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     domain: Mapped[TechnologyDomain] = mapped_column(
         SQLEnum(TechnologyDomain),
@@ -116,53 +114,33 @@ class Technology(Base):
     use_cases: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # External links
-    documentation_url: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
-    repository_url: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
-    website_url: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
+    documentation_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    repository_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    website_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
 
     # Tags for filtering
-    tags: Mapped[Optional[str]] = mapped_column(
-        Text, nullable=True
-    )  # Comma-separated
+    tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Comma-separated
 
     # Technology Radar v2 - Enhanced Evaluation Fields
     # Performance characteristics
-    latency_ms: Mapped[Optional[float]] = mapped_column(
-        Float, nullable=True
-    )  # P99 latency
-    throughput_qps: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True
-    )  # Queries/sec
+    latency_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # P99 latency
+    throughput_qps: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # Queries/sec
 
     # Integration assessment
-    integration_difficulty: Mapped[
-        Optional[IntegrationDifficulty]
-    ] = mapped_column(SQLEnum(IntegrationDifficulty), nullable=True)
-    integration_time_estimate_days: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True
+    integration_difficulty: Mapped[Optional[IntegrationDifficulty]] = mapped_column(
+        SQLEnum(IntegrationDifficulty), nullable=True
     )
+    integration_time_estimate_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Maturity and stability
     maturity_level: Mapped[Optional[MaturityLevel]] = mapped_column(
         SQLEnum(MaturityLevel), nullable=True
     )
-    stability_score: Mapped[Optional[int]] = mapped_column(
-        Integer, nullable=True
-    )  # 0-100
+    stability_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 0-100
 
     # Cost analysis
-    cost_tier: Mapped[Optional[CostTier]] = mapped_column(
-        SQLEnum(CostTier), nullable=True
-    )
-    cost_monthly_usd: Mapped[Optional[float]] = mapped_column(
-        Float, nullable=True
-    )
+    cost_tier: Mapped[Optional[CostTier]] = mapped_column(SQLEnum(CostTier), nullable=True)
+    cost_monthly_usd: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # Dependencies and relationships
     dependencies: Mapped[Optional[dict]] = mapped_column(
@@ -173,19 +151,13 @@ class Technology(Base):
     )  # Comma-separated tech IDs
 
     # Monitoring and alerts
-    last_hn_mention: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    last_hn_mention: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     hn_score_avg: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     github_stars: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    github_last_commit: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    github_last_commit: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )

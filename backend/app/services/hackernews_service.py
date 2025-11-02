@@ -53,9 +53,7 @@ class HackerNewsService:
             Item dict with 'id', 'type', 'title', 'url', 'score', 'time', etc.
         """
         try:
-            response = await self.client.get(
-                f"{self.BASE_URL}/item/{item_id}.json"
-            )
+            response = await self.client.get(f"{self.BASE_URL}/item/{item_id}.json")
             response.raise_for_status()
             return response.json()
         except Exception as e:
@@ -74,9 +72,7 @@ class HackerNewsService:
         """
         try:
             # Fetch top story IDs
-            response = await self.client.get(
-                f"{self.BASE_URL}/topstories.json"
-            )
+            response = await self.client.get(f"{self.BASE_URL}/topstories.json")
             response.raise_for_status()
             story_ids = response.json()[:limit]
 
@@ -105,9 +101,7 @@ class HackerNewsService:
             List of story dicts
         """
         try:
-            response = await self.client.get(
-                f"{self.BASE_URL}/beststories.json"
-            )
+            response = await self.client.get(f"{self.BASE_URL}/beststories.json")
             response.raise_for_status()
             story_ids = response.json()[:limit]
 
@@ -145,9 +139,7 @@ class HackerNewsService:
         """
         try:
             # Calculate timestamp for date filter
-            since_timestamp = int(
-                (datetime.utcnow() - timedelta(hours=since_hours)).timestamp()
-            )
+            since_timestamp = int((datetime.utcnow() - timedelta(hours=since_hours)).timestamp())
 
             # Build search query (OR logic for multiple keywords)
             query = " OR ".join(keywords)
@@ -160,19 +152,12 @@ class HackerNewsService:
                 "hitsPerPage": limit,
             }
 
-            response = await self.client.get(
-                self.ALGOLIA_SEARCH_URL, params=params
-            )
+            response = await self.client.get(self.ALGOLIA_SEARCH_URL, params=params)
             response.raise_for_status()
             data = response.json()
 
-            stories = [
-                self._normalize_algolia_hit(hit)
-                for hit in data.get("hits", [])
-            ]
-            logger.info(
-                f"✅ Found {len(stories)} HN stories matching keywords: {keywords}"
-            )
+            stories = [self._normalize_algolia_hit(hit) for hit in data.get("hits", [])]
+            logger.info(f"✅ Found {len(stories)} HN stories matching keywords: {keywords}")
             return stories
 
         except Exception as e:
@@ -267,11 +252,7 @@ class HackerNewsService:
             Relevance score (0.0 - 1.0)
         """
         title_lower = story_title.lower()
-        matches = sum(
-            1
-            for keyword in technology_keywords
-            if keyword.lower() in title_lower
-        )
+        matches = sum(1 for keyword in technology_keywords if keyword.lower() in title_lower)
         return min(1.0, matches / max(1, len(technology_keywords)))
 
 

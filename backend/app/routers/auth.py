@@ -53,9 +53,7 @@ async def register(
         HTTPException: If email already exists
     """
     # Check if user already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_data.email))
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
@@ -102,15 +100,11 @@ async def login(
         HTTPException: If credentials are invalid
     """
     # Find user by email
-    result = await db.execute(
-        select(User).where(User.email == user_credentials.email)
-    )
+    result = await db.execute(select(User).where(User.email == user_credentials.email))
     user = result.scalar_one_or_none()
 
     # Verify user exists and password is correct
-    if not user or not verify_password(
-        user_credentials.password, user.hashed_password
-    ):
+    if not user or not verify_password(user_credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

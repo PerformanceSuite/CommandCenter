@@ -39,23 +39,15 @@ class KnowledgeEntry(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Source tracking
-    source_file: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
-    source_url: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
+    source_file: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    source_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     source_type: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True
     )  # pdf, html, manual, etc.
 
     # Vector database reference
-    vector_db_id: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
-    embedding_model: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
+    vector_db_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    embedding_model: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Metadata
     page_number: Mapped[Optional[int]] = mapped_column(nullable=True)
@@ -66,9 +58,7 @@ class KnowledgeEntry(Base):
     relevance_score: Mapped[Optional[float]] = mapped_column(nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )

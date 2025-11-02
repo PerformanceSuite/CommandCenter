@@ -51,22 +51,16 @@ class PomXmlParser(BaseParser):
         dependencies = []
 
         # Parse dependencies
-        for dep in tree.xpath(
-            "//mvn:dependencies/mvn:dependency", namespaces=namespace
-        ):
+        for dep in tree.xpath("//mvn:dependencies/mvn:dependency", namespaces=namespace):
             group_id = dep.findtext("mvn:groupId", namespaces=namespace)
             artifact_id = dep.findtext("mvn:artifactId", namespaces=namespace)
             version = dep.findtext("mvn:version", namespaces=namespace)
-            scope = (
-                dep.findtext("mvn:scope", namespaces=namespace) or "compile"
-            )
+            scope = dep.findtext("mvn:scope", namespaces=namespace) or "compile"
 
             if group_id and artifact_id:
                 name = f"{group_id}:{artifact_id}"
                 dep_type = (
-                    DependencyType.DEV
-                    if scope in ["test", "provided"]
-                    else DependencyType.RUNTIME
+                    DependencyType.DEV if scope in ["test", "provided"] else DependencyType.RUNTIME
                 )
 
                 dependencies.append(
@@ -110,9 +104,7 @@ class PomXmlParser(BaseParser):
 
         return dependencies
 
-    async def _enrich_with_latest_versions(
-        self, dependencies: List[Dependency]
-    ) -> None:
+    async def _enrich_with_latest_versions(self, dependencies: List[Dependency]) -> None:
         """
         Fetch latest versions from Maven Central.
 
@@ -122,18 +114,14 @@ class PomXmlParser(BaseParser):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for dep in dependencies:
                 try:
-                    latest = await self.get_latest_version(
-                        dep.name, client=client
-                    )
+                    latest = await self.get_latest_version(dep.name, client=client)
                     dep.latest_version = latest
                     dep.is_outdated = latest != dep.version
                 except Exception:
                     # Silently fail for missing/private artifacts
                     pass
 
-    async def get_latest_version(
-        self, package_name: str, client: httpx.AsyncClient = None
-    ) -> str:
+    async def get_latest_version(self, package_name: str, client: httpx.AsyncClient = None) -> str:
         """
         Fetch latest version from Maven Central.
 

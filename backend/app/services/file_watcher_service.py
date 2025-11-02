@@ -131,9 +131,7 @@ class FileWatcherService:
                 )
 
         except OSError as e:
-            self.logger.error(
-                f"Failed to check file size for {file_path}: {e}"
-            )
+            self.logger.error(f"Failed to check file size for {file_path}: {e}")
             raise ValueError(f"Cannot access file: {file_path}")
 
     def extract_text_from_file(self, file_path: str) -> str:
@@ -211,9 +209,7 @@ class FileWatcherService:
 
         return False
 
-    def should_ignore_file(
-        self, file_path: str, ignore_patterns: List[str]
-    ) -> bool:
+    def should_ignore_file(self, file_path: str, ignore_patterns: List[str]) -> bool:
         """
         Check if file matches any ignore patterns.
 
@@ -230,9 +226,7 @@ class FileWatcherService:
 
         return False
 
-    def should_debounce(
-        self, file_path: str, debounce_seconds: int = 2
-    ) -> bool:
+    def should_debounce(self, file_path: str, debounce_seconds: int = 2) -> bool:
         """
         Check if enough time has passed since last processing.
 
@@ -249,9 +243,7 @@ class FileWatcherService:
         # Remove entries older than 1 hour when dict grows beyond 1000 entries
         if len(self._last_processed) > 1000:
             cutoff = now - timedelta(hours=1)
-            self._last_processed = {
-                k: v for k, v in self._last_processed.items() if v > cutoff
-            }
+            self._last_processed = {k: v for k, v in self._last_processed.items() if v > cutoff}
             self.logger.debug(
                 f"Cleaned up debounce cache, {len(self._last_processed)} entries remain"
             )
@@ -300,21 +292,15 @@ class FileChangeHandler(FileSystemEventHandler):
             return
 
         # Check ignore patterns
-        if self.file_watcher.should_ignore_file(
-            file_path, self.ignore_patterns
-        ):
+        if self.file_watcher.should_ignore_file(file_path, self.ignore_patterns):
             return
 
         # Debounce
-        if not self.file_watcher.should_debounce(
-            file_path, debounce_seconds=2
-        ):
+        if not self.file_watcher.should_debounce(file_path, debounce_seconds=2):
             return
 
         # Trigger callback
-        event = FileChangeEvent(
-            event_type=event_type, file_path=file_path, is_directory=False
-        )
+        event = FileChangeEvent(event_type=event_type, file_path=file_path, is_directory=False)
 
         self.callback(event)
 

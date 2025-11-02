@@ -349,9 +349,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 "model": response["model"],
                 "provider": response["provider"],
                 "usage": response["usage"],
-                "execution_time_seconds": (
-                    datetime.utcnow() - self.start_time
-                ).total_seconds(),
+                "execution_time_seconds": (datetime.utcnow() - self.start_time).total_seconds(),
             }
 
             self.result = result
@@ -407,9 +405,7 @@ class ResearchAgentOrchestrator:
             agent = ResearchAgent(
                 role=AgentRole(task_def["role"]),
                 model=task_def.get("model", self.default_model),
-                provider=AIProvider(
-                    task_def.get("provider", self.default_provider.value)
-                ),
+                provider=AIProvider(task_def.get("provider", self.default_provider.value)),
                 temperature=task_def.get("temperature", 0.7),
                 max_tokens=task_def.get("max_tokens", 4096),
             )
@@ -424,10 +420,7 @@ class ResearchAgentOrchestrator:
 
         # Launch all agents
         results = await asyncio.gather(
-            *[
-                execute_with_semaphore(agent, prompt)
-                for agent, prompt in agents
-            ],
+            *[execute_with_semaphore(agent, prompt) for agent, prompt in agents],
             return_exceptions=True,
         )
 
@@ -504,7 +497,9 @@ class ResearchAgentOrchestrator:
     def _generate_summary(self, results: List[Dict[str, Any]]) -> str:
         """Generate executive summary from agent results"""
         # TODO: Use AI to generate summary from all agent findings
-        return f"Research completed with {len(results)} agents. See individual findings for details."
+        return (
+            f"Research completed with {len(results)} agents. See individual findings for details."
+        )
 
 
 # Global orchestrator instance

@@ -57,14 +57,10 @@ class ResearchTaskService:
         """
         # Apply filters
         if technology_id:
-            tasks = await self.repo.list_by_technology(
-                technology_id, skip, limit
-            )
+            tasks = await self.repo.list_by_technology(technology_id, skip, limit)
             total = await self.repo.count(technology_id=technology_id)
         elif repository_id:
-            tasks = await self.repo.list_by_repository(
-                repository_id, skip, limit
-            )
+            tasks = await self.repo.list_by_repository(repository_id, skip, limit)
             total = await self.repo.count(repository_id=repository_id)
         elif status:
             tasks = await self.repo.list_by_status(status, skip, limit)
@@ -131,9 +127,7 @@ class ResearchTaskService:
 
         return task
 
-    async def update_task(
-        self, task_id: int, task_data: ResearchTaskUpdate
-    ) -> ResearchTask:
+    async def update_task(self, task_id: int, task_data: ResearchTaskUpdate) -> ResearchTask:
         """
         Update research task
 
@@ -200,9 +194,7 @@ class ResearchTaskService:
         await self.repo.delete(task)
         await self.db.commit()
 
-    async def upload_document(
-        self, task_id: int, file: UploadFile
-    ) -> ResearchTask:
+    async def upload_document(self, task_id: int, file: UploadFile) -> ResearchTask:
         """
         Upload document for research task
 
@@ -251,9 +243,7 @@ class ResearchTaskService:
             }
             uploaded_docs.append(doc_info)
 
-            task = await self.repo.update(
-                task, uploaded_documents=uploaded_docs
-            )
+            task = await self.repo.update(task, uploaded_documents=uploaded_docs)
             await self.db.commit()
             await self.db.refresh(task)
 
@@ -280,9 +270,7 @@ class ResearchTaskService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(
-        self, days: int = 7, limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -323,9 +311,7 @@ class ResearchTaskService:
 
         return stats
 
-    async def update_progress(
-        self, task_id: int, progress_percentage: int
-    ) -> ResearchTask:
+    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
         """
         Update task progress percentage
 
@@ -346,9 +332,7 @@ class ResearchTaskService:
             )
 
         task = await self.get_task(task_id)
-        task = await self.repo.update(
-            task, progress_percentage=progress_percentage
-        )
+        task = await self.repo.update(task, progress_percentage=progress_percentage)
 
         # Auto-update status if progress reaches 100%
         if progress_percentage == 100 and task.status != TaskStatus.COMPLETED:

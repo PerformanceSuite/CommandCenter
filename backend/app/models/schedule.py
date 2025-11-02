@@ -52,9 +52,7 @@ class Schedule(Base):
 
     # Schedule identification
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(
-        String(512), nullable=True
-    )
+    description: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
 
     # Task configuration
     task_type: Mapped[str] = mapped_column(
@@ -88,21 +86,11 @@ class Schedule(Base):
 
     # Status tracking
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
-    last_run_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    next_run_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True, index=True
-    )
-    run_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Total number of executions
-    success_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Successful executions
-    failure_count: Mapped[int] = mapped_column(
-        Integer, default=0
-    )  # Failed executions
+    last_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    next_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    run_count: Mapped[int] = mapped_column(Integer, default=0)  # Total number of executions
+    success_count: Mapped[int] = mapped_column(Integer, default=0)  # Successful executions
+    failure_count: Mapped[int] = mapped_column(Integer, default=0)  # Failed executions
 
     # Celery Beat integration
     celery_task_name: Mapped[Optional[str]] = mapped_column(
@@ -116,9 +104,7 @@ class Schedule(Base):
     created_by: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    tags: Mapped[Optional[dict]] = mapped_column(
-        JSON, default=dict
-    )  # Custom tags for filtering
+    tags: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)  # Custom tags for filtering
 
     # Audit logging
     last_error: Mapped[Optional[str]] = mapped_column(
@@ -132,9 +118,7 @@ class Schedule(Base):
     )  # Last failed execution
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -216,35 +200,21 @@ class Schedule(Base):
             "cron_expression": self.cron_expression,
             "interval_seconds": self.interval_seconds,
             "timezone": self.timezone,
-            "start_time": self.start_time.isoformat()
-            if self.start_time
-            else None,
+            "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
             "enabled": self.enabled,
-            "last_run_at": self.last_run_at.isoformat()
-            if self.last_run_at
-            else None,
-            "next_run_at": self.next_run_at.isoformat()
-            if self.next_run_at
-            else None,
+            "last_run_at": self.last_run_at.isoformat() if self.last_run_at else None,
+            "next_run_at": self.next_run_at.isoformat() if self.next_run_at else None,
             "run_count": self.run_count,
             "success_count": self.success_count,
             "failure_count": self.failure_count,
             "success_rate": self.success_rate,
             "is_active": self.is_active,
             "last_error": self.last_error,
-            "last_success_at": self.last_success_at.isoformat()
-            if self.last_success_at
-            else None,
-            "last_failure_at": self.last_failure_at.isoformat()
-            if self.last_failure_at
-            else None,
+            "last_success_at": self.last_success_at.isoformat() if self.last_success_at else None,
+            "last_failure_at": self.last_failure_at.isoformat() if self.last_failure_at else None,
             "created_by": self.created_by,
             "tags": self.tags,
-            "created_at": self.created_at.isoformat()
-            if self.created_at
-            else None,
-            "updated_at": self.updated_at.isoformat()
-            if self.updated_at
-            else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -92,9 +92,7 @@ class ProjectAnalyzer:
         research_gaps = await self._identify_gaps(dependencies, technologies)
 
         # Calculate duration
-        duration_ms = int(
-            (datetime.utcnow() - start_time).total_seconds() * 1000
-        )
+        duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
         # Build result
         result = ProjectAnalysisResult(
@@ -136,9 +134,7 @@ class ProjectAnalyzer:
 
         return dependencies
 
-    async def _detect_technologies(
-        self, path: Path
-    ) -> List[DetectedTechnology]:
+    async def _detect_technologies(self, path: Path) -> List[DetectedTechnology]:
         """
         Detect frameworks, tools, databases.
 
@@ -179,9 +175,7 @@ class ProjectAnalyzer:
         """
         return await self.gap_analyzer.analyze(dependencies, technologies)
 
-    async def _get_cached_analysis(
-        self, project_path: str
-    ) -> Optional[ProjectAnalysisResult]:
+    async def _get_cached_analysis(self, project_path: str) -> Optional[ProjectAnalysisResult]:
         """
         Get cached analysis if available and valid.
 
@@ -207,10 +201,7 @@ class ProjectAnalyzer:
             project_path=cached.project_path,
             analyzed_at=cached.analyzed_at,
             dependencies=(
-                [
-                    Dependency(**dep)
-                    for dep in cached.dependencies.get("items", [])
-                ]
+                [Dependency(**dep) for dep in cached.dependencies.get("items", [])]
                 if cached.dependencies
                 else []
             ),
@@ -233,10 +224,7 @@ class ProjectAnalyzer:
                 )
             ),
             research_gaps=(
-                [
-                    ResearchGap(**gap)
-                    for gap in cached.research_gaps.get("items", [])
-                ]
+                [ResearchGap(**gap) for gap in cached.research_gaps.get("items", [])]
                 if cached.research_gaps
                 else []
             ),
@@ -253,25 +241,17 @@ class ProjectAnalyzer:
         # Convert result to database model
         analysis = ProjectAnalysis(
             project_path=result.project_path,
-            detected_technologies={
-                "items": [tech.model_dump() for tech in result.technologies]
-            },
-            dependencies={
-                "items": [dep.model_dump() for dep in result.dependencies]
-            },
+            detected_technologies={"items": [tech.model_dump() for tech in result.technologies]},
+            dependencies={"items": [dep.model_dump() for dep in result.dependencies]},
             code_metrics=result.code_metrics.model_dump(),
-            research_gaps={
-                "items": [gap.model_dump() for gap in result.research_gaps]
-            },
+            research_gaps={"items": [gap.model_dump() for gap in result.research_gaps]},
             analysis_version=ANALYSIS_VERSION,
             analysis_duration_ms=result.analysis_duration_ms,
             analyzed_at=result.analyzed_at,
         )
 
         # Upsert (update if exists, insert if not)
-        stmt = select(ProjectAnalysis).where(
-            ProjectAnalysis.project_path == result.project_path
-        )
+        stmt = select(ProjectAnalysis).where(ProjectAnalysis.project_path == result.project_path)
         existing_result = await self.db.execute(stmt)
         existing = existing_result.scalar_one_or_none()
 
@@ -308,9 +288,7 @@ class ProjectAnalyzer:
             ComposerJsonParser(),
         ]
 
-    async def get_analysis_by_id(
-        self, analysis_id: int
-    ) -> Optional[ProjectAnalysisResult]:
+    async def get_analysis_by_id(self, analysis_id: int) -> Optional[ProjectAnalysisResult]:
         """
         Get analysis by ID.
 
@@ -332,10 +310,7 @@ class ProjectAnalyzer:
             project_path=cached.project_path,
             analyzed_at=cached.analyzed_at,
             dependencies=(
-                [
-                    Dependency(**dep)
-                    for dep in cached.dependencies.get("items", [])
-                ]
+                [Dependency(**dep) for dep in cached.dependencies.get("items", [])]
                 if cached.dependencies
                 else []
             ),
@@ -358,10 +333,7 @@ class ProjectAnalyzer:
                 )
             ),
             research_gaps=(
-                [
-                    ResearchGap(**gap)
-                    for gap in cached.research_gaps.get("items", [])
-                ]
+                [ResearchGap(**gap) for gap in cached.research_gaps.get("items", [])]
                 if cached.research_gaps
                 else []
             ),

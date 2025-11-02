@@ -30,9 +30,7 @@ class DoclingService:
             ImportError: If Docling is not installed
         """
         if not DOCLING_AVAILABLE:
-            raise ImportError(
-                "Docling not installed. " "Install with: pip install docling"
-            )
+            raise ImportError("Docling not installed. " "Install with: pip install docling")
 
         # Initialize document converter with default options
         # Docling v1.20.0 API simplified - no need for format-specific options
@@ -49,9 +47,7 @@ class DoclingService:
             Extracted and cleaned text content
         """
         # Create temporary file for PDF processing
-        with tempfile.NamedTemporaryFile(
-            suffix=".pdf", delete=False
-        ) as tmp_file:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
             tmp_file.write(content)
             tmp_path = tmp_file.name
 
@@ -149,15 +145,11 @@ class DoclingService:
 
         # Remove common PDF artifacts
         cleaned_text = re.sub(r"\x0c", "", cleaned_text)  # Form feed
-        cleaned_text = re.sub(
-            r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text
-        )  # Control chars
+        cleaned_text = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text)  # Control chars
 
         return cleaned_text.strip()
 
-    async def extract_metadata(
-        self, content: bytes, file_type: str
-    ) -> Dict[str, Any]:
+    async def extract_metadata(self, content: bytes, file_type: str) -> Dict[str, Any]:
         """
         Extract metadata from document
 
@@ -175,9 +167,7 @@ class DoclingService:
 
         if file_type.lower() == "pdf":
             # Create temporary file for metadata extraction
-            with tempfile.NamedTemporaryFile(
-                suffix=".pdf", delete=False
-            ) as tmp_file:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
                 tmp_file.write(content)
                 tmp_path = tmp_file.name
 
@@ -196,9 +186,7 @@ class DoclingService:
                         if hasattr(doc_metadata, "author"):
                             metadata["author"] = doc_metadata.author
                         if hasattr(doc_metadata, "creation_date"):
-                            metadata["creation_date"] = str(
-                                doc_metadata.creation_date
-                            )
+                            metadata["creation_date"] = str(doc_metadata.creation_date)
 
                     # Page count
                     if hasattr(doc, "pages"):

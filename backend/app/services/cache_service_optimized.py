@@ -54,15 +54,11 @@ class OptimizedCacheService:
             prefix: Global prefix for all cache keys
         """
         if not REDIS_AVAILABLE:
-            raise ImportError(
-                "Redis not installed. Install with: pip install redis"
-            )
+            raise ImportError("Redis not installed. Install with: pip install redis")
 
         import os
 
-        self.redis_url = redis_url or os.getenv(
-            "REDIS_URL", "redis://localhost:6379"
-        )
+        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
         self.default_ttl = default_ttl
         self.prefix = prefix
         self.redis_client: Optional[redis.Redis] = None
@@ -110,16 +106,12 @@ class OptimizedCacheService:
                 try:
                     return pickle.loads(value)
                 except Exception:
-                    return (
-                        value.decode() if isinstance(value, bytes) else value
-                    )
+                    return value.decode() if isinstance(value, bytes) else value
         except Exception as e:
             print(f"Cache get error for {key}: {e}")
             return None
 
-    async def set(
-        self, key: str, value: Any, ttl: Optional[timedelta] = None
-    ) -> bool:
+    async def set(self, key: str, value: Any, ttl: Optional[timedelta] = None) -> bool:
         """Set value in cache with automatic serialization."""
         try:
             client = await self._get_client()
@@ -213,9 +205,7 @@ class OptimizedCacheService:
             print(f"Cache mget error: {e}")
             return {}
 
-    async def mset(
-        self, items: Dict[str, Any], ttl: Optional[timedelta] = None
-    ) -> bool:
+    async def mset(self, items: Dict[str, Any], ttl: Optional[timedelta] = None) -> bool:
         """Set multiple values in a single operation."""
         try:
             client = await self._get_client()
@@ -252,9 +242,7 @@ class OptimizedCacheService:
 
             # Use SCAN for better performance
             while True:
-                cursor, keys = await client.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await client.scan(cursor, match=pattern, count=100)
                 if keys:
                     deleted += await client.delete(*keys)
                 if cursor == 0:
@@ -308,9 +296,7 @@ class OptimizedCacheService:
                 return await db.query(Technology).filter(**filters)
         """
 
-        def decorator(
-            func: Callable[..., Awaitable[T]]
-        ) -> Callable[..., Awaitable[T]]:
+        def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
             @wraps(func)
             async def wrapper(*args, **kwargs) -> T:
                 # Generate cache key
@@ -374,9 +360,7 @@ class CacheMetrics:
     def get_metrics(self) -> dict:
         """Get current metrics."""
         total_gets = self.operations["gets"]
-        hit_rate = (
-            self.operations["hits"] / total_gets * 100 if total_gets > 0 else 0
-        )
+        hit_rate = self.operations["hits"] / total_gets * 100 if total_gets > 0 else 0
 
         return {**self.operations, "hit_rate": round(hit_rate, 2)}
 

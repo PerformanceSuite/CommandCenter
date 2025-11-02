@@ -74,9 +74,7 @@ async def get_recent_activity(
     # Get recent items from services (using their get_all methods with ordering)
     recent_repos = await repo_service.list_repositories(skip=0, limit=limit)
     recent_tech, _ = await tech_service.list_technologies(skip=0, limit=limit)
-    recent_tasks = await research_service.list_research_tasks(
-        skip=0, limit=limit
-    )
+    recent_tasks = await research_service.list_research_tasks(skip=0, limit=limit)
 
     return {
         "recent_repositories": [

@@ -52,9 +52,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     setup_logging(
         log_level=log_level,
-        log_file=log_file
-        if os.getenv("ENVIRONMENT") == "production"
-        else None,
+        log_file=log_file if os.getenv("ENVIRONMENT") == "production" else None,
         json_format=json_logs,
     )
 
@@ -176,9 +174,7 @@ async def detailed_health_check(
     if health_status["status"] == "unhealthy":
         status_code = 503
     elif health_status["status"] == "degraded":
-        status_code = (
-            200  # Still return 200 for degraded (e.g., Redis disabled)
-        )
+        status_code = 200  # Still return 200 for degraded (e.g., Redis disabled)
 
     return JSONResponse(
         content=health_status,
@@ -202,9 +198,7 @@ async def root() -> JSONResponse:
 
 # Include routers
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
-app.include_router(
-    projects.router, prefix=settings.api_v1_prefix
-)  # Project isolation
+app.include_router(projects.router, prefix=settings.api_v1_prefix)  # Project isolation
 app.include_router(repositories.router, prefix=settings.api_v1_prefix)
 app.include_router(technologies.router, prefix=settings.api_v1_prefix)
 app.include_router(research_tasks.router, prefix=settings.api_v1_prefix)
@@ -216,13 +210,9 @@ app.include_router(github_features.router, prefix=settings.api_v1_prefix)
 app.include_router(rate_limits.router, prefix=settings.api_v1_prefix)
 app.include_router(mcp.router)  # MCP (Model Context Protocol) endpoints
 app.include_router(jobs.router)  # Jobs API for async task management
-app.include_router(
-    batch.router
-)  # Batch operations API for bulk analysis/import/export
+app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
 app.include_router(schedules.router)  # Schedule management for recurring tasks
-app.include_router(
-    export.router
-)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
+app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 
 # Mount Prometheus metrics endpoint
 metrics_app = make_asgi_app()
@@ -237,9 +227,7 @@ async def global_exception_handler(request, exc):
         status_code=500,
         content={
             "error": "Internal server error",
-            "detail": str(exc)
-            if settings.debug
-            else "An unexpected error occurred",
+            "detail": str(exc) if settings.debug else "An unexpected error occurred",
         },
     )
 

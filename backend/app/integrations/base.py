@@ -22,15 +22,12 @@ class IntegrationError(Exception):
     """Base exception for integration errors."""
 
 
-
 class IntegrationAuthError(IntegrationError):
     """Authentication/authorization error."""
 
 
-
 class IntegrationRateLimitError(IntegrationError):
     """Rate limit exceeded."""
-
 
 
 class BaseIntegration(ABC):
@@ -84,9 +81,7 @@ class BaseIntegration(ABC):
         integration = result.scalar_one_or_none()
 
         if not integration:
-            raise IntegrationError(
-                f"Integration {self.integration_id} not found"
-            )
+            raise IntegrationError(f"Integration {self.integration_id} not found")
 
         if integration.integration_type != self.integration_type:
             raise IntegrationError(
@@ -118,9 +113,7 @@ class BaseIntegration(ABC):
                 await self.refresh_token()
                 integration = await self.load()
             else:
-                raise IntegrationAuthError(
-                    "Access token expired and no refresh token available"
-                )
+                raise IntegrationAuthError("Access token expired and no refresh token available")
 
         try:
             return decrypt_value(integration.access_token_encrypted)
@@ -146,9 +139,7 @@ class BaseIntegration(ABC):
         integration.access_token_encrypted = encrypt_value(access_token)
 
         if expires_in:
-            integration.token_expires_at = datetime.utcnow() + timedelta(
-                seconds=expires_in
-            )
+            integration.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
         if refresh_token:
             integration.refresh_token_encrypted = encrypt_value(refresh_token)
@@ -171,9 +162,7 @@ class BaseIntegration(ABC):
             IntegrationAuthError: If refresh fails
         """
         # Override in subclasses that support token refresh
-        raise IntegrationAuthError(
-            f"{self.integration_type} does not support token refresh"
-        )
+        raise IntegrationAuthError(f"{self.integration_type} does not support token refresh")
 
     async def record_success(self) -> None:
         """Record successful operation."""
@@ -233,9 +222,7 @@ class BaseIntegration(ABC):
             "last_error": integration.last_error,
         }
 
-    async def update_rate_limit(
-        self, remaining: int, reset_at: datetime
-    ) -> None:
+    async def update_rate_limit(self, remaining: int, reset_at: datetime) -> None:
         """
         Update rate limit information.
 
@@ -248,9 +235,7 @@ class BaseIntegration(ABC):
         integration.rate_limit_reset_at = reset_at
         await self.db.commit()
 
-    def verify_webhook_signature(
-        self, payload: bytes, signature: str, secret: str
-    ) -> bool:
+    def verify_webhook_signature(self, payload: bytes, signature: str, secret: str) -> bool:
         """
         Verify webhook signature (HMAC-SHA256).
 
@@ -265,9 +250,7 @@ class BaseIntegration(ABC):
         import hmac
         import hashlib
 
-        expected = hmac.new(
-            secret.encode(), payload, hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
         return hmac.compare_digest(signature, expected)
 
@@ -301,9 +284,7 @@ class WebhookIntegration(BaseIntegration):
     """
 
     @abstractmethod
-    async def handle_webhook(
-        self, event_type: str, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def handle_webhook(self, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle incoming webhook event.
 
@@ -349,9 +330,7 @@ class OAuthIntegration(BaseIntegration):
         """
 
     @abstractmethod
-    async def exchange_code_for_token(
-        self, code: str, redirect_uri: str
-    ) -> Dict[str, Any]:
+    async def exchange_code_for_token(self, code: str, redirect_uri: str) -> Dict[str, Any]:
         """
         Exchange authorization code for access token.
 

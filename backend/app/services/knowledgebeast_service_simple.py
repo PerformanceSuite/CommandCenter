@@ -45,9 +45,7 @@ class KnowledgeBeastService:
 
         self.project_id = project_id
         self.collection_name = f"project_{project_id}"
-        self.db_path = db_path or getattr(
-            settings, "knowledgebeast_db_path", "./kb_chroma_db"
-        )
+        self.db_path = db_path or getattr(settings, "knowledgebeast_db_path", "./kb_chroma_db")
         self.embedding_model = embedding_model
 
         # Create per-project persist directory
@@ -63,9 +61,7 @@ class KnowledgeBeastService:
             vector_cache_size=1000,
         )
 
-        logger.info(
-            f"KB initialized: project={project_id}, dir={self.persist_dir}"
-        )
+        logger.info(f"KB initialized: project={project_id}, dir={self.persist_dir}")
 
     async def query(
         self,
@@ -120,9 +116,7 @@ class KnowledgeBeastService:
             import tempfile
             import os
 
-            with tempfile.NamedTemporaryFile(
-                mode="w", delete=False, suffix=".txt"
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
                 f.write(content)
                 temp_path = f.name
 
@@ -148,7 +142,7 @@ class KnowledgeBeastService:
 
     async def delete_by_source(self, source: str) -> bool:
         """Delete by source - KB may not support this natively"""
-        logger.warning(f"delete_by_source not fully supported in KB v0.1.0")
+        logger.warning("delete_by_source not fully supported in KB v0.1.0")
         # Would need to rebuild index without the document
         return False
 

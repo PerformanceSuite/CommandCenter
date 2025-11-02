@@ -109,9 +109,7 @@ class BatchService:
         # Validate format
         valid_formats = {"sarif", "markdown", "html", "csv", "json"}
         if format not in valid_formats:
-            raise ValueError(
-                f"Invalid export format '{format}'. Must be one of: {valid_formats}"
-            )
+            raise ValueError(f"Invalid export format '{format}'. Must be one of: {valid_formats}")
 
         # Prepare batch parameters
         batch_params = {
@@ -158,8 +156,7 @@ class BatchService:
         valid_strategies = {"skip", "overwrite", "merge"}
         if merge_strategy not in valid_strategies:
             raise ValueError(
-                f"Invalid merge strategy '{merge_strategy}'. "
-                f"Must be one of: {valid_strategies}"
+                f"Invalid merge strategy '{merge_strategy}'. " f"Must be one of: {valid_strategies}"
             )
 
         # Validate technology data (basic validation)
@@ -167,9 +164,7 @@ class BatchService:
         for i, tech in enumerate(technologies):
             missing = required_fields - set(tech.keys())
             if missing:
-                raise ValueError(
-                    f"Technology at index {i} missing required fields: {missing}"
-                )
+                raise ValueError(f"Technology at index {i} missing required fields: {missing}")
 
         # Prepare batch parameters
         batch_params = {
@@ -190,9 +185,7 @@ class BatchService:
 
         return job
 
-    async def get_batch_statistics(
-        self, project_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_batch_statistics(self, project_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get statistics for batch operations.
 
@@ -204,9 +197,7 @@ class BatchService:
         """
         # Build query
         stmt = select(Job).where(
-            Job.job_type.in_(
-                ["batch_analysis", "batch_export", "batch_import"]
-            )
+            Job.job_type.in_(["batch_analysis", "batch_export", "batch_import"])
         )
         if project_id:
             stmt = stmt.where(Job.project_id == project_id)
@@ -216,9 +207,7 @@ class BatchService:
 
         # Calculate statistics
         total_batches = len(jobs)
-        active_batches = len(
-            [j for j in jobs if j.status in ["pending", "running"]]
-        )
+        active_batches = len([j for j in jobs if j.status in ["pending", "running"]])
 
         by_type = {}
         by_status = {}
@@ -240,9 +229,7 @@ class BatchService:
         completed = by_status.get("completed", 0)
         failed = by_status.get("failed", 0)
         success_rate = (
-            (completed / (completed + failed)) * 100
-            if (completed + failed) > 0
-            else None
+            (completed / (completed + failed)) * 100 if (completed + failed) > 0 else None
         )
 
         return {

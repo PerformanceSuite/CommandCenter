@@ -25,9 +25,7 @@ class MCPAuthenticator:
             secret_key: Secret key for token validation (generated if not provided)
         """
         self.secret_key = secret_key or secrets.token_hex(32)
-        self._valid_tokens: Dict[
-            str, dict
-        ] = {}  # token -> {user_id, expires_at}
+        self._valid_tokens: Dict[str, dict] = {}  # token -> {user_id, expires_at}
 
     def generate_token(self, user_id: str, expires_in: int = 3600) -> str:
         """
@@ -123,9 +121,7 @@ class MCPRateLimiter:
             AsyncLimiter instance
         """
         if session_id not in self._session_limiters:
-            self._session_limiters[session_id] = AsyncLimiter(
-                self._requests_per_minute, 60
-            )
+            self._session_limiters[session_id] = AsyncLimiter(self._requests_per_minute, 60)
         return self._session_limiters[session_id]
 
     async def check_rate_limit(self, session_id: str) -> bool:

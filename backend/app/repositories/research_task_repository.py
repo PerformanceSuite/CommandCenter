@@ -137,9 +137,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         )
         return list(result.scalars().all())
 
-    async def get_upcoming(
-        self, days: int = 7, limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -159,9 +157,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             select(ResearchTask)
             .where(
                 ResearchTask.due_date.between(now, future),
-                ResearchTask.status.in_(
-                    [TaskStatus.PENDING, TaskStatus.IN_PROGRESS]
-                ),
+                ResearchTask.status.in_([TaskStatus.PENDING, TaskStatus.IN_PROGRESS]),
             )
             .order_by(ResearchTask.due_date.asc())
             .limit(limit)

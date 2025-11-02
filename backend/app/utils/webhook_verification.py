@@ -42,9 +42,7 @@ def verify_github_signature(
     expected_signature = signature_header[7:]  # Remove 'sha256=' prefix
 
     # Compute HMAC-SHA256
-    mac = hmac.new(
-        secret.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256
-    )
+    mac = hmac.new(secret.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
     computed_signature = mac.hexdigest()
 
     # Compare signatures using constant-time comparison
@@ -58,9 +56,7 @@ def verify_github_signature(
 
 
 async def get_webhook_signature(
-    x_hub_signature_256: Optional[str] = Header(
-        None, alias="X-Hub-Signature-256"
-    )
+    x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256")
 ) -> Optional[str]:
     """Dependency to extract webhook signature from headers"""
     return x_hub_signature_256

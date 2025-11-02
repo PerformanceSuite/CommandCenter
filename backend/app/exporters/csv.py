@@ -24,9 +24,7 @@ class CSVExporter(BaseExporter):
     - Combined (all in one with sections)
     """
 
-    def __init__(
-        self, project_analysis: Dict[str, Any], export_type: str = "combined"
-    ):
+    def __init__(self, project_analysis: Dict[str, Any], export_type: str = "combined"):
         """
         Initialize CSV exporter.
 
@@ -117,9 +115,7 @@ class CSVExporter(BaseExporter):
 
         # Data rows
         for dep in self._get_dependency_list():
-            is_outdated = dep.get("is_outdated", False) or dep.get(
-                "needs_update", False
-            )
+            is_outdated = dep.get("is_outdated", False) or dep.get("needs_update", False)
             status = "Outdated" if is_outdated else "Current"
 
             writer.writerow(
@@ -236,9 +232,7 @@ class CSVExporter(BaseExporter):
         technologies = self._get_technology_list()
         dependencies = self._get_dependency_list()
         research_gaps = self._get_research_gaps_list()
-        outdated_count = sum(
-            1 for d in dependencies if d.get("is_outdated", False)
-        )
+        outdated_count = sum(1 for d in dependencies if d.get("is_outdated", False))
 
         writer.writerow(["SUMMARY"])
         writer.writerow(["Metric", "Value"])
@@ -307,9 +301,7 @@ class CSVExporter(BaseExporter):
 
         # Research gaps section
         writer.writerow(["RESEARCH GAPS"])
-        writer.writerow(
-            ["Title", "Description", "Category", "Priority", "Recommendation"]
-        )
+        writer.writerow(["Title", "Description", "Category", "Priority", "Recommendation"])
         for gap in research_gaps:
             writer.writerow(
                 [
@@ -378,9 +370,7 @@ class ExcelExporter(CSVExporter):
         # Title
         ws["A1"] = "CommandCenter Analysis Report"
         ws["A1"].font = Font(size=16, bold=True, color="FFFFFF")
-        ws["A1"].fill = PatternFill(
-            start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-        )
+        ws["A1"].fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Metadata
         ws["A3"] = "Project:"
@@ -392,9 +382,7 @@ class ExcelExporter(CSVExporter):
         technologies = self._get_technology_list()
         dependencies = self._get_dependency_list()
         research_gaps = self._get_research_gaps_list()
-        outdated_count = sum(
-            1 for d in dependencies if d.get("is_outdated", False)
-        )
+        outdated_count = sum(1 for d in dependencies if d.get("is_outdated", False))
 
         ws["A6"] = "Summary Metrics"
         ws["A6"].font = Font(bold=True)
@@ -433,9 +421,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, tech in enumerate(self._get_technology_list(), 2):
@@ -471,9 +457,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, dep in enumerate(self._get_dependency_list(), 2):
@@ -551,9 +535,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, gap in enumerate(self._get_research_gaps_list(), 2):
@@ -568,9 +550,7 @@ class ExcelExporter(CSVExporter):
             ws.column_dimensions[get_column_letter(col)].width = 25
 
 
-def export_to_csv(
-    project_analysis: Dict[str, Any], export_type: str = "combined"
-) -> str:
+def export_to_csv(project_analysis: Dict[str, Any], export_type: str = "combined") -> str:
     """
     Convenience function to export analysis to CSV format.
 

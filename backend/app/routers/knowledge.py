@@ -90,14 +90,14 @@ async def query_knowledge_base(
         List of relevant knowledge entries with scores
     """
     # Create cache key (include mode and alpha for KB)
-    cache_key = f"kb_query:{project_id}:{mode}:{alpha}:{request.query}:{request.category}:{request.limit}"
+    cache_key = (
+        f"kb_query:{project_id}:{mode}:{alpha}:{request.query}:{request.category}:{request.limit}"
+    )
 
     # Try to get from cache first
     cached_result = await cache_service.get(cache_key)
     if cached_result:
-        return [
-            KnowledgeSearchResult(**item) for item in json.loads(cached_result)
-        ]
+        return [KnowledgeSearchResult(**item) for item in json.loads(cached_result)]
 
     try:
         # Query using appropriate service
@@ -183,21 +183,15 @@ async def add_document(
         filename = file.filename
 
         # Determine file type
-        file_extension = (
-            filename.split(".")[-1].lower() if "." in filename else ""
-        )
+        file_extension = filename.split(".")[-1].lower() if "." in filename else ""
 
         # Process document with Docling
         if file_extension == "pdf":
             processed_content = await docling_service.process_pdf(content)
         elif file_extension in ["md", "markdown"]:
-            processed_content = await docling_service.process_markdown(
-                content.decode("utf-8")
-            )
+            processed_content = await docling_service.process_markdown(content.decode("utf-8"))
         elif file_extension in ["txt", "text"]:
-            processed_content = await docling_service.process_text(
-                content.decode("utf-8")
-            )
+            processed_content = await docling_service.process_text(content.decode("utf-8"))
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -217,9 +211,7 @@ async def add_document(
         rag_service = RAGService(collection_name=collection)
 
         # Add to vector database
-        chunks_added = await rag_service.add_document(
-            content=processed_content, metadata=metadata
-        )
+        chunks_added = await rag_service.add_document(content=processed_content, metadata=metadata)
 
         # Create knowledge entry in database
         knowledge_entry = KnowledgeEntry(
@@ -255,9 +247,7 @@ async def add_document(
         )
 
 
-@router.delete(
-    "/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
     document_id: int,
     collection: str = "default",
@@ -272,9 +262,7 @@ async def delete_document(
         collection: Collection name
     """
     # Get knowledge entry
-    result = await db.execute(
-        select(KnowledgeEntry).where(KnowledgeEntry.id == document_id)
-    )
+    result = await db.execute(select(KnowledgeEntry).where(KnowledgeEntry.id == document_id))
     knowledge_entry = result.scalar_one_or_none()
 
     if not knowledge_entry:

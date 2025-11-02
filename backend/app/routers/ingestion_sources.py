@@ -31,9 +31,7 @@ router = APIRouter(prefix="/api/ingestion", tags=["ingestion"])
     response_model=IngestionSourceResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_source(
-    source: IngestionSourceCreate, db: AsyncSession = Depends(get_db)
-):
+async def create_source(source: IngestionSourceCreate, db: AsyncSession = Depends(get_db)):
     """
     Create a new ingestion source.
     """
@@ -42,9 +40,7 @@ async def create_source(
     await db.commit()
     await db.refresh(db_source)
 
-    logger.info(
-        f"Created ingestion source: {db_source.name} (ID: {db_source.id})"
-    )
+    logger.info(f"Created ingestion source: {db_source.name} (ID: {db_source.id})")
 
     return db_source
 
@@ -94,15 +90,11 @@ async def get_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get ingestion source by ID.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
-        raise HTTPException(
-            status_code=404, detail="Ingestion source not found"
-        )
+        raise HTTPException(status_code=404, detail="Ingestion source not found")
 
     return source
 
@@ -116,15 +108,11 @@ async def update_source(
     """
     Update ingestion source.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
-        raise HTTPException(
-            status_code=404, detail="Ingestion source not found"
-        )
+        raise HTTPException(status_code=404, detail="Ingestion source not found")
 
     # Update fields
     update_data = source_update.model_dump(exclude_unset=True)
@@ -144,15 +132,11 @@ async def delete_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Delete ingestion source.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
-        raise HTTPException(
-            status_code=404, detail="Ingestion source not found"
-        )
+        raise HTTPException(status_code=404, detail="Ingestion source not found")
 
     await db.delete(source)
     await db.commit()
@@ -163,21 +147,15 @@ async def delete_source(source_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/sources/{source_id}/run", status_code=status.HTTP_202_ACCEPTED)
-async def trigger_manual_run(
-    source_id: int, db: AsyncSession = Depends(get_db)
-):
+async def trigger_manual_run(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Manually trigger ingestion source run.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
-        raise HTTPException(
-            status_code=404, detail="Ingestion source not found"
-        )
+        raise HTTPException(status_code=404, detail="Ingestion source not found")
 
     if not source.enabled:
         raise HTTPException(status_code=400, detail="Source is disabled")
@@ -195,13 +173,9 @@ async def trigger_manual_run(
             detail="Webhook sources cannot be triggered manually",
         )
     elif source.type == SourceType.FILE_WATCHER:
-        raise HTTPException(
-            status_code=400, detail="File watcher sources run automatically"
-        )
+        raise HTTPException(status_code=400, detail="File watcher sources run automatically")
 
-    logger.info(
-        f"Triggered manual run for source: {source.name} (task_id: {task.id})"
-    )
+    logger.info(f"Triggered manual run for source: {source.name} (task_id: {task.id})")
 
     return {
         "task_id": task.id,

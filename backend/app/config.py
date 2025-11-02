@@ -145,9 +145,7 @@ class Settings(BaseSettings):
                 return [parsed]
             except json.JSONDecodeError:
                 # Fallback: treat as comma-separated list
-                return [
-                    origin.strip() for origin in v.split(",") if origin.strip()
-                ]
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     def get_postgres_url(self) -> str:

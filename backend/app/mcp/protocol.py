@@ -133,9 +133,7 @@ class MCPProtocolHandler:
 
         try:
             request = JSONRPCRequest.model_validate(data)
-            self._logger.debug(
-                f"Parsed request: method={request.method}, id={request.id}"
-            )
+            self._logger.debug(f"Parsed request: method={request.method}, id={request.id}")
             return request
         except Exception as e:
             self._logger.error(f"Request validation error: {e}")
@@ -155,9 +153,7 @@ class MCPProtocolHandler:
             JSONRPCResponse with result
         """
         response = JSONRPCResponse(id=request_id, result=result)
-        self._logger.debug(
-            f"Created success response for request {request_id}"
-        )
+        self._logger.debug(f"Created success response for request {request_id}")
         return response
 
     def create_error_response(
@@ -181,9 +177,7 @@ class MCPProtocolHandler:
         """
         error = JSONRPCError(code=code, message=message, data=data)
         response = JSONRPCResponse(id=request_id, error=error)
-        self._logger.debug(
-            f"Created error response for request {request_id}: {code} - {message}"
-        )
+        self._logger.debug(f"Created error response for request {request_id}: {code} - {message}")
         return response
 
     def create_parse_error(self) -> JSONRPCResponse:
@@ -315,9 +309,7 @@ class MCPProtocolHandler:
             # Unexpected error
             # Security: Log full exception details for debugging, but only return
             # error type to client to prevent information disclosure
-            self._logger.exception(
-                f"Unexpected error handling request {request_id}"
-            )
+            self._logger.exception(f"Unexpected error handling request {request_id}")
             error_data = {"type": type(exception).__name__}
             return self.create_error_response(
                 request_id,

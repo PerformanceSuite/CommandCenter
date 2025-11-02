@@ -65,22 +65,14 @@ class ResearchTask(Base):
     )
 
     # Research artifacts
-    uploaded_documents: Mapped[Optional[list]] = mapped_column(
-        JSON, nullable=True
-    )
+    uploaded_documents: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
     user_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     findings: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Task metadata
-    assigned_to: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
-    due_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, nullable=True
-    )
+    assigned_to: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Progress tracking
     progress_percentage: Mapped[int] = mapped_column(default=0)  # 0-100
@@ -89,14 +81,10 @@ class ResearchTask(Base):
 
     # Additional metadata
     # Note: 'metadata_' to avoid conflict with SQLAlchemy's reserved 'metadata'
-    metadata_: Mapped[Optional[dict]] = mapped_column(
-        "metadata", JSON, nullable=True
-    )
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )

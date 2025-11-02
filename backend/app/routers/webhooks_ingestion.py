@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 
-def verify_github_signature(
-    payload_body: bytes, signature_header: str, secret: str
-) -> bool:
+def verify_github_signature(payload_body: bytes, signature_header: str, secret: str) -> bool:
     """
     Verify GitHub webhook signature.
 
@@ -50,9 +48,7 @@ def verify_github_signature(
 async def github_webhook(
     request: Request,
     source_id: int = Query(..., description="ID of webhook ingestion source"),
-    x_hub_signature_256: Optional[str] = Header(
-        None, alias="X-Hub-Signature-256"
-    ),
+    x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256"),
     x_github_event: Optional[str] = Header(None, alias="X-GitHub-Event"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -76,9 +72,7 @@ async def github_webhook(
         raise HTTPException(status_code=404, detail="Webhook source not found")
 
     if not source.enabled:
-        raise HTTPException(
-            status_code=403, detail="Webhook source is disabled"
-        )
+        raise HTTPException(status_code=403, detail="Webhook source is disabled")
 
     # Get payload
     payload_body = await request.body()
@@ -87,17 +81,13 @@ async def github_webhook(
     # Verify signature
     secret = source.config.get("secret", "")
     if not verify_github_signature(payload_body, x_hub_signature_256, secret):
-        logger.warning(
-            f"Invalid GitHub webhook signature for source {source_id}"
-        )
+        logger.warning(f"Invalid GitHub webhook signature for source {source_id}")
         raise HTTPException(status_code=401, detail="Invalid signature")
 
     # Check if event is configured
     allowed_events = source.config.get("events", [])
     if allowed_events and x_github_event not in allowed_events:
-        logger.info(
-            f"Ignoring GitHub event '{x_github_event}' for source {source_id}"
-        )
+        logger.info(f"Ignoring GitHub event '{x_github_event}' for source {source_id}")
         return {"status": "ignored", "event": x_github_event}
 
     # Queue task asynchronously
@@ -105,9 +95,7 @@ async def github_webhook(
         source_id=source.id, payload=payload, event_type=x_github_event
     )
 
-    logger.info(
-        f"Queued GitHub webhook processing: task_id={task.id}, event={x_github_event}"
-    )
+    logger.info(f"Queued GitHub webhook processing: task_id={task.id}, event={x_github_event}")
 
     return {"status": "accepted", "task_id": task.id, "event": x_github_event}
 
@@ -138,21 +126,15 @@ async def generic_webhook(
     expected_api_key = os.getenv("GENERIC_WEBHOOK_API_KEY")
 
     if not expected_api_key:
-        logger.error(
-            "GENERIC_WEBHOOK_API_KEY environment variable not configured"
-        )
-        raise HTTPException(
-            status_code=500, detail="Webhook API key not configured on server"
-        )
+        logger.error("GENERIC_WEBHOOK_API_KEY environment variable not configured")
+        raise HTTPException(status_code=500, detail="Webhook API key not configured on server")
 
     if not x_api_key:
         logger.warning("Generic webhook request missing X-API-Key header")
         raise HTTPException(status_code=401, detail="Missing API key")
 
     if x_api_key != expected_api_key:
-        logger.warning(
-            f"Invalid API key provided for generic webhook: {x_api_key[:8]}..."
-        )
+        logger.warning(f"Invalid API key provided for generic webhook: {x_api_key[:8]}...")
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     payload = await request.json()

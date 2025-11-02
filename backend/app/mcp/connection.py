@@ -213,9 +213,7 @@ class MCPConnectionManager:
             del self._request_handlers[method]
             self._logger.debug(f"Unregistered handler for method: {method}")
 
-    async def create_session(
-        self, client_info: Optional[Dict[str, Any]] = None
-    ) -> MCPSession:
+    async def create_session(self, client_info: Optional[Dict[str, Any]] = None) -> MCPSession:
         """
         Create new client session.
 
@@ -229,9 +227,7 @@ class MCPConnectionManager:
             RuntimeError: If max connections reached
         """
         if len(self._sessions) >= self.max_connections:
-            raise RuntimeError(
-                f"Maximum connections ({self.max_connections}) reached"
-            )
+            raise RuntimeError(f"Maximum connections ({self.max_connections}) reached")
 
         session = MCPSession(client_info=client_info)
         self._sessions[session.session_id] = session
@@ -284,9 +280,7 @@ class MCPConnectionManager:
 
         return len(expired)
 
-    async def handle_request(
-        self, session_id: str, raw_message: str
-    ) -> Optional[str]:
+    async def handle_request(self, session_id: str, raw_message: str) -> Optional[str]:
         """
         Handle incoming request for a session.
 
@@ -334,9 +328,7 @@ class MCPConnectionManager:
             error_response = await self._protocol_handler.handle_exception(e)
             return self._protocol_handler.serialize_response(error_response)
 
-    async def _route_request(
-        self, request: JSONRPCRequest, session: MCPSession
-    ) -> JSONRPCResponse:
+    async def _route_request(self, request: JSONRPCRequest, session: MCPSession) -> JSONRPCResponse:
         """
         Route request to appropriate handler.
 
@@ -351,9 +343,7 @@ class MCPConnectionManager:
 
         # Check if handler exists
         if method not in self._request_handlers:
-            return self._protocol_handler.create_method_not_found_error(
-                request.id, method
-            )
+            return self._protocol_handler.create_method_not_found_error(request.id, method)
 
         try:
             # Call handler
@@ -400,9 +390,7 @@ class MCPConnectionManager:
         }
 
     # Session context management
-    async def set_session_context(
-        self, session_id: str, key: str, value: Any
-    ) -> bool:
+    async def set_session_context(self, session_id: str, key: str, value: Any) -> bool:
         """
         Set context value for a session.
 
@@ -421,9 +409,7 @@ class MCPConnectionManager:
         session.set_context(key, value)
         return True
 
-    async def get_session_context(
-        self, session_id: str, key: str, default: Any = None
-    ) -> Any:
+    async def get_session_context(self, session_id: str, key: str, default: Any = None) -> Any:
         """
         Get context value from a session.
 
@@ -492,9 +478,7 @@ class MCPConnectionManager:
         session.clear_context()
         return True
 
-    async def get_all_session_context(
-        self, session_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_all_session_context(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
         Get all context from a session.
 

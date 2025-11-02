@@ -35,9 +35,7 @@ class BaseRepository(Generic[ModelType]):
         Returns:
             Entity or None if not found
         """
-        result = await self.db.execute(
-            select(self.model).where(self.model.id == id)
-        )
+        result = await self.db.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
     async def get_all(
@@ -119,9 +117,7 @@ class BaseRepository(Generic[ModelType]):
         Returns:
             True if deleted, False if not found
         """
-        result = await self.db.execute(
-            delete(self.model).where(self.model.id == id)
-        )
+        result = await self.db.execute(delete(self.model).where(self.model.id == id))
         await self.db.flush()
         return result.rowcount > 0
 
