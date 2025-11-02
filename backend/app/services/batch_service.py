@@ -70,11 +70,11 @@ class BatchService:
         }
 
         # Create batch job
+        # Note: priority parameter stored in parameters, not as separate field
         job = await self.job_service.create_job(
             project_id=project_id,
             job_type="batch_analysis",
             parameters=batch_params,
-            priority=priority,
             tags=tags or {},
             created_by=created_by,
         )
@@ -122,7 +122,6 @@ class BatchService:
             project_id=project_id,
             job_type="batch_export",
             parameters=batch_params,
-            priority=5,
             tags=tags or {},
             created_by=created_by,
         )
@@ -176,7 +175,6 @@ class BatchService:
             project_id=project_id,
             job_type="batch_import",
             parameters=batch_params,
-            priority=5,
             tags=tags or {},
             created_by=created_by,
         )

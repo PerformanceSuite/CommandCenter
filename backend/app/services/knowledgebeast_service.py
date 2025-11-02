@@ -464,4 +464,6 @@ def get_knowledge_service(project_id: int, use_knowledgebeast: bool = False):
         # Import legacy RAG service
         from app.services.rag_service import RAGService
 
-        return RAGService(collection_name=f"project_{project_id}")
+        # RAGService expects repository_id, not collection_name
+        # Using project_id as repository_id for project-level collections
+        return RAGService(repository_id=project_id)

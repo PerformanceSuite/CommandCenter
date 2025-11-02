@@ -154,7 +154,7 @@ class ScheduleService:
     async def update_schedule(
         self,
         schedule_id: int,
-        **updates: Dict[str, Any],
+        **updates: Any,
     ) -> Schedule:
         """
         Update an existing schedule.
@@ -338,7 +338,7 @@ class ScheduleService:
             select(Schedule)
             .where(
                 and_(
-                    Schedule.enabled == True,
+                    Schedule.enabled.is_(True),
                     or_(
                         Schedule.next_run_at.is_(None),
                         Schedule.next_run_at <= now,
@@ -567,7 +567,7 @@ class ScheduleService:
             and_(
                 Schedule.project_id == project_id,
                 Schedule.task_type == task_type,
-                Schedule.enabled == True,
+                Schedule.enabled.is_(True),
             )
         )
 
