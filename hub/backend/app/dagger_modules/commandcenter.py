@@ -334,9 +334,10 @@ class CommandCenterStack:
             if not container:
                 return {"healthy": False, "service": "backend", "error": "Container not found"}
 
-            # Execute curl to health endpoint
+            # Execute curl to health endpoint with timeouts
             result = await container.with_exec([
-                "curl", "-f", "http://localhost:8000/health"
+                "curl", "-f", "--connect-timeout", "5", "--max-time", "10",
+                "http://localhost:8000/health"
             ]).stdout()
 
             healthy = "ok" in result.lower() or "healthy" in result.lower()
@@ -365,9 +366,10 @@ class CommandCenterStack:
             if not container:
                 return {"healthy": False, "service": "frontend", "error": "Container not found"}
 
-            # Execute curl to root path
+            # Execute curl to root path with timeouts
             result = await container.with_exec([
-                "curl", "-f", "http://localhost:3000/"
+                "curl", "-f", "--connect-timeout", "5", "--max-time", "10",
+                "http://localhost:3000/"
             ]).stdout()
 
             # If curl succeeds (exit 0), consider healthy
@@ -449,11 +451,11 @@ class CommandCenterStack:
         else:
             raise ValueError(f"Unhandled service: {service_name}")
 
-        # Update registry with new container
-        self._service_containers[service_name] = new_container
+        # Start as service BEFORE updating registry (so registry stays consistent if start fails)
+        new_service = new_container.as_service()
 
-        # Start as service
-        _ = new_container.as_service()
+        # Update registry with new container only after successful start
+        self._service_containers[service_name] = new_container
 
         logger.info(f"Service {service_name} restarted successfully")
 

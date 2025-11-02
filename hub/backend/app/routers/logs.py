@@ -23,6 +23,11 @@ async def get_service_logs(
     """
     Retrieve logs from a specific service container.
 
+    **SECURITY WARNING**: Logs may contain sensitive data (credentials, tokens,
+    stack traces with internal paths). This endpoint should only be exposed on
+    localhost (127.0.0.1) for development. Add authentication before deploying
+    the Hub to a shared network.
+
     Args:
         project_id: Project ID
         service_name: Service name (postgres, redis, backend, frontend)
