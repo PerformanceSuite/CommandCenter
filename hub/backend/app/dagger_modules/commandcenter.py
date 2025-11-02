@@ -12,6 +12,8 @@ from datetime import datetime
 
 import dagger
 
+from .retry import retry_with_backoff
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,6 +168,7 @@ class CommandCenterStack:
             .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
         )
 
+    @retry_with_backoff(max_attempts=3, initial_delay=2.0)
     async def start(self) -> dict:
         """Start all CommandCenter containers"""
         if not self.client:
@@ -256,6 +259,7 @@ class CommandCenterStack:
                              f"Has start() been called?")
         return self._service_containers[service_name]
 
+    @retry_with_backoff(max_attempts=2, initial_delay=1.0)
     async def check_postgres_health(self) -> dict:
         """
         Check PostgreSQL health using pg_isready.
@@ -286,6 +290,7 @@ class CommandCenterStack:
                 "error": str(e)
             }
 
+    @retry_with_backoff(max_attempts=2, initial_delay=1.0)
     async def check_redis_health(self) -> dict:
         """
         Check Redis health using redis-cli ping.
@@ -316,6 +321,7 @@ class CommandCenterStack:
                 "error": str(e)
             }
 
+    @retry_with_backoff(max_attempts=2, initial_delay=1.0)
     async def check_backend_health(self) -> dict:
         """
         Check backend health via HTTP /health endpoint.
@@ -346,6 +352,7 @@ class CommandCenterStack:
                 "error": str(e)
             }
 
+    @retry_with_backoff(max_attempts=2, initial_delay=1.0)
     async def check_frontend_health(self) -> dict:
         """
         Check frontend health via HTTP request to root.
