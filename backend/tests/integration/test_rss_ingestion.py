@@ -21,7 +21,7 @@ async def rss_source(db_session: AsyncSession, sample_project: Project) -> Inges
         name="Test RSS Feed",
         url="https://example.com/feed.xml",
         priority=7,
-        enabled=True
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
@@ -40,7 +40,7 @@ async def test_scrape_rss_feed_success(db_session: AsyncSession, rss_source: Ing
             summary="Summary 1",
             published=datetime(2024, 1, 15, 10, 30),
             author="John Doe",
-            tags=["python", "testing"]
+            tags=["python", "testing"],
         ),
         FeedEntry(
             title="Test Article 2",
@@ -49,19 +49,20 @@ async def test_scrape_rss_feed_success(db_session: AsyncSession, rss_source: Ing
             summary="Summary 2",
             published=datetime(2024, 1, 16, 14, 0),
             author="Jane Smith",
-            tags=["fastapi"]
-        )
+            tags=["fastapi"],
+        ),
     ]
 
-    with patch('app.services.feed_scraper_service.FeedScraperService.parse_feed',
-               return_value=mock_entries):
-        with patch('app.services.rag_service.RAGService.add_document') as mock_add_doc:
+    with patch(
+        "app.services.feed_scraper_service.FeedScraperService.parse_feed", return_value=mock_entries
+    ):
+        with patch("app.services.rag_service.RAGService.add_document") as mock_add_doc:
             # Execute task
             result = scrape_rss_feed(rss_source.id)
 
     # Verify result
-    assert result['status'] == 'success'
-    assert result['documents_ingested'] == 2
+    assert result["status"] == "success"
+    assert result["documents_ingested"] == 2
 
     # Verify source status updated
     await db_session.refresh(rss_source)
@@ -77,13 +78,15 @@ async def test_scrape_rss_feed_success(db_session: AsyncSession, rss_source: Ing
 @pytest.mark.asyncio
 async def test_scrape_rss_feed_with_errors(db_session: AsyncSession, rss_source: IngestionSource):
     """Test RSS feed scraping with errors"""
-    with patch('app.services.feed_scraper_service.FeedScraperService.parse_feed',
-               side_effect=ValueError("Feed is malformed")):
+    with patch(
+        "app.services.feed_scraper_service.FeedScraperService.parse_feed",
+        side_effect=ValueError("Feed is malformed"),
+    ):
         result = scrape_rss_feed(rss_source.id)
 
     # Verify error handling
-    assert result['status'] == 'error'
-    assert 'Feed is malformed' in result['error']
+    assert result["status"] == "error"
+    assert "Feed is malformed" in result["error"]
 
     # Verify source status updated
     await db_session.refresh(rss_source)
@@ -100,5 +103,5 @@ async def test_scrape_disabled_source(db_session: AsyncSession, rss_source: Inge
 
     result = scrape_rss_feed(rss_source.id)
 
-    assert result['status'] == 'skipped'
-    assert 'disabled' in result['message'].lower()
+    assert result["status"] == "skipped"
+    assert "disabled" in result["message"].lower()

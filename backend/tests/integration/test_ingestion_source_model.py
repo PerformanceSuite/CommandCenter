@@ -19,7 +19,7 @@ async def test_create_rss_source(db_session: AsyncSession, sample_project: Proje
         url="https://example.com/feed.xml",
         schedule="0 * * * *",  # Every hour
         priority=8,
-        enabled=True
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
@@ -42,7 +42,7 @@ async def test_create_documentation_source(db_session: AsyncSession, sample_proj
         schedule="0 0 * * 0",  # Weekly
         priority=9,
         enabled=True,
-        config={"doc_system": "mkdocs", "max_depth": 3}
+        config={"doc_system": "mkdocs", "max_depth": 3},
     )
     db_session.add(source)
     await db_session.commit()
@@ -62,7 +62,7 @@ async def test_create_webhook_source(db_session: AsyncSession, sample_project: P
         url="/api/webhooks/github",
         priority=10,
         enabled=True,
-        config={"secret": "webhook-secret-key", "events": ["push", "release"]}
+        config={"secret": "webhook-secret-key", "events": ["push", "release"]},
     )
     db_session.add(source)
     await db_session.commit()
@@ -81,7 +81,7 @@ async def test_create_file_watcher_source(db_session: AsyncSession, sample_proje
         path="/home/user/Documents/Research",
         priority=7,
         enabled=True,
-        config={"patterns": ["*.pdf", "*.md"], "ignore": [".git", "node_modules"]}
+        config={"patterns": ["*.pdf", "*.md"], "ignore": [".git", "node_modules"]},
     )
     db_session.add(source)
     await db_session.commit()
@@ -95,16 +95,28 @@ async def test_source_priority_ordering(db_session: AsyncSession, sample_project
     """Test sources can be ordered by priority"""
     # Create sources with different priorities
     low = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Low Priority", url="https://low.com/feed", priority=3, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Low Priority",
+        url="https://low.com/feed",
+        priority=3,
+        enabled=True,
     )
     high = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="High Priority", url="https://high.com/feed", priority=9, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="High Priority",
+        url="https://high.com/feed",
+        priority=9,
+        enabled=True,
     )
     medium = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Medium Priority", url="https://medium.com/feed", priority=6, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Medium Priority",
+        url="https://medium.com/feed",
+        priority=6,
+        enabled=True,
     )
 
     db_session.add_all([low, high, medium])
@@ -127,8 +139,12 @@ async def test_source_priority_ordering(db_session: AsyncSession, sample_project
 async def test_update_source_status(db_session: AsyncSession, sample_project: Project):
     """Test updating source status after run"""
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Test Source", url="https://test.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Test Source",
+        url="https://test.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
@@ -159,8 +175,12 @@ async def test_update_source_status(db_session: AsyncSession, sample_project: Pr
 async def test_disable_source(db_session: AsyncSession, sample_project: Project):
     """Test disabling a source"""
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Test Source", url="https://test.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Test Source",
+        url="https://test.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()

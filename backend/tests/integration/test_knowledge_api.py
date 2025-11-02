@@ -32,7 +32,7 @@ class TestKnowledgeAPI:
                 "content": "FastAPI supports async operations",
                 "metadata": {"file_path": "docs/async.md"},
                 "score": 0.87,
-            }
+            },
         ]
 
         with patch("app.services.rag_service.RAGService") as mock_rag_class:
@@ -117,9 +117,7 @@ class TestKnowledgeAPI:
             data = response.json()
             assert data["results"] == []
 
-    async def test_query_knowledge_base_validation_error(
-        self, async_client: AsyncClient
-    ):
+    async def test_query_knowledge_base_validation_error(self, async_client: AsyncClient):
         """Test query validation errors"""
         # Missing required fields
         invalid_data = {
@@ -131,9 +129,7 @@ class TestKnowledgeAPI:
 
         assert response.status_code == 422  # Validation error
 
-    async def test_query_knowledge_base_nonexistent_repository(
-        self, async_client: AsyncClient
-    ):
+    async def test_query_knowledge_base_nonexistent_repository(self, async_client: AsyncClient):
         """Test querying with nonexistent repository"""
         query_data = {
             "query": "test query",
@@ -146,25 +142,19 @@ class TestKnowledgeAPI:
         # Should return 404 or appropriate error
         assert response.status_code in [404, 400]
 
-    async def test_index_repository(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_index_repository(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test indexing a repository for knowledge base"""
         project = await ProjectFactory.create(db_session)
         repo = await RepositoryFactory.create(db=db_session, project_id=project.id)
 
         with patch("app.services.rag_service.RAGService") as mock_rag_class:
             mock_rag = AsyncMock()
-            mock_rag.index_repository = AsyncMock(
-                return_value={"indexed": True, "documents": 150}
-            )
+            mock_rag.index_repository = AsyncMock(return_value={"indexed": True, "documents": 150})
             mock_rag.initialize.return_value = None
             mock_rag_class.return_value = mock_rag
 
             # Index repository
-            response = await async_client.post(
-                f"/knowledge/index/{repo.id}"
-            )
+            response = await async_client.post(f"/knowledge/index/{repo.id}")
 
             assert response.status_code in [200, 202]  # Success or Accepted
             data = response.json()
@@ -178,8 +168,7 @@ class TestKnowledgeAPI:
         repo = await RepositoryFactory.create(db=db_session, project_id=project.id)
 
         mock_results = [
-            {"content": f"Result {i}", "metadata": {}, "score": 0.9 - (i * 0.1)}
-            for i in range(10)
+            {"content": f"Result {i}", "metadata": {}, "score": 0.9 - (i * 0.1)} for i in range(10)
         ]
 
         with patch("app.services.rag_service.RAGService") as mock_rag_class:

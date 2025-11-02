@@ -14,9 +14,7 @@ from backend.tests.utils.factories import TechnologyFactory, ProjectFactory
 class TestTechnologiesAPI:
     """Test Technology API CRUD operations"""
 
-    async def test_create_technology(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_create_technology(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test creating a technology via API"""
         # Create project first
         project = await ProjectFactory.create(db_session)
@@ -46,22 +44,14 @@ class TestTechnologiesAPI:
         assert "id" in data
         assert "created_at" in data
 
-    async def test_list_technologies(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_list_technologies(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test listing technologies"""
         # Create project and technologies
         project = await ProjectFactory.create(db_session)
 
-        await TechnologyFactory.create(
-            db=db_session, project_id=project.id, title="Python"
-        )
-        await TechnologyFactory.create(
-            db=db_session, project_id=project.id, title="Django"
-        )
-        await TechnologyFactory.create(
-            db=db_session, project_id=project.id, title="PostgreSQL"
-        )
+        await TechnologyFactory.create(db=db_session, project_id=project.id, title="Python")
+        await TechnologyFactory.create(db=db_session, project_id=project.id, title="Django")
+        await TechnologyFactory.create(db=db_session, project_id=project.id, title="PostgreSQL")
 
         # List technologies
         response = await async_client.get(f"/technologies/?project_id={project.id}")
@@ -73,9 +63,7 @@ class TestTechnologiesAPI:
         assert "total" in data
         assert data["total"] == 3
 
-    async def test_get_technology_by_id(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_get_technology_by_id(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test getting a specific technology"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(
@@ -96,9 +84,7 @@ class TestTechnologiesAPI:
         assert data["domain"] == "infrastructure"
         assert data["status"] == "implementation"
 
-    async def test_update_technology(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_update_technology(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test updating a technology"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(
@@ -116,9 +102,7 @@ class TestTechnologiesAPI:
             "notes": "Started implementation in Q1",
         }
 
-        response = await async_client.patch(
-            f"/technologies/{tech.id}", json=update_data
-        )
+        response = await async_client.patch(f"/technologies/{tech.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -128,14 +112,10 @@ class TestTechnologiesAPI:
         assert data["notes"] == "Started implementation in Q1"
         assert data["title"] == "Kubernetes"  # Unchanged
 
-    async def test_delete_technology(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_delete_technology(self, async_client: AsyncClient, db_session: AsyncSession):
         """Test deleting a technology"""
         project = await ProjectFactory.create(db_session)
-        tech = await TechnologyFactory.create(
-            db=db_session, project_id=project.id, title="OldTech"
-        )
+        tech = await TechnologyFactory.create(db=db_session, project_id=project.id, title="OldTech")
 
         # Delete technology
         response = await async_client.delete(f"/technologies/{tech.id}")
@@ -173,9 +153,7 @@ class TestTechnologiesAPI:
         )
 
         # Filter by AI_ML domain
-        response = await async_client.get(
-            f"/technologies/?project_id={project.id}&domain=ai-ml"
-        )
+        response = await async_client.get(f"/technologies/?project_id={project.id}&domain=ai-ml")
 
         assert response.status_code == 200
         data = response.json()

@@ -19,31 +19,41 @@ async def test_create_rss_source(async_client: AsyncClient, sample_project: Proj
         "url": "https://example.com/feed.xml",
         "schedule": "0 * * * *",
         "priority": 8,
-        "enabled": True
+        "enabled": True,
     }
 
     response = await async_client.post("/api/ingestion/sources", json=payload)
 
     assert response.status_code == 201
     data = response.json()
-    assert data['name'] == "Tech Blog"
-    assert data['type'] == "rss"
-    assert data['status'] == "pending"
+    assert data["name"] == "Tech Blog"
+    assert data["type"] == "rss"
+    assert data["status"] == "pending"
 
 
 @pytest.mark.asyncio
-async def test_list_sources(async_client: AsyncClient, sample_project: Project, db_session: AsyncSession):
+async def test_list_sources(
+    async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
+):
     """Test listing ingestion sources"""
     from app.models.ingestion_source import IngestionSource
 
     # Create test sources
     source1 = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Source 1", url="https://example.com/feed1", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Source 1",
+        url="https://example.com/feed1",
+        priority=5,
+        enabled=True,
     )
     source2 = IngestionSource(
-        project_id=sample_project.id, type=SourceType.DOCUMENTATION,
-        name="Source 2", url="https://example.com/docs", priority=7, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.DOCUMENTATION,
+        name="Source 2",
+        url="https://example.com/docs",
+        priority=7,
+        enabled=True,
     )
     db_session.add_all([source1, source2])
     await db_session.commit()
@@ -52,18 +62,24 @@ async def test_list_sources(async_client: AsyncClient, sample_project: Project, 
 
     assert response.status_code == 200
     data = response.json()
-    assert data['total'] == 2
-    assert len(data['sources']) == 2
+    assert data["total"] == 2
+    assert len(data["sources"]) == 2
 
 
 @pytest.mark.asyncio
-async def test_get_source_by_id(async_client: AsyncClient, sample_project: Project, db_session: AsyncSession):
+async def test_get_source_by_id(
+    async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
+):
     """Test getting single source"""
     from app.models.ingestion_source import IngestionSource
 
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Test Source", url="https://example.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Test Source",
+        url="https://example.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
@@ -73,47 +89,55 @@ async def test_get_source_by_id(async_client: AsyncClient, sample_project: Proje
 
     assert response.status_code == 200
     data = response.json()
-    assert data['id'] == source.id
-    assert data['name'] == "Test Source"
+    assert data["id"] == source.id
+    assert data["name"] == "Test Source"
 
 
 @pytest.mark.asyncio
-async def test_update_source(async_client: AsyncClient, sample_project: Project, db_session: AsyncSession):
+async def test_update_source(
+    async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
+):
     """Test updating source"""
     from app.models.ingestion_source import IngestionSource
 
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Old Name", url="https://example.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Old Name",
+        url="https://example.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
     await db_session.refresh(source)
 
-    update_payload = {
-        "name": "New Name",
-        "priority": 9,
-        "enabled": False
-    }
+    update_payload = {"name": "New Name", "priority": 9, "enabled": False}
 
     response = await async_client.put(f"/api/ingestion/sources/{source.id}", json=update_payload)
 
     assert response.status_code == 200
     data = response.json()
-    assert data['name'] == "New Name"
-    assert data['priority'] == 9
-    assert data['enabled'] == False
+    assert data["name"] == "New Name"
+    assert data["priority"] == 9
+    assert data["enabled"] == False
 
 
 @pytest.mark.asyncio
-async def test_delete_source(async_client: AsyncClient, sample_project: Project, db_session: AsyncSession):
+async def test_delete_source(
+    async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
+):
     """Test deleting source"""
     from app.models.ingestion_source import IngestionSource
     from sqlalchemy import select
 
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="To Delete", url="https://example.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="To Delete",
+        url="https://example.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
@@ -133,25 +157,31 @@ async def test_delete_source(async_client: AsyncClient, sample_project: Project,
 
 
 @pytest.mark.asyncio
-async def test_trigger_manual_run(async_client: AsyncClient, sample_project: Project, db_session: AsyncSession):
+async def test_trigger_manual_run(
+    async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
+):
     """Test manually triggering source run"""
     from app.models.ingestion_source import IngestionSource
     from unittest.mock import patch
 
     source = IngestionSource(
-        project_id=sample_project.id, type=SourceType.RSS,
-        name="Manual Source", url="https://example.com/feed", priority=5, enabled=True
+        project_id=sample_project.id,
+        type=SourceType.RSS,
+        name="Manual Source",
+        url="https://example.com/feed",
+        priority=5,
+        enabled=True,
     )
     db_session.add(source)
     await db_session.commit()
     await db_session.refresh(source)
 
-    with patch('app.tasks.ingestion_tasks.scrape_rss_feed.delay') as mock_task:
-        mock_task.return_value.id = 'task-123'
+    with patch("app.tasks.ingestion_tasks.scrape_rss_feed.delay") as mock_task:
+        mock_task.return_value.id = "task-123"
 
         response = await async_client.post(f"/api/ingestion/sources/{source.id}/run")
 
         assert response.status_code == 202
         data = response.json()
-        assert 'task_id' in data
+        assert "task_id" in data
         mock_task.assert_called_once_with(source.id)

@@ -22,9 +22,7 @@ def temp_watch_dir():
 
 @pytest.fixture
 def file_watcher_source(
-    db_session: Session,
-    sample_project: Project,
-    temp_watch_dir: str
+    db_session: Session, sample_project: Project, temp_watch_dir: str
 ) -> IngestionSource:
     """Create a file watcher ingestion source"""
     source = IngestionSource(
@@ -34,10 +32,7 @@ def file_watcher_source(
         path=temp_watch_dir,
         priority=7,
         enabled=True,
-        config={
-            "patterns": ["*.pdf", "*.md", "*.txt"],
-            "ignore": [".git", "__pycache__"]
-        }
+        config={"patterns": ["*.pdf", "*.md", "*.txt"], "ignore": [".git", "__pycache__"]},
     )
     db_session.add(source)
     db_session.commit()
@@ -45,27 +40,21 @@ def file_watcher_source(
 
 
 def test_process_new_markdown_file(
-    db_session: Session,
-    file_watcher_source: IngestionSource,
-    temp_watch_dir: str
+    db_session: Session, file_watcher_source: IngestionSource, temp_watch_dir: str
 ):
     """Test processing newly created Markdown file"""
     # Create test file
     md_file = os.path.join(temp_watch_dir, "notes.md")
-    with open(md_file, 'w') as f:
+    with open(md_file, "w") as f:
         f.write("# Research Notes\n\nImportant findings about the topic...")
 
     # Simulate file change event
-    event = FileChangeEvent(
-        event_type='created',
-        file_path=md_file,
-        is_directory=False
-    )
+    event = FileChangeEvent(event_type="created", file_path=md_file, is_directory=False)
 
     result = process_file_change(file_watcher_source.id, event)
 
-    assert result['status'] == 'success'
-    assert result['documents_ingested'] == 1
+    assert result["status"] == "success"
+    assert result["documents_ingested"] == 1
 
     # Verify source updated
     db_session.refresh(file_watcher_source)
@@ -73,9 +62,7 @@ def test_process_new_markdown_file(
 
 
 def test_process_pdf_file(
-    db_session: Session,
-    file_watcher_source: IngestionSource,
-    temp_watch_dir: str
+    db_session: Session, file_watcher_source: IngestionSource, temp_watch_dir: str
 ):
     """Test processing PDF file"""
     from unittest.mock import patch, MagicMock
@@ -84,34 +71,25 @@ def test_process_pdf_file(
     Path(pdf_file).touch()  # Create empty file
 
     # Mock PDF extraction
-    with patch('app.services.file_watcher_service.FileWatcherService.extract_text_from_file',
-               return_value="PDF content extracted"):
-        event = FileChangeEvent(
-            event_type='created',
-            file_path=pdf_file,
-            is_directory=False
-        )
+    with patch(
+        "app.services.file_watcher_service.FileWatcherService.extract_text_from_file",
+        return_value="PDF content extracted",
+    ):
+        event = FileChangeEvent(event_type="created", file_path=pdf_file, is_directory=False)
 
         result = process_file_change(file_watcher_source.id, event)
 
-    assert result['status'] == 'success'
+    assert result["status"] == "success"
 
 
-def test_ignore_non_matching_files(
-    file_watcher_source: IngestionSource,
-    temp_watch_dir: str
-):
+def test_ignore_non_matching_files(file_watcher_source: IngestionSource, temp_watch_dir: str):
     """Test that non-matching files are ignored"""
     # Create file that doesn't match patterns
     img_file = os.path.join(temp_watch_dir, "image.png")
     Path(img_file).touch()
 
-    event = FileChangeEvent(
-        event_type='created',
-        file_path=img_file,
-        is_directory=False
-    )
+    event = FileChangeEvent(event_type="created", file_path=img_file, is_directory=False)
 
     result = process_file_change(file_watcher_source.id, event)
 
-    assert result['status'] == 'skipped'
+    assert result["status"] == "skipped"
