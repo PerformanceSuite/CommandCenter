@@ -13,15 +13,15 @@ V = TypeVar("V")
 
 class LRUCache(Generic[K, V]):
     """Thread-safe LRU (Least Recently Used) cache implementation.
-    
+
     This cache automatically evicts the least recently used items when
     the maximum capacity is reached.
-    
+
     Attributes:
         capacity: Maximum number of items the cache can hold
         cache: OrderedDict storing the cached items
     """
-    
+
     def __init__(self, capacity: int = 100) -> None:
         """Initialize the LRU cache.
 
@@ -36,7 +36,7 @@ class LRUCache(Generic[K, V]):
         self.capacity = capacity
         self.cache: OrderedDict[K, V] = OrderedDict()
         self._lock = threading.Lock()
-    
+
     def get(self, key: K) -> Optional[V]:
         """Get an item from the cache.
 
@@ -53,7 +53,7 @@ class LRUCache(Generic[K, V]):
                 # Move to end to mark as recently used
                 self.cache.move_to_end(key)
                 return self.cache[key]
-    
+
     def put(self, key: K, value: V) -> None:
         """Put an item in the cache.
 
@@ -71,23 +71,23 @@ class LRUCache(Generic[K, V]):
                 # Remove least recently used item if over capacity
                 if len(self.cache) > self.capacity:
                     self.cache.popitem(last=False)
-    
+
     def clear(self) -> None:
         """Clear all items from the cache."""
         with measure_cache_operation("clear", "lru"):
             with self._lock:
                 self.cache.clear()
-    
+
     def __len__(self) -> int:
         """Return the current number of items in the cache."""
         with self._lock:
             return len(self.cache)
-    
+
     def __contains__(self, key: K) -> bool:
         """Check if a key exists in the cache."""
         with self._lock:
             return key in self.cache
-    
+
     def stats(self) -> dict[str, Any]:
         """Get cache statistics.
 

@@ -228,4 +228,3 @@ echo "1️⃣  pnpm hub:refresh"
 echo "2️⃣  pnpm hub:projects:refresh"
 echo "3️⃣  pnpm hub:projects"
 echo "Then open the console (pnpm console:dev) and you should see both Tools and Project Instances listed."
-

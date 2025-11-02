@@ -49,7 +49,9 @@ def test_config_init(runner):
         config_path = Path("test_config.yaml")
 
         with patch("cli.config.Config.get_default_config_path", return_value=config_path):
-            with patch("cli.commands.config_cmd.Config.get_default_config_path", return_value=config_path):
+            with patch(
+                "cli.commands.config_cmd.Config.get_default_config_path", return_value=config_path
+            ):
                 result = runner.invoke(cli, ["config", "init", "--force"])
 
                 assert result.exit_code == 0
@@ -156,9 +158,7 @@ def test_analyze_github(mock_api_client, runner, temp_config):
 
     with patch("cli.config.Config.get_default_config_path", return_value=temp_config):
         runner.invoke(cli, ["config", "init"])
-        result = runner.invoke(
-            cli, ["analyze", "project", ".", "--github", "facebook/react"]
-        )
+        result = runner.invoke(cli, ["analyze", "project", ".", "--github", "facebook/react"])
 
         assert result.exit_code == 0
         mock_api.analyze_github_repo.assert_called_once()

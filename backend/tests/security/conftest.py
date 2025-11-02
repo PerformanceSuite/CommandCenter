@@ -8,22 +8,14 @@ from tests.utils.factories import UserFactory, ProjectFactory
 @pytest.fixture
 async def user_a(db_session):
     """Create isolated user A with project-a."""
-    user = await UserFactory.create(
-        db_session,
-        email="user_a@test.com",
-        project_id="project-a"
-    )
+    user = await UserFactory.create(db_session, email="user_a@test.com", project_id="project-a")
     return user
 
 
 @pytest.fixture
 async def user_b(db_session):
     """Create isolated user B with project-b."""
-    user = await UserFactory.create(
-        db_session,
-        email="user_b@test.com",
-        project_id="project-b"
-    )
+    user = await UserFactory.create(db_session, email="user_b@test.com", project_id="project-b")
     return user
 
 
@@ -40,19 +32,17 @@ def jwt_token_factory():
     Returns:
         JWT token string
     """
+
     def _create_token(
         user_id: str,
         expires_delta: timedelta = None,
         tampered: bool = False,
-        tamper_type: str = "signature"
+        tamper_type: str = "signature",
     ):
         if expires_delta is None:
             expires_delta = timedelta(minutes=30)
 
-        token = create_access_token(
-            data={"sub": user_id},
-            expires_delta=expires_delta
-        )
+        token = create_access_token(data={"sub": user_id}, expires_delta=expires_delta)
 
         if tampered:
             parts = token.split(".")
@@ -79,6 +69,7 @@ def auth_headers_factory(jwt_token_factory):
     Returns:
         Dictionary with Authorization header
     """
+
     def _create_headers(user):
         token = jwt_token_factory(user_id=str(user.id))
         return {"Authorization": f"Bearer {token}"}

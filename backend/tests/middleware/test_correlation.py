@@ -42,9 +42,9 @@ def test_extracts_existing_request_id():
     response = client.get("/health", headers={"X-Request-ID": custom_id})
 
     # Should preserve the custom ID
-    assert response.headers["X-Request-ID"] == custom_id, (
-        f"Expected {custom_id}, got {response.headers.get('X-Request-ID')}"
-    )
+    assert (
+        response.headers["X-Request-ID"] == custom_id
+    ), f"Expected {custom_id}, got {response.headers.get('X-Request-ID')}"
 
 
 def test_adds_request_id_to_response_headers():
@@ -105,6 +105,4 @@ def test_correlation_id_works_with_different_endpoints():
 
     for endpoint in endpoints:
         response = client.get(endpoint)
-        assert "X-Request-ID" in response.headers, (
-            f"Missing X-Request-ID for endpoint: {endpoint}"
-        )
+        assert "X-Request-ID" in response.headers, f"Missing X-Request-ID for endpoint: {endpoint}"

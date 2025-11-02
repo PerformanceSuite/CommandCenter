@@ -43,9 +43,7 @@ class TestScheduleCreation:
     """Tests for schedule creation endpoint."""
 
     @pytest.mark.asyncio
-    async def test_create_schedule_success(
-        self, client: AsyncClient, test_project: Project
-    ):
+    async def test_create_schedule_success(self, client: AsyncClient, test_project: Project):
         """Test creating a schedule successfully."""
         data = {
             "project_id": test_project.id,
@@ -67,9 +65,7 @@ class TestScheduleCreation:
         assert result["id"] is not None
 
     @pytest.mark.asyncio
-    async def test_create_cron_schedule(
-        self, client: AsyncClient, test_project: Project
-    ):
+    async def test_create_cron_schedule(self, client: AsyncClient, test_project: Project):
         """Test creating a cron-based schedule."""
         data = {
             "project_id": test_project.id,
@@ -124,9 +120,7 @@ class TestScheduleRetrieval:
     """Tests for schedule retrieval endpoints."""
 
     @pytest.mark.asyncio
-    async def test_list_schedules(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_list_schedules(self, client: AsyncClient, test_schedule: Schedule):
         """Test listing schedules."""
         response = await client.get("/api/v1/schedules")
 
@@ -136,9 +130,7 @@ class TestScheduleRetrieval:
         assert result["total"] >= 1
 
     @pytest.mark.asyncio
-    async def test_list_schedules_with_filters(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_list_schedules_with_filters(self, client: AsyncClient, test_schedule: Schedule):
         """Test listing schedules with filters."""
         response = await client.get(
             "/api/v1/schedules",
@@ -182,9 +174,7 @@ class TestScheduleRetrieval:
         assert result["page"] == 1
 
     @pytest.mark.asyncio
-    async def test_get_schedule_by_id(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_get_schedule_by_id(self, client: AsyncClient, test_schedule: Schedule):
         """Test getting schedule by ID."""
         response = await client.get(f"/api/v1/schedules/{test_schedule.id}")
 
@@ -194,9 +184,7 @@ class TestScheduleRetrieval:
         assert result["name"] == test_schedule.name
 
     @pytest.mark.asyncio
-    async def test_get_nonexistent_schedule(
-        self, client: AsyncClient
-    ):
+    async def test_get_nonexistent_schedule(self, client: AsyncClient):
         """Test getting nonexistent schedule."""
         response = await client.get("/api/v1/schedules/99999")
 
@@ -207,39 +195,29 @@ class TestScheduleUpdate:
     """Tests for schedule update endpoint."""
 
     @pytest.mark.asyncio
-    async def test_update_schedule_name(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_update_schedule_name(self, client: AsyncClient, test_schedule: Schedule):
         """Test updating schedule name."""
         data = {"name": "Updated Name"}
 
-        response = await client.patch(
-            f"/api/v1/schedules/{test_schedule.id}", json=data
-        )
+        response = await client.patch(f"/api/v1/schedules/{test_schedule.id}", json=data)
 
         assert response.status_code == 200
         result = response.json()
         assert result["name"] == "Updated Name"
 
     @pytest.mark.asyncio
-    async def test_update_schedule_frequency(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_update_schedule_frequency(self, client: AsyncClient, test_schedule: Schedule):
         """Test updating schedule frequency."""
         data = {"frequency": "weekly"}
 
-        response = await client.patch(
-            f"/api/v1/schedules/{test_schedule.id}", json=data
-        )
+        response = await client.patch(f"/api/v1/schedules/{test_schedule.id}", json=data)
 
         assert response.status_code == 200
         result = response.json()
         assert result["frequency"] == "weekly"
 
     @pytest.mark.asyncio
-    async def test_update_nonexistent_schedule(
-        self, client: AsyncClient
-    ):
+    async def test_update_nonexistent_schedule(self, client: AsyncClient):
         """Test updating nonexistent schedule."""
         data = {"name": "Should Fail"}
 
@@ -252,9 +230,7 @@ class TestScheduleDeletion:
     """Tests for schedule deletion endpoint."""
 
     @pytest.mark.asyncio
-    async def test_delete_schedule(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_delete_schedule(self, client: AsyncClient, test_schedule: Schedule):
         """Test deleting a schedule."""
         response = await client.delete(f"/api/v1/schedules/{test_schedule.id}")
 
@@ -265,9 +241,7 @@ class TestScheduleDeletion:
         assert get_response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_delete_nonexistent_schedule(
-        self, client: AsyncClient
-    ):
+    async def test_delete_nonexistent_schedule(self, client: AsyncClient):
         """Test deleting nonexistent schedule."""
         response = await client.delete("/api/v1/schedules/99999")
 
@@ -278,9 +252,7 @@ class TestScheduleExecution:
     """Tests for schedule execution endpoint."""
 
     @pytest.mark.asyncio
-    async def test_execute_schedule(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_execute_schedule(self, client: AsyncClient, test_schedule: Schedule):
         """Test executing a schedule."""
         response = await client.post(f"/api/v1/schedules/{test_schedule.id}/execute")
 
@@ -299,18 +271,14 @@ class TestScheduleExecution:
         await db_session.commit()
 
         data = {"force": True}
-        response = await client.post(
-            f"/api/v1/schedules/{test_schedule.id}/execute", json=data
-        )
+        response = await client.post(f"/api/v1/schedules/{test_schedule.id}/execute", json=data)
 
         assert response.status_code == 202
         result = response.json()
         assert result["job_id"] is not None
 
     @pytest.mark.asyncio
-    async def test_execute_nonexistent_schedule(
-        self, client: AsyncClient
-    ):
+    async def test_execute_nonexistent_schedule(self, client: AsyncClient):
         """Test executing nonexistent schedule."""
         response = await client.post("/api/v1/schedules/99999/execute")
 
@@ -321,9 +289,7 @@ class TestScheduleEnableDisable:
     """Tests for schedule enable/disable endpoints."""
 
     @pytest.mark.asyncio
-    async def test_disable_schedule(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_disable_schedule(self, client: AsyncClient, test_schedule: Schedule):
         """Test disabling a schedule."""
         response = await client.post(f"/api/v1/schedules/{test_schedule.id}/disable")
 
@@ -351,9 +317,7 @@ class TestScheduleStatistics:
     """Tests for schedule statistics endpoint."""
 
     @pytest.mark.asyncio
-    async def test_get_schedule_statistics(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_get_schedule_statistics(self, client: AsyncClient, test_schedule: Schedule):
         """Test getting schedule statistics."""
         response = await client.get("/api/v1/schedules/statistics/summary")
 

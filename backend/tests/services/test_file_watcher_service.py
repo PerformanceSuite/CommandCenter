@@ -26,8 +26,8 @@ def test_extract_text_from_pdf(file_watcher, temp_dir):
     """Test extracting text from PDF file"""
     # Create a dummy PDF file for size validation
     pdf_path = os.path.join(temp_dir, "test.pdf")
-    with open(pdf_path, 'wb') as f:
-        f.write(b'%PDF-1.4 dummy content')
+    with open(pdf_path, "wb") as f:
+        f.write(b"%PDF-1.4 dummy content")
 
     # Mock PDF reader
     mock_pdf = MagicMock()
@@ -35,7 +35,7 @@ def test_extract_text_from_pdf(file_watcher, temp_dir):
     mock_page.extract_text.return_value = "PDF content here"
     mock_pdf.pages = [mock_page]
 
-    with patch('app.services.file_watcher_service.PyPDF2.PdfReader', return_value=mock_pdf):
+    with patch("app.services.file_watcher_service.PyPDF2.PdfReader", return_value=mock_pdf):
         content = file_watcher.extract_text_from_file(pdf_path)
 
     assert content == "PDF content here"
@@ -45,7 +45,7 @@ def test_extract_text_from_markdown(file_watcher, temp_dir):
     """Test extracting text from Markdown file"""
     md_path = os.path.join(temp_dir, "test.md")
 
-    with open(md_path, 'w') as f:
+    with open(md_path, "w") as f:
         f.write("# Header\n\nMarkdown content")
 
     content = file_watcher.extract_text_from_file(md_path)
@@ -58,15 +58,15 @@ def test_extract_text_from_docx(file_watcher, temp_dir):
     """Test extracting text from DOCX file"""
     # Create a dummy DOCX file for size validation
     docx_path = os.path.join(temp_dir, "test.docx")
-    with open(docx_path, 'wb') as f:
-        f.write(b'PK dummy docx content')
+    with open(docx_path, "wb") as f:
+        f.write(b"PK dummy docx content")
 
     mock_doc = MagicMock()
     mock_para = MagicMock()
     mock_para.text = "DOCX paragraph content"
     mock_doc.paragraphs = [mock_para]
 
-    with patch('app.services.file_watcher_service.Document', return_value=mock_doc):
+    with patch("app.services.file_watcher_service.Document", return_value=mock_doc):
         content = file_watcher.extract_text_from_file(docx_path)
 
     assert content == "DOCX paragraph content"
@@ -87,7 +87,9 @@ def test_should_ignore_file_with_ignore_patterns(file_watcher):
     ignore_patterns = [".git", "node_modules", "__pycache__"]
 
     assert file_watcher.should_ignore_file("/path/.git/config", ignore_patterns) == True
-    assert file_watcher.should_ignore_file("/path/node_modules/pkg/file.js", ignore_patterns) == True
+    assert (
+        file_watcher.should_ignore_file("/path/node_modules/pkg/file.js", ignore_patterns) == True
+    )
     assert file_watcher.should_ignore_file("/path/__pycache__/module.pyc", ignore_patterns) == True
     assert file_watcher.should_ignore_file("/path/src/main.py", ignore_patterns) == False
 
@@ -97,17 +99,13 @@ def test_detect_file_changes(file_watcher, temp_dir):
     test_file = os.path.join(temp_dir, "test.md")
 
     # Create file
-    with open(test_file, 'w') as f:
+    with open(test_file, "w") as f:
         f.write("Test content")
 
     # Simulate file event
-    event = FileChangeEvent(
-        event_type='created',
-        file_path=test_file,
-        is_directory=False
-    )
+    event = FileChangeEvent(event_type="created", file_path=test_file, is_directory=False)
 
-    assert event.event_type == 'created'
+    assert event.event_type == "created"
     assert event.file_path == test_file
     assert event.is_directory == False
 
@@ -134,6 +132,7 @@ def test_debounce_rapid_changes(file_watcher):
 
 
 # Security Tests
+
 
 def test_path_traversal_rejected(file_watcher, temp_dir):
     """Test that path traversal attempts are rejected"""
@@ -168,11 +167,11 @@ def test_absolute_system_path_rejected(file_watcher):
     if not tested_at_least_one:
         # At minimum, test that /etc would be blocked (common path)
         # We'll use a mock to simulate its existence
-        with patch('pathlib.Path.exists', return_value=True):
-            with patch('pathlib.Path.is_dir', return_value=True):
-                with patch('pathlib.Path.resolve', return_value=Path('/etc')):
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch("pathlib.Path.is_dir", return_value=True):
+                with patch("pathlib.Path.resolve", return_value=Path("/etc")):
                     with pytest.raises(ValueError, match="Access denied"):
-                        file_watcher._validate_watch_path('/etc')
+                        file_watcher._validate_watch_path("/etc")
 
 
 def test_nonexistent_path_rejected(file_watcher, temp_dir):
@@ -187,7 +186,7 @@ def test_file_instead_of_directory_rejected(file_watcher, temp_dir):
     """Test that files cannot be watched (only directories)"""
     # Create a file
     test_file = os.path.join(temp_dir, "test.txt")
-    with open(test_file, 'w') as f:
+    with open(test_file, "w") as f:
         f.write("test")
 
     with pytest.raises(ValueError, match="Path is not a directory"):
@@ -212,8 +211,8 @@ def test_oversized_file_rejected(file_watcher, temp_dir):
     large_file = os.path.join(temp_dir, "large_file.txt")
 
     # Create a 200MB file (larger than 100MB limit)
-    with open(large_file, 'wb') as f:
-        f.write(b'0' * (200 * 1024 * 1024))
+    with open(large_file, "wb") as f:
+        f.write(b"0" * (200 * 1024 * 1024))
 
     # Should raise ValueError
     with pytest.raises(ValueError, match="File too large"):
@@ -226,8 +225,8 @@ def test_file_size_validation_in_extract(file_watcher, temp_dir):
     large_file = os.path.join(temp_dir, "large.md")
 
     # Create a 200MB file
-    with open(large_file, 'wb') as f:
-        f.write(b'0' * (200 * 1024 * 1024))
+    with open(large_file, "wb") as f:
+        f.write(b"0" * (200 * 1024 * 1024))
 
     # Should return empty string (error logged)
     content = file_watcher.extract_text_from_file(large_file)
@@ -242,8 +241,8 @@ def test_file_size_configurable(temp_dir):
 
     # Create a 2MB file
     large_file = os.path.join(temp_dir, "large_file.txt")
-    with open(large_file, 'wb') as f:
-        f.write(b'0' * (2 * 1024 * 1024))
+    with open(large_file, "wb") as f:
+        f.write(b"0" * (2 * 1024 * 1024))
 
     # Should be rejected with custom limit
     with pytest.raises(ValueError, match="File too large"):
@@ -254,7 +253,7 @@ def test_normal_size_file_accepted(file_watcher, temp_dir):
     """Test that normal-sized files pass validation"""
     # Create a small file
     normal_file = os.path.join(temp_dir, "normal.txt")
-    with open(normal_file, 'w') as f:
+    with open(normal_file, "w") as f:
         f.write("This is a normal sized file")
 
     # Should not raise an exception

@@ -32,9 +32,7 @@ async def create_user_and_login(
         Tuple of (user, headers_dict)
     """
     # Create user
-    user = await UserFactory.create(
-        db=db, email=email, password=password, full_name=full_name
-    )
+    user = await UserFactory.create(db=db, email=email, password=password, full_name=full_name)
 
     # Create token
     tokens = create_token_pair(user.id, user.email)

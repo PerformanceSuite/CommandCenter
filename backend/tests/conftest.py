@@ -186,9 +186,7 @@ async def test_project(db_session: AsyncSession):
     """Create a test project"""
     from backend.tests.utils.factories import ProjectFactory
 
-    project = await ProjectFactory.create(
-        db=db_session, name="Test Project", owner="testowner"
-    )
+    project = await ProjectFactory.create(db=db_session, name="Test Project", owner="testowner")
     return project
 
 
@@ -221,11 +219,7 @@ async def sample_project(db_session: AsyncSession):
     """Create a sample project for testing"""
     from app.models.project import Project
 
-    project = Project(
-        name="Test Project",
-        owner="testowner",
-        description="Project for testing"
-    )
+    project = Project(name="Test Project", owner="testowner", description="Project for testing")
     db_session.add(project)
     await db_session.commit()
     await db_session.refresh(project)

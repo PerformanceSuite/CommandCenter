@@ -45,8 +45,7 @@ class TestGitHubService:
         """Test failed repository authentication"""
         mock_github = mocker.MagicMock()
         mock_github.get_repo.side_effect = GithubException(
-            status=401,
-            data={"message": "Bad credentials"}
+            status=401, data={"message": "Bad credentials"}
         )
 
         service = GitHubService(access_token="test_token")
@@ -61,8 +60,7 @@ class TestGitHubService:
         """Test repository authentication with non-auth error"""
         mock_github = mocker.MagicMock()
         mock_github.get_repo.side_effect = GithubException(
-            status=404,
-            data={"message": "Not found"}
+            status=404, data={"message": "Not found"}
         )
 
         service = GitHubService(access_token="test_token")
@@ -117,11 +115,7 @@ class TestGitHubService:
     @pytest.mark.asyncio
     async def test_sync_repository_success(self, mocker):
         """Test successful repository sync"""
-        mock_commit = MockGitHubCommit(
-            sha="abc123",
-            message="Test commit",
-            author="Test Author"
-        )
+        mock_commit = MockGitHubCommit(sha="abc123", message="Test commit", author="Test Author")
 
         mock_commits = mocker.MagicMock()
         mock_commits.totalCount = 1
@@ -162,11 +156,7 @@ class TestGitHubService:
         service.github = mock_github
 
         # Pass old SHA to detect changes
-        result = await service.sync_repository(
-            "testowner",
-            "testrepo",
-            last_known_sha="abc123"
-        )
+        result = await service.sync_repository("testowner", "testrepo", last_known_sha="abc123")
 
         assert result["changes_detected"] is True
         assert result["last_commit_sha"] == "def456"
@@ -179,7 +169,7 @@ class TestGitHubService:
             name="testrepo",
             description="Test repository",
             stars=100,
-            language="Python"
+            language="Python",
         )
 
         mock_github = mocker.MagicMock()
@@ -237,8 +227,7 @@ class TestGitHubService:
         """Test error handling in list_user_repos"""
         mock_github = mocker.MagicMock()
         mock_github.get_user.side_effect = GithubException(
-            status=404,
-            data={"message": "User not found"}
+            status=404, data={"message": "User not found"}
         )
 
         service = GitHubService(access_token="test_token")
@@ -254,8 +243,7 @@ class TestGitHubService:
         """GitHubService handles API errors gracefully."""
         mock_github = mocker.MagicMock()
         mock_github.get_repo.side_effect = GithubException(
-            status=403,
-            data={"message": "Rate limit exceeded"}
+            status=403, data={"message": "Rate limit exceeded"}
         )
 
         service = GitHubService(access_token="test_token")
@@ -271,8 +259,7 @@ class TestGitHubService:
         """GitHubService handles search errors gracefully."""
         mock_github = mocker.MagicMock()
         mock_github.search_repositories.side_effect = GithubException(
-            status=422,
-            data={"message": "Validation failed"}
+            status=422, data={"message": "Validation failed"}
         )
 
         service = GitHubService(access_token="test_token")

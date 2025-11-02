@@ -968,4 +968,3 @@ class KnowledgeBeastTools:
                 "project_id": project_id,
                 "doc_id": doc_id,
             }
-

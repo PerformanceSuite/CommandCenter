@@ -163,7 +163,7 @@ class TestReadProjectResources:
         project1.to_dict.return_value = {
             "id": 1,
             "name": "Project 1",
-            "description": "Description 1"
+            "description": "Description 1",
         }
 
         project2 = MagicMock(spec=Project)
@@ -174,7 +174,7 @@ class TestReadProjectResources:
         project2.to_dict.return_value = {
             "id": 2,
             "name": "Project 2",
-            "description": "Description 2"
+            "description": "Description 2",
         }
 
         # Mock database query
@@ -205,7 +205,7 @@ class TestReadProjectResources:
         project.to_dict.return_value = {
             "id": 1,
             "name": "Test Project",
-            "description": "Test Description"
+            "description": "Test Description",
         }
 
         # Mock database query
@@ -246,7 +246,7 @@ class TestReadTechnologyResources:
             "id": 1,
             "title": "Docker",
             "domain": "Infrastructure",
-            "status": "adopt"
+            "status": "adopt",
         }
 
         tech2 = MagicMock(spec=Technology)
@@ -254,7 +254,7 @@ class TestReadTechnologyResources:
             "id": 2,
             "title": "Kubernetes",
             "domain": "Infrastructure",
-            "status": "trial"
+            "status": "trial",
         }
 
         mock_result = MagicMock()
@@ -278,7 +278,7 @@ class TestReadTechnologyResources:
             "title": "FastAPI",
             "domain": "Backend",
             "status": "adopt",
-            "relevance": "high"
+            "relevance": "high",
         }
 
         mock_result = MagicMock()
@@ -304,7 +304,7 @@ class TestReadResearchTaskResources:
             "id": 1,
             "title": "Evaluate Kubernetes",
             "status": "in_progress",
-            "priority": "high"
+            "priority": "high",
         }
 
         task2 = MagicMock(spec=ResearchTask)
@@ -312,7 +312,7 @@ class TestReadResearchTaskResources:
             "id": 2,
             "title": "Test Docker Compose",
             "status": "done",
-            "priority": "medium"
+            "priority": "medium",
         }
 
         mock_result = MagicMock()
@@ -335,18 +335,10 @@ class TestReadScheduleResources:
     async def test_read_all_schedules(self, resource_provider, mock_db_session):
         """Test reading all schedules."""
         schedule1 = MagicMock(spec=Schedule)
-        schedule1.to_dict.return_value = {
-            "id": 1,
-            "name": "Weekly Analysis",
-            "enabled": True
-        }
+        schedule1.to_dict.return_value = {"id": 1, "name": "Weekly Analysis", "enabled": True}
 
         schedule2 = MagicMock(spec=Schedule)
-        schedule2.to_dict.return_value = {
-            "id": 2,
-            "name": "Daily Sync",
-            "enabled": False
-        }
+        schedule2.to_dict.return_value = {"id": 2, "name": "Daily Sync", "enabled": False}
 
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [schedule1, schedule2]
@@ -362,11 +354,7 @@ class TestReadScheduleResources:
     async def test_read_active_schedules_only(self, resource_provider, mock_db_session):
         """Test reading only active (enabled) schedules."""
         schedule1 = MagicMock(spec=Schedule)
-        schedule1.to_dict.return_value = {
-            "id": 1,
-            "name": "Active Schedule",
-            "enabled": True
-        }
+        schedule1.to_dict.return_value = {"id": 1, "name": "Active Schedule", "enabled": True}
 
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [schedule1]
@@ -387,18 +375,10 @@ class TestReadJobResources:
     async def test_read_all_jobs(self, resource_provider, mock_db_session):
         """Test reading all jobs."""
         job1 = MagicMock(spec=Job)
-        job1.to_dict.return_value = {
-            "id": 1,
-            "job_type": "analysis",
-            "status": "completed"
-        }
+        job1.to_dict.return_value = {"id": 1, "job_type": "analysis", "status": "completed"}
 
         job2 = MagicMock(spec=Job)
-        job2.to_dict.return_value = {
-            "id": 2,
-            "job_type": "export",
-            "status": "running"
-        }
+        job2.to_dict.return_value = {"id": 2, "job_type": "export", "status": "running"}
 
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = [job1, job2]
@@ -418,7 +398,7 @@ class TestReadJobResources:
             "id": 1,
             "job_type": "analysis",
             "status": "running",
-            "progress": 50
+            "progress": 50,
         }
 
         mock_result = MagicMock()
@@ -440,7 +420,7 @@ class TestReadJobResources:
             "id": 5,
             "job_type": "batch_analysis",
             "status": "completed",
-            "progress": 100
+            "progress": 100,
         }
 
         mock_result = MagicMock()
@@ -461,6 +441,7 @@ class TestReadOverview:
     @pytest.mark.asyncio
     async def test_read_overview(self, resource_provider, mock_db_session):
         """Test reading system overview with counts."""
+
         # Mock count queries
         def mock_execute(query):
             mock_result = MagicMock()

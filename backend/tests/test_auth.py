@@ -96,7 +96,7 @@ class TestAuthEndpoints:
         user_data = {
             "email": "newuser@example.com",
             "password": "SecurePassword123!",
-            "full_name": "New User"
+            "full_name": "New User",
         }
 
         response = await client.post("/api/v1/auth/register", json=user_data)
@@ -116,16 +116,13 @@ class TestAuthEndpoints:
         user1 = User(
             email="existing@example.com",
             hashed_password=get_password_hash("password123"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(user1)
         await db_session.commit()
 
         # Try to register with same email
-        user_data = {
-            "email": "existing@example.com",
-            "password": "DifferentPassword123!"
-        }
+        user_data = {"email": "existing@example.com", "password": "DifferentPassword123!"}
 
         response = await client.post("/api/v1/auth/register", json=user_data)
 
@@ -139,16 +136,13 @@ class TestAuthEndpoints:
         user = User(
             email="testuser@example.com",
             hashed_password=get_password_hash(password),
-            is_active=True
+            is_active=True,
         )
         db_session.add(user)
         await db_session.commit()
 
         # Login
-        login_data = {
-            "email": "testuser@example.com",
-            "password": password
-        }
+        login_data = {"email": "testuser@example.com", "password": password}
 
         response = await client.post("/api/v1/auth/login", json=login_data)
 
@@ -164,16 +158,13 @@ class TestAuthEndpoints:
         user = User(
             email="testuser@example.com",
             hashed_password=get_password_hash("CorrectPassword123!"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(user)
         await db_session.commit()
 
         # Try to login with wrong password
-        login_data = {
-            "email": "testuser@example.com",
-            "password": "WrongPassword123!"
-        }
+        login_data = {"email": "testuser@example.com", "password": "WrongPassword123!"}
 
         response = await client.post("/api/v1/auth/login", json=login_data)
 
@@ -187,16 +178,13 @@ class TestAuthEndpoints:
         user = User(
             email="inactive@example.com",
             hashed_password=get_password_hash(password),
-            is_active=False
+            is_active=False,
         )
         db_session.add(user)
         await db_session.commit()
 
         # Try to login
-        login_data = {
-            "email": "inactive@example.com",
-            "password": password
-        }
+        login_data = {"email": "inactive@example.com", "password": password}
 
         response = await client.post("/api/v1/auth/login", json=login_data)
 
@@ -211,7 +199,7 @@ class TestAuthEndpoints:
             email="testuser@example.com",
             hashed_password=get_password_hash(password),
             full_name="Test User",
-            is_active=True
+            is_active=True,
         )
         db_session.add(user)
         await db_session.commit()
@@ -222,8 +210,7 @@ class TestAuthEndpoints:
 
         # Get current user info
         response = await client.get(
-            "/api/v1/auth/me",
-            headers={"Authorization": f"Bearer {tokens['access_token']}"}
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {tokens['access_token']}"}
         )
 
         assert response.status_code == 200
@@ -234,8 +221,7 @@ class TestAuthEndpoints:
     async def test_get_current_user_invalid_token(self, client: AsyncClient):
         """Test getting current user with invalid token"""
         response = await client.get(
-            "/api/v1/auth/me",
-            headers={"Authorization": "Bearer invalid.token.here"}
+            "/api/v1/auth/me", headers={"Authorization": "Bearer invalid.token.here"}
         )
 
         assert response.status_code == 401
@@ -246,7 +232,7 @@ class TestAuthEndpoints:
         user = User(
             email="testuser@example.com",
             hashed_password=get_password_hash("password123"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(user)
         await db_session.commit()
@@ -256,9 +242,7 @@ class TestAuthEndpoints:
         tokens = create_token_pair(user.id, user.email)
 
         # Refresh token
-        refresh_data = {
-            "refresh_token": tokens["refresh_token"]
-        }
+        refresh_data = {"refresh_token": tokens["refresh_token"]}
 
         response = await client.post("/api/v1/auth/refresh", json=refresh_data)
 
@@ -268,13 +252,15 @@ class TestAuthEndpoints:
         assert "refresh_token" in data
         assert data["access_token"] != tokens["access_token"]  # Should be new token
 
-    async def test_refresh_with_access_token_fails(self, client: AsyncClient, db_session: AsyncSession):
+    async def test_refresh_with_access_token_fails(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
         """Test that using access token for refresh fails"""
         # Create user
         user = User(
             email="testuser@example.com",
             hashed_password=get_password_hash("password123"),
-            is_active=True
+            is_active=True,
         )
         db_session.add(user)
         await db_session.commit()
@@ -284,9 +270,7 @@ class TestAuthEndpoints:
         tokens = create_token_pair(user.id, user.email)
 
         # Try to refresh with access token (should fail)
-        refresh_data = {
-            "refresh_token": tokens["access_token"]  # Using access token instead
-        }
+        refresh_data = {"refresh_token": tokens["access_token"]}  # Using access token instead
 
         response = await client.post("/api/v1/auth/refresh", json=refresh_data)
 
@@ -308,7 +292,7 @@ class TestTokenEncryption:
             owner="testowner",
             name="testrepo",
             full_name="testowner/testrepo",
-            access_token=plain_token
+            access_token=plain_token,
         )
 
         db_session.add(repo)
@@ -328,10 +312,7 @@ class TestTokenEncryption:
 
         # Create repository without access token
         repo = Repository(
-            owner="testowner",
-            name="testrepo",
-            full_name="testowner/testrepo",
-            access_token=None
+            owner="testowner", name="testrepo", full_name="testowner/testrepo", access_token=None
         )
 
         db_session.add(repo)

@@ -131,9 +131,7 @@ class APIClient:
         return self._handle_response(response)
 
     # Agent orchestration endpoints
-    def launch_agents(
-        self, workflow: str = "full", max_concurrent: int = 3
-    ) -> Dict[str, Any]:
+    def launch_agents(self, workflow: str = "full", max_concurrent: int = 3) -> Dict[str, Any]:
         """
         Launch agent orchestration workflow.
 
@@ -259,9 +257,7 @@ class APIClient:
         return self._handle_response(response)
 
     # Research tasks endpoints
-    def create_research_tasks_from_analysis(
-        self, analysis_id: str
-    ) -> List[Dict[str, Any]]:
+    def create_research_tasks_from_analysis(self, analysis_id: str) -> List[Dict[str, Any]]:
         """
         Create research tasks from analysis results.
 

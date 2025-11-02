@@ -149,7 +149,9 @@ class TestResearchTaskTools:
                 # Mock the task that gets added to the session
                 tool_provider.db.add = AsyncMock()
                 tool_provider.db.commit = AsyncMock()
-                tool_provider.db.refresh = AsyncMock(side_effect=lambda task: setattr(task, "id", 1))
+                tool_provider.db.refresh = AsyncMock(
+                    side_effect=lambda task: setattr(task, "id", 1)
+                )
 
                 result = await tool_provider.call_tool("create_research_task", arguments)
 
@@ -663,12 +665,15 @@ class TestToolResultFormat:
 
         tool_provider.schedule_service.create_schedule = AsyncMock(return_value=mock_schedule)
 
-        result = await tool_provider.call_tool("create_schedule", {
-            "project_id": 1,
-            "name": "Test",
-            "task_type": "analysis",
-            "frequency": "daily",
-        })
+        result = await tool_provider.call_tool(
+            "create_schedule",
+            {
+                "project_id": 1,
+                "name": "Test",
+                "task_type": "analysis",
+                "frequency": "daily",
+            },
+        )
 
         assert isinstance(result, ToolResult)
         assert result.success is True

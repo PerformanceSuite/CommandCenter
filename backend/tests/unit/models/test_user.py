@@ -32,10 +32,7 @@ class TestUserModel:
         password = "TestPass123"
         hashed = hash_password(password)
 
-        user = User(
-            email="test@gmail.com",
-            hashed_password=hashed
-        )
+        user = User(email="test@gmail.com", hashed_password=hashed)
         db_session.add(user)
         await db_session.commit()
         await db_session.refresh(user)
@@ -48,19 +45,13 @@ class TestUserModel:
         """User model validates email format"""
         # Invalid email should raise error
         with pytest.raises(ValueError, match="Invalid email address"):
-            user = User(
-                email="not-an-email",
-                hashed_password=hash_password("password")
-            )
+            user = User(email="not-an-email", hashed_password=hash_password("password"))
             db_session.add(user)
             await db_session.commit()
 
     async def test_user_email_normalization(self, db_session):
         """User email is normalized"""
-        user = await create_test_user(
-            db_session,
-            email="Test.User@Example.COM"
-        )
+        user = await create_test_user(db_session, email="Test.User@Example.COM")
 
         # Email should be normalized to lowercase
         assert user.email == "test.user@example.com"
@@ -75,10 +66,7 @@ class TestUserModel:
 
     async def test_user_default_values(self, db_session):
         """Test user default values"""
-        user = User(
-            email="newuser@example.com",
-            hashed_password=hash_password("password")
-        )
+        user = User(email="newuser@example.com", hashed_password=hash_password("password"))
         db_session.add(user)
         await db_session.commit()
         await db_session.refresh(user)
@@ -97,7 +85,7 @@ class TestUserModel:
             email="full@example.com",
             full_name="John Doe",
             is_active=True,
-            is_superuser=True
+            is_superuser=True,
         )
 
         assert user.email == "full@example.com"

@@ -81,9 +81,7 @@ class TestMCPProtocolHandler:
     @pytest.mark.asyncio
     async def test_parse_valid_request(self, handler):
         """Test parsing valid JSON-RPC request."""
-        message = json.dumps(
-            {"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}
-        )
+        message = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}})
 
         request = await handler.parse_request(message)
 
@@ -126,9 +124,7 @@ class TestMCPProtocolHandler:
 
     def test_create_error_response(self, handler):
         """Test creating error response."""
-        response = handler.create_error_response(
-            1, -32600, "Invalid Request", "Additional data"
-        )
+        response = handler.create_error_response(1, -32600, "Invalid Request", "Additional data")
 
         assert response.id == 1
         assert response.error.code == -32600

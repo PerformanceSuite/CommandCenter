@@ -16,27 +16,26 @@ from app.services.knowledgebeast_service import (
 
 
 # Skip all tests if KnowledgeBeast not installed
-pytestmark = pytest.mark.skipif(
-    not KNOWLEDGEBEAST_AVAILABLE,
-    reason="KnowledgeBeast not installed"
-)
+pytestmark = pytest.mark.skipif(not KNOWLEDGEBEAST_AVAILABLE, reason="KnowledgeBeast not installed")
 
 
 @pytest.fixture
 def mock_embedding_engine():
     """Mock EmbeddingEngine"""
-    with patch('app.services.knowledgebeast_service.EmbeddingEngine') as mock:
+    with patch("app.services.knowledgebeast_service.EmbeddingEngine") as mock:
         engine = Mock()
         engine.embed = Mock(return_value=[0.1] * 384)  # Mock 384-dim embedding
         engine.model_name = "all-MiniLM-L6-v2"
         engine.embedding_dim = 384
-        engine.get_stats = Mock(return_value={
-            "cache_hits": 10,
-            "cache_misses": 5,
-            "cache_hit_rate": 0.67,
-            "cache_size": 10,
-            "cache_capacity": 1000,
-        })
+        engine.get_stats = Mock(
+            return_value={
+                "cache_hits": 10,
+                "cache_misses": 5,
+                "cache_hit_rate": 0.67,
+                "cache_size": 10,
+                "cache_capacity": 1000,
+            }
+        )
         mock.return_value = engine
         yield engine
 
@@ -44,36 +43,46 @@ def mock_embedding_engine():
 @pytest.fixture
 def mock_vector_store():
     """Mock VectorStore"""
-    with patch('app.services.knowledgebeast_service.VectorStore') as mock:
+    with patch("app.services.knowledgebeast_service.VectorStore") as mock:
         store = Mock()
         store.collection_name = "project_1"
-        store.get_stats = Mock(return_value={
-            "total_documents": 100,
-            "total_queries": 50,
-            "circuit_breaker": {"state": "closed"},
-        })
-        store.get_health = Mock(return_value={
-            "status": "healthy",
-            "chromadb_available": True,
-            "circuit_breaker_state": "closed",
-            "document_count": 100,
-            "collection": "project_1",
-        })
-        store.query = Mock(return_value={
-            "ids": [["doc1", "doc2"]],
-            "documents": [["Machine learning is AI", "Deep learning is ML"]],
-            "distances": [[0.2, 0.3]],
-            "metadatas": [[
-                {"category": "ai", "source": "ml.txt", "title": "ML Intro"},
-                {"category": "ai", "source": "dl.txt", "title": "DL Basics"},
-            ]],
-        })
+        store.get_stats = Mock(
+            return_value={
+                "total_documents": 100,
+                "total_queries": 50,
+                "circuit_breaker": {"state": "closed"},
+            }
+        )
+        store.get_health = Mock(
+            return_value={
+                "status": "healthy",
+                "chromadb_available": True,
+                "circuit_breaker_state": "closed",
+                "document_count": 100,
+                "collection": "project_1",
+            }
+        )
+        store.query = Mock(
+            return_value={
+                "ids": [["doc1", "doc2"]],
+                "documents": [["Machine learning is AI", "Deep learning is ML"]],
+                "distances": [[0.2, 0.3]],
+                "metadatas": [
+                    [
+                        {"category": "ai", "source": "ml.txt", "title": "ML Intro"},
+                        {"category": "ai", "source": "dl.txt", "title": "DL Basics"},
+                    ]
+                ],
+            }
+        )
         store.add = Mock()
         store.delete = Mock()
-        store.get = Mock(return_value={
-            "ids": ["doc1"],
-            "metadatas": [{"category": "ai", "source": "test.txt"}],
-        })
+        store.get = Mock(
+            return_value={
+                "ids": ["doc1"],
+                "metadatas": [{"category": "ai", "source": "test.txt"}],
+            }
+        )
         mock.return_value = store
         yield store
 
@@ -81,7 +90,7 @@ def mock_vector_store():
 @pytest.fixture
 def mock_repository():
     """Mock DocumentRepository"""
-    with patch('app.services.knowledgebeast_service.DocumentRepository') as mock:
+    with patch("app.services.knowledgebeast_service.DocumentRepository") as mock:
         repo = Mock()
         repo.documents = {}
         repo.add_document = Mock()
@@ -93,16 +102,56 @@ def mock_repository():
 @pytest.fixture
 def mock_query_engine():
     """Mock HybridQueryEngine"""
-    with patch('app.services.knowledgebeast_service.HybridQueryEngine') as mock:
+    with patch("app.services.knowledgebeast_service.HybridQueryEngine") as mock:
         engine = Mock()
-        engine.search_keyword = Mock(return_value=[
-            ("doc1", {"content": "Machine learning", "category": "ai", "source": "ml.txt", "title": "ML"}, 0.8),
-            ("doc2", {"content": "Deep learning", "category": "ai", "source": "dl.txt", "title": "DL"}, 0.6),
-        ])
-        engine.search_hybrid = Mock(return_value=[
-            ("doc1", {"content": "Machine learning", "category": "ai", "source": "ml.txt", "title": "ML"}, 0.9),
-            ("doc2", {"content": "Deep learning", "category": "ai", "source": "dl.txt", "title": "DL"}, 0.7),
-        ])
+        engine.search_keyword = Mock(
+            return_value=[
+                (
+                    "doc1",
+                    {
+                        "content": "Machine learning",
+                        "category": "ai",
+                        "source": "ml.txt",
+                        "title": "ML",
+                    },
+                    0.8,
+                ),
+                (
+                    "doc2",
+                    {
+                        "content": "Deep learning",
+                        "category": "ai",
+                        "source": "dl.txt",
+                        "title": "DL",
+                    },
+                    0.6,
+                ),
+            ]
+        )
+        engine.search_hybrid = Mock(
+            return_value=[
+                (
+                    "doc1",
+                    {
+                        "content": "Machine learning",
+                        "category": "ai",
+                        "source": "ml.txt",
+                        "title": "ML",
+                    },
+                    0.9,
+                ),
+                (
+                    "doc2",
+                    {
+                        "content": "Deep learning",
+                        "category": "ai",
+                        "source": "dl.txt",
+                        "title": "DL",
+                    },
+                    0.7,
+                ),
+            ]
+        )
         mock.return_value = engine
         yield engine
 
@@ -111,9 +160,7 @@ def mock_query_engine():
 def kb_service(mock_embedding_engine, mock_vector_store, mock_repository, mock_query_engine):
     """Create KnowledgeBeastService with mocked components"""
     service = KnowledgeBeastService(
-        project_id=1,
-        db_path="./test_kb_chroma",
-        embedding_model="all-MiniLM-L6-v2"
+        project_id=1, db_path="./test_kb_chroma", embedding_model="all-MiniLM-L6-v2"
     )
     return service
 
@@ -127,7 +174,9 @@ class TestKnowledgeBeastServiceInit:
         assert kb_service.collection_name == "project_1"
         assert kb_service.embedding_model == "all-MiniLM-L6-v2"
 
-    def test_init_with_custom_project(self, mock_embedding_engine, mock_vector_store, mock_repository, mock_query_engine):
+    def test_init_with_custom_project(
+        self, mock_embedding_engine, mock_vector_store, mock_repository, mock_query_engine
+    ):
         """Test initialization with different project ID"""
         service = KnowledgeBeastService(project_id=42)
         assert service.project_id == 42
@@ -135,7 +184,7 @@ class TestKnowledgeBeastServiceInit:
 
     def test_init_without_kb_raises_error(self):
         """Test that ImportError is raised when KB not available"""
-        with patch('app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE', False):
+        with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", False):
             with pytest.raises(ImportError, match="KnowledgeBeast not installed"):
                 KnowledgeBeastService(project_id=1)
 
@@ -146,11 +195,7 @@ class TestQuery:
     @pytest.mark.asyncio
     async def test_query_vector_mode(self, kb_service, mock_vector_store, mock_embedding_engine):
         """Test vector search mode"""
-        results = await kb_service.query(
-            question="What is machine learning?",
-            mode="vector",
-            k=5
-        )
+        results = await kb_service.query(question="What is machine learning?", mode="vector", k=5)
 
         assert len(results) == 2
         assert results[0]["content"] == "Machine learning is AI"
@@ -167,11 +212,7 @@ class TestQuery:
     @pytest.mark.asyncio
     async def test_query_keyword_mode(self, kb_service, mock_query_engine):
         """Test keyword search mode"""
-        results = await kb_service.query(
-            question="machine learning",
-            mode="keyword",
-            k=5
-        )
+        results = await kb_service.query(question="machine learning", mode="keyword", k=5)
 
         assert len(results) == 2
         assert results[0]["content"] == "Machine learning"
@@ -183,28 +224,20 @@ class TestQuery:
     @pytest.mark.asyncio
     async def test_query_hybrid_mode(self, kb_service, mock_query_engine):
         """Test hybrid search mode"""
-        results = await kb_service.query(
-            question="machine learning",
-            mode="hybrid",
-            k=5,
-            alpha=0.7
-        )
+        results = await kb_service.query(question="machine learning", mode="hybrid", k=5, alpha=0.7)
 
         assert len(results) == 2
         assert results[0]["score"] == 0.9
 
         # Verify hybrid search was called
-        mock_query_engine.search_hybrid.assert_called_once_with("machine learning", top_k=5, alpha=0.7)
+        mock_query_engine.search_hybrid.assert_called_once_with(
+            "machine learning", top_k=5, alpha=0.7
+        )
 
     @pytest.mark.asyncio
     async def test_query_with_category_filter(self, kb_service, mock_vector_store):
         """Test query with category filter"""
-        results = await kb_service.query(
-            question="What is AI?",
-            category="ai",
-            mode="vector",
-            k=5
-        )
+        results = await kb_service.query(question="What is AI?", category="ai", mode="vector", k=5)
 
         # Verify category filter was passed to vector store
         call_args = mock_vector_store.query.call_args
@@ -215,15 +248,15 @@ class TestAddDocument:
     """Test document addition"""
 
     @pytest.mark.asyncio
-    async def test_add_document_simple(self, kb_service, mock_embedding_engine, mock_vector_store, mock_repository):
+    async def test_add_document_simple(
+        self, kb_service, mock_embedding_engine, mock_vector_store, mock_repository
+    ):
         """Test adding a simple document"""
         content = "This is a test document about machine learning."
         metadata = {"category": "test", "source": "test.txt", "title": "Test Doc"}
 
         chunks_added = await kb_service.add_document(
-            content=content,
-            metadata=metadata,
-            chunk_size=1000
+            content=content, metadata=metadata, chunk_size=1000
         )
 
         assert chunks_added > 0
@@ -238,16 +271,16 @@ class TestAddDocument:
         assert mock_repository.add_document.called
 
     @pytest.mark.asyncio
-    async def test_add_document_with_chunking(self, kb_service, mock_embedding_engine, mock_vector_store):
+    async def test_add_document_with_chunking(
+        self, kb_service, mock_embedding_engine, mock_vector_store
+    ):
         """Test document chunking"""
         # Long content that will be chunked
         content = " ".join(["word"] * 1500)  # ~7500 chars
         metadata = {"category": "test", "source": "long.txt"}
 
         chunks_added = await kb_service.add_document(
-            content=content,
-            metadata=metadata,
-            chunk_size=1000
+            content=content, metadata=metadata, chunk_size=1000
         )
 
         # Should create multiple chunks
@@ -257,8 +290,7 @@ class TestAddDocument:
     async def test_add_document_empty_content(self, kb_service):
         """Test adding empty document returns 0"""
         chunks_added = await kb_service.add_document(
-            content="",
-            metadata={"category": "test", "source": "empty.txt"}
+            content="", metadata={"category": "test", "source": "empty.txt"}
         )
 
         assert chunks_added == 0
@@ -271,9 +303,7 @@ class TestDeleteBySource:
     async def test_delete_by_source_success(self, kb_service, mock_vector_store, mock_repository):
         """Test successful deletion"""
         # Mock get() to return documents
-        mock_vector_store.get.return_value = {
-            "ids": ["doc1", "doc2"]
-        }
+        mock_vector_store.get.return_value = {"ids": ["doc1", "doc2"]}
         mock_repository.documents = {"doc1": {}, "doc2": {}}
 
         success = await kb_service.delete_by_source("test.txt")
@@ -400,10 +430,12 @@ class TestResultFormatting:
             "ids": [["doc1", "doc2"]],
             "documents": [["Content 1", "Content 2"]],
             "distances": [[0.1, 0.2]],
-            "metadatas": [[
-                {"category": "ai", "source": "1.txt", "title": "Doc 1"},
-                {"category": "ml", "source": "2.txt", "title": "Doc 2"},
-            ]]
+            "metadatas": [
+                [
+                    {"category": "ai", "source": "1.txt", "title": "Doc 1"},
+                    {"category": "ml", "source": "2.txt", "title": "Doc 2"},
+                ]
+            ],
         }
 
         formatted = kb_service._format_results(raw_results)
@@ -418,8 +450,16 @@ class TestResultFormatting:
     def test_format_hybrid_results(self, kb_service):
         """Test formatting hybrid/keyword search results"""
         raw_results = [
-            ("doc1", {"content": "Content 1", "category": "ai", "source": "1.txt", "title": "Doc 1"}, 0.9),
-            ("doc2", {"content": "Content 2", "category": "ml", "source": "2.txt", "title": "Doc 2"}, 0.8),
+            (
+                "doc1",
+                {"content": "Content 1", "category": "ai", "source": "1.txt", "title": "Doc 1"},
+                0.9,
+            ),
+            (
+                "doc2",
+                {"content": "Content 2", "category": "ml", "source": "2.txt", "title": "Doc 2"},
+                0.8,
+            ),
         ]
 
         formatted = kb_service._format_results(raw_results)

@@ -17,7 +17,7 @@ pnpm add nats dotenv
 ```bash
 pnpm tsx ./scripts/apply-phase5-scripts.ts
 ```
-➡ Expect `✅ Added Phase5 scripts`  
+➡ Expect `✅ Added Phase5 scripts`
 
 ---
 
@@ -85,6 +85,6 @@ git commit -m "Enable Phase 5 federation, registry feed, and metrics"
 ```
 
 After execution, your hub will:
-- Broadcast local tool/project updates (incl. MRKTZR) over NATS subjects.  
-- Maintain a live registry feed for cross-hub synchronization.  
+- Broadcast local tool/project updates (incl. MRKTZR) over NATS subjects.
+- Maintain a live registry feed for cross-hub synchronization.
 - Continuously publish metrics for CommandCenter observability.

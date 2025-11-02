@@ -19,15 +19,15 @@ class RedisService:
     def _make_key(self, project_id: int, key_type: str, identifier: str) -> str:
         """Generate namespaced key: project:{id}:{type}:{identifier}"""
         return f"project:{project_id}:{key_type}:{identifier}"
-    
+
     async def get(self, project_id: int, key_type: str, identifier: str):
         key = self._make_key(project_id, key_type, identifier)
         return await self.redis.get(key)
-    
+
     async def set(self, project_id: int, key_type: str, identifier: str, value, ttl=3600):
         key = self._make_key(project_id, key_type, identifier)
         return await self.redis.setex(key, ttl, value)
-    
+
     async def delete_pattern(self, project_id: int, pattern: str):
         """Delete all keys matching project:id:pattern"""
         full_pattern = f"project:{project_id}:{pattern}"

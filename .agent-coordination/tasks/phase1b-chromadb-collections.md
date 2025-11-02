@@ -19,11 +19,11 @@ class RAGService:
     def _get_collection_name(self, project_id: int) -> str:
         """Get collection name for project"""
         return f"knowledge_project_{project_id}"
-    
+
     def get_collection(self, project_id: int):
         """Get or create collection for project"""
         collection_name = self._get_collection_name(project_id)
-        
+
         try:
             return self.chroma_client.get_collection(name=collection_name)
         except:
@@ -31,7 +31,7 @@ class RAGService:
                 name=collection_name,
                 metadata={"project_id": project_id}
             )
-    
+
     async def query(self, project_id: int, query_text: str, n_results: int = 5):
         """Query project's collection only"""
         collection = self.get_collection(project_id)

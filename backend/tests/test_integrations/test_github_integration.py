@@ -99,9 +99,7 @@ class TestIssuesSync:
         assert task is not None
 
     @pytest.mark.asyncio
-    async def test_sync_existing_issue_updates_task(
-        self, mock_db_session, mock_integration
-    ):
+    async def test_sync_existing_issue_updates_task(self, mock_db_session, mock_integration):
         """Test syncing existing issue updates the task."""
         # Setup existing task
         existing_task = MagicMock(spec=ResearchTask)
@@ -170,9 +168,7 @@ class TestWebhooks:
     """Tests for webhook handling."""
 
     @pytest.mark.asyncio
-    async def test_webhook_signature_verification(
-        self, mock_db_session, mock_integration
-    ):
+    async def test_webhook_signature_verification(self, mock_db_session, mock_integration):
         """Test webhook signature verification."""
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_integration
@@ -188,24 +184,16 @@ class TestWebhooks:
         import hmac
         import hashlib
 
-        valid_signature = hmac.new(
-            secret.encode(), payload, hashlib.sha256
-        ).hexdigest()
+        valid_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
         # Test valid signature
-        assert integration.verify_webhook_signature(
-            payload, valid_signature, secret
-        ) is True
+        assert integration.verify_webhook_signature(payload, valid_signature, secret) is True
 
         # Test invalid signature
-        assert integration.verify_webhook_signature(
-            payload, "invalid_signature", secret
-        ) is False
+        assert integration.verify_webhook_signature(payload, "invalid_signature", secret) is False
 
     @pytest.mark.asyncio
-    async def test_handle_issues_webhook_opened(
-        self, mock_db_session, mock_integration
-    ):
+    async def test_handle_issues_webhook_opened(self, mock_db_session, mock_integration):
         """Test handling issues webhook when issue is opened."""
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.side_effect = [
@@ -239,9 +227,7 @@ class TestWebhooks:
         mock_db_session.add.assert_called()
 
     @pytest.mark.asyncio
-    async def test_handle_pull_request_webhook(
-        self, mock_db_session, mock_integration
-    ):
+    async def test_handle_pull_request_webhook(self, mock_db_session, mock_integration):
         """Test handling pull_request webhook."""
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_integration
@@ -307,7 +293,9 @@ class TestConnectionAndHealth:
             mock_github.get_user.return_value = mock_user
             mock_github_class.return_value = mock_github
 
-            with patch("app.integrations.github_integration.decrypt_value", return_value="test_token"):
+            with patch(
+                "app.integrations.github_integration.decrypt_value", return_value="test_token"
+            ):
                 integration = GitHubIntegration(integration_id=1, db=mock_db_session)
                 name = await integration.get_display_name()
 
@@ -365,9 +353,7 @@ class TestErrorHandling:
         mock_db_session.commit.assert_called()
 
     @pytest.mark.asyncio
-    async def test_disable_after_multiple_errors(
-        self, mock_db_session, mock_integration
-    ):
+    async def test_disable_after_multiple_errors(self, mock_db_session, mock_integration):
         """Test integration disabled after 5 consecutive errors."""
         mock_integration.error_count = 4  # One away from threshold
 

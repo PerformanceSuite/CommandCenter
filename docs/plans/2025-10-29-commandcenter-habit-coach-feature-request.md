@@ -38,24 +38,24 @@ Introduce a continuous “Habit Coach” capability that monitors developer work
 - Provide team-level reporting and recommendations for OKR planning.
 
 ## 5. Architecture & Components
-- **Telemetry Pipeline:** 
+- **Telemetry Pipeline:**
   - Client SDKs (web, CLI, IDE) sending events through authenticated WebSocket/REST endpoints.
   - Ingestion service (FastAPI) writing to TimescaleDB or ClickHouse for scalable analytics.
   - Consent registry per user/project; events tagged with `project_id` for isolation.
-- **Knowledge Ingestion Layer:** 
+- **Knowledge Ingestion Layer:**
   - Reuse scheduled jobs from the Ecosystem roadmap (Section 2 & 4) to collect external signals.
   - Additional watcher for repository docs with semantic diffing and version history.
   - Embedding storage in KnowledgeBeast with metadata linking to habit categories.
-- **Insight Engine:** 
+- **Insight Engine:**
   - Rule DSL stored in Postgres (`rules`, `triggers`, `actions` tables).
   - Model service (optional) using lightweight classifiers for adoption probability.
   - Recommendation graph mapping telemetry → habit → knowledge resource.
-- **Delivery Surfaces:** 
+- **Delivery Surfaces:**
   - Hub UI module with triage queue, snooze state, adoption charts.
   - CommandCenter dashboard cards per project (recent alerts, outstanding actions).
   - PR bot integration (existing automation channel).
   - IDE agent (MCP Skill) retrieving recommendations scoped to current file/task.
-- **Governance & Privacy:** 
+- **Governance & Privacy:**
   - Consent toggles per user/project; defaults to off for new users.
   - Event minimization (command hashes vs. raw arguments where possible).
   - Audit log of recommendations issued and user responses.

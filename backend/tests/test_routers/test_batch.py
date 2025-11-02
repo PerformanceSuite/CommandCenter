@@ -75,9 +75,7 @@ class TestBatchAnalyze:
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    async def test_batch_analyze_invalid_repositories(
-        self, client, mock_batch_service
-    ):
+    async def test_batch_analyze_invalid_repositories(self, client, mock_batch_service):
         """Test batch analysis with invalid repository IDs."""
         mock_batch_service.analyze_repositories = AsyncMock(
             side_effect=ValueError("Repositories not found: {99}")

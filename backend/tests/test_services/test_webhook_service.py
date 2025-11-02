@@ -124,7 +124,9 @@ class TestWebhookServiceCreation:
         assert delivery is None
 
     @pytest.mark.asyncio
-    async def test_create_delivery_wildcard_event(self, webhook_service, webhook_config, db_session):
+    async def test_create_delivery_wildcard_event(
+        self, webhook_service, webhook_config, db_session
+    ):
         """Test wildcard event matching."""
         # Update config to use wildcard
         webhook_config.events = ["analysis.*"]
@@ -276,9 +278,7 @@ class TestWebhookDelivery:
             payload=payload,
         )
 
-        with patch.object(
-            webhook_service.http_client, "post", new_callable=AsyncMock
-        ) as mock_post:
+        with patch.object(webhook_service.http_client, "post", new_callable=AsyncMock) as mock_post:
             mock_post.side_effect = httpx.TimeoutException("Timeout")
 
             success = await webhook_service.deliver_webhook(delivery.id, attempt_number=1)

@@ -11,7 +11,7 @@ def setup_logging(
     include_timestamp: bool = True
 ) -> None:
     """Setup logging configuration for KnowledgeBeast.
-    
+
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         format_string: Custom format string. If None, uses default.
@@ -24,7 +24,7 @@ def setup_logging(
             )
         else:
             format_string = "%(name)s - %(levelname)s - %(message)s"
-    
+
     # Configure root logger
     logging.basicConfig(
         level=getattr(logging, level.upper()),
@@ -33,7 +33,7 @@ def setup_logging(
             logging.StreamHandler(sys.stdout)
         ]
     )
-    
+
     # Set level for third-party libraries to WARNING to reduce noise
     logging.getLogger("chromadb").setLevel(logging.WARNING)
     logging.getLogger("sentence_transformers").setLevel(logging.WARNING)

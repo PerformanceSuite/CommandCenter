@@ -23,4 +23,3 @@ echo "  pnpm hub:projects"
 echo ""
 echo "Test them now:"
 echo "  pnpm hub:projects:refresh && pnpm hub:projects"
-

@@ -29,9 +29,11 @@ async def test_repository_detail_response_time(
     from app.models.repository import Repository
 
     # Get a repository ID from the dataset
-    repo = await db_session.query(Repository).filter(
-        Repository.project_id == user_a.project_id
-    ).first()
+    repo = (
+        await db_session.query(Repository)
+        .filter(Repository.project_id == user_a.project_id)
+        .first()
+    )
 
     headers = auth_headers_factory(user_a)
 
@@ -54,10 +56,7 @@ async def test_research_task_list_pagination_performance(
     headers = auth_headers_factory(user_a)
 
     start = time.time()
-    response = await client.get(
-        "/api/v1/research?page=1&per_page=50",
-        headers=headers
-    )
+    response = await client.get("/api/v1/research?page=1&per_page=50", headers=headers)
     elapsed = (time.time() - start) * 1000
 
     assert response.status_code == 200

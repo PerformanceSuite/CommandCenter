@@ -69,9 +69,7 @@ def search(ctx, query, filter_type, limit, interactive, tui):
             return
 
         except ImportError:
-            display_error(
-                "TUI mode requires 'textual' library. Install with: pip install textual"
-            )
+            display_error("TUI mode requires 'textual' library. Install with: pip install textual")
             raise click.Abort()
         except Exception as e:
             display_error(f"TUI failed to start: {e}")
@@ -82,9 +80,7 @@ def search(ctx, query, filter_type, limit, interactive, tui):
     def perform_search(search_query: str):
         """Execute a search query."""
         try:
-            with APIClient(
-                config.api.url, config.auth.token, config.api.timeout
-            ) as api:
+            with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
                 with create_progress_bar("Searching...") as progress:
                     task = progress.add_task("Searching knowledge base...", total=None)
                     results = api.search_knowledge(

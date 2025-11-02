@@ -40,9 +40,7 @@ def init(ctx, force):
     config_path = Config.get_default_config_path()
 
     if config_path.exists() and not force:
-        display_error(
-            f"Configuration already exists at {config_path}. Use --force to overwrite."
-        )
+        display_error(f"Configuration already exists at {config_path}. Use --force to overwrite.")
         raise click.Abort()
 
     # Create default config

@@ -202,9 +202,7 @@ class SearchApp(App):
 
                 # Update status
                 result_count = len(results)
-                self.query_one(
-                    "#status-bar", Static
-                ).update(
+                self.query_one("#status-bar", Static).update(
                     f"Found {result_count} results | Ctrl+Q to quit | Ctrl+H to toggle history"
                 )
 
@@ -213,16 +211,12 @@ class SearchApp(App):
             results_view = self.query_one(SearchResultsView)
             results_view.update(f"[red]Error:[/red] {e.message}")
 
-            self.query_one("#status-bar", Static).update(
-                f"Search failed: {e.message}"
-            )
+            self.query_one("#status-bar", Static).update(f"Search failed: {e.message}")
         except Exception as e:
             results_view = self.query_one(SearchResultsView)
             results_view.update(f"[red]Unexpected error:[/red] {str(e)}")
 
-            self.query_one("#status-bar", Static).update(
-                f"Error: {str(e)}"
-            )
+            self.query_one("#status-bar", Static).update(f"Error: {str(e)}")
 
     def action_clear_input(self) -> None:
         """Clear the search input."""

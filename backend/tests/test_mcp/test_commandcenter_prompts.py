@@ -308,9 +308,7 @@ class TestReviewCodePrompt:
 
         content = result.messages[1].content
         assert "performance" in content.lower()
-        assert any(
-            term in content.lower() for term in ["optimization", "caching", "query"]
-        )
+        assert any(term in content.lower() for term in ["optimization", "caching", "query"])
 
     @pytest.mark.asyncio
     async def test_review_code_architecture_focus(self, prompt_provider):
@@ -325,8 +323,7 @@ class TestReviewCodePrompt:
         content = result.messages[1].content
         assert "architecture" in content.lower()
         assert any(
-            term in content.lower()
-            for term in ["solid", "pattern", "scalability", "design"]
+            term in content.lower() for term in ["solid", "pattern", "scalability", "design"]
         )
 
     @pytest.mark.asyncio

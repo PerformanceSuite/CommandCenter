@@ -38,11 +38,7 @@ class TestRepositoryModel:
 
     async def test_repository_default_values(self, db_session):
         """Test repository default values"""
-        repo = Repository(
-            owner="owner",
-            name="repo",
-            full_name="owner/repo"
-        )
+        repo = Repository(owner="owner", name="repo", full_name="owner/repo")
         db_session.add(repo)
         await db_session.commit()
         await db_session.refresh(repo)
@@ -56,15 +52,8 @@ class TestRepositoryModel:
 
     async def test_repository_with_metadata(self, db_session):
         """Test repository with JSON metadata"""
-        metadata = {
-            "topics": ["python", "testing"],
-            "has_issues": True,
-            "open_issues": 5
-        }
-        repo = await create_test_repository(
-            db_session,
-            metadata_=metadata
-        )
+        metadata = {"topics": ["python", "testing"], "has_issues": True, "open_issues": 5}
+        repo = await create_test_repository(db_session, metadata_=metadata)
 
         assert repo.metadata_ == metadata
         assert repo.metadata_["topics"] == ["python", "testing"]
@@ -93,7 +82,7 @@ class TestRepositoryModel:
             last_commit_message="Test commit",
             last_commit_author="Test Author",
             last_commit_date=sync_time,
-            last_synced_at=sync_time
+            last_synced_at=sync_time,
         )
 
         assert repo.last_commit_sha == "abc123"
@@ -113,10 +102,7 @@ class TestRepositoryModel:
 
     async def test_query_repository_by_full_name(self, db_session):
         """Test querying repository by full_name"""
-        repo1 = await create_test_repository(
-            db_session,
-            full_name="owner1/repo1"
-        )
+        repo1 = await create_test_repository(db_session, full_name="owner1/repo1")
 
         # Query by full_name
         stmt = select(Repository).where(Repository.full_name == "owner1/repo1")
@@ -130,9 +116,7 @@ class TestRepositoryModel:
     async def test_repository_with_private_flag(self, db_session):
         """Test private repository"""
         repo = await create_test_repository(
-            db_session,
-            is_private=True,
-            access_token="ghp_test_token_123"
+            db_session, is_private=True, access_token="ghp_test_token_123"
         )
 
         assert repo.is_private is True

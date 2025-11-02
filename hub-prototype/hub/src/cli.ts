@@ -106,4 +106,3 @@ switch (cmd) {
     usage();
     break;
 }
-

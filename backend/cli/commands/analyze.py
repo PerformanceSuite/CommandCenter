@@ -20,7 +20,7 @@ from cli.output import (
 )
 
 # Watch mode ignore patterns
-WATCH_IGNORE_PATTERNS = {'.git', '__pycache__', 'node_modules', '.venv', 'venv'}
+WATCH_IGNORE_PATTERNS = {".git", "__pycache__", "node_modules", ".venv", "venv"}
 MAX_WATCH_FAILURES = 3
 
 
@@ -36,7 +36,9 @@ def export_analysis_result(result, export_format, output_path=None):
     Returns:
         Path: Path to exported file
     """
-    export_path = Path(output_path) if output_path else Path(f"analysis-{result.get('id')}.{export_format}")
+    export_path = (
+        Path(output_path) if output_path else Path(f"analysis-{result.get('id')}.{export_format}")
+    )
 
     # Validate parent directory is writable if it exists
     if export_path.parent.exists() and not os.access(export_path.parent, os.W_OK):
@@ -149,7 +151,9 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
                 try:
                     with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
                         with create_progress_bar("Analyzing...") as progress:
-                            task = progress.add_task(f"Analyzing {project_path.name}...", total=None)
+                            task = progress.add_task(
+                                f"Analyzing {project_path.name}...", total=None
+                            )
                             result = api.analyze_project(str(project_path), use_cache=not no_cache)
                             progress.update(task, completed=True)
 
@@ -166,7 +170,9 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
                     display_error(f"Analysis failed: {e}")
 
                     if handler.consecutive_failures >= MAX_WATCH_FAILURES:
-                        display_error(f"Too many consecutive failures ({MAX_WATCH_FAILURES}), exiting watch mode")
+                        display_error(
+                            f"Too many consecutive failures ({MAX_WATCH_FAILURES}), exiting watch mode"
+                        )
                         observer.stop()
 
             # Initial analysis
@@ -184,7 +190,7 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
             try:
                 while True:
                     user_input = click.getchar(echo=False)
-                    if user_input in ['\r', '\n']:  # Enter key
+                    if user_input in ["\r", "\n"]:  # Enter key
                         click.echo("\nManual analysis triggered...")
                         perform_analysis()
             except KeyboardInterrupt:
@@ -194,7 +200,9 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
             return
 
         except ImportError:
-            display_error("Watch mode requires 'watchdog' library. Install with: pip install watchdog")
+            display_error(
+                "Watch mode requires 'watchdog' library. Install with: pip install watchdog"
+            )
             raise click.Abort()
 
     # Normal (non-watch) mode

@@ -4,7 +4,7 @@ from tests.utils.factories import (
     TechnologyFactory,
     RepositoryFactory,
     ResearchTaskFactory,
-    KnowledgeEntryFactory
+    KnowledgeEntryFactory,
 )
 
 
@@ -15,10 +15,7 @@ async def test_user_cannot_read_other_user_technologies(
     """User A cannot see User B's technologies."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session,
-        title="Secret Tech B",
-        domain="ai",
-        project_id=user_b.project_id
+        db_session, title="Secret Tech B", domain="ai", project_id=user_b.project_id
     )
     await db_session.commit()
 
@@ -39,25 +36,21 @@ async def test_user_cannot_modify_other_user_technologies(
     """User A cannot update User B's technology."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session,
-        title="Tech B",
-        domain="cloud",
-        project_id=user_b.project_id
+        db_session, title="Tech B", domain="cloud", project_id=user_b.project_id
     )
     await db_session.commit()
 
     # User A tries to modify User B's technology
     headers = auth_headers_factory(user_a)
     response = await client.put(
-        f"/api/v1/technologies/{tech_b.id}",
-        headers=headers,
-        json={"title": "Hacked Title"}
+        f"/api/v1/technologies/{tech_b.id}", headers=headers, json={"title": "Hacked Title"}
     )
 
     # Should return 403 Forbidden or 404 Not Found
-    assert response.status_code in [403, 404], (
-        "User A should not be able to modify User B's technology"
-    )
+    assert response.status_code in [
+        403,
+        404,
+    ], "User A should not be able to modify User B's technology"
 
 
 @pytest.mark.asyncio
@@ -67,24 +60,19 @@ async def test_user_cannot_delete_other_user_technologies(
     """User A cannot delete User B's technology."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session,
-        title="Tech B Delete",
-        domain="audio",
-        project_id=user_b.project_id
+        db_session, title="Tech B Delete", domain="audio", project_id=user_b.project_id
     )
     await db_session.commit()
 
     # User A tries to delete User B's technology
     headers = auth_headers_factory(user_a)
-    response = await client.delete(
-        f"/api/v1/technologies/{tech_b.id}",
-        headers=headers
-    )
+    response = await client.delete(f"/api/v1/technologies/{tech_b.id}", headers=headers)
 
     # Should return 403 Forbidden or 404 Not Found
-    assert response.status_code in [403, 404], (
-        "User A should not be able to delete User B's technology"
-    )
+    assert response.status_code in [
+        403,
+        404,
+    ], "User A should not be able to delete User B's technology"
 
 
 @pytest.mark.asyncio
@@ -94,10 +82,7 @@ async def test_user_cannot_read_other_user_repositories(
     """User A cannot see User B's repositories."""
     # Create repository for User B
     repo_b = await RepositoryFactory.create(
-        db_session,
-        owner="user-b",
-        name="secret-repo",
-        project_id=user_b.project_id
+        db_session, owner="user-b", name="secret-repo", project_id=user_b.project_id
     )
     await db_session.commit()
 
@@ -121,7 +106,7 @@ async def test_user_cannot_read_other_user_research_tasks(
         db_session,
         title="Secret Research",
         description="Confidential",
-        project_id=user_b.project_id
+        project_id=user_b.project_id,
     )
     await db_session.commit()
 
@@ -142,10 +127,7 @@ async def test_user_cannot_read_other_user_knowledge_entries(
     """User A cannot see User B's knowledge entries."""
     # Create knowledge entry for User B
     knowledge_b = await KnowledgeEntryFactory.create(
-        db_session,
-        source="confidential.pdf",
-        category="research",
-        project_id=user_b.project_id
+        db_session, source="confidential.pdf", category="research", project_id=user_b.project_id
     )
     await db_session.commit()
 

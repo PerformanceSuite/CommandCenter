@@ -1,13 +1,13 @@
 # 🧠 CommandCenter Context Bridge & RAG Hub Overview
 
-**Date:** October 27 2025  
-**Author:** Daniel Connolly  
+**Date:** October 27 2025
+**Author:** Daniel Connolly
 
 ---
 
 ## 🌟 Purpose
 
-CommandCenter serves as the **central coordination hub** for all projects in the PROACTIVA ecosystem.  
+CommandCenter serves as the **central coordination hub** for all projects in the PROACTIVA ecosystem.
 It manages AI context, communication, and isolated retrieval-augmented-generation (RAG) engines for each connected project.
 
 This document explains the **Context Bridge** architecture, how it integrates with **Codex** and **ChatGPT**, and how the system can expand to include isolated RAGs per project.
@@ -53,9 +53,9 @@ This document explains the **Context Bridge** architecture, how it integrates wi
 
 ## 🧠 CommandCenter as the Hub
 
-- Provides a **shared memory layer** between ChatGPT and local tools (Codex, Cursor).  
-- Manages **per-project isolation** so Veria, MRKTZR, Performia, etc., maintain independent contexts.  
-- Hosts a REST API accessible at `http://127.0.0.1:5050`.  
+- Provides a **shared memory layer** between ChatGPT and local tools (Codex, Cursor).
+- Manages **per-project isolation** so Veria, MRKTZR, Performia, etc., maintain independent contexts.
+- Hosts a REST API accessible at `http://127.0.0.1:5050`.
 - Can later manage **MCP or agent registration** and **RAG engine initialization** for each project.
 
 ---
@@ -79,9 +79,9 @@ Stops any Uvicorn process running on port 5050.
 commandcenter
 ```
 Runs `scripts/start_commandcenter.sh`, which:
-1. Kills old instances  
-2. Activates the `.venv`  
-3. Starts the Context Bridge API in background mode  
+1. Kills old instances
+2. Activates the `.venv`
+3. Starts the Context Bridge API in background mode
 4. Logs to `commandcenter.log`
 
 ### Verify Service
@@ -137,27 +137,26 @@ A future module (`init_rag.py`) will:
 
 ## 🖯 Next Steps
 
-1. Verify `_project-index.json` lives at `~/Projects/`.  
-2. Use `ccup` / `ccdown` for quick control.  
-3. Confirm `curl http://127.0.0.1:5050/projects` returns JSON.  
-4. Develop `init_rag.py` for automatic RAG bootstrapping.  
+1. Verify `_project-index.json` lives at `~/Projects/`.
+2. Use `ccup` / `ccdown` for quick control.
+3. Confirm `curl http://127.0.0.1:5050/projects` returns JSON.
+4. Develop `init_rag.py` for automatic RAG bootstrapping.
 5. Expand dashboard view in CommandCenter to display:
-   - Connected projects  
-   - Context sync status  
-   - RAG health / embedding count  
+   - Connected projects
+   - Context sync status
+   - RAG health / embedding count
 
 ---
 
 ## 📘 References
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)  
-- [Uvicorn Server Guide](https://www.uvicorn.org/)  
-- [FAISS](https://github.com/facebookresearch/faiss)  
-- [Qdrant](https://qdrant.tech/)  
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Uvicorn Server Guide](https://www.uvicorn.org/)
+- [FAISS](https://github.com/facebookresearch/faiss)
+- [Qdrant](https://qdrant.tech/)
 
 ---
 
-**End of Document**  
-> This specification can be added directly as a GitHub Issue titled:  
+**End of Document**
+> This specification can be added directly as a GitHub Issue titled:
 > “🧩 Integrate CommandCenter Context Bridge & Multi-Project RAG Hub”
-

@@ -8,7 +8,7 @@ Implemented comprehensive test infrastructure and 15+ essential tests covering u
 ### Created Files:
 1. **backend/tests/utils/factories.py** - Factory classes for test data generation
    - UserFactory
-   - ProjectFactory  
+   - ProjectFactory
    - TechnologyFactory
    - RepositoryFactory
 
@@ -29,7 +29,7 @@ Implemented comprehensive test infrastructure and 15+ essential tests covering u
 ### 1. backend/tests/unit/models/test_technology.py
 **Tests:** Technology model validation
 - ✅ test_create_technology
-- ✅ test_technology_default_values  
+- ✅ test_technology_default_values
 - ✅ test_technology_with_urls
 - ✅ test_technology_with_tags
 - ✅ test_technology_status_transitions

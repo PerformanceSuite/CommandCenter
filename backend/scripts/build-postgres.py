@@ -18,7 +18,7 @@ async def main():
         db_name="commandcenter",
         db_password="postgres",  # Will be overridden by .env
         postgres_version="16",
-        pgvector_version="v0.7.0"
+        pgvector_version="v0.7.0",
     )
 
     async with PostgresStack(config) as stack:

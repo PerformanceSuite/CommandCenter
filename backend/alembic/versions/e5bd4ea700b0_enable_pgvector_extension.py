@@ -17,8 +17,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e5bd4ea700b0'
-down_revision: Union[str, Sequence[str], None] = '013_merge_heads'
+revision: str = "e5bd4ea700b0"
+down_revision: Union[str, Sequence[str], None] = "013_merge_heads"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -39,7 +39,8 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
     # Create helper function for updating timestamps (if not exists)
-    op.execute("""
+    op.execute(
+        """
         CREATE OR REPLACE FUNCTION update_updated_at_column()
         RETURNS TRIGGER AS $$
         BEGIN
@@ -47,7 +48,8 @@ def upgrade() -> None:
             RETURN NEW;
         END;
         $$ language 'plpgsql';
-    """)
+    """
+    )
 
 
 def downgrade() -> None:

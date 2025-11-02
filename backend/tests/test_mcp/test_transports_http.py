@@ -67,12 +67,7 @@ class TestHTTPTransport:
 
     def test_rpc_endpoint_list_resources(self, http_client):
         """Test JSON-RPC request for listing resources."""
-        rpc_request = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "resources/list",
-            "params": {}
-        }
+        rpc_request = {"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}
         response = http_client.post("/mcp/v1/rpc", json=rpc_request)
         assert response.status_code == 200
         data = response.json()
@@ -82,12 +77,7 @@ class TestHTTPTransport:
 
     def test_rpc_endpoint_list_tools(self, http_client):
         """Test JSON-RPC request for listing tools."""
-        rpc_request = {
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/list",
-            "params": {}
-        }
+        rpc_request = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
         response = http_client.post("/mcp/v1/rpc", json=rpc_request)
         assert response.status_code == 200
         data = response.json()
@@ -97,12 +87,7 @@ class TestHTTPTransport:
 
     def test_rpc_endpoint_list_prompts(self, http_client):
         """Test JSON-RPC request for listing prompts."""
-        rpc_request = {
-            "jsonrpc": "2.0",
-            "id": 3,
-            "method": "prompts/list",
-            "params": {}
-        }
+        rpc_request = {"jsonrpc": "2.0", "id": 3, "method": "prompts/list", "params": {}}
         response = http_client.post("/mcp/v1/rpc", json=rpc_request)
         assert response.status_code == 200
         data = response.json()
@@ -117,12 +102,7 @@ class TestHTTPTransport:
 
     def test_rpc_endpoint_invalid_method(self, http_client):
         """Test JSON-RPC request with invalid method."""
-        rpc_request = {
-            "jsonrpc": "2.0",
-            "id": 4,
-            "method": "invalid/method",
-            "params": {}
-        }
+        rpc_request = {"jsonrpc": "2.0", "id": 4, "method": "invalid/method", "params": {}}
         response = http_client.post("/mcp/v1/rpc", json=rpc_request)
         assert response.status_code == 200
         data = response.json()
@@ -152,15 +132,12 @@ class TestHTTPTransport:
         """Test create_http_app returns FastAPI instance."""
         app = create_http_app(mcp_server)
         from fastapi import FastAPI
+
         assert isinstance(app, FastAPI)
 
     def test_rpc_notification_no_response(self, http_client):
         """Test JSON-RPC notification (no id, no response expected)."""
-        rpc_notification = {
-            "jsonrpc": "2.0",
-            "method": "notification/test",
-            "params": {}
-        }
+        rpc_notification = {"jsonrpc": "2.0", "method": "notification/test", "params": {}}
         response = http_client.post("/mcp/v1/rpc", json=rpc_notification)
         # Notifications return 204 No Content
         assert response.status_code == 204

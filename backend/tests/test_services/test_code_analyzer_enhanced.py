@@ -20,8 +20,9 @@ def analyzer():
 @pytest.fixture
 def temp_python_file():
     """Create temporary Python file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        code = textwrap.dedent("""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        code = textwrap.dedent(
+            """
             import os
             import sys
 
@@ -46,7 +47,8 @@ def temp_python_file():
                     return a / b
                 except ZeroDivisionError:
                     return 0
-        """)
+        """
+        )
         f.write(code)
         f.flush()
         yield Path(f.name)
@@ -60,7 +62,8 @@ class TestASTComplexityVisitor:
 
     def test_visitor_counts_functions(self):
         """Test visitor counts function definitions."""
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             def func1():
                 pass
 
@@ -69,7 +72,8 @@ class TestASTComplexityVisitor:
 
             async def func3():
                 pass
-        """)
+        """
+        )
         tree = ast.parse(code)
         visitor = ASTComplexityVisitor()
         visitor.visit(tree)
@@ -79,14 +83,16 @@ class TestASTComplexityVisitor:
 
     def test_visitor_counts_classes(self):
         """Test visitor counts class definitions."""
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             class ClassA:
                 pass
 
             class ClassB:
                 def method(self):
                     pass
-        """)
+        """
+        )
         tree = ast.parse(code)
         visitor = ASTComplexityVisitor()
         visitor.visit(tree)
@@ -96,12 +102,14 @@ class TestASTComplexityVisitor:
 
     def test_visitor_counts_imports(self):
         """Test visitor counts imports."""
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             import os
             import sys
             from pathlib import Path
             from typing import List, Dict
-        """)
+        """
+        )
         tree = ast.parse(code)
         visitor = ASTComplexityVisitor()
         visitor.visit(tree)
@@ -110,7 +118,8 @@ class TestASTComplexityVisitor:
 
     def test_visitor_calculates_complexity(self):
         """Test visitor calculates cyclomatic complexity."""
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             def complex_function(x):
                 if x > 0:
                     for i in range(x):
@@ -123,7 +132,8 @@ class TestASTComplexityVisitor:
                 except ZeroDivisionError:
                     result = 0
                 return result
-        """)
+        """
+        )
         tree = ast.parse(code)
         visitor = ASTComplexityVisitor()
         visitor.visit(tree)
@@ -133,11 +143,13 @@ class TestASTComplexityVisitor:
 
     def test_visitor_counts_boolean_operations(self):
         """Test visitor counts boolean operations."""
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             def func(a, b, c):
                 if a and b or c:
                     pass
-        """)
+        """
+        )
         tree = ast.parse(code)
         visitor = ASTComplexityVisitor()
         visitor.visit(tree)
@@ -168,11 +180,15 @@ class TestCodeAnalyzerEnhanced:
 
             # Create Python file
             py_file = tmpdir_path / "test.py"
-            py_file.write_text(textwrap.dedent("""
+            py_file.write_text(
+                textwrap.dedent(
+                    """
                 def test_func():
                     if True:
                         pass
-            """))
+            """
+                )
+            )
 
             result = await analyzer.analyze(tmpdir_path)
 
@@ -205,7 +221,9 @@ class TestCodeAnalyzerEnhanced:
 
             # Create complex Python file
             py_file = tmpdir_path / "complex.py"
-            py_file.write_text(textwrap.dedent("""
+            py_file.write_text(
+                textwrap.dedent(
+                    """
                 def very_complex(x, y, z):
                     if x > 0:
                         for i in range(x):
@@ -214,7 +232,9 @@ class TestCodeAnalyzerEnhanced:
                                     y -= 1
                                     if z:
                                         pass
-            """))
+            """
+                )
+            )
 
             result = await analyzer.analyze(tmpdir_path)
 
@@ -233,12 +253,16 @@ class TestCodeAnalyzerEnhanced:
             # Create multiple Python files
             for i in range(3):
                 py_file = tmpdir_path / f"file{i}.py"
-                py_file.write_text(textwrap.dedent(f"""
+                py_file.write_text(
+                    textwrap.dedent(
+                        f"""
                     class Class{i}:
                         def method(self):
                             if True:
                                 pass
-                """))
+                """
+                    )
+                )
 
             result = await analyzer.analyze(tmpdir_path)
 
@@ -258,13 +282,17 @@ class TestCodeAnalyzerEnhanced:
             py_file1.write_text("def simple(): pass")
 
             py_file2 = tmpdir_path / "complex.py"
-            py_file2.write_text(textwrap.dedent("""
+            py_file2.write_text(
+                textwrap.dedent(
+                    """
                 def complex(x):
                     if x > 0:
                         for i in range(10):
                             if i % 2:
                                 pass
-            """))
+            """
+                )
+            )
 
             result = await analyzer.analyze(tmpdir_path)
 

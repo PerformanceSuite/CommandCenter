@@ -13,6 +13,7 @@ def test_openai_sdk_importable():
     try:
         import openai
         from openai import AsyncOpenAI
+
         assert openai.__version__ is not None
         assert AsyncOpenAI is not None
     except ImportError as e:
@@ -24,6 +25,7 @@ def test_anthropic_sdk_importable():
     try:
         import anthropic
         from anthropic import AsyncAnthropic
+
         assert anthropic.__version__ is not None
         assert AsyncAnthropic is not None
     except ImportError as e:
@@ -34,6 +36,7 @@ def test_google_ai_sdk_importable():
     """Verify Google Gen AI SDK can be imported (new SDK as of May 2025)"""
     try:
         from google import genai
+
         # New SDK (google-genai) replaced google-generativeai in May 2025
         assert genai is not None
     except ImportError as e:
@@ -44,6 +47,7 @@ def test_litellm_importable():
     """Verify LiteLLM SDK can be imported"""
     try:
         import litellm
+
         assert litellm.__version__ is not None
     except ImportError as e:
         pytest.fail(f"LiteLLM SDK not installed or not importable: {e}")

@@ -34,7 +34,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
     """KnowledgeBeast - Production-ready knowledge management system."""
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
-    
+
     # Setup logging
     log_level = "DEBUG" if verbose else "INFO"
     setup_logging(level=log_level)

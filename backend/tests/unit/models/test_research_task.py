@@ -31,9 +31,7 @@ class TestResearchTaskModel:
         """ResearchTask state transitions are valid"""
         project = await create_test_project(db_session)
         task = await create_test_research_task(
-            db_session,
-            project_id=project.id,
-            status=TaskStatus.PENDING
+            db_session, project_id=project.id, status=TaskStatus.PENDING
         )
 
         # Valid transitions
@@ -59,10 +57,7 @@ class TestResearchTaskModel:
 
         for status in TaskStatus:
             task = await create_test_research_task(
-                db_session,
-                project_id=project.id,
-                title=f"Task {status.value}",
-                status=status
+                db_session, project_id=project.id, title=f"Task {status.value}", status=status
             )
             assert task.status == status
 
@@ -70,10 +65,7 @@ class TestResearchTaskModel:
         """Test research task default values"""
         project = await create_test_project(db_session)
 
-        task = ResearchTask(
-            title="Minimal Task",
-            project_id=project.id
-        )
+        task = ResearchTask(title="Minimal Task", project_id=project.id)
         db_session.add(task)
         await db_session.commit()
         await db_session.refresh(task)
@@ -105,7 +97,7 @@ class TestResearchTaskModel:
             user_notes="Some user notes",
             findings="Research findings",
             uploaded_documents=["doc1.pdf", "doc2.pdf"],
-            metadata_={"key": "value"}
+            metadata_={"key": "value"},
         )
         db_session.add(task)
         await db_session.commit()
@@ -162,9 +154,7 @@ class TestResearchTaskModel:
         """Test blocking a research task"""
         project = await create_test_project(db_session)
         task = await create_test_research_task(
-            db_session,
-            project_id=project.id,
-            status=TaskStatus.IN_PROGRESS
+            db_session, project_id=project.id, status=TaskStatus.IN_PROGRESS
         )
 
         # Block the task
@@ -180,9 +170,7 @@ class TestResearchTaskModel:
         """Test cancelling a research task"""
         project = await create_test_project(db_session)
         task = await create_test_research_task(
-            db_session,
-            project_id=project.id,
-            status=TaskStatus.PENDING
+            db_session, project_id=project.id, status=TaskStatus.PENDING
         )
 
         # Cancel the task

@@ -16,14 +16,14 @@ CRITICAL - Blocks multi-project deployment
 # backend/app/models/project.py
 class Project(Base):
     __tablename__ = "projects"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     owner = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     __table_args__ = (UniqueConstraint('owner', 'name'),)
 ```
 

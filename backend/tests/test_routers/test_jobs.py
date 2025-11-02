@@ -253,9 +253,7 @@ class TestJobsRouter:
 
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.cancel_job = AsyncMock(
-                side_effect=HTTPException(
-                    status_code=400, detail="Cannot cancel completed job"
-                )
+                side_effect=HTTPException(status_code=400, detail="Cannot cancel completed job")
             )
 
             response = client.post(f"/api/v1/jobs/{sample_job.id}/cancel")
@@ -278,9 +276,7 @@ class TestJobsRouter:
         }
 
         with patch("app.routers.jobs.JobService") as mock_service:
-            mock_service.return_value.get_job_progress = AsyncMock(
-                return_value=progress_data
-            )
+            mock_service.return_value.get_job_progress = AsyncMock(return_value=progress_data)
 
             response = client.get("/api/v1/jobs/1/progress")
 
@@ -296,9 +292,7 @@ class TestJobsRouter:
         active_job.status = JobStatus.RUNNING
 
         with patch("app.routers.jobs.JobService") as mock_service:
-            mock_service.return_value.get_active_jobs = AsyncMock(
-                return_value=[active_job]
-            )
+            mock_service.return_value.get_active_jobs = AsyncMock(return_value=[active_job])
 
             response = client.get("/api/v1/jobs/active/list")
 
@@ -351,9 +345,7 @@ class TestJobsRouter:
                 return_value={"total": 10, "by_status": {}, "active_jobs": 2}
             )
 
-            response = client.get(
-                "/api/v1/jobs/statistics/summary", params={"project_id": 1}
-            )
+            response = client.get("/api/v1/jobs/statistics/summary", params={"project_id": 1})
 
             assert response.status_code == status.HTTP_200_OK
             mock_service.return_value.get_statistics.assert_called_with(project_id=1)

@@ -28,9 +28,7 @@ class TestTechnologyModel:
     async def test_technology_with_domain(self, db_session):
         """Test technology with specific domain"""
         tech = Technology(
-            title="TensorFlow",
-            domain=TechnologyDomain.AI_ML,
-            status=TechnologyStatus.RESEARCH
+            title="TensorFlow", domain=TechnologyDomain.AI_ML, status=TechnologyStatus.RESEARCH
         )
         db_session.add(tech)
         await db_session.commit()
@@ -67,7 +65,7 @@ class TestTechnologyModel:
             title="FastAPI",
             documentation_url="https://fastapi.tiangolo.com",
             repository_url="https://github.com/tiangolo/fastapi",
-            website_url="https://fastapi.tiangolo.com"
+            website_url="https://fastapi.tiangolo.com",
         )
 
         assert tech.documentation_url == "https://fastapi.tiangolo.com"
@@ -77,9 +75,7 @@ class TestTechnologyModel:
     async def test_technology_with_tags(self, db_session):
         """Test technology with tags"""
         tech = await create_test_technology(
-            db_session,
-            title="React",
-            tags="frontend,javascript,ui,library"
+            db_session, title="React", tags="frontend,javascript,ui,library"
         )
 
         assert tech.tags == "frontend,javascript,ui,library"
@@ -106,10 +102,7 @@ class TestTechnologyModel:
     async def test_technology_relevance_and_priority(self, db_session):
         """Test technology relevance score and priority"""
         tech = await create_test_technology(
-            db_session,
-            title="HighPriority",
-            relevance_score=95,
-            priority=5
+            db_session, title="HighPriority", relevance_score=95, priority=5
         )
 
         assert tech.relevance_score == 95
@@ -130,7 +123,7 @@ class TestTechnologyModel:
             documentation_url="https://docs.example.com",
             repository_url="https://github.com/example/repo",
             website_url="https://example.com",
-            tags="ai,ml,production"
+            tags="ai,ml,production",
         )
         db_session.add(tech)
         await db_session.commit()

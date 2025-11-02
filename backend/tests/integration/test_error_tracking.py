@@ -25,7 +25,11 @@ def get_error_metric_value():
     for metric in REGISTRY.collect():
         if metric.name == "commandcenter_errors_total":
             # Sum all samples (across all label combinations)
-            total = sum(sample.value for sample in metric.samples if sample.name == "commandcenter_errors_total")
+            total = sum(
+                sample.value
+                for sample in metric.samples
+                if sample.name == "commandcenter_errors_total"
+            )
             return int(total)
     return 0
 

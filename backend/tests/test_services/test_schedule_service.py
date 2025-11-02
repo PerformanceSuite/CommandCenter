@@ -210,14 +210,10 @@ class TestScheduleUpdate:
         assert updated.next_run_at != original_next_run
 
     @pytest.mark.asyncio
-    async def test_update_nonexistent_schedule(
-        self, schedule_service: ScheduleService
-    ):
+    async def test_update_nonexistent_schedule(self, schedule_service: ScheduleService):
         """Test updating nonexistent schedule."""
         with pytest.raises(ValueError, match="not found"):
-            await schedule_service.update_schedule(
-                schedule_id=99999, name="Should Fail"
-            )
+            await schedule_service.update_schedule(schedule_id=99999, name="Should Fail")
 
 
 class TestScheduleExecution:
@@ -275,9 +271,7 @@ class TestScheduleExecution:
             frequency=ScheduleFrequency.DAILY,
         )
 
-        await schedule_service.record_execution_result(
-            schedule_id=schedule.id, success=True
-        )
+        await schedule_service.record_execution_result(schedule_id=schedule.id, success=True)
 
         await db_session.refresh(schedule)
         assert schedule.success_count == 1
@@ -364,9 +358,7 @@ class TestScheduleQueries:
                 frequency=ScheduleFrequency.DAILY if i % 2 == 0 else ScheduleFrequency.HOURLY,
             )
 
-        stats = await schedule_service.get_schedule_statistics(
-            project_id=test_project.id
-        )
+        stats = await schedule_service.get_schedule_statistics(project_id=test_project.id)
 
         assert stats["total_schedules"] == 3
         assert stats["enabled_schedules"] == 3
@@ -377,9 +369,7 @@ class TestScheduleDeletion:
     """Tests for schedule deletion."""
 
     @pytest.mark.asyncio
-    async def test_delete_schedule(
-        self, schedule_service: ScheduleService, test_project: Project
-    ):
+    async def test_delete_schedule(self, schedule_service: ScheduleService, test_project: Project):
         """Test deleting a schedule."""
         schedule = await schedule_service.create_schedule(
             project_id=test_project.id,
@@ -395,9 +385,7 @@ class TestScheduleDeletion:
             await schedule_service.update_schedule(schedule_id=schedule.id, name="Should Fail")
 
     @pytest.mark.asyncio
-    async def test_delete_nonexistent_schedule(
-        self, schedule_service: ScheduleService
-    ):
+    async def test_delete_nonexistent_schedule(self, schedule_service: ScheduleService):
         """Test deleting nonexistent schedule."""
         with pytest.raises(ValueError, match="not found"):
             await schedule_service.delete_schedule(99999)

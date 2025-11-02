@@ -30,10 +30,10 @@ def test_config_has_kb_settings():
     """Verify configuration has KnowledgeBeast settings."""
     from app.config import settings
 
-    assert hasattr(settings, 'EMBEDDING_MODEL')
-    assert hasattr(settings, 'EMBEDDING_DIMENSION')
-    assert hasattr(settings, 'KNOWLEDGE_COLLECTION_PREFIX')
-    assert hasattr(settings, 'KB_POOL_MAX_SIZE')
+    assert hasattr(settings, "EMBEDDING_MODEL")
+    assert hasattr(settings, "EMBEDDING_DIMENSION")
+    assert hasattr(settings, "KNOWLEDGE_COLLECTION_PREFIX")
+    assert hasattr(settings, "KB_POOL_MAX_SIZE")
 
 
 def test_rag_service_imports():
@@ -92,12 +92,12 @@ def test_backward_compatibility():
     service = RAGService(repository_id=1)
 
     # Check required methods exist
-    assert hasattr(service, 'query')
-    assert hasattr(service, 'add_document')
-    assert hasattr(service, 'delete_by_source')
-    assert hasattr(service, 'get_statistics')
-    assert hasattr(service, 'initialize')
-    assert hasattr(service, 'close')
+    assert hasattr(service, "query")
+    assert hasattr(service, "add_document")
+    assert hasattr(service, "delete_by_source")
+    assert hasattr(service, "get_statistics")
+    assert hasattr(service, "initialize")
+    assert hasattr(service, "close")
 
     # Check methods are async
     assert inspect.iscoroutinefunction(service.query)

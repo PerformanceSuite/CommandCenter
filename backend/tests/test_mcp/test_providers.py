@@ -167,9 +167,7 @@ class MockResourceProvider(ResourceProvider):
     async def read_resource(self, uri: str):
         for resource in self.resources:
             if resource.uri == uri:
-                return ResourceContent(
-                    uri=uri, mime_type="text/plain", text=f"Content for {uri}"
-                )
+                return ResourceContent(uri=uri, mime_type="text/plain", text=f"Content for {uri}")
         raise ResourceNotFoundError(uri)
 
 
@@ -189,9 +187,7 @@ class MockToolProvider(ToolProvider):
     async def call_tool(self, name: str, arguments: dict):
         for tool in self.tools:
             if tool.name == name:
-                return ToolResult(
-                    success=True, result={"output": f"Result from {name}"}
-                )
+                return ToolResult(success=True, result={"output": f"Result from {name}"})
         raise ToolNotFoundError(name)
 
 
@@ -212,9 +208,7 @@ class MockPromptProvider(PromptProvider):
         for prompt in self.prompts:
             if prompt.name == name:
                 return PromptResult(
-                    messages=[
-                        PromptMessage(role="user", content=f"Prompt content for {name}")
-                    ]
+                    messages=[PromptMessage(role="user", content=f"Prompt content for {name}")]
                 )
         raise PromptNotFoundError(name)
 

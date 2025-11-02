@@ -7,10 +7,7 @@ def test_postgres_config_dataclass():
     from dagger_modules.postgres import PostgresConfig
 
     config = PostgresConfig(
-        db_name="test",
-        db_password="testpass",
-        postgres_version="16",
-        pgvector_version="v0.7.0"
+        db_name="test", db_password="testpass", postgres_version="16", pgvector_version="v0.7.0"
     )
 
     assert config.db_name == "test"

@@ -8,6 +8,7 @@ import dagger
 @dataclass
 class PostgresConfig:
     """Configuration for custom Postgres with pgvector."""
+
     db_name: str = "commandcenter"
     db_password: str = "changeme"
     postgres_version: str = "16"
@@ -50,25 +51,32 @@ class PostgresStack:
         return (
             self.client.container()
             .from_(f"postgres:{self.config.postgres_version}")
-
             # Install build dependencies
             .with_exec(["apt-get", "update"])
-            .with_exec([
-                "apt-get", "install", "-y",
-                "build-essential",
-                f"postgresql-server-dev-{self.config.postgres_version}",
-                "git"
-            ])
-
+            .with_exec(
+                [
+                    "apt-get",
+                    "install",
+                    "-y",
+                    "build-essential",
+                    f"postgresql-server-dev-{self.config.postgres_version}",
+                    "git",
+                ]
+            )
             # Install pgvector
-            .with_exec([
-                "git", "clone", "--branch", self.config.pgvector_version,
-                "https://github.com/pgvector/pgvector.git", "/tmp/pgvector"
-            ])
+            .with_exec(
+                [
+                    "git",
+                    "clone",
+                    "--branch",
+                    self.config.pgvector_version,
+                    "https://github.com/pgvector/pgvector.git",
+                    "/tmp/pgvector",
+                ]
+            )
             .with_workdir("/tmp/pgvector")
             .with_exec(["make"])
             .with_exec(["make", "install"])
-
             # Configure Postgres
             .with_env_variable("POSTGRES_DB", self.config.db_name)
             .with_env_variable("POSTGRES_PASSWORD", self.config.db_password)

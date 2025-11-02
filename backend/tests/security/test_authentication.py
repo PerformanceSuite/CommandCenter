@@ -14,9 +14,10 @@ async def test_endpoints_require_authentication(client):
 
     for endpoint in endpoints:
         response = await client.get(endpoint)  # No auth headers
-        assert response.status_code in [401, 403], (
-            f"{endpoint} should require authentication, got {response.status_code}"
-        )
+        assert response.status_code in [
+            401,
+            403,
+        ], f"{endpoint} should require authentication, got {response.status_code}"
 
 
 @pytest.mark.asyncio
@@ -25,9 +26,7 @@ async def test_invalid_token_rejected(client):
     headers = {"Authorization": "Bearer invalid-token-xyz"}
 
     response = await client.get("/api/v1/technologies", headers=headers)
-    assert response.status_code in [401, 403], (
-        "Invalid token should be rejected"
-    )
+    assert response.status_code in [401, 403], "Invalid token should be rejected"
 
 
 @pytest.mark.asyncio
@@ -40,9 +39,7 @@ async def test_tampered_token_rejected(client, jwt_token_factory, user_a):
     headers = {"Authorization": f"Bearer {tampered_token}"}
     response = await client.get("/api/v1/technologies", headers=headers)
 
-    assert response.status_code in [401, 403], (
-        "Tampered token should be rejected"
-    )
+    assert response.status_code in [401, 403], "Tampered token should be rejected"
 
 
 @pytest.mark.asyncio
@@ -54,9 +51,7 @@ async def test_expired_token_rejected(client, jwt_token_factory, user_a):
     headers = {"Authorization": f"Bearer {expired_token}"}
     response = await client.get("/api/v1/technologies", headers=headers)
 
-    assert response.status_code in [401, 403], (
-        "Expired token should be rejected"
-    )
+    assert response.status_code in [401, 403], "Expired token should be rejected"
 
 
 @pytest.mark.asyncio
@@ -66,9 +61,7 @@ async def test_csrf_token_required_for_mutations(client, auth_headers_factory, u
 
     # POST without CSRF token should be rejected
     response = await client.post(
-        "/api/v1/technologies",
-        json={"title": "Test Tech", "domain": "security"},
-        headers=headers
+        "/api/v1/technologies", json={"title": "Test Tech", "domain": "security"}, headers=headers
     )
 
     # Either requires CSRF token (403) or uses other protection (SameSite cookies)
@@ -77,9 +70,7 @@ async def test_csrf_token_required_for_mutations(client, auth_headers_factory, u
         # Implementation uses alternative CSRF protection (SameSite cookies, Origin checks)
         pass
     else:
-        assert response.status_code in [403, 400], (
-            "Mutations should have CSRF protection"
-        )
+        assert response.status_code in [403, 400], "Mutations should have CSRF protection"
 
 
 @pytest.mark.asyncio

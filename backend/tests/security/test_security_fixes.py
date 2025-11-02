@@ -72,7 +72,9 @@ class TestErrorMessageSanitization:
         handler = MCPProtocolHandler()
 
         # Create an exception with sensitive information
-        sensitive_exception = ValueError("Database connection failed: user=admin password=secret123 host=internal-db.company.com")
+        sensitive_exception = ValueError(
+            "Database connection failed: user=admin password=secret123 host=internal-db.company.com"
+        )
 
         # Handle the exception
         response = await handler.handle_exception(sensitive_exception, request_id=1)
@@ -180,6 +182,7 @@ class TestPathTraversalProtection:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Patch ALLOWED_ANALYSIS_DIRS for this test
             from app.routers import projects
+
             original_dirs = projects.ALLOWED_ANALYSIS_DIRS
 
             try:
@@ -233,9 +236,9 @@ from cli.config import Config, AuthConfig
 class TestSecureTokenStorage:
     """Test that tokens are stored securely in system keyring."""
 
-    @patch('keyring.set_password')
-    @patch('keyring.get_password')
-    @patch('keyring.delete_password')
+    @patch("keyring.set_password")
+    @patch("keyring.get_password")
+    @patch("keyring.delete_password")
     def test_token_saved_to_keyring(self, mock_delete, mock_get, mock_set):
         """Tokens should be saved to system keyring, not config file."""
         config = Config()
@@ -247,7 +250,7 @@ class TestSecureTokenStorage:
         # Should call keyring.set_password
         mock_set.assert_called_once_with("commandcenter", "api_token", test_token)
 
-    @patch('keyring.get_password', return_value="stored-token")
+    @patch("keyring.get_password", return_value="stored-token")
     def test_token_loaded_from_keyring(self, mock_get):
         """Tokens should be loaded from system keyring."""
         config = Config()
@@ -259,7 +262,7 @@ class TestSecureTokenStorage:
         mock_get.assert_called_once_with("commandcenter", "api_token")
         assert token == "stored-token"
 
-    @patch('keyring.delete_password')
+    @patch("keyring.delete_password")
     def test_token_deleted_from_keyring(self, mock_delete):
         """Tokens should be deleted from system keyring."""
         config = Config()
@@ -270,14 +273,14 @@ class TestSecureTokenStorage:
         # Should call keyring.delete_password
         mock_delete.assert_called_once_with("commandcenter", "api_token")
 
-    @patch('keyring.get_password', return_value=None)
+    @patch("keyring.get_password", return_value=None)
     def test_has_token_returns_false_when_no_token(self, mock_get):
         """has_token() should return False when no token exists."""
         config = Config()
 
         assert config.has_token() is False
 
-    @patch('keyring.get_password', return_value="some-token")
+    @patch("keyring.get_password", return_value="some-token")
     def test_has_token_returns_true_when_token_exists(self, mock_get):
         """has_token() should return True when token exists."""
         config = Config()

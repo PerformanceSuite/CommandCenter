@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 class APIConfig(BaseModel):
     """API connection configuration."""
 
-    url: str = Field(
-        default="http://localhost:8000", description="CommandCenter API URL"
-    )
+    url: str = Field(default="http://localhost:8000", description="CommandCenter API URL")
     timeout: int = Field(default=30, description="Request timeout in seconds")
     verify_ssl: bool = Field(default=True, description="Verify SSL certificates")
 
@@ -101,9 +99,7 @@ class AuthConfig(BaseModel):
 class OutputConfig(BaseModel):
     """Output formatting configuration."""
 
-    format: str = Field(
-        default="table", description="Output format (table, json, yaml)"
-    )
+    format: str = Field(default="table", description="Output format (table, json, yaml)")
     color: str = Field(default="auto", description="Color mode (auto, always, never)")
     verbose: bool = Field(default=False, description="Enable verbose output")
 
@@ -113,9 +109,7 @@ class AnalysisConfig(BaseModel):
 
     cache: bool = Field(default=True, description="Enable analysis caching")
     create_tasks: bool = Field(default=False, description="Auto-create research tasks")
-    export_path: str = Field(
-        default="./analysis-results", description="Export directory"
-    )
+    export_path: str = Field(default="./analysis-results", description="Export directory")
 
 
 class AgentsConfig(BaseModel):

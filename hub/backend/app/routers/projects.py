@@ -108,5 +108,3 @@ async def delete_project(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Project {project_id} not found",
         )
-
-

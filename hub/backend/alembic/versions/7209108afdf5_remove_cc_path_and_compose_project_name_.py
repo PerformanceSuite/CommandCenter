@@ -1,7 +1,7 @@
 """remove cc_path and compose_project_name from projects
 
 Revision ID: 7209108afdf5
-Revises: 
+Revises:
 Create Date: 2025-10-17 13:44:52.115248
 
 """

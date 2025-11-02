@@ -34,12 +34,7 @@ class TestMCPRouter:
 
     def test_mcp_rpc_endpoint(self, client):
         """Test MCP JSON-RPC endpoint."""
-        rpc_request = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "resources/list",
-            "params": {}
-        }
+        rpc_request = {"jsonrpc": "2.0", "id": 1, "method": "resources/list", "params": {}}
         response = client.post("/api/v1/mcp/rpc", json=rpc_request)
         assert response.status_code == 200
 

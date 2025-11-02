@@ -1,4 +1,4 @@
-# Veria Ecosystem Intelligence & Automation Roadmap  
+# Veria Ecosystem Intelligence & Automation Roadmap
 _Updated: 2025-10-29_
 
 ## 1. Vision Snapshot
@@ -91,13 +91,13 @@ _Updated: 2025-10-29_
 - **Security**: Store provider keys/secrets via Vault or encrypted fields; integrate compliance with Veria’s key management policies.
 
 ## 10. Recommended Sequence (Quarterly Milestones)
-1. **Q4 2025**  
-   - Dagger template v2, control pane, intelligence jobs, MRKTZR ↔ Veria pipeline MVP.  
-2. **Q1 2026**  
-   - Knowledge hygiene suite, Hub analytics 1.0, MCP bootstrapper, IDE context API.  
-3. **Q2 2026**  
-   - Automated partnership pipeline v2 (external data), Hub signal console, cross-project search.  
-4. **Q3 2026**  
+1. **Q4 2025**
+   - Dagger template v2, control pane, intelligence jobs, MRKTZR ↔ Veria pipeline MVP.
+2. **Q1 2026**
+   - Knowledge hygiene suite, Hub analytics 1.0, MCP bootstrapper, IDE context API.
+3. **Q2 2026**
+   - Automated partnership pipeline v2 (external data), Hub signal console, cross-project search.
+4. **Q3 2026**
    - Fleet automation, living briefs with annotations, full ecosystem analytics, Fractlzr trust asset pilots.
 
 ---

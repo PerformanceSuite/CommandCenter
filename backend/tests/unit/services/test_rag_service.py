@@ -25,18 +25,20 @@ class TestRAGService:
         """Mock PostgresBackend"""
         mock = MagicMock()
         mock.initialize = AsyncMock()
-        mock.query = AsyncMock(return_value=[
-            {
-                "content": "FastAPI is a modern web framework",
-                "metadata": {"file_path": "docs/fastapi.md", "line_number": 10},
-                "score": 0.95,
-            },
-            {
-                "content": "FastAPI supports async/await",
-                "metadata": {"file_path": "docs/async.md", "line_number": 5},
-                "score": 0.87,
-            }
-        ])
+        mock.query = AsyncMock(
+            return_value=[
+                {
+                    "content": "FastAPI is a modern web framework",
+                    "metadata": {"file_path": "docs/fastapi.md", "line_number": 10},
+                    "score": 0.95,
+                },
+                {
+                    "content": "FastAPI supports async/await",
+                    "metadata": {"file_path": "docs/async.md", "line_number": 5},
+                    "score": 0.87,
+                },
+            ]
+        )
         mock.add_documents = AsyncMock()
         mock.delete_collection = AsyncMock()
         mock.close = AsyncMock()
@@ -64,8 +66,13 @@ class TestRAGService:
     async def test_rag_service_query_success(self, mock_embedding_model, mock_postgres_backend):
         """Test successful RAG query"""
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
-            with patch("app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend):
-                with patch("app.services.rag_service.SentenceTransformer", return_value=mock_embedding_model):
+            with patch(
+                "app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend
+            ):
+                with patch(
+                    "app.services.rag_service.SentenceTransformer",
+                    return_value=mock_embedding_model,
+                ):
                     # Create service
                     service = RAGService(repository_id=1)
                     await service.initialize()
@@ -81,11 +88,18 @@ class TestRAGService:
                     mock_postgres_backend.query.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_rag_service_query_with_category_filter(self, mock_embedding_model, mock_postgres_backend):
+    async def test_rag_service_query_with_category_filter(
+        self, mock_embedding_model, mock_postgres_backend
+    ):
         """Test RAG query with category filter"""
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
-            with patch("app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend):
-                with patch("app.services.rag_service.SentenceTransformer", return_value=mock_embedding_model):
+            with patch(
+                "app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend
+            ):
+                with patch(
+                    "app.services.rag_service.SentenceTransformer",
+                    return_value=mock_embedding_model,
+                ):
                     service = RAGService(repository_id=1)
                     await service.initialize()
 
@@ -103,8 +117,13 @@ class TestRAGService:
     async def test_rag_service_add_documents(self, mock_embedding_model, mock_postgres_backend):
         """Test adding documents to knowledge base"""
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
-            with patch("app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend):
-                with patch("app.services.rag_service.SentenceTransformer", return_value=mock_embedding_model):
+            with patch(
+                "app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend
+            ):
+                with patch(
+                    "app.services.rag_service.SentenceTransformer",
+                    return_value=mock_embedding_model,
+                ):
                     service = RAGService(repository_id=1)
                     await service.initialize()
 
@@ -117,7 +136,7 @@ class TestRAGService:
                         {
                             "content": "Document 2 content",
                             "metadata": {"file_path": "file2.py", "category": "code"},
-                        }
+                        },
                     ]
 
                     await service.backend.add_documents(documents)
@@ -126,11 +145,18 @@ class TestRAGService:
                     mock_postgres_backend.add_documents.assert_called_once_with(documents)
 
     @pytest.mark.asyncio
-    async def test_rag_service_initialization_required(self, mock_embedding_model, mock_postgres_backend):
+    async def test_rag_service_initialization_required(
+        self, mock_embedding_model, mock_postgres_backend
+    ):
         """Test that initialization is required before use"""
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
-            with patch("app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend):
-                with patch("app.services.rag_service.SentenceTransformer", return_value=mock_embedding_model):
+            with patch(
+                "app.services.rag_service.PostgresBackend", return_value=mock_postgres_backend
+            ):
+                with patch(
+                    "app.services.rag_service.SentenceTransformer",
+                    return_value=mock_embedding_model,
+                ):
                     service = RAGService(repository_id=1)
 
                     # Should not be initialized yet
@@ -173,7 +199,10 @@ class TestRAGService:
 
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
             with patch("app.services.rag_service.PostgresBackend", return_value=mock_backend):
-                with patch("app.services.rag_service.SentenceTransformer", return_value=mock_embedding_model):
+                with patch(
+                    "app.services.rag_service.SentenceTransformer",
+                    return_value=mock_embedding_model,
+                ):
                     service = RAGService(repository_id=1)
                     await service.initialize()
 

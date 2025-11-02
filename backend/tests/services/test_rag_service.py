@@ -14,28 +14,33 @@ from app.services.rag_service import RAGService, RAG_AVAILABLE
 
 # Skip all tests if RAG dependencies not installed
 pytestmark = pytest.mark.skipif(
-    not RAG_AVAILABLE,
-    reason="KnowledgeBeast dependencies not installed"
+    not RAG_AVAILABLE, reason="KnowledgeBeast dependencies not installed"
 )
 
 
 @pytest.fixture
 def mock_postgres_backend():
     """Mock PostgresBackend for testing"""
-    with patch('app.services.rag_service.PostgresBackend') as mock_class:
+    with patch("app.services.rag_service.PostgresBackend") as mock_class:
         # Create mock instance
         backend = AsyncMock()
         backend.initialize = AsyncMock()
-        backend.query_hybrid = AsyncMock(return_value=[
-            ("doc1", 0.95, {"category": "docs", "source": "readme.md"}, "Test document content"),
-            ("doc2", 0.85, {"category": "docs", "source": "guide.md"}, "Guide content"),
-        ])
+        backend.query_hybrid = AsyncMock(
+            return_value=[
+                (
+                    "doc1",
+                    0.95,
+                    {"category": "docs", "source": "readme.md"},
+                    "Test document content",
+                ),
+                ("doc2", 0.85, {"category": "docs", "source": "guide.md"}, "Guide content"),
+            ]
+        )
         backend.add_documents = AsyncMock()
         backend.delete_documents = AsyncMock(return_value=2)
-        backend.get_statistics = AsyncMock(return_value={
-            "document_count": 100,
-            "collection": "commandcenter_1"
-        })
+        backend.get_statistics = AsyncMock(
+            return_value={"document_count": 100, "collection": "commandcenter_1"}
+        )
         backend.close = AsyncMock()
 
         # Mock class returns our mock instance
@@ -47,7 +52,7 @@ def mock_postgres_backend():
 @pytest.fixture
 def mock_embed_text():
     """Mock embed_text function"""
-    with patch('app.services.rag_service.embed_text') as mock:
+    with patch("app.services.rag_service.embed_text") as mock:
         mock.return_value = [0.1] * 384  # Mock 384-dim embedding
         yield mock
 
@@ -55,7 +60,7 @@ def mock_embed_text():
 @pytest.fixture
 def mock_embed_texts():
     """Mock embed_texts function"""
-    with patch('app.services.rag_service.embed_texts') as mock:
+    with patch("app.services.rag_service.embed_texts") as mock:
         # Return list of embeddings (one per text)
         mock.return_value = [[0.1] * 384, [0.2] * 384]
         yield mock
@@ -64,7 +69,7 @@ def mock_embed_texts():
 @pytest.fixture
 def mock_settings():
     """Mock settings"""
-    with patch('app.services.rag_service.settings') as mock:
+    with patch("app.services.rag_service.settings") as mock:
         mock.KNOWLEDGE_COLLECTION_PREFIX = "commandcenter"
         mock.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
         mock.EMBEDDING_DIMENSION = 384
@@ -102,7 +107,7 @@ class TestRAGServiceInit:
 
     def test_init_without_dependencies_raises_error(self):
         """Test that ImportError is raised when dependencies not available"""
-        with patch('app.services.rag_service.RAG_AVAILABLE', False):
+        with patch("app.services.rag_service.RAG_AVAILABLE", False):
             with pytest.raises(ImportError, match="KnowledgeBeast dependencies not installed"):
                 RAGService(repository_id=1)
 
@@ -144,21 +149,18 @@ class TestQuery:
 
         # Verify embed_text was called
         mock_embed_text.assert_called_once_with(
-            "What is machine learning?",
-            model_name="all-MiniLM-L6-v2"
+            "What is machine learning?", model_name="all-MiniLM-L6-v2"
         )
 
         # Verify hybrid search was called
         mock_postgres_backend.query_hybrid.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_query_with_category_filter(self, rag_service, mock_postgres_backend, mock_embed_text):
+    async def test_query_with_category_filter(
+        self, rag_service, mock_postgres_backend, mock_embed_text
+    ):
         """Test query with category filter"""
-        results = await rag_service.query(
-            question="Python tutorials",
-            category="tutorials",
-            k=10
-        )
+        results = await rag_service.query(question="Python tutorials", category="tutorials", k=10)
 
         # Verify filter was passed to backend
         call_args = mock_postgres_backend.query_hybrid.call_args
@@ -186,9 +188,7 @@ class TestAddDocument:
         metadata = {"category": "docs", "source": "test.md"}
 
         chunks_added = await rag_service.add_document(
-            content=content,
-            metadata=metadata,
-            chunk_size=1000
+            content=content, metadata=metadata, chunk_size=1000
         )
 
         assert chunks_added > 0
@@ -200,7 +200,9 @@ class TestAddDocument:
         mock_postgres_backend.add_documents.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_add_document_chunking(self, rag_service, mock_postgres_backend, mock_embed_texts):
+    async def test_add_document_chunking(
+        self, rag_service, mock_postgres_backend, mock_embed_texts
+    ):
         """Test document chunking"""
         # Create long content that will be chunked
         content = " ".join(["word"] * 500)  # ~2500 chars
@@ -210,16 +212,16 @@ class TestAddDocument:
         mock_embed_texts.return_value = [[0.1] * 384, [0.2] * 384, [0.3] * 384]
 
         chunks_added = await rag_service.add_document(
-            content=content,
-            metadata=metadata,
-            chunk_size=1000
+            content=content, metadata=metadata, chunk_size=1000
         )
 
         # Should create multiple chunks
         assert chunks_added >= 2
 
     @pytest.mark.asyncio
-    async def test_add_document_metadata_preservation(self, rag_service, mock_postgres_backend, mock_embed_texts):
+    async def test_add_document_metadata_preservation(
+        self, rag_service, mock_postgres_backend, mock_embed_texts
+    ):
         """Test that metadata is preserved for each chunk"""
         content = "Test content"
         metadata = {"category": "test", "source": "test.md", "author": "Test Author"}
@@ -251,9 +253,7 @@ class TestDeleteBySource:
         assert success is True
 
         # Verify delete was called with correct filter
-        mock_postgres_backend.delete_documents.assert_called_once_with(
-            where={"source": "test.md"}
-        )
+        mock_postgres_backend.delete_documents.assert_called_once_with(where={"source": "test.md"})
 
     @pytest.mark.asyncio
     async def test_delete_by_source_not_found(self, rag_service, mock_postgres_backend):

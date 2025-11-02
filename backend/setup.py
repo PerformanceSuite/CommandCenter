@@ -19,11 +19,7 @@ requirements_path = Path(__file__).parent / "requirements.txt"
 requirements = []
 if requirements_path.exists():
     with open(requirements_path, "r", encoding="utf-8") as f:
-        requirements = [
-            line.strip()
-            for line in f
-            if line.strip() and not line.startswith("#")
-        ]
+        requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 setup(
     name="commandcenter-cli",
@@ -35,14 +31,11 @@ setup(
     author_email="team@commandcenter.dev",
     url="https://github.com/yourusername/commandcenter",
     license="MIT",
-
     # Package discovery
     packages=find_packages(exclude=["tests", "tests.*"]),
     include_package_data=True,
-
     # Python version requirement
     python_requires=">=3.11",
-
     # Dependencies
     install_requires=[
         "click>=8.0",
@@ -53,7 +46,6 @@ setup(
         "pydantic>=2.0",
         "textual>=0.40",  # For TUI search interface
     ],
-
     # Development dependencies
     extras_require={
         "dev": [
@@ -65,14 +57,12 @@ setup(
             "mypy>=1.0",
         ],
     },
-
     # Console scripts entry point
     entry_points={
         "console_scripts": [
             "commandcenter=cli.commandcenter:cli",
         ],
     },
-
     # Project metadata
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -86,10 +76,8 @@ setup(
         "Topic :: Software Development :: Documentation",
         "Topic :: Text Processing :: Markup",
     ],
-
     # Keywords for PyPI
     keywords="cli research development knowledge-base rag fastapi",
-
     # Project URLs
     project_urls={
         "Bug Reports": "https://github.com/yourusername/commandcenter/issues",

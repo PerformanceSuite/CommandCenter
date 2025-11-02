@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from app.services.research_agent_orchestrator import (
     ResearchAgentOrchestrator,
     AgentRole,
-    ResearchAgent
+    ResearchAgent,
 )
 
 
@@ -20,16 +20,16 @@ class TestResearchAgentOrchestrator:
         # Mock the execute method on ResearchAgent
         mock_results = [
             {"role": "deep_researcher", "findings": "Test findings", "status": "completed"},
-            {"role": "comparator", "findings": "Comparison results", "status": "completed"}
+            {"role": "comparator", "findings": "Comparison results", "status": "completed"},
         ]
 
-        with patch.object(ResearchAgent, 'execute', new_callable=AsyncMock) as mock_execute:
+        with patch.object(ResearchAgent, "execute", new_callable=AsyncMock) as mock_execute:
             # Set up mock to return different results based on call order
             mock_execute.side_effect = mock_results
 
             tasks = [
                 {"role": "deep_researcher", "prompt": "Research Python"},
-                {"role": "comparator", "prompt": "Compare Python vs Ruby"}
+                {"role": "comparator", "prompt": "Compare Python vs Ruby"},
             ]
 
             results = await orchestrator.launch_parallel_research(tasks)
@@ -45,16 +45,16 @@ class TestResearchAgentOrchestrator:
         """ResearchAgentOrchestrator handles agent failures gracefully."""
         orchestrator = ResearchAgentOrchestrator()
 
-        with patch.object(ResearchAgent, 'execute', new_callable=AsyncMock) as mock_execute:
+        with patch.object(ResearchAgent, "execute", new_callable=AsyncMock) as mock_execute:
             # First agent succeeds, second fails
             mock_execute.side_effect = [
                 {"role": "deep_researcher", "findings": "Success"},
-                Exception("Agent execution failed")
+                Exception("Agent execution failed"),
             ]
 
             tasks = [
                 {"role": "deep_researcher", "prompt": "Research topic 1"},
-                {"role": "comparator", "prompt": "Research topic 2"}
+                {"role": "comparator", "prompt": "Research topic 2"},
             ]
 
             results = await orchestrator.launch_parallel_research(tasks)

@@ -12,7 +12,7 @@ from app.schemas.repository import (
     RepositoryInDB,
     RepositoryResponse,
     RepositorySyncRequest,
-    RepositorySyncResponse
+    RepositorySyncResponse,
 )
 
 
@@ -26,7 +26,7 @@ class TestRepositorySchemas:
             "owner": "testowner",
             "name": "testrepo",
             "description": "Test repository",
-            "is_private": False
+            "is_private": False,
         }
         schema = RepositoryCreate(**data)
 
@@ -37,10 +37,7 @@ class TestRepositorySchemas:
 
     def test_repository_create_invalid_owner(self):
         """Test repository creation with invalid owner name"""
-        data = {
-            "owner": "-invalid-owner",  # Starts with dash
-            "name": "testrepo"
-        }
+        data = {"owner": "-invalid-owner", "name": "testrepo"}  # Starts with dash
 
         with pytest.raises(ValidationError) as exc_info:
             RepositoryCreate(**data)
@@ -49,10 +46,7 @@ class TestRepositorySchemas:
 
     def test_repository_create_invalid_name(self):
         """Test repository creation with invalid repo name"""
-        data = {
-            "owner": "testowner",
-            "name": "invalid-repo-"  # Ends with dash
-        }
+        data = {"owner": "testowner", "name": "invalid-repo-"}  # Ends with dash
 
         with pytest.raises(ValidationError) as exc_info:
             RepositoryCreate(**data)
@@ -64,7 +58,7 @@ class TestRepositorySchemas:
         data = {
             "owner": "testowner",
             "name": "testrepo",
-            "access_token": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+            "access_token": "ghp_1234567890abcdefghijklmnopqrstuvwxyz",
         }
         schema = RepositoryCreate(**data)
 
@@ -72,11 +66,7 @@ class TestRepositorySchemas:
 
     def test_repository_create_with_invalid_token(self):
         """Test repository creation with invalid token format"""
-        data = {
-            "owner": "testowner",
-            "name": "testrepo",
-            "access_token": "invalid_token"
-        }
+        data = {"owner": "testowner", "name": "testrepo", "access_token": "invalid_token"}
 
         with pytest.raises(ValidationError) as exc_info:
             RepositoryCreate(**data)
@@ -85,9 +75,7 @@ class TestRepositorySchemas:
 
     def test_repository_update_partial(self):
         """Test repository update with partial data"""
-        data = {
-            "description": "Updated description"
-        }
+        data = {"description": "Updated description"}
         schema = RepositoryUpdate(**data)
 
         assert schema.description == "Updated description"
@@ -100,7 +88,7 @@ class TestRepositorySchemas:
             "description": "Updated description",
             "access_token": "ghp_newtoken1234567890abcdefghijklmnopqr",
             "is_private": True,
-            "metadata_": {"custom": "data"}
+            "metadata_": {"custom": "data"},
         }
         schema = RepositoryUpdate(**data)
 
@@ -121,7 +109,7 @@ class TestRepositorySchemas:
             "stars": 100,
             "forks": 10,
             "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
         schema = RepositoryInDB(**data)
 
@@ -151,7 +139,7 @@ class TestRepositorySchemas:
             "last_commit_sha": "abc123",
             "last_commit_message": "Test commit",
             "last_synced_at": sync_time,
-            "changes_detected": True
+            "changes_detected": True,
         }
         schema = RepositorySyncResponse(**data)
 
@@ -173,7 +161,7 @@ class TestRepositorySchemas:
             "stars": 100,
             "forks": 10,
             "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
 
         # RepositoryResponse inherits from RepositoryInDB

@@ -73,7 +73,7 @@ Performance characteristics:
 # Mark as E2E test - requires KnowledgeBeast installed
 pytestmark = pytest.mark.skipif(
     not KNOWLEDGEBEAST_AVAILABLE or not settings.use_knowledgebeast,
-    reason="E2E tests require KnowledgeBeast enabled"
+    reason="E2E tests require KnowledgeBeast enabled",
 )
 
 
@@ -81,6 +81,7 @@ pytestmark = pytest.mark.skipif(
 async def kb_service():
     """Get KnowledgeBeast service instance"""
     from app.services.knowledgebeast_service import KnowledgeBeastService
+
     return KnowledgeBeastService(project_id=999)  # Use test project
 
 
@@ -123,12 +124,14 @@ class TestKnowledgeBeastE2E:
                     "source": doc_data["filename"],
                     "category": doc_data["category"],
                     "title": doc_data["filename"],
+                },
+            )
+            uploaded_docs.append(
+                {
+                    "filename": doc_data["filename"],
+                    "chunks": chunks_added,
                 }
             )
-            uploaded_docs.append({
-                "filename": doc_data["filename"],
-                "chunks": chunks_added,
-            })
             print(f"  ✅ {doc_data['filename']}: {chunks_added} chunks")
 
         assert all(doc["chunks"] > 0 for doc in uploaded_docs), "All documents should create chunks"
@@ -136,49 +139,50 @@ class TestKnowledgeBeastE2E:
         # Step 2: Vector search
         print("\n🔍 Step 2: Testing vector search...")
         vector_results = await kb_service.query(
-            question="What is machine learning?",
-            mode="vector",
-            k=5
+            question="What is machine learning?", mode="vector", k=5
         )
 
         assert len(vector_results) > 0, "Vector search should return results"
         assert vector_results[0]["score"] > 0.3, "Top result should have decent score"
-        assert "machine learning" in vector_results[0]["content"].lower() or "ml" in vector_results[0]["content"].lower()
-        print(f"  ✅ Found {len(vector_results)} results, top score: {vector_results[0]['score']:.3f}")
+        assert (
+            "machine learning" in vector_results[0]["content"].lower()
+            or "ml" in vector_results[0]["content"].lower()
+        )
+        print(
+            f"  ✅ Found {len(vector_results)} results, top score: {vector_results[0]['score']:.3f}"
+        )
 
         # Step 3: Keyword search
         print("\n🔍 Step 3: Testing keyword search...")
         keyword_results = await kb_service.query(
-            question="RAG retrieval augmented generation",
-            mode="keyword",
-            k=5
+            question="RAG retrieval augmented generation", mode="keyword", k=5
         )
 
         assert len(keyword_results) > 0, "Keyword search should return results"
-        print(f"  ✅ Found {len(keyword_results)} results, top score: {keyword_results[0]['score']:.3f}")
+        print(
+            f"  ✅ Found {len(keyword_results)} results, top score: {keyword_results[0]['score']:.3f}"
+        )
 
         # Step 4: Hybrid search
         print("\n🔍 Step 4: Testing hybrid search...")
         hybrid_results = await kb_service.query(
-            question="KnowledgeBeast performance caching",
-            mode="hybrid",
-            alpha=0.7,
-            k=5
+            question="KnowledgeBeast performance caching", mode="hybrid", alpha=0.7, k=5
         )
 
         assert len(hybrid_results) > 0, "Hybrid search should return results"
-        print(f"  ✅ Found {len(hybrid_results)} results, top score: {hybrid_results[0]['score']:.3f}")
+        print(
+            f"  ✅ Found {len(hybrid_results)} results, top score: {hybrid_results[0]['score']:.3f}"
+        )
 
         # Step 5: Category filtering
         print("\n🔍 Step 5: Testing category filter...")
         ai_results = await kb_service.query(
-            question="artificial intelligence concepts",
-            category="ai",
-            mode="vector",
-            k=5
+            question="artificial intelligence concepts", category="ai", mode="vector", k=5
         )
 
-        assert all(r["category"] == "ai" for r in ai_results), "All results should be from 'ai' category"
+        assert all(
+            r["category"] == "ai" for r in ai_results
+        ), "All results should be from 'ai' category"
         print(f"  ✅ Category filter working: {len(ai_results)} AI results")
 
         # Step 6: Statistics
@@ -203,15 +207,12 @@ class TestKnowledgeBeastE2E:
         # Step 8: Verify deletion
         print("\n✅ Step 8: Verifying deletion...")
         post_delete_results = await kb_service.query(
-            question="machine learning",
-            mode="vector",
-            k=5
+            question="machine learning", mode="vector", k=5
         )
 
         # Should have no or very few results now
         assert len(post_delete_results) == 0 or all(
-            r["source"] not in [d["filename"] for d in TEST_DOCUMENTS]
-            for r in post_delete_results
+            r["source"] not in [d["filename"] for d in TEST_DOCUMENTS] for r in post_delete_results
         ), "Deleted documents should not appear in results"
         print("  ✅ Deletion verified")
 
@@ -223,28 +224,20 @@ class TestKnowledgeBeastE2E:
         # Upload one document for testing
         await kb_service.add_document(
             content=TEST_DOCUMENTS[0]["content"],
-            metadata={
-                "source": "perf_test.txt",
-                "category": "test",
-                "title": "Performance Test"
-            }
+            metadata={"source": "perf_test.txt", "category": "test", "title": "Performance Test"},
         )
 
         # First query (cache miss)
         start = time.time()
         results1 = await kb_service.query(
-            question="machine learning algorithms",
-            mode="hybrid",
-            k=3
+            question="machine learning algorithms", mode="hybrid", k=3
         )
         first_query_time = (time.time() - start) * 1000  # ms
 
         # Second identical query (should be cached)
         start = time.time()
         results2 = await kb_service.query(
-            question="machine learning algorithms",
-            mode="hybrid",
-            k=3
+            question="machine learning algorithms", mode="hybrid", k=3
         )
         cached_query_time = (time.time() - start) * 1000  # ms
 
@@ -273,8 +266,8 @@ class TestKnowledgeBeastE2E:
             metadata={
                 "source": "concurrent_test.txt",
                 "category": "test",
-                "title": "Concurrent Test"
-            }
+                "title": "Concurrent Test",
+            },
         )
 
         # Run 10 concurrent queries
@@ -287,10 +280,7 @@ class TestKnowledgeBeastE2E:
         ] * 2  # 10 queries total
 
         start = time.time()
-        results = await asyncio.gather(*[
-            kb_service.query(q, mode="vector", k=3)
-            for q in queries
-        ])
+        results = await asyncio.gather(*[kb_service.query(q, mode="vector", k=3) for q in queries])
         total_time = (time.time() - start) * 1000
 
         print(f"\n🚀 Concurrent Query Results:")
@@ -300,7 +290,9 @@ class TestKnowledgeBeastE2E:
 
         # All queries should succeed
         assert all(len(r) > 0 for r in results), "All queries should return results"
-        assert total_time < 5000, f"10 concurrent queries should complete < 5s, got {total_time:.0f}ms"
+        assert (
+            total_time < 5000
+        ), f"10 concurrent queries should complete < 5s, got {total_time:.0f}ms"
 
         # Cleanup
         await kb_service.delete_by_source("concurrent_test.txt")
@@ -311,11 +303,7 @@ class TestKnowledgeBeastE2E:
         # Upload document
         await kb_service.add_document(
             content="Vector embeddings enable semantic similarity search in AI systems.",
-            metadata={
-                "source": "mode_test.txt",
-                "category": "test",
-                "title": "Mode Comparison"
-            }
+            metadata={"source": "mode_test.txt", "category": "test", "title": "Mode Comparison"},
         )
 
         query = "semantic search AI"
@@ -326,9 +314,15 @@ class TestKnowledgeBeastE2E:
         hybrid_results = await kb_service.query(query, mode="hybrid", alpha=0.7, k=3)
 
         print(f"\n🔬 Search Mode Comparison for: '{query}'")
-        print(f"  Vector results: {len(vector_results)}, top score: {vector_results[0]['score']:.3f if vector_results else 0}")
-        print(f"  Keyword results: {len(keyword_results)}, top score: {keyword_results[0]['score']:.3f if keyword_results else 0}")
-        print(f"  Hybrid results: {len(hybrid_results)}, top score: {hybrid_results[0]['score']:.3f if hybrid_results else 0}")
+        print(
+            f"  Vector results: {len(vector_results)}, top score: {vector_results[0]['score']:.3f if vector_results else 0}"
+        )
+        print(
+            f"  Keyword results: {len(keyword_results)}, top score: {keyword_results[0]['score']:.3f if keyword_results else 0}"
+        )
+        print(
+            f"  Hybrid results: {len(hybrid_results)}, top score: {hybrid_results[0]['score']:.3f if hybrid_results else 0}"
+        )
 
         # All modes should work
         assert len(vector_results) > 0, "Vector mode should return results"
@@ -351,7 +345,7 @@ class TestKnowledgeAPIE2E:
         response = await async_client.post(
             "/api/v1/knowledge/query",
             json={"query": "test query", "limit": 3},
-            params={"mode": "vector", "alpha": 1.0}
+            params={"mode": "vector", "alpha": 1.0},
         )
         assert response.status_code == 200
 
@@ -359,7 +353,7 @@ class TestKnowledgeAPIE2E:
         response = await async_client.post(
             "/api/v1/knowledge/query",
             json={"query": "test query", "limit": 3},
-            params={"mode": "keyword", "alpha": 0.0}
+            params={"mode": "keyword", "alpha": 0.0},
         )
         assert response.status_code == 200
 
@@ -367,7 +361,7 @@ class TestKnowledgeAPIE2E:
         response = await async_client.post(
             "/api/v1/knowledge/query",
             json={"query": "test query", "limit": 3},
-            params={"mode": "hybrid", "alpha": 0.7}
+            params={"mode": "hybrid", "alpha": 0.7},
         )
         assert response.status_code == 200
 
@@ -378,8 +372,7 @@ class TestKnowledgeAPIE2E:
 
         # Query without new parameters (backward compatible)
         response = await async_client.post(
-            "/api/v1/knowledge/query",
-            json={"query": "test", "limit": 5}
+            "/api/v1/knowledge/query", json={"query": "test", "limit": 5}
         )
 
         assert response.status_code == 200

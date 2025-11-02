@@ -62,17 +62,13 @@ def launch(ctx, workflow, max_concurrent, no_watch):
         with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
             console.print(f"[bold]Launching {workflow} workflow...[/bold]")
 
-            orchestration = api.launch_agents(
-                workflow=workflow, max_concurrent=max_concurrent
-            )
+            orchestration = api.launch_agents(workflow=workflow, max_concurrent=max_concurrent)
 
             orch_id = orchestration.get("id")
             display_success(f"Orchestration started: {orch_id}")
 
             if no_watch:
-                console.print(
-                    f"\nUse 'commandcenter agents status {orch_id}' to check progress"
-                )
+                console.print(f"\nUse 'commandcenter agents status {orch_id}' to check progress")
                 return
 
             # Live status updates
@@ -96,8 +92,7 @@ def launch(ctx, workflow, max_concurrent, no_watch):
             else:
                 status = orchestration.get("status")
                 console.print(
-                    f"\n[bold yellow]Orchestration ended with "
-                    f"status: {status}[/bold yellow]"
+                    f"\n[bold yellow]Orchestration ended with " f"status: {status}[/bold yellow]"
                 )
 
     except APIError as e:

@@ -253,9 +253,7 @@ class TestMCPIntegration:
         resources_data = json.loads(response)
 
         assert len(resources_data["result"]["resources"]) == 2
-        assert any(
-            r["name"] == "Technologies" for r in resources_data["result"]["resources"]
-        )
+        assert any(r["name"] == "Technologies" for r in resources_data["result"]["resources"])
 
         # Step 3: Read a resource
         read_resource_request = {
@@ -322,9 +320,7 @@ class TestMCPIntegration:
         prompts_data = json.loads(response)
 
         assert len(prompts_data["result"]["prompts"]) == 2
-        assert any(
-            p["name"] == "research_analysis" for p in prompts_data["result"]["prompts"]
-        )
+        assert any(p["name"] == "research_analysis" for p in prompts_data["result"]["prompts"])
 
         # Step 7: Get a prompt
         get_prompt_request = {
@@ -396,9 +392,7 @@ class TestMCPIntegration:
         session.set_initialized(True)
 
         # Test invalid JSON
-        response = await complete_server.handle_message(
-            session.session_id, "invalid json"
-        )
+        response = await complete_server.handle_message(session.session_id, "invalid json")
         error_data = json.loads(response)
         assert "error" in error_data
         assert error_data["error"]["code"] == -32700

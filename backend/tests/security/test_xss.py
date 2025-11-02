@@ -12,9 +12,7 @@ async def test_technology_title_escapes_html(client, auth_headers_factory, user_
 
     service = TechnologyService(db_session)
     tech = await service.create_technology(
-        title=xss_payload,
-        domain="security",
-        project_id=user_a.project_id
+        title=xss_payload, domain="security", project_id=user_a.project_id
     )
     await db_session.commit()
 
@@ -26,9 +24,9 @@ async def test_technology_title_escapes_html(client, auth_headers_factory, user_
     data = response.json()
 
     # Verify script tags are escaped or stripped
-    assert "<script>" not in data["title"], (
-        "XSS payload should be escaped/sanitized in API response"
-    )
+    assert (
+        "<script>" not in data["title"]
+    ), "XSS payload should be escaped/sanitized in API response"
 
 
 @pytest.mark.asyncio
@@ -42,9 +40,7 @@ async def test_research_task_description_escapes_html(
 
     service = ResearchService(db_session)
     research = await service.create_research_task(
-        title="Test",
-        description=xss_payload,
-        project_id=user_a.project_id
+        title="Test", description=xss_payload, project_id=user_a.project_id
     )
     await db_session.commit()
 
@@ -55,9 +51,9 @@ async def test_research_task_description_escapes_html(
     data = response.json()
 
     # Verify HTML tags are escaped
-    assert "<img" not in data["description"] or "onerror" not in data["description"], (
-        "XSS payload should be escaped/sanitized"
-    )
+    assert (
+        "<img" not in data["description"] or "onerror" not in data["description"]
+    ), "XSS payload should be escaped/sanitized"
 
 
 @pytest.mark.asyncio
@@ -69,11 +65,7 @@ async def test_knowledge_entry_source_escapes_html(
 
     xss_payload = "<iframe src='javascript:alert(1)'></iframe>"
 
-    entry = KnowledgeEntry(
-        source=xss_payload,
-        category="test",
-        project_id=user_a.project_id
-    )
+    entry = KnowledgeEntry(source=xss_payload, category="test", project_id=user_a.project_id)
     db_session.add(entry)
     await db_session.commit()
 
@@ -84,6 +76,4 @@ async def test_knowledge_entry_source_escapes_html(
     data = response.json()
 
     # Verify iframe tags are escaped
-    assert "<iframe" not in data["source"], (
-        "XSS payload should be escaped/sanitized"
-    )
+    assert "<iframe" not in data["source"], "XSS payload should be escaped/sanitized"

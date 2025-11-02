@@ -51,37 +51,22 @@ class TestProjectModel:
     async def test_project_max_length_name(self, db_session):
         """Project name at max length should be accepted"""
         max_length_name = "a" * 255
-        project = await create_test_project(
-            db_session,
-            name=max_length_name
-        )
+        project = await create_test_project(db_session, name=max_length_name)
 
         assert len(project.name) == 255
         assert project.name == max_length_name
 
     async def test_project_unique_owner_name_constraint(self, db_session):
         """Test that owner + name combination must be unique"""
-        await create_test_project(
-            db_session,
-            name="UniqueProject",
-            owner="owner1"
-        )
+        await create_test_project(db_session, name="UniqueProject", owner="owner1")
 
         # Same name with different owner should work
-        project2 = await create_test_project(
-            db_session,
-            name="UniqueProject",
-            owner="owner2"
-        )
+        project2 = await create_test_project(db_session, name="UniqueProject", owner="owner2")
         assert project2.id is not None
 
         # Same owner + name should fail
         with pytest.raises(Exception):
-            await create_test_project(
-                db_session,
-                name="UniqueProject",
-                owner="owner1"
-            )
+            await create_test_project(db_session, name="UniqueProject", owner="owner1")
 
     async def test_project_relationships_initialization(self, db_session):
         """Project should initialize with empty relationships"""
@@ -101,7 +86,7 @@ class TestProjectModel:
             db_session,
             name="Comprehensive Project",
             owner="john_doe",
-            description="A detailed project description with all information"
+            description="A detailed project description with all information",
         )
 
         assert project.name == "Comprehensive Project"
@@ -123,10 +108,7 @@ class TestProjectModel:
 
     async def test_project_without_description(self, db_session):
         """Test project can be created without description"""
-        project = Project(
-            name="Minimal Project",
-            owner="testowner"
-        )
+        project = Project(name="Minimal Project", owner="testowner")
         db_session.add(project)
         await db_session.commit()
         await db_session.refresh(project)

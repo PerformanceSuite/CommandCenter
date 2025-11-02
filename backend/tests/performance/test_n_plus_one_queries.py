@@ -30,8 +30,8 @@ async def test_technologies_list_no_n_plus_one(
     assert num_queries <= 3, (
         f"Expected ≤3 queries, got {num_queries}. "
         f"Possible N+1 query problem. "
-        f"Queries executed:\n" +
-        "\n".join([f"  - {q['statement'][:100]}..." for q in query_counter])
+        f"Queries executed:\n"
+        + "\n".join([f"  - {q['statement'][:100]}..." for q in query_counter])
     )
 
     # Verify response still correct
@@ -62,10 +62,10 @@ async def test_technology_detail_no_n_plus_one(
     # 1. SELECT technology
     # 2. JOIN repositories + research_tasks
     num_queries = len(query_counter)
-    assert num_queries <= 2, (
-        f"Expected ≤2 queries for detail view, got {num_queries}. "
-        f"Queries:\n" +
-        "\n".join([f"  - {q['statement'][:100]}..." for q in query_counter])
+    assert (
+        num_queries <= 2
+    ), f"Expected ≤2 queries for detail view, got {num_queries}. " f"Queries:\n" + "\n".join(
+        [f"  - {q['statement'][:100]}..." for q in query_counter]
     )
 
     assert response.status_code == 200
@@ -96,8 +96,7 @@ async def test_research_tasks_list_no_n_plus_one(
     assert num_queries <= 2, (
         f"Expected ≤2 queries, got {num_queries}. "
         f"N+1 query detected in research tasks endpoint. "
-        f"Queries:\n" +
-        "\n".join([f"  - {q['statement'][:80]}..." for q in query_counter])
+        f"Queries:\n" + "\n".join([f"  - {q['statement'][:80]}..." for q in query_counter])
     )
 
     assert response.status_code == 200
@@ -127,8 +126,7 @@ async def test_repositories_list_with_technologies_no_n_plus_one(
     assert num_queries <= 3, (
         f"Expected ≤3 queries, got {num_queries}. "
         f"N+1 detected in repositories endpoint. "
-        f"Queries:\n" +
-        "\n".join([f"  - {q['statement'][:80]}..." for q in query_counter])
+        f"Queries:\n" + "\n".join([f"  - {q['statement'][:80]}..." for q in query_counter])
     )
 
     assert response.status_code == 200
@@ -146,10 +144,7 @@ async def test_knowledge_base_query_no_n_plus_one(
     # Create knowledge entries
     for i in range(10):
         await KnowledgeEntryFactory.create(
-            db_session,
-            source=f"doc-{i}.pdf",
-            category="research",
-            project_id=user_a.project_id
+            db_session, source=f"doc-{i}.pdf", category="research", project_id=user_a.project_id
         )
     await db_session.commit()
 
@@ -158,9 +153,7 @@ async def test_knowledge_base_query_no_n_plus_one(
 
     headers = auth_headers_factory(user_a)
     response = await client.post(
-        "/api/v1/knowledge/query",
-        headers=headers,
-        json={"query": "test query", "top_k": 5}
+        "/api/v1/knowledge/query", headers=headers, json={"query": "test query", "top_k": 5}
     )
 
     num_queries = len(query_counter)
@@ -169,10 +162,10 @@ async def test_knowledge_base_query_no_n_plus_one(
     # - Vector similarity search (1 query)
     # - Metadata lookup (1 query)
     # Total ≤3 queries (including any filtering)
-    assert num_queries <= 3, (
-        f"Expected ≤3 queries for RAG search, got {num_queries}. "
-        f"Queries:\n" +
-        "\n".join([f"  - {q['statement'][:80]}..." for q in query_counter])
+    assert (
+        num_queries <= 3
+    ), f"Expected ≤3 queries for RAG search, got {num_queries}. " f"Queries:\n" + "\n".join(
+        [f"  - {q['statement'][:80]}..." for q in query_counter]
     )
 
     assert response.status_code == 200

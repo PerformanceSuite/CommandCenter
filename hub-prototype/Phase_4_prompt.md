@@ -3,8 +3,8 @@
 Context:
 The bundle `CommandCenter-Hub-Phase4-bundle.tar.gz` is located in this directory.
 The goal is to:
-1️⃣  Install and configure the NATS Mesh-Bus bridge.  
-2️⃣  Verify event publishing/subscription.  
+1️⃣  Install and configure the NATS Mesh-Bus bridge.
+2️⃣  Verify event publishing/subscription.
 3️⃣  Apply Phase 4+ upgrades for rotation + temporal replay CLI.
 
 ---
@@ -23,7 +23,7 @@ pnpm add nats dotenv
 pnpm tsx ./scripts/apply-phase4-scripts.ts
 ```
 
-Expected:  
+Expected:
 `✅ Updated hub/package.json with Phase 4 scripts.`
 
 ---
@@ -50,7 +50,7 @@ export PERSIST_INBOUND=true
 ```bash
 pnpm -C hub nats:bridge
 ```
-Expected:  
+Expected:
 ```
 ✅ NATS connected: ...
 🚉 Bridge active: mockBus -> NATS. Emit local events to publish.

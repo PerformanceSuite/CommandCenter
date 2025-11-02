@@ -226,9 +226,7 @@ class TestMCPServer:
             },
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -251,9 +249,7 @@ class TestMCPServer:
             "params": {},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -275,9 +271,7 @@ class TestMCPServer:
             "params": {"uri": "commandcenter://project/1"},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -299,9 +293,7 @@ class TestMCPServer:
             "params": {},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -322,9 +314,7 @@ class TestMCPServer:
             "params": {"name": "analyze_project", "arguments": {}},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -345,9 +335,7 @@ class TestMCPServer:
             "params": {},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -368,9 +356,7 @@ class TestMCPServer:
             "params": {"name": "code_review"},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -391,9 +377,7 @@ class TestMCPServer:
             "params": {},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 
@@ -413,9 +397,7 @@ class TestMCPServer:
             "params": {},
         }
 
-        response = await server.handle_message(
-            session.session_id, json.dumps(request_data)
-        )
+        response = await server.handle_message(session.session_id, json.dumps(request_data))
 
         response_data = json.loads(response)
 

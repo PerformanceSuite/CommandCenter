@@ -8,7 +8,7 @@
 
 ## Tasks
 
-### 
+###
 
 
 **Review until 10/10, create PR, auto-merge when approved**

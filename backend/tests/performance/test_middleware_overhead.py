@@ -74,14 +74,10 @@ def test_middleware_performance_health_endpoint():
 
     # Assert reasonable performance
     # Health endpoint should be fast even with middleware
-    assert stats['p95'] < 10.0, (
-        f"P95 latency too high: {stats['p95']:.3f}ms (expected < 10ms)"
-    )
+    assert stats["p95"] < 10.0, f"P95 latency too high: {stats['p95']:.3f}ms (expected < 10ms)"
 
     # Mean should be very low
-    assert stats['mean'] < 5.0, (
-        f"Mean latency too high: {stats['mean']:.3f}ms (expected < 5ms)"
-    )
+    assert stats["mean"] < 5.0, f"Mean latency too high: {stats['mean']:.3f}ms (expected < 5ms)"
 
 
 @pytest.mark.slow
@@ -118,13 +114,11 @@ def test_middleware_overhead_estimate():
     print(f"  P95: {p95_overhead:.4f}ms")
 
     # Assert overhead is minimal
-    assert mean_overhead < 0.1, (
-        f"Middleware overhead too high: {mean_overhead:.4f}ms (expected < 0.1ms)"
-    )
+    assert (
+        mean_overhead < 0.1
+    ), f"Middleware overhead too high: {mean_overhead:.4f}ms (expected < 0.1ms)"
 
-    assert p95_overhead < 0.5, (
-        f"P95 overhead too high: {p95_overhead:.4f}ms (expected < 0.5ms)"
-    )
+    assert p95_overhead < 0.5, f"P95 overhead too high: {p95_overhead:.4f}ms (expected < 0.5ms)"
 
     print(f"  ✓ Middleware overhead acceptable: {mean_overhead:.4f}ms average")
 
@@ -141,6 +135,7 @@ def test_correlation_id_uniqueness_performance():
     ids = set()
     for _ in range(iterations):
         import uuid
+
         ids.add(str(uuid.uuid4()))
 
     end = time.perf_counter()
@@ -155,9 +150,7 @@ def test_correlation_id_uniqueness_performance():
     print(f"  Total time: {duration_ms:.2f}ms")
     print(f"  Average per UUID: {avg_per_id:.4f}ms")
 
-    assert avg_per_id < 0.01, (
-        f"UUID generation too slow: {avg_per_id:.4f}ms per ID"
-    )
+    assert avg_per_id < 0.01, f"UUID generation too slow: {avg_per_id:.4f}ms per ID"
 
 
 @pytest.mark.slow
@@ -174,7 +167,7 @@ def test_middleware_scales_with_concurrent_requests():
     batch_means = []
     for batch_num in range(num_batches):
         stats = measure_endpoint_latency("/health", iterations=batch_size)
-        batch_means.append(stats['mean'])
+        batch_means.append(stats["mean"])
 
         print(f"Batch {batch_num + 1}: {stats['mean']:.3f}ms mean")
 
@@ -190,8 +183,8 @@ def test_middleware_scales_with_concurrent_requests():
     # Standard deviation should be small relative to mean
     coefficient_of_variation = overall_stdev / overall_mean
 
-    assert coefficient_of_variation < 0.5, (
-        f"Performance variance too high: {coefficient_of_variation:.2f}"
-    )
+    assert (
+        coefficient_of_variation < 0.5
+    ), f"Performance variance too high: {coefficient_of_variation:.2f}"
 
     print(f"  ✓ Performance consistent across batches (CV: {coefficient_of_variation:.2f})")

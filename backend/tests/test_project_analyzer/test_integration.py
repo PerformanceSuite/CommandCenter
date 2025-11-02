@@ -11,9 +11,7 @@ async def test_full_project_analysis(sample_multi_language_project, db_session):
     """Test complete project analysis workflow"""
     analyzer = ProjectAnalyzer(db_session)
 
-    result = await analyzer.analyze_project(
-        str(sample_multi_language_project), use_cache=False
-    )
+    result = await analyzer.analyze_project(str(sample_multi_language_project), use_cache=False)
 
     # Verify all analysis components completed
     assert result.project_path == str(sample_multi_language_project)
@@ -40,9 +38,7 @@ async def test_cache_functionality(sample_package_json, db_session):
     analyzer = ProjectAnalyzer(db_session)
 
     # First analysis
-    result1 = await analyzer.analyze_project(
-        str(sample_package_json), use_cache=False
-    )
+    result1 = await analyzer.analyze_project(str(sample_package_json), use_cache=False)
     first_duration = result1.analysis_duration_ms
 
     # Second analysis with cache
@@ -84,9 +80,7 @@ async def test_multiple_parsers_same_project(sample_multi_language_project, db_s
     """Test that multiple parsers work together correctly"""
     analyzer = ProjectAnalyzer(db_session)
 
-    result = await analyzer.analyze_project(
-        str(sample_multi_language_project), use_cache=False
-    )
+    result = await analyzer.analyze_project(str(sample_multi_language_project), use_cache=False)
 
     # Should have dependencies from multiple languages
     languages = {dep.language for dep in result.dependencies}
