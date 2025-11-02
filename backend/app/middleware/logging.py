@@ -33,9 +33,11 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         Returns:
             HTTP response
         """
-        # Generate request ID
-        request_id = str(uuid.uuid4())
-        request.state.request_id = request_id
+        # Get request ID (from CorrelationIDMiddleware) or generate fallback
+        request_id = getattr(request.state, "request_id", None)
+        if not request_id:
+            request_id = str(uuid.uuid4())
+            request.state.request_id = request_id
 
         # Start timer
         start_time = time.time()

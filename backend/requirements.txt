@@ -63,7 +63,7 @@ litellm>=1.30.0,<1.50.0  # Self-hosted proxy for 100+ LLMs (tested 1.30-1.45)
 # Project Analyzer dependencies
 toml>=0.10.2  # Parse TOML files (Cargo.toml, pyproject.toml)
 PyYAML>=6.0  # Parse YAML files (docker-compose, k8s)
-lxml>=4.9.0  # Parse XML files (pom.xml)
+lxml>=4.9.0,<5.0.0  # Parse XML files (pom.xml); <5.0 for newspaper4k compatibility
 # packaging is provided by pytest/black dependencies (>=22.0)
 
 # CLI dependencies

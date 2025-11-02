@@ -82,11 +82,11 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# Add correlation ID middleware (MUST be first to ensure all logs have request_id)
-app.add_middleware(CorrelationIDMiddleware)
-
-# Add logging middleware
+# Add logging middleware first (middleware runs in reverse order)
 app.add_middleware(LoggingMiddleware)
+
+# Add correlation ID middleware (runs FIRST due to reverse order)
+app.add_middleware(CorrelationIDMiddleware)
 
 # Add rate limiting
 app.state.limiter = limiter
