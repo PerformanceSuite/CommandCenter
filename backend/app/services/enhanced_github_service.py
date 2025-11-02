@@ -2,14 +2,16 @@
 Enhanced GitHub service with rate limiting, caching, and advanced features
 """
 
-from typing import Optional, List, Dict, Any
 import logging
-from github import Github, GithubException, Repository as GithubRepo
+from typing import Any, Dict, List, Optional
+
+from github import Github, GithubException
+from github import Repository as GithubRepo
 
 from app.config import settings
-from app.services.redis_service import RedisService
+from app.services.metrics_service import metrics_service, track_github_api_call
 from app.services.rate_limit_service import with_rate_limit_retry
-from app.services.metrics_service import track_github_api_call, metrics_service
+from app.services.redis_service import RedisService
 
 logger = logging.getLogger(__name__)
 

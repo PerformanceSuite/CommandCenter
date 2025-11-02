@@ -2,9 +2,10 @@
 Unit tests for RAG service
 """
 
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock, patch
-from typing import List, Dict, Any
 
 from app.services.rag_service import RAGService
 

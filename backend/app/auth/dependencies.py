@@ -3,14 +3,15 @@ Authentication dependencies for protecting routes
 """
 
 from typing import Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth.jwt import decode_token
 from app.database import get_db
 from app.models.user import User
-from app.auth.jwt import decode_token
 
 # HTTP Bearer token scheme
 security = HTTPBearer()

@@ -3,10 +3,11 @@ Pydantic schemas for ingestion sources
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from typing import Any, Dict, Optional
 
-from app.models.ingestion_source import SourceType, SourceStatus
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.models.ingestion_source import SourceStatus, SourceType
 
 
 class IngestionSourceBase(BaseModel):

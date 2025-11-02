@@ -3,22 +3,20 @@ Knowledge base and RAG endpoints
 Provides access to document storage, retrieval, and semantic search
 """
 
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 import json
+from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
 from app.database import get_db
 from app.models.knowledge_entry import KnowledgeEntry
-from app.schemas import (
-    KnowledgeSearchRequest,
-    KnowledgeSearchResult,
-)
-from app.services.rag_service import RAGService
-from app.services.docling_service import DoclingService
+from app.schemas import KnowledgeSearchRequest, KnowledgeSearchResult
 from app.services.cache_service import CacheService
-from app.config import settings
+from app.services.docling_service import DoclingService
+from app.services.rag_service import RAGService
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 

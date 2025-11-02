@@ -2,9 +2,11 @@
 GitHub integration service for repository management
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
-from github import Github, GithubException, Repository as GithubRepo
+from typing import Any, Dict, List, Optional
+
+from github import Github, GithubException
+from github import Repository as GithubRepo
 
 from app.config import settings
 

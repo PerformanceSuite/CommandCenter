@@ -2,13 +2,14 @@
 Tests for enhanced code analyzer with AST analysis.
 """
 
-import pytest
-from pathlib import Path
+import ast
 import tempfile
 import textwrap
+from pathlib import Path
 
-from app.services.code_analyzer import CodeAnalyzer, ASTComplexityVisitor
-import ast
+import pytest
+
+from app.services.code_analyzer import ASTComplexityVisitor, CodeAnalyzer
 
 
 @pytest.fixture

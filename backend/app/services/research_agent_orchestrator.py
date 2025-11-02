@@ -10,15 +10,15 @@ Based on:
 - docs/COMMANDCENTER_RESEARCH_WORKFLOW.md - Research workflow spec
 """
 
-import logging
 import asyncio
-from datetime import datetime
-from typing import List, Dict, Any, Optional
-from enum import Enum
 import json
+import logging
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from app.services.ai_router import ai_router, AIProvider
 from app.config import settings
+from app.services.ai_router import AIProvider, ai_router
 
 logger = logging.getLogger(__name__)
 

@@ -6,11 +6,7 @@ from typing import List
 
 from packaging import version as version_pkg
 
-from app.schemas.project_analysis import (
-    Dependency,
-    DetectedTechnology,
-    ResearchGap,
-)
+from app.schemas.project_analysis import Dependency, DetectedTechnology, ResearchGap
 
 
 class ResearchGapAnalyzer:

@@ -2,12 +2,13 @@
 Unit tests for ResearchTask model
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy import select
+from tests.utils import create_test_project, create_test_research_task
 
 from app.models.research_task import ResearchTask, TaskStatus
-from tests.utils import create_test_research_task, create_test_project
 
 
 @pytest.mark.unit

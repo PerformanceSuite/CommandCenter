@@ -3,13 +3,15 @@ Repository business logic service
 Handles repository operations with transaction management
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Repository
 from app.repositories import RepositoryRepository
 from app.schemas import RepositoryCreate, RepositoryUpdate
+
 from .github_async import GitHubAsyncService
 
 

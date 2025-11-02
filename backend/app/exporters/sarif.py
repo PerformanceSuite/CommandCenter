@@ -5,8 +5,8 @@ Implements SARIF 2.1.0 specification for GitHub code scanning integration.
 Reference: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 """
 
-from typing import Any, Dict, List
 import hashlib
+from typing import Any, Dict, List
 
 from app.exporters import BaseExporter
 

@@ -2,20 +2,20 @@
 Integration test fixtures and configuration.
 """
 
-import os
 import asyncio
-import pytest
 import json
-from typing import AsyncGenerator, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from httpx import AsyncClient
+import os
+from typing import Any, AsyncGenerator, Dict
+
+import pytest
 from fastapi import WebSocket
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import Project, Repository, Technology, Job, JobStatus
+from app.models import Job, JobStatus, Project, Repository, Technology
 from app.services.job_service import JobService
-
 
 # Mark all tests in this directory as integration tests
 pytestmark = pytest.mark.integration

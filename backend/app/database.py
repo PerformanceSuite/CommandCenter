@@ -5,14 +5,15 @@ Supports both SQLite (development) and PostgreSQL (production)
 Phase C Enhancement: Query comment injection for correlation tracking
 """
 
-from typing import AsyncGenerator
 from contextvars import ContextVar
+from typing import AsyncGenerator
+
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     AsyncEngine,
-    create_async_engine,
+    AsyncSession,
     async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool

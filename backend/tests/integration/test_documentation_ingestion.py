@@ -1,14 +1,15 @@
 """
 Integration tests for documentation ingestion
 """
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ingestion_source import IngestionSource, SourceType, SourceStatus
+from app.models.ingestion_source import IngestionSource, SourceStatus, SourceType
 from app.models.project import Project
-from app.tasks.ingestion_tasks import scrape_documentation
 from app.services.documentation_scraper_service import DocumentationPage
+from app.tasks.ingestion_tasks import scrape_documentation
 
 
 @pytest.fixture

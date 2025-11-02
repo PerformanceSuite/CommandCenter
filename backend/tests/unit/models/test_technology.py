@@ -2,12 +2,13 @@
 Unit tests for Technology model
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy import select
+from tests.utils import create_test_technology
 
 from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
-from tests.utils import create_test_technology
 
 
 @pytest.mark.unit

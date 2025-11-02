@@ -56,10 +56,10 @@ def test_litellm_importable():
 def test_all_provider_sdks_importable():
     """Integration test: verify all AI provider SDKs can be imported together"""
     try:
-        import openai
         import anthropic
-        from google import genai
         import litellm
+        import openai
+        from google import genai
 
         # Verify all imports succeeded
         assert openai is not None

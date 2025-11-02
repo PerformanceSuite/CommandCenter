@@ -8,11 +8,12 @@ Tests verify that correlation IDs are:
 5. Resilient to errors
 """
 
-import pytest
 import uuid
-from fastapi.testclient import TestClient
-from app.main import app
 
+import pytest
+from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 

@@ -5,15 +5,15 @@ Tests the complete workflow with real KnowledgeBeast instance (not mocked).
 Validates document upload, querying with different modes, and statistics.
 """
 
-import pytest
-from httpx import AsyncClient
 import asyncio
 import time
 
+import pytest
+from httpx import AsyncClient
+
+from app.config import settings
 from app.main import app
 from app.services.knowledgebeast_service import KNOWLEDGEBEAST_AVAILABLE
-from app.config import settings
-
 
 # Test documents for E2E validation
 TEST_DOCUMENTS = [

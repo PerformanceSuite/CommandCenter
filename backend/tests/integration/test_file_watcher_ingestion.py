@@ -1,16 +1,17 @@
 """
 Integration tests for file watcher ingestion
 """
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
 from sqlalchemy.orm import Session
 
 from app.models.ingestion_source import IngestionSource, SourceType
 from app.models.project import Project
-from app.tasks.ingestion_tasks import process_file_change
 from app.services.file_watcher_service import FileChangeEvent
+from app.tasks.ingestion_tasks import process_file_change
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ def test_process_pdf_file(
     db_session: Session, file_watcher_source: IngestionSource, temp_watch_dir: str
 ):
     """Test processing PDF file"""
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import MagicMock, patch
 
     pdf_file = os.path.join(temp_watch_dir, "paper.pdf")
     Path(pdf_file).touch()  # Create empty file

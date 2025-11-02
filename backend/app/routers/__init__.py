@@ -4,12 +4,12 @@ API routers for FastAPI endpoints
 
 from app.routers import (
     auth,
-    repositories,
-    technologies,
+    batch,
     dashboard,
     knowledge,
+    repositories,
     research_tasks,
-    batch,
+    technologies,
 )
 
 __all__ = [

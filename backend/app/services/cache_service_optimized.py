@@ -3,13 +3,13 @@ Enhanced Redis Cache Service with performance optimizations.
 Adds cache stampede prevention, batch operations, and monitoring.
 """
 
-import json
+import asyncio
 import hashlib
+import json
 import pickle
-from typing import Optional, Any, Callable, Awaitable, List, TypeVar, Union, Dict
 from datetime import timedelta
 from functools import wraps
-import asyncio
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar, Union
 
 # Lazy imports
 try:

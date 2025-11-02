@@ -10,8 +10,8 @@ Dependencies:
 - langchain>=0.1.0 (text splitting)
 """
 
-from typing import List, Dict, Any, Optional
 import logging
+from typing import Any, Dict, List, Optional
 
 from app.config import settings
 

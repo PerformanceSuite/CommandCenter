@@ -4,8 +4,9 @@ API client for CommandCenter backend.
 Provides a high-level interface for interacting with the CommandCenter API.
 """
 
+from typing import Any, Dict, List, Optional
+
 import httpx
-from typing import Optional, Dict, Any, List
 
 
 class APIError(Exception):

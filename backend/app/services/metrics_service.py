@@ -2,11 +2,12 @@
 Prometheus metrics service for monitoring GitHub operations
 """
 
-from prometheus_client import Counter, Histogram, Gauge
+import logging
 import time
 from functools import wraps
 from typing import Callable
-import logging
+
+from prometheus_client import Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 

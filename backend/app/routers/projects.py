@@ -5,26 +5,22 @@ Project CRUD endpoints for multi-project isolation and project analysis
 import os
 from pathlib import Path
 from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.database import get_db
+from app.models.knowledge_entry import KnowledgeEntry
 from app.models.project import Project
 from app.models.repository import Repository
-from app.models.technology import Technology
 from app.models.research_task import ResearchTask
-from app.models.knowledge_entry import KnowledgeEntry
-from app.schemas.project import (
-    ProjectCreate,
-    ProjectUpdate,
-    ProjectResponse,
-    ProjectWithCounts,
-)
+from app.models.technology import Technology
+from app.schemas.project import ProjectCreate, ProjectResponse, ProjectUpdate, ProjectWithCounts
 from app.schemas.project_analysis import (
+    AnalysisStatistics,
     ProjectAnalysisRequest,
     ProjectAnalysisResult,
-    AnalysisStatistics,
 )
 from app.services.project_analyzer import ProjectAnalyzer
 

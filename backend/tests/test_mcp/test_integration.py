@@ -1,6 +1,7 @@
 """Integration tests for MCP server."""
 
 import json
+
 import pytest
 
 from app.mcp import MCPServer

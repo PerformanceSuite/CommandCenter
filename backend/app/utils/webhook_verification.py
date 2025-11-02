@@ -2,10 +2,11 @@
 GitHub webhook signature verification utilities
 """
 
-import hmac
 import hashlib
+import hmac
 from typing import Optional
-from fastapi import HTTPException, Header, status
+
+from fastapi import Header, HTTPException, status
 
 
 def verify_github_signature(

@@ -11,29 +11,28 @@ Provides endpoints for multi-agent research workflow:
 import logging
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.technology import Technology
 from app.schemas.research import (
-    TechnologyDeepDiveRequest,
-    MultiAgentLaunchRequest,
-    ResearchOrchestrationResponse,
-    TechnologyMonitorRequest,
-    TechnologyMonitorResponse,
-    AvailableModelsResponse,
-    ResearchSummaryResponse,
     AgentResult,
     AgentResultMetadata,
+    AvailableModelsResponse,
     MonitoringAlert,
+    MultiAgentLaunchRequest,
+    ResearchOrchestrationResponse,
+    ResearchSummaryResponse,
+    TechnologyDeepDiveRequest,
+    TechnologyMonitorRequest,
+    TechnologyMonitorResponse,
 )
-from app.services.research_agent_orchestrator import (
-    research_orchestrator,
-)
+from app.services.ai_router import AIProvider, ai_router
 from app.services.hackernews_service import HackerNewsService
-from app.services.ai_router import ai_router, AIProvider
+from app.services.research_agent_orchestrator import research_orchestrator
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/research", tags=["research"])

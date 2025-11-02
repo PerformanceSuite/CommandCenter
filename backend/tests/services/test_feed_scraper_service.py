@@ -1,10 +1,12 @@
 """
 Unit tests for FeedScraperService
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
-from app.services.feed_scraper_service import FeedScraperService, FeedEntry
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+from app.services.feed_scraper_service import FeedEntry, FeedScraperService
 
 
 @pytest.fixture

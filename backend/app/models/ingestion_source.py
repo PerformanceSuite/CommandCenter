@@ -3,9 +3,10 @@ IngestionSource model for automated knowledge ingestion
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
 from enum import Enum
-from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Boolean, JSON
+from typing import Any, Dict, Optional
+
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base

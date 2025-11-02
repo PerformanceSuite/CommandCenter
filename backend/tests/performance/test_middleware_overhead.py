@@ -7,12 +7,13 @@ with and without correlation ID processing. The middleware is always active
 in our app, so we measure the actual request time and verify it's reasonable.
 """
 
-import pytest
-import time
 import statistics
-from fastapi.testclient import TestClient
-from app.main import app
+import time
 
+import pytest
+from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 

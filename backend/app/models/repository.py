@@ -4,12 +4,13 @@ Repository model for tracking GitHub repositories
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, JSON, Text, ForeignKey, Integer
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.utils.crypto import encrypt_token, decrypt_token
+from app.utils.crypto import decrypt_token, encrypt_token
 
 
 class Repository(Base):

@@ -9,11 +9,11 @@ This module provides the generic job execution framework that:
 """
 
 import traceback
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any, Dict
 
-from app.tasks import celery_app
 from app.models import JobStatus, JobType
+from app.tasks import celery_app
 
 
 @celery_app.task(bind=True, name="app.tasks.job_tasks.execute_job")
@@ -40,14 +40,12 @@ def execute_job(self, job_id: int, job_type: str, parameters: Dict[str, Any]):
     Raises:
         Exception: Any unhandled exception during execution
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    import asyncio
+
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
     from app.services.job_service import JobService
-    import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)

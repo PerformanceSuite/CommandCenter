@@ -3,9 +3,10 @@ Helper functions for testing
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, Any, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Tuple
+
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.jwt import create_access_token, create_token_pair
 from backend.tests.utils.factories import UserFactory

@@ -3,8 +3,8 @@ Tests for shell completion command.
 """
 
 import pytest
-from click.testing import CliRunner
 from cli.commands.completion import completion
+from click.testing import CliRunner
 
 
 class TestCompletionCommand:

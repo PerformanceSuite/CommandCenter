@@ -5,8 +5,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.ingestion_source import SourceStatus, SourceType
 from app.models.project import Project
-from app.models.ingestion_source import SourceType, SourceStatus
 
 
 @pytest.mark.asyncio
@@ -128,8 +128,9 @@ async def test_delete_source(
     async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
 ):
     """Test deleting source"""
-    from app.models.ingestion_source import IngestionSource
     from sqlalchemy import select
+
+    from app.models.ingestion_source import IngestionSource
 
     source = IngestionSource(
         project_id=sample_project.id,
@@ -161,8 +162,9 @@ async def test_trigger_manual_run(
     async_client: AsyncClient, sample_project: Project, db_session: AsyncSession
 ):
     """Test manually triggering source run"""
-    from app.models.ingestion_source import IngestionSource
     from unittest.mock import patch
+
+    from app.models.ingestion_source import IngestionSource
 
     source = IngestionSource(
         project_id=sample_project.id,

@@ -1,31 +1,24 @@
 """Tests for MCP server."""
 
 import json
+
 import pytest
 
-from app.mcp.config import (
-    MCPCapabilities,
-    MCPServerConfig,
-    MCPServerInfo,
-)
-from app.mcp.server import MCPServer
+from app.mcp.config import MCPCapabilities, MCPServerConfig, MCPServerInfo
 from app.mcp.providers.base import (
+    Prompt,
+    PromptMessage,
+    PromptProvider,
+    PromptResult,
     Resource,
     ResourceContent,
     ResourceProvider,
     Tool,
     ToolProvider,
     ToolResult,
-    Prompt,
-    PromptProvider,
-    PromptResult,
-    PromptMessage,
 )
-from app.mcp.utils import (
-    ResourceNotFoundError,
-    ToolNotFoundError,
-    PromptNotFoundError,
-)
+from app.mcp.server import MCPServer
+from app.mcp.utils import PromptNotFoundError, ResourceNotFoundError, ToolNotFoundError
 
 
 class MockResourceProvider(ResourceProvider):

@@ -9,9 +9,9 @@ Tests verify end-to-end error tracking:
 
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
 from prometheus_client import REGISTRY
 
+from app.main import app
 
 client = TestClient(app)
 

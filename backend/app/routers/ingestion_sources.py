@@ -4,22 +4,20 @@ API endpoints for managing ingestion sources
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.ingestion_source import IngestionSource, SourceType
 from app.schemas.ingestion import (
     IngestionSourceCreate,
-    IngestionSourceUpdate,
-    IngestionSourceResponse,
     IngestionSourceList,
+    IngestionSourceResponse,
+    IngestionSourceUpdate,
 )
-from app.tasks.ingestion_tasks import (
-    scrape_rss_feed,
-    scrape_documentation,
-)
+from app.tasks.ingestion_tasks import scrape_documentation, scrape_rss_feed
 
 logger = logging.getLogger(__name__)
 

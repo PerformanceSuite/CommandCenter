@@ -2,30 +2,23 @@
 Jobs API router for managing async task execution.
 """
 
-from typing import Optional, List
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.services.job_service import JobService
-from app.services.optimized_job_service import OptimizedJobService
 from app.schemas import (
     JobCreate,
-    JobUpdate,
-    JobResponse,
     JobListResponse,
     JobProgressResponse,
+    JobResponse,
     JobStatisticsResponse,
+    JobUpdate,
 )
+from app.services.job_service import JobService
+from app.services.optimized_job_service import OptimizedJobService
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 

@@ -12,10 +12,11 @@ Based on architecture design in docs/AI_PROVIDER_ROUTING_ARCHITECTURE.md
 """
 
 import logging
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from openai import AsyncOpenAI
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)

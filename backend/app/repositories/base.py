@@ -3,6 +3,7 @@ Base repository for common CRUD operations.
 """
 
 from typing import Any, Generic, Type, TypeVar
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import DeclarativeBase

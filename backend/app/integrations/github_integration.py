@@ -9,20 +9,17 @@ Extends basic GitHubService with:
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import Any, Dict, List, Optional
+
 from github import Github, GithubException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.integrations.base import (
-    WebhookIntegration,
-    IntegrationError,
-)
-from app.models.research_task import ResearchTask
+from app.integrations.base import IntegrationError, WebhookIntegration
 from app.models.integration import IntegrationType
+from app.models.research_task import ResearchTask
 from app.services.github_service import GitHubService
-
 
 logger = logging.getLogger(__name__)
 

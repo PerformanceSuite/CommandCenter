@@ -1,9 +1,10 @@
 """Comprehensive tests for CommandCenter Prompt Provider."""
 
 import pytest
+
+from app.mcp.providers.base import Prompt, PromptMessage, PromptResult
 from app.mcp.providers.commandcenter_prompts import CommandCenterPromptProvider
-from app.mcp.providers.base import Prompt, PromptResult, PromptMessage
-from app.mcp.utils import PromptNotFoundError, InvalidParamsError
+from app.mcp.utils import InvalidParamsError, PromptNotFoundError
 
 
 @pytest.fixture

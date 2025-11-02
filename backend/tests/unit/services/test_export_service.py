@@ -1,10 +1,12 @@
 """Unit tests for ExportService."""
-import pytest
-import json
 import csv
+import json
 from io import StringIO
-from app.services.export_service import ExportService
+
+import pytest
+
 from app.models.technology import Technology
+from app.services.export_service import ExportService
 
 
 @pytest.fixture

@@ -8,8 +8,9 @@ API Documentation: https://github.com/HackerNews/API
 """
 
 import logging
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 

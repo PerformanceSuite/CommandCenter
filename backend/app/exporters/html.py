@@ -5,9 +5,9 @@ Generates single-file HTML reports with embedded CSS and JavaScript.
 No external dependencies required - can be opened directly in browser.
 """
 
-from typing import Any, Dict, List
-from datetime import datetime
 import json
+from datetime import datetime
+from typing import Any, Dict, List
 
 from app.exporters import BaseExporter
 

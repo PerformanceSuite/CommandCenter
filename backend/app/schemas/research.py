@@ -4,7 +4,8 @@ Pydantic schemas for Research Task and Knowledge Entry endpoints
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.research_task import TaskStatus
 

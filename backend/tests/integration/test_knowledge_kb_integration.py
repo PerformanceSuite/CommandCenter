@@ -4,13 +4,14 @@ Integration tests for KnowledgeBeast-enabled knowledge router
 Tests the full API integration with KnowledgeBeast when feature flag is enabled.
 """
 
+from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, Mock, AsyncMock
-from typing import Dict, Any
 
-from app.main import app
 from app.config import settings
+from app.main import app
 
 
 @pytest.fixture

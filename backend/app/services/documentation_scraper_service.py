@@ -2,16 +2,17 @@
 Documentation scraper service for automated docs ingestion
 """
 
-import logging
 import asyncio
 import ipaddress
-from typing import List, Set, Optional
+import logging
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from typing import List, Optional, Set
 from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
+
 import httpx
 from bs4 import BeautifulSoup
-import xml.etree.ElementTree as ET
 
 logger = logging.getLogger(__name__)
 

@@ -6,17 +6,16 @@ Provides context-aware prompts for analysis, research, and project management ta
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from app.mcp.providers.base import (
     Prompt,
+    PromptMessage,
     PromptParameter,
     PromptProvider,
     PromptResult,
-    PromptMessage,
 )
-from app.mcp.utils import PromptNotFoundError, InvalidParamsError
-
+from app.mcp.utils import InvalidParamsError, PromptNotFoundError
 
 logger = logging.getLogger(__name__)
 

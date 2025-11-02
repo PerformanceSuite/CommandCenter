@@ -9,8 +9,9 @@ This module sets up the Celery app for async job processing including:
 """
 
 import os
+
 from celery import Celery
-from kombu import Queue, Exchange
+from kombu import Exchange, Queue
 
 # Get configuration from environment
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -101,12 +102,12 @@ def debug_task(self):
 # Import task modules to register them with Celery
 # Note: Import after celery_app is configured to avoid circular imports
 try:
-    from app.tasks import job_tasks  # noqa: F401
     from app.tasks import analysis_tasks  # noqa: F401
     from app.tasks import export_tasks  # noqa: F401
-    from app.tasks import webhook_tasks  # noqa: F401
-    from app.tasks import scheduled_tasks  # noqa: F401
     from app.tasks import ingestion_tasks  # noqa: F401
+    from app.tasks import job_tasks  # noqa: F401
+    from app.tasks import scheduled_tasks  # noqa: F401
+    from app.tasks import webhook_tasks  # noqa: F401
 except ImportError as e:
     # Tasks may not exist yet during initial setup
     print(f"Warning: Could not import task modules: {e}")

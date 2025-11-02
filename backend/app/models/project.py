@@ -3,8 +3,9 @@ Project model for multi-tenant isolation
 """
 
 from datetime import datetime
-from typing import Optional, TYPE_CHECKING
-from sqlalchemy import String, Text, DateTime, UniqueConstraint
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import DateTime, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base

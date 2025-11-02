@@ -9,16 +9,16 @@ Tests the complete export workflow including:
 - JSON export for programmatic access
 """
 
-import pytest
-import json
 import io
-from typing import Dict, Any
+import json
+from typing import Any, Dict
+
+import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from openpyxl import load_workbook
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Project, Repository, Technology
-
 
 pytestmark = pytest.mark.integration
 

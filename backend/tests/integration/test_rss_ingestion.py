@@ -1,15 +1,16 @@
 """
 Integration tests for RSS feed ingestion
 """
-import pytest
-from unittest.mock import patch, Mock
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ingestion_source import IngestionSource, SourceType, SourceStatus
+from app.models.ingestion_source import IngestionSource, SourceStatus, SourceType
 from app.models.project import Project
-from app.tasks.ingestion_tasks import scrape_rss_feed
 from app.services.feed_scraper_service import FeedEntry
+from app.tasks.ingestion_tasks import scrape_rss_feed
 
 
 @pytest.fixture

@@ -2,12 +2,13 @@
 Unit tests for Project model
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy import select
+from tests.utils import create_test_project
 
 from app.models.project import Project
-from tests.utils import create_test_project
 
 
 @pytest.mark.unit

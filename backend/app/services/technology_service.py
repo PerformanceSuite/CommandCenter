@@ -3,7 +3,8 @@ Technology business logic service
 Handles technology operations with transaction management
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -7,7 +7,7 @@ from pathlib import Path
 # Add backend to path so we can import dagger_modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from dagger_modules.postgres import PostgresStack, PostgresConfig
+from dagger_modules.postgres import PostgresConfig, PostgresStack
 
 
 async def main():

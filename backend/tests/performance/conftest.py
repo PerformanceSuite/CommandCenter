@@ -2,10 +2,10 @@
 import pytest
 from sqlalchemy import event
 from tests.utils.factories import (
-    TechnologyFactory,
+    KnowledgeEntryFactory,
     RepositoryFactory,
     ResearchTaskFactory,
-    KnowledgeEntryFactory,
+    TechnologyFactory,
 )
 
 

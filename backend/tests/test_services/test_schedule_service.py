@@ -2,12 +2,13 @@
 Tests for Schedule Service.
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Project, Schedule, ScheduleFrequency, User
 from app.services.schedule_service import ScheduleService
-from app.models import Schedule, Project, User, ScheduleFrequency
 
 
 @pytest.fixture

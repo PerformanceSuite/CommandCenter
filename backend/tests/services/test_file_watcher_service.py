@@ -1,12 +1,14 @@
 """
 Unit tests for FileWatcherService
 """
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from app.services.file_watcher_service import FileWatcherService, FileChangeEvent
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
+from app.services.file_watcher_service import FileChangeEvent, FileWatcherService
 
 
 @pytest.fixture

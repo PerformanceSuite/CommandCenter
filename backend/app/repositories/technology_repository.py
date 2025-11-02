@@ -2,11 +2,13 @@
 Technology-specific data access operations
 """
 
-from typing import Optional, List
-from sqlalchemy import select, func, or_
+from typing import List, Optional
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Technology, TechnologyDomain, TechnologyStatus
+
 from .base import BaseRepository
 
 

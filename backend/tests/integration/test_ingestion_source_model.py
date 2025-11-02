@@ -1,11 +1,13 @@
 """
 Integration tests for IngestionSource model
 """
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from sqlalchemy import select
-from app.models.ingestion_source import IngestionSource, SourceType, SourceStatus
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.ingestion_source import IngestionSource, SourceStatus, SourceType
 from app.models.project import Project
 
 

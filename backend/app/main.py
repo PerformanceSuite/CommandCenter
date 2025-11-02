@@ -3,31 +3,47 @@ Command Center FastAPI Application
 Main entry point for the backend API
 """
 
+import logging
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-import os
 
-from fastapi import FastAPI, Depends, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import logging
-from sqlalchemy.ext.asyncio import AsyncSession
 from prometheus_client import make_asgi_app
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import init_db, close_db, get_db
-from app.routers import auth, repositories, technologies, dashboard, knowledge
-from app.routers import webhooks, github_features, rate_limits, research_tasks, projects
-from app.routers import research_orchestration, mcp, jobs, batch, schedules, export
-from app.routers import webhooks_ingestion, ingestion_sources
-from app.services import redis_service
-from app.utils.metrics import setup_custom_metrics, error_counter
-from app.utils.logging import setup_logging
-from app.middleware import limiter, add_security_headers, LoggingMiddleware
+from app.database import close_db, get_db, init_db
+from app.middleware import LoggingMiddleware, add_security_headers, limiter
 from app.middleware.correlation import CorrelationIDMiddleware
+from app.routers import (
+    auth,
+    batch,
+    dashboard,
+    export,
+    github_features,
+    ingestion_sources,
+    jobs,
+    knowledge,
+    mcp,
+    projects,
+    rate_limits,
+    repositories,
+    research_orchestration,
+    research_tasks,
+    schedules,
+    technologies,
+    webhooks,
+    webhooks_ingestion,
+)
+from app.services import redis_service
+from app.utils.logging import setup_logging
+from app.utils.metrics import error_counter, setup_custom_metrics
 
 
 @asynccontextmanager

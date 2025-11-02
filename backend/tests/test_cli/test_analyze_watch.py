@@ -2,12 +2,13 @@
 Tests for analyze command watch mode.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from click.testing import CliRunner
-from cli.commandcenter import cli
-from pathlib import Path
 import time
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+from cli.commandcenter import cli
+from click.testing import CliRunner
 
 
 class TestAnalyzeWatchMode:

@@ -8,13 +8,13 @@ as MCP resources for AI assistants to read and understand.
 import json
 import logging
 from typing import List
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mcp.providers.base import Resource, ResourceContent, ResourceProvider
 from app.mcp.utils import ResourceNotFoundError
-from app.models import Project, Technology, ResearchTask, Repository, Schedule, Job
-
+from app.models import Job, Project, Repository, ResearchTask, Schedule, Technology
 
 logger = logging.getLogger(__name__)
 

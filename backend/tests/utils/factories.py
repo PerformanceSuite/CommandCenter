@@ -4,13 +4,14 @@ Factory classes for creating test data
 
 from datetime import datetime
 from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
-from app.models.project import Project
-from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
-from app.models.repository import Repository
 from app.auth.jwt import get_password_hash
+from app.models.project import Project
+from app.models.repository import Repository
+from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
+from app.models.user import User
 
 
 class UserFactory:

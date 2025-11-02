@@ -9,14 +9,15 @@ Tests the 5 immediate-priority security fixes:
 5. Secure token storage
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Test 1: Session Fixation Prevention
-from app.mcp.connection import MCPSession, MCPConnectionManager
+from app.mcp.connection import MCPConnectionManager, MCPSession
 
 
 class TestSessionFixationPrevention:
@@ -60,7 +61,7 @@ class TestSessionFixationPrevention:
 
 
 # Test 2: Error Message Sanitization
-from app.mcp.protocol import MCPProtocolHandler, JSONRPCRequest
+from app.mcp.protocol import JSONRPCRequest, MCPProtocolHandler
 
 
 class TestErrorMessageSanitization:
@@ -230,7 +231,7 @@ class TestCLISetup:
 
 
 # Test 5: Secure Token Storage
-from cli.config import Config, AuthConfig
+from cli.config import AuthConfig, Config
 
 
 class TestSecureTokenStorage:

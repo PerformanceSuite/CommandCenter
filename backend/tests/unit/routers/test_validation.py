@@ -1,7 +1,7 @@
 """Unit tests for router validation and middleware."""
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 
 from app.main import app

@@ -6,11 +6,7 @@ Commands for managing CLI configuration.
 
 import click
 from cli.config import Config
-from cli.output import (
-    display_success,
-    display_error,
-    display_config,
-)
+from cli.output import display_config, display_error, display_success
 from rich.console import Console
 
 console = Console()

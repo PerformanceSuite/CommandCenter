@@ -4,20 +4,13 @@ MCP (Model Context Protocol) API endpoints.
 Provides HTTP and WebSocket endpoints for MCP server access.
 """
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Request,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.mcp.config import MCPCapabilities, MCPServerConfig, MCPServerInfo
 from app.mcp.server import MCPServer
-from app.mcp.config import MCPServerConfig, MCPServerInfo, MCPCapabilities
 from app.mcp.utils import get_mcp_logger
 
 logger = get_mcp_logger(__name__)
@@ -349,9 +342,9 @@ async def list_prompts(db: Session = Depends(get_db)):
 async def initialize_mcp_server():
     """Initialize MCP server on application startup."""
     from app.database import AsyncSessionLocal as async_session
+    from app.mcp.providers.commandcenter_prompts import CommandCenterPromptProvider
     from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
     from app.mcp.providers.commandcenter_tools import CommandCenterToolProvider
-    from app.mcp.providers.commandcenter_prompts import CommandCenterPromptProvider
 
     server = get_mcp_server()
 

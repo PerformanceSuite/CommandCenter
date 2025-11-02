@@ -3,17 +3,18 @@ Repository management endpoints
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status, Query
+
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import Repository
 from app.schemas import (
     RepositoryCreate,
-    RepositoryUpdate,
     RepositoryResponse,
     RepositorySyncRequest,
     RepositorySyncResponse,
+    RepositoryUpdate,
 )
 from app.services import RepositoryService
 

@@ -2,12 +2,13 @@
 Unit tests for Repository model
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy import select
+from tests.utils import create_test_repository
 
 from app.models.repository import Repository
-from tests.utils import create_test_repository
 
 
 @pytest.mark.unit

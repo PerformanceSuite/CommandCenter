@@ -6,15 +6,15 @@ as MCP tools that AI assistants can call to perform operations.
 """
 
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mcp.providers.base import Tool, ToolParameter, ToolProvider, ToolResult
-from app.mcp.utils import ToolNotFoundError, InvalidParamsError
+from app.mcp.utils import InvalidParamsError, ToolNotFoundError
+from app.models import ResearchTask, Technology
 from app.services.job_service import JobService
 from app.services.schedule_service import ScheduleService
-from app.models import ResearchTask, Technology
-
 
 logger = logging.getLogger(__name__)
 

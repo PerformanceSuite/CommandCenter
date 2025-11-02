@@ -5,15 +5,12 @@ Tests the KnowledgeBeast service wrapper for CommandCenter integration.
 Mocks KnowledgeBeast components to test service logic in isolation.
 """
 
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from typing import List, Dict, Any
 
-from app.services.knowledgebeast_service import (
-    KnowledgeBeastService,
-    KNOWLEDGEBEAST_AVAILABLE,
-)
-
+from app.services.knowledgebeast_service import KNOWLEDGEBEAST_AVAILABLE, KnowledgeBeastService
 
 # Skip all tests if KnowledgeBeast not installed
 pytestmark = pytest.mark.skipif(not KNOWLEDGEBEAST_AVAILABLE, reason="KnowledgeBeast not installed")

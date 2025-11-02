@@ -1,10 +1,12 @@
 """Unit tests for ResearchAgentOrchestrator service."""
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from app.services.research_agent_orchestrator import (
-    ResearchAgentOrchestrator,
     AgentRole,
     ResearchAgent,
+    ResearchAgentOrchestrator,
 )
 
 

@@ -6,11 +6,12 @@ Handles loading, saving, and managing CLI configuration from ~/.commandcenter/co
 Security: API tokens are stored securely in the system keyring, not in plain text config files.
 """
 
+import logging
 from pathlib import Path
 from typing import Optional
-import yaml
+
 import keyring
-import logging
+import yaml
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

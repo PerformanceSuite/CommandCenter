@@ -1,14 +1,15 @@
 """Comprehensive tests for CommandCenter Resource Provider."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
 from app.mcp.providers.base import Resource, ResourceContent
+from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
 from app.mcp.utils import ResourceNotFoundError
-from app.models import Project, Technology, ResearchTask, Repository, Schedule, Job
+from app.models import Job, Project, Repository, ResearchTask, Schedule, Technology
 
 
 @pytest.fixture

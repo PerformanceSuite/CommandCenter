@@ -2,12 +2,13 @@
 Tests for CLI commands using CliRunner.
 """
 
-import pytest
-from click.testing import CliRunner
-from pathlib import Path
 import tempfile
-from unittest.mock import patch, Mock
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 from cli.commandcenter import cli
+from click.testing import CliRunner
 
 
 @pytest.fixture

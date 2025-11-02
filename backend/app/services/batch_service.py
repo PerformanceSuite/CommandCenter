@@ -2,9 +2,10 @@
 Batch service for bulk operations on repositories, technologies, and analyses.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
 
 from app.models.job import Job
 from app.models.repository import Repository

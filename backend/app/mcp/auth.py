@@ -6,7 +6,8 @@ Provides authentication validation and rate limiting for MCP sessions.
 
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from aiolimiter import AsyncLimiter
 
 

@@ -1,12 +1,14 @@
 """Database stress tests."""
-import pytest
 import asyncio
+
+import pytest
 
 
 @pytest.mark.asyncio
 async def test_bulk_technology_creation(performance_threshold, db_session, user_a):
     """Bulk create 100 technologies within threshold (1500ms)."""
     import time
+
     from app.services.technology_service import TechnologyService
 
     service = TechnologyService(db_session)

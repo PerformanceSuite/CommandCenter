@@ -9,7 +9,7 @@ This module provides tasks for automatically executing scheduled jobs including:
 
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 from app.tasks import celery_app
 
@@ -31,14 +31,12 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
     Returns:
         dict: Summary of dispatched schedules
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    import asyncio
+
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
     from app.services.schedule_service import ScheduleService
-    import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
@@ -142,15 +140,13 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
     Returns:
         dict: Summary of cleaned up schedules
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
-    from sqlalchemy import select, and_
+    import asyncio
+
+    from sqlalchemy import and_, select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
     from app.models import Schedule
-    import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
@@ -229,16 +225,14 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
     Returns:
         dict: Health report with any issues found
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    import asyncio
+    from datetime import timedelta
+
     from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
     from app.models import Schedule
-    from datetime import timedelta
-    import asyncio
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
@@ -364,16 +358,14 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
     Returns:
         dict: Execution result
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
-    from sqlalchemy import select
-    from app.config import settings
-    from app.services.schedule_service import ScheduleService
-    from app.models import Schedule
     import asyncio
+
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    from app.config import settings
+    from app.models import Schedule
+    from app.services.schedule_service import ScheduleService
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)

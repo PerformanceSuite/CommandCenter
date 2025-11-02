@@ -2,12 +2,13 @@
 Feed scraper service for RSS/Atom feed ingestion
 """
 
-import logging
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Tuple
-from dataclasses import dataclass
+
 import feedparser
 from newspaper import Article
 

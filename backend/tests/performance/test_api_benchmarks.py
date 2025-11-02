@@ -1,6 +1,7 @@
 """API endpoint performance benchmarks."""
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.asyncio

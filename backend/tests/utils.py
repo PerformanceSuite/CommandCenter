@@ -2,16 +2,17 @@
 Test utilities and helper functions
 """
 
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.repository import Repository
-from app.models.technology import Technology
-from app.models.research_task import ResearchTask
 from app.models.knowledge_entry import KnowledgeEntry
-from app.models.user import User
 from app.models.project import Project
+from app.models.repository import Repository
+from app.models.research_task import ResearchTask
+from app.models.technology import Technology
+from app.models.user import User
 from app.utils.crypto import hash_password
 
 

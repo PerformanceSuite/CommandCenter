@@ -4,17 +4,16 @@ Configured for async SQLAlchemy with auto-import of models
 """
 
 import asyncio
-from logging.config import fileConfig
-
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 # Import the app configuration and models
 import sys
+from logging.config import fileConfig
 from pathlib import Path
+
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Add the app directory to the path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -23,12 +22,7 @@ from app.config import settings
 from app.database import Base
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models import (
-    Repository,
-    Technology,
-    ResearchTask,
-    KnowledgeEntry,
-)
+from app.models import KnowledgeEntry, Repository, ResearchTask, Technology
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

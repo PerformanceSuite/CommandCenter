@@ -2,21 +2,22 @@
 Celery tasks for automated knowledge ingestion
 """
 
-import logging
 import asyncio
+import logging
 import os
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 from celery import Task
 from sqlalchemy import select
 
-from app.tasks import celery_app
 from app.models.ingestion_source import IngestionSource, SourceStatus
-from app.services.feed_scraper_service import FeedScraperService
 from app.services.documentation_scraper_service import DocumentationScraperService
+from app.services.feed_scraper_service import FeedScraperService
+from app.services.file_watcher_service import FileChangeEvent, FileWatcherService
 from app.services.rag_service import RAGService
-from app.services.file_watcher_service import FileWatcherService, FileChangeEvent
+from app.tasks import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +43,8 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
     Returns:
         Dict with status, documents_ingested, and optional error
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
 
     # Create async database connection
@@ -177,11 +175,8 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
     Returns:
         Dict with status, documents_ingested, and optional error
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
 
     # Create async database connection
@@ -342,11 +337,8 @@ def process_webhook_payload(
     Returns:
         Dict with status and documents_ingested
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
 
     # Create async database connection
@@ -518,11 +510,8 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
     Returns:
         Dict with status and documents_ingested
     """
-    from sqlalchemy.ext.asyncio import (
-        create_async_engine,
-        async_sessionmaker,
-        AsyncSession,
-    )
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
     from app.config import settings
 
     # Create async database connection

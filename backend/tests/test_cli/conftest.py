@@ -2,9 +2,10 @@
 Shared test fixtures for CLI tests.
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
 

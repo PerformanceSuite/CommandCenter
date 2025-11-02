@@ -2,18 +2,18 @@
 File watcher service for monitoring local directories
 """
 
+import fnmatch
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import List, Callable, Dict
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
-import fnmatch
+from typing import Callable, Dict, List
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
 import PyPDF2
 from docx import Document
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.observers import Observer
 
 logger = logging.getLogger(__name__)
 

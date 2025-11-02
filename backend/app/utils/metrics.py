@@ -2,9 +2,8 @@
 Custom Prometheus metrics for Command Center
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Info
 from fastapi import FastAPI
-
+from prometheus_client import Counter, Gauge, Histogram, Info
 
 # Custom metrics
 repository_operations = Counter(

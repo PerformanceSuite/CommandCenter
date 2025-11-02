@@ -4,15 +4,15 @@ Interactive TUI application for knowledge base search.
 Provides a rich terminal interface with live search, history, and results display.
 """
 
-from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal
-from textual.widgets import Header, Footer, Input, Static, ListView, ListItem, Label, Button
-from textual.binding import Binding
-from rich.syntax import Syntax
-from rich.table import Table
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from cli.api_client import APIClient, APIError
+from rich.syntax import Syntax
+from rich.table import Table
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Static
 
 
 class SearchResultsView(Static):

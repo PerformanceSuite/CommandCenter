@@ -4,19 +4,20 @@ Analyze commands for CommandCenter CLI.
 Commands for analyzing projects and GitHub repositories.
 """
 
-import click
-from pathlib import Path
 import json
-import yaml
-import time
 import os
+import time
+from pathlib import Path
+
+import click
+import yaml
 from cli.api_client import APIClient, APIError
 from cli.output import (
+    create_progress_bar,
     display_analysis_results,
     display_error,
-    display_success,
     display_statistics,
-    create_progress_bar,
+    display_success,
 )
 
 # Watch mode ignore patterns
@@ -116,8 +117,8 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
             raise click.Abort()
 
         try:
-            from watchdog.observers import Observer
             from watchdog.events import FileSystemEventHandler
+            from watchdog.observers import Observer
 
             project_path = Path(path).resolve()
 

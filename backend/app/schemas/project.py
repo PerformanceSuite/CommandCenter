@@ -4,7 +4,8 @@ Pydantic schemas for Project model
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectBase(BaseModel):

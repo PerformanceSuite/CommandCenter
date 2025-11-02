@@ -4,7 +4,8 @@ Redis caching service for API responses
 
 import json
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
+
 import redis.asyncio as redis
 
 from app.config import settings

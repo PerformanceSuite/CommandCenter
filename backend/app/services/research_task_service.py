@@ -3,11 +3,12 @@ ResearchTask business logic service
 Handles research task operations with transaction management
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
-from fastapi import HTTPException, status, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from fastapi import HTTPException, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ResearchTask, TaskStatus
 from app.repositories import ResearchTaskRepository

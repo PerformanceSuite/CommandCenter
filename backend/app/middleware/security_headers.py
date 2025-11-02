@@ -3,9 +3,10 @@ Security headers middleware
 Adds HTTP security headers to protect against common vulnerabilities
 """
 
+from typing import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Callable
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

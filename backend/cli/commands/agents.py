@@ -4,16 +4,17 @@ Agent orchestration commands for CommandCenter CLI.
 Commands for managing and monitoring agent workflows.
 """
 
-import click
 import time
+
+import click
 from cli.api_client import APIClient, APIError
 from cli.output import (
+    create_progress_bar,
+    display_error,
+    display_logs,
     display_orchestration_status,
     display_orchestrations_list,
-    display_error,
     display_success,
-    display_logs,
-    create_progress_bar,
 )
 from rich.console import Console
 from rich.live import Live

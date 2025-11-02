@@ -2,22 +2,22 @@
 GitHub API rate limiting service with tracking and exponential backoff
 """
 
-import logging
 import asyncio
-from datetime import datetime
-from typing import Optional, Dict, Any, Callable
-from functools import wraps
 import hashlib
+import logging
+from datetime import datetime
+from functools import wraps
+from typing import Any, Callable, Dict, Optional
 
 from github import Github, GithubException, RateLimitExceededException
+from sqlalchemy.ext.asyncio import AsyncSession
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import GitHubRateLimit
 

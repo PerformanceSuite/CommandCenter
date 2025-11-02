@@ -6,8 +6,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import create_token_pair, decode_token, get_password_hash, verify_password
 from app.models.user import User
-from app.auth import get_password_hash, verify_password, create_token_pair, decode_token
 
 
 class TestPasswordHashing:

@@ -9,19 +9,19 @@ Tests the complete async job workflow including:
 - Job cancellation
 """
 
-import pytest
 import asyncio
 import datetime
-from typing import Dict, Any
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi import HTTPException
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
 
 from app.models import Job, JobStatus, Project, Repository
 from app.services.job_service import JobService
 from app.tasks.job_tasks import execute_job
-
 
 pytestmark = pytest.mark.integration
 

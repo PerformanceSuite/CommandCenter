@@ -2,13 +2,14 @@
 Tests for analyze command export functionality.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from click.testing import CliRunner
-from cli.commandcenter import cli
-from pathlib import Path
 import json
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 import yaml
+from cli.commandcenter import cli
+from click.testing import CliRunner
 
 
 class TestAnalyzeExport:

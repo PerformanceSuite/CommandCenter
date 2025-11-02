@@ -3,26 +3,27 @@ Authentication endpoints for user login, registration, and token management
 """
 
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
-from app.models.user import User
 from app.auth import (
-    UserLogin,
-    UserCreate,
-    UserResponse,
-    Token,
     RefreshTokenRequest,
-    verify_password,
-    get_password_hash,
+    Token,
+    UserCreate,
+    UserLogin,
+    UserResponse,
     create_token_pair,
     decode_token,
     get_current_active_user,
+    get_password_hash,
+    verify_password,
 )
+from app.database import get_db
+from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

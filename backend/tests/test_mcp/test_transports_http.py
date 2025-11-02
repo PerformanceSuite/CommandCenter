@@ -5,8 +5,8 @@ Tests for HTTP transport layer.
 import pytest
 from fastapi.testclient import TestClient
 
+from app.mcp.config import MCPCapabilities, MCPServerConfig, MCPServerInfo
 from app.mcp.server import MCPServer
-from app.mcp.config import MCPServerConfig, MCPServerInfo, MCPCapabilities
 from app.mcp.transports.http import HTTPTransport, create_http_app
 
 

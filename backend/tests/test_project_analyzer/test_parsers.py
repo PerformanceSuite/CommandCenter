@@ -4,10 +4,10 @@ Tests for dependency parsers
 import pytest
 
 from app.schemas.project_analysis import DependencyType
+from app.services.parsers.cargo_toml_parser import CargoTomlParser
+from app.services.parsers.go_mod_parser import GoModParser
 from app.services.parsers.package_json_parser import PackageJsonParser
 from app.services.parsers.requirements_parser import RequirementsParser
-from app.services.parsers.go_mod_parser import GoModParser
-from app.services.parsers.cargo_toml_parser import CargoTomlParser
 
 
 @pytest.mark.asyncio

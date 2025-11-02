@@ -4,9 +4,10 @@ User model for authentication and authorization
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Boolean, DateTime
+
+from email_validator import EmailNotValidError, validate_email
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
-from email_validator import validate_email, EmailNotValidError
 
 from app.database import Base
 

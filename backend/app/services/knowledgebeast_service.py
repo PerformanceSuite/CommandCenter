@@ -12,16 +12,16 @@ Features:
 - Backward compatibility with existing RAG API
 """
 
-from typing import List, Dict, Any, Optional
-import time
 import logging
+import time
+from typing import Any, Dict, List, Optional
 
 # Lazy imports for KnowledgeBeast (optional dependency during migration)
 try:
     from knowledgebeast.core.embeddings import EmbeddingEngine
-    from knowledgebeast.core.vector_store import VectorStore
     from knowledgebeast.core.query_engine import HybridQueryEngine
     from knowledgebeast.core.repository import DocumentRepository
+    from knowledgebeast.core.vector_store import VectorStore
 
     KNOWLEDGEBEAST_AVAILABLE = True
 except ImportError:

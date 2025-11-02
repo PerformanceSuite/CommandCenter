@@ -1,19 +1,11 @@
 """Tests for MCP protocol handler."""
 
 import json
+
 import pytest
 
-from app.mcp.protocol import (
-    JSONRPCError,
-    JSONRPCRequest,
-    JSONRPCResponse,
-    MCPProtocolHandler,
-)
-from app.mcp.utils import (
-    InvalidRequestError,
-    MethodNotFoundError,
-    ParseError,
-)
+from app.mcp.protocol import JSONRPCError, JSONRPCRequest, JSONRPCResponse, MCPProtocolHandler
+from app.mcp.utils import InvalidRequestError, MethodNotFoundError, ParseError
 
 
 class TestJSONRPCRequest:

@@ -2,13 +2,14 @@
 Unit tests for GitHub service
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 from github import GithubException
+from tests.utils import MockGitHubCommit, MockGitHubRepo
 
 from app.services.github_service import GitHubService
-from tests.utils import MockGitHubRepo, MockGitHubCommit
 
 
 @pytest.mark.unit

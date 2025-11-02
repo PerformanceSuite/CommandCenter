@@ -3,14 +3,14 @@ Test utilities package
 """
 
 from backend.tests.utils.factories import (
-    UserFactory,
     ProjectFactory,
-    TechnologyFactory,
     RepositoryFactory,
+    TechnologyFactory,
+    UserFactory,
 )
 from backend.tests.utils.helpers import (
-    create_user_and_login,
     create_test_token,
+    create_user_and_login,
     generate_mock_github_data,
     generate_mock_rag_response,
 )

@@ -5,16 +5,15 @@ import pytest
 def test_all_dependencies_available():
     """Verify all required dependencies are installed."""
     # KnowledgeBeast
-    from knowledgebeast.backends.postgres import PostgresBackend
+    # Standard libraries
+    import asyncpg
 
     # Dagger
     import dagger
+    from knowledgebeast.backends.postgres import PostgresBackend
 
     # LangChain (still used for chunking)
     from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-    # Standard libraries
-    import asyncpg
 
     # Sentence transformers
     from sentence_transformers import SentenceTransformer
@@ -52,7 +51,7 @@ def test_dagger_module_imports():
 
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
-    from dagger_modules.postgres import PostgresStack, PostgresConfig
+    from dagger_modules.postgres import PostgresConfig, PostgresStack
 
     config = PostgresConfig()
     stack = PostgresStack(config)
@@ -64,8 +63,9 @@ def test_dagger_module_imports():
 @pytest.mark.asyncio
 async def test_rag_service_lifecycle():
     """Test RAGService initialization and cleanup."""
-    from app.services.rag_service import RAGService
     from unittest.mock import AsyncMock
+
+    from app.services.rag_service import RAGService
 
     service = RAGService(repository_id=1)
 
@@ -86,8 +86,9 @@ async def test_rag_service_lifecycle():
 
 def test_backward_compatibility():
     """Verify API surface matches old RAGService."""
-    from app.services.rag_service import RAGService
     import inspect
+
+    from app.services.rag_service import RAGService
 
     service = RAGService(repository_id=1)
 

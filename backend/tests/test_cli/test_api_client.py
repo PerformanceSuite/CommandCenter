@@ -2,9 +2,10 @@
 Tests for API client.
 """
 
-import pytest
-import httpx
 from unittest.mock import Mock, patch
+
+import httpx
+import pytest
 from cli.api_client import APIClient, APIError
 
 

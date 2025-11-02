@@ -2,13 +2,14 @@
 Tests for WebhookService
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-import httpx
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.webhook_service import WebhookService, DeliveryStatus
-from app.models import WebhookConfig, WebhookDelivery, Project, Repository
+import httpx
+import pytest
+
+from app.models import Project, Repository, WebhookConfig, WebhookDelivery
+from app.services.webhook_service import DeliveryStatus, WebhookService
 
 
 @pytest.fixture

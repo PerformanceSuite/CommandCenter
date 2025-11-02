@@ -2,13 +2,14 @@
 Unit tests for User model
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy import select
+from tests.utils import create_test_user
 
 from app.models.user import User
 from app.utils.crypto import hash_password, verify_password
-from tests.utils import create_test_user
 
 
 @pytest.mark.unit

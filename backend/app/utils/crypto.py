@@ -3,11 +3,13 @@ Encryption utilities for sensitive data (GitHub tokens, API keys)
 """
 
 import base64
+
 from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
 from passlib.context import CryptContext
+
 from app.config import settings
 
 

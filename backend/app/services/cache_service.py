@@ -3,9 +3,9 @@ Redis Cache Service
 Provides caching functionality with LRU eviction for RAG queries
 """
 
-from typing import Optional
 import json
 import os
+from typing import Optional
 
 # Lazy imports - only import when CacheService is instantiated
 try:

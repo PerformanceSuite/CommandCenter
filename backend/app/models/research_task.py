@@ -2,19 +2,14 @@
 ResearchTask model for tracking research activities
 """
 
+import enum
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import (
-    String,
-    Text,
-    Enum as SQLEnum,
-    DateTime,
-    ForeignKey,
-    Integer,
-    JSON,
-)
+
+from sqlalchemy import JSON, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 
 from app.database import Base
 

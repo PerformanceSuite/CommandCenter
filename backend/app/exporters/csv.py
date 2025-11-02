@@ -5,9 +5,9 @@ Generates CSV files that can be imported into Excel, Google Sheets, etc.
 Multiple sheets exported as separate CSV files or ZIP archive.
 """
 
-from typing import Any, Dict
 import csv
 import io
+from typing import Any, Dict
 
 from app.exporters import BaseExporter
 

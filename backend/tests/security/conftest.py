@@ -1,8 +1,10 @@
 """Security test fixtures."""
-import pytest
 from datetime import timedelta
+
+import pytest
+from tests.utils.factories import ProjectFactory, UserFactory
+
 from app.auth.jwt import create_access_token
-from tests.utils.factories import UserFactory, ProjectFactory
 
 
 @pytest.fixture

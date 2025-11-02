@@ -5,8 +5,8 @@ This uses the actual KnowledgeBeast.KnowledgeBase class
 with its native query() and index() methods.
 """
 
-from typing import List, Dict, Any, Optional
 import logging
+from typing import Any, Dict, List, Optional
 
 # Lazy import for KnowledgeBeast
 try:
@@ -113,8 +113,8 @@ class KnowledgeBeastService:
         """Add document to KB"""
         try:
             # Save content to temp file (KB expects file path)
-            import tempfile
             import os
+            import tempfile
 
             with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
                 f.write(content)

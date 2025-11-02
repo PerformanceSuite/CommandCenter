@@ -2,9 +2,10 @@
 Tests for CLI configuration management.
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import pytest
 from cli.config import Config
 
 

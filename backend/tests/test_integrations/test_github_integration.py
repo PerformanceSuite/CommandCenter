@@ -1,11 +1,12 @@
 """Tests for GitHub integration service."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from app.integrations.github_integration import GitHubIntegration
-from app.models.integration import Integration, IntegrationType, IntegrationStatus
+from app.models.integration import Integration, IntegrationStatus, IntegrationType
 from app.models.research_task import ResearchTask
 
 
@@ -181,8 +182,8 @@ class TestWebhooks:
         secret = "test_secret"
 
         # Generate valid signature
-        import hmac
         import hashlib
+        import hmac
 
         valid_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 

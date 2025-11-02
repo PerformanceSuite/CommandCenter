@@ -3,16 +3,13 @@ Research Task management endpoints
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status, Query, UploadFile, File
+
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import TaskStatus
-from app.schemas import (
-    ResearchTaskCreate,
-    ResearchTaskUpdate,
-    ResearchTaskResponse,
-)
+from app.schemas import ResearchTaskCreate, ResearchTaskResponse, ResearchTaskUpdate
 from app.services import ResearchService
 
 router = APIRouter(prefix="/research-tasks", tags=["research-tasks"])

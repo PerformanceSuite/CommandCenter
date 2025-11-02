@@ -4,15 +4,16 @@ Rich terminal output utilities for CommandCenter CLI.
 Provides beautiful, colorful terminal output using the Rich library.
 """
 
-from typing import Dict, Any, List
+import json
+from datetime import datetime
+from typing import Any, Dict, List
+
 from rich.console import Console
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.syntax import Syntax
 from rich.table import Table
 from rich.tree import Tree
-from rich.syntax import Syntax
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from datetime import datetime
-import json
 
 console = Console()
 

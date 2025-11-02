@@ -4,14 +4,15 @@ CommandCenter CLI - Main entry point.
 Professional command-line interface for CommandCenter R&D management system.
 """
 
-import click
 from pathlib import Path
-from cli.config import Config
-from cli.commands.analyze import analyze
+
+import click
 from cli.commands.agents import agents
-from cli.commands.search import search
-from cli.commands.config_cmd import config as config_cmd
+from cli.commands.analyze import analyze
 from cli.commands.completion import completion
+from cli.commands.config_cmd import config as config_cmd
+from cli.commands.search import search
+from cli.config import Config
 
 
 @click.group()

@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.technology import TechnologyDomain, TechnologyStatus
-from backend.tests.utils.factories import TechnologyFactory, ProjectFactory
+from backend.tests.utils.factories import ProjectFactory, TechnologyFactory
 
 
 @pytest.mark.integration

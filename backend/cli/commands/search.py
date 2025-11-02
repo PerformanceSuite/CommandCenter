@@ -6,11 +6,7 @@ RAG-powered knowledge base search commands.
 
 import click
 from cli.api_client import APIClient, APIError
-from cli.output import (
-    display_search_results,
-    display_error,
-    create_progress_bar,
-)
+from cli.output import create_progress_bar, display_error, display_search_results
 from rich.console import Console
 from rich.prompt import Prompt
 

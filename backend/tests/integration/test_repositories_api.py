@@ -2,13 +2,14 @@
 Integration tests for Repository API endpoints
 """
 
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, MagicMock
-from datetime import datetime
+from tests.utils import create_test_repository
 
 from app.models.repository import Repository
-from tests.utils import create_test_repository
 
 
 @pytest.mark.integration

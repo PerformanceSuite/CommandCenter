@@ -4,7 +4,8 @@ Job model for tracking async task execution.
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, JSON, Text, Integer, ForeignKey, Index
+
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base

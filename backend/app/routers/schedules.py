@@ -9,23 +9,24 @@ This module provides:
 """
 
 import logging
-from typing import Optional, List
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
 
 from app.database import get_db
 from app.models import Schedule
-from app.services.schedule_service import ScheduleService
 from app.schemas import (
     ScheduleCreate,
-    ScheduleUpdate,
-    ScheduleResponse,
-    ScheduleListResponse,
     ScheduleExecutionRequest,
     ScheduleExecutionResponse,
+    ScheduleListResponse,
+    ScheduleResponse,
     ScheduleStatistics,
+    ScheduleUpdate,
 )
+from app.services.schedule_service import ScheduleService
 
 logger = logging.getLogger(__name__)
 

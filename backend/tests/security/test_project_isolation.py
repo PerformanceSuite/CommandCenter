@@ -1,10 +1,10 @@
 """Project isolation security tests."""
 import pytest
 from tests.utils.factories import (
-    TechnologyFactory,
+    KnowledgeEntryFactory,
     RepositoryFactory,
     ResearchTaskFactory,
-    KnowledgeEntryFactory,
+    TechnologyFactory,
 )
 
 

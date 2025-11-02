@@ -8,19 +8,19 @@ Tests the complete WebSocket workflow including:
 - Connection cleanup and error handling
 """
 
-import pytest
 import asyncio
 import json
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
 from fastapi import WebSocket
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.main import app
 from app.models import Job, JobStatus, Project
-from app.services.job_service import JobService
 from app.routers.jobs import manager as connection_manager
-
+from app.services.job_service import JobService
 
 pytestmark = pytest.mark.integration
 

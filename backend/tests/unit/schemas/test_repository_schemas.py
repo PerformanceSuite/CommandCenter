@@ -2,17 +2,18 @@
 Unit tests for Repository Pydantic schemas
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
 
 from app.schemas.repository import (
     RepositoryCreate,
-    RepositoryUpdate,
     RepositoryInDB,
     RepositoryResponse,
     RepositorySyncRequest,
     RepositorySyncResponse,
+    RepositoryUpdate,
 )
 
 

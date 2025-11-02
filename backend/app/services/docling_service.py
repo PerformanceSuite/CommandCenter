@@ -3,14 +3,13 @@ Docling Integration Service
 Processes various document formats (PDF, Markdown, text) into clean text for RAG
 """
 
-from typing import List, Dict, Any
-import tempfile
 import os
+import tempfile
+from typing import Any, Dict, List
 
 # Lazy imports - only import when DoclingService is instantiated
 try:
-    from docling.document_converter import DocumentConverter
-    from docling.document_converter import PipelineOptions
+    from docling.document_converter import DocumentConverter, PipelineOptions
 
     DOCLING_AVAILABLE = True
 except ImportError:

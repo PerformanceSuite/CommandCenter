@@ -3,16 +3,17 @@ Optimized database configuration with proper connection pooling.
 Performance improvements for production deployments.
 """
 
+import asyncio
+from typing import AsyncGenerator, List, Optional
+
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
     AsyncEngine,
-    create_async_engine,
+    AsyncSession,
     async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.pool import NullPool, AsyncAdaptedQueuePool
-from typing import AsyncGenerator, List, Optional
-import asyncio
+from sqlalchemy.pool import AsyncAdaptedQueuePool, NullPool
 
 from app.config import settings
 

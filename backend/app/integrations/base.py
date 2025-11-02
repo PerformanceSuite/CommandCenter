@@ -7,13 +7,13 @@ Provides common functionality for OAuth, webhooks, rate limiting, and error hand
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.integration import Integration, IntegrationStatus
-from app.utils.crypto import encrypt_value, decrypt_value
-
+from app.utils.crypto import decrypt_value, encrypt_value
 
 logger = logging.getLogger(__name__)
 
@@ -247,8 +247,8 @@ class BaseIntegration(ABC):
         Returns:
             True if signature is valid
         """
-        import hmac
         import hashlib
+        import hmac
 
         expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 

@@ -3,7 +3,8 @@ GitHub rate limit tracking and monitoring endpoints
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from github import Github
 from sqlalchemy.ext.asyncio import AsyncSession

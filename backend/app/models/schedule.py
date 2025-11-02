@@ -4,7 +4,8 @@ Schedule model for recurring task execution.
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, JSON, Integer, Boolean, ForeignKey, Index
+
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base

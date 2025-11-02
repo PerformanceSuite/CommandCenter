@@ -1,6 +1,7 @@
 """RAG search performance tests."""
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.asyncio

@@ -7,7 +7,6 @@ import re
 from pathlib import Path
 from typing import Dict, List
 
-
 from app.schemas.project_analysis import DetectedTechnology
 
 

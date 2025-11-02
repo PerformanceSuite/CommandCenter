@@ -15,9 +15,8 @@ CRITICAL: This migration ensures complete data isolation between projects.
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "003_add_project_isolation"

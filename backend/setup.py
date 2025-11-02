@@ -4,8 +4,9 @@ CommandCenter CLI - Setup Configuration
 Production-ready setup.py for pip installation of the CommandCenter CLI tool.
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read the README for long description
 readme_path = Path(__file__).parent.parent / "README.md"

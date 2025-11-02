@@ -2,17 +2,13 @@
 Security tests for basic authentication functionality
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.jwt import (
-    get_password_hash,
-    verify_password,
-    create_access_token,
-    decode_token,
-)
+from app.auth.jwt import create_access_token, decode_token, get_password_hash, verify_password
 from backend.tests.utils.factories import UserFactory
 from backend.tests.utils.helpers import create_test_token
 

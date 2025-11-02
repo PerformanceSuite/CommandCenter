@@ -3,14 +3,15 @@ Job business logic service.
 Handles async job operations with Celery integration.
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from celery.result import AsyncResult
 from fastapi import HTTPException, status
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_
 
 from app.models import Job, JobStatus
-from celery.result import AsyncResult
 
 
 class JobService:

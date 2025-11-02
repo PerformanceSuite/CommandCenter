@@ -2,16 +2,13 @@
 Dashboard and analytics endpoints
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.services import (
-    RepositoryService,
-    TechnologyService,
-    ResearchService,
-)
+from app.services import RepositoryService, ResearchService, TechnologyService
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 

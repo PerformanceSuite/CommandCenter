@@ -4,6 +4,7 @@ Authentication schemas for JWT tokens and user authentication
 
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel, EmailStr, Field
 
 

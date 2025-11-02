@@ -1,11 +1,13 @@
 """
 Unit tests for DocumentationScraperService
 """
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
 from app.services.documentation_scraper_service import (
-    DocumentationScraperService,
     DocumentationPage,
+    DocumentationScraperService,
 )
 
 

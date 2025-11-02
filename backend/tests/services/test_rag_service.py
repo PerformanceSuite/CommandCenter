@@ -5,12 +5,12 @@ Tests the RAG service using mocked PostgresBackend to avoid requiring
 a real database connection during unit tests.
 """
 
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from typing import List, Dict, Any
 
-from app.services.rag_service import RAGService, RAG_AVAILABLE
-
+from app.services.rag_service import RAG_AVAILABLE, RAGService
 
 # Skip all tests if RAG dependencies not installed
 pytestmark = pytest.mark.skipif(

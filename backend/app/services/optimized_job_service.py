@@ -3,14 +3,15 @@ Optimized Job Service with performance improvements.
 Fixes N+1 query pattern and adds efficient pagination.
 """
 
-from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, Integer
-import sqlalchemy as sa
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import sqlalchemy as sa
+from fastapi import HTTPException, status
+from sqlalchemy import Integer, and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Job, JobStatus
 

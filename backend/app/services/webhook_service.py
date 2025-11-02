@@ -5,13 +5,13 @@ Webhook service for managing outbound webhook deliveries.
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_
+from typing import Any, Dict, List, Optional
+
 import httpx
+from sqlalchemy import and_, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import WebhookConfig, WebhookDelivery
-
 
 logger = logging.getLogger(__name__)
 
@@ -176,9 +176,9 @@ class WebhookService:
 
         # Add signature if secret is configured
         if config.secret:
-            import json
-            import hmac
             import hashlib
+            import hmac
+            import json
 
             payload_bytes = json.dumps(delivery.payload).encode("utf-8")
             signature = hmac.new(

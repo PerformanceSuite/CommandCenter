@@ -6,9 +6,9 @@ Create Date: 2025-10-11
 
 """
 from typing import Sequence, Union
-from alembic import op
-import sqlalchemy as sa
 
+import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "006_merge_heads"

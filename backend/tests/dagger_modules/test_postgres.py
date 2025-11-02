@@ -18,7 +18,7 @@ def test_postgres_config_dataclass():
 
 def test_postgres_stack_initialization():
     """Test PostgresStack can be initialized."""
-    from dagger_modules.postgres import PostgresStack, PostgresConfig
+    from dagger_modules.postgres import PostgresConfig, PostgresStack
 
     config = PostgresConfig()
     stack = PostgresStack(config)

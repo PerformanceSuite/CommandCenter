@@ -2,22 +2,23 @@
 Unit tests for Technology Pydantic schemas
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 from pydantic import ValidationError
 
+from app.models.technology import (
+    CostTier,
+    IntegrationDifficulty,
+    MaturityLevel,
+    TechnologyDomain,
+    TechnologyStatus,
+)
 from app.schemas.technology import (
     TechnologyBase,
     TechnologyCreate,
-    TechnologyUpdate,
     TechnologyResponse,
-)
-from app.models.technology import (
-    TechnologyDomain,
-    TechnologyStatus,
-    IntegrationDifficulty,
-    MaturityLevel,
-    CostTier,
+    TechnologyUpdate,
 )
 
 
