@@ -923,4 +923,1197 @@ async def test_exporter_db_overhead():
 
 ---
 
-**Next Steps**: Proceed to Phase 5 (Worktree Setup) and Phase 6 (Implementation Plan).
+## Phase 5: Worktree Setup
+
+### Overview
+
+Phase C implementation will be done in an isolated git worktree to avoid disrupting the main development branch during the 4-week rollout. This approach allows parallel development of other features while Phase C progresses through testing and iteration.
+
+### Worktree Structure
+
+```
+CommandCenter/
+├── .git/                           # Main git directory
+├── backend/                        # Main worktree (current work)
+├── frontend/
+├── ...
+└── worktree/
+    └── phase-c-observability/      # Phase C isolated worktree
+        ├── backend/
+        ├── frontend/
+        ├── monitoring/
+        └── docs/
+```
+
+### Setup Commands
+
+```bash
+# Create isolated worktree from main
+git worktree add worktree/phase-c-observability -b phase-c-observability
+
+# Switch to worktree
+cd worktree/phase-c-observability
+
+# Verify isolation
+git branch
+# * phase-c-observability
+
+# Copy environment configuration
+cp ../../.env .env
+# Update COMPOSE_PROJECT_NAME to avoid conflicts
+sed -i 's/commandcenter/commandcenter-phase-c/g' .env
+
+# Start services with unique project name
+docker-compose -p commandcenter-phase-c up -d
+
+# Verify services running on different ports
+docker ps | grep phase-c
+```
+
+### Port Allocation
+
+To avoid conflicts with main development environment:
+
+| Service | Main | Phase C Worktree |
+|---------|------|------------------|
+| Backend | 8000 | 8100 |
+| Frontend | 3000 | 3100 |
+| PostgreSQL | 5432 | 5532 |
+| Redis | 6379 | 6479 |
+| Prometheus | 9090 | 9190 |
+| Grafana | 3001 | 3101 |
+| postgres-exporter | 9187 | 9287 |
+
+**Phase C .env additions**:
+```bash
+# Update these in worktree/.env
+BACKEND_PORT=8100
+FRONTEND_PORT=3100
+POSTGRES_PORT=5532
+REDIS_PORT=6479
+PROMETHEUS_PORT=9190
+GRAFANA_PORT=3101
+POSTGRES_EXPORTER_PORT=9287
+EXPORTER_PASSWORD=<generate-unique-password>
+```
+
+### Benefits of Worktree Approach
+
+1. **Isolation**: Main branch remains stable during Phase C development
+2. **Parallel Work**: Other features can be developed on main simultaneously
+3. **Safe Testing**: Load tests and performance validation don't impact main
+4. **Easy Comparison**: Compare Phase C metrics against main baseline
+5. **Clean Merge**: Review all changes in single PR when ready
+
+### Development Workflow
+
+```bash
+# Day-to-day development in worktree
+cd worktree/phase-c-observability
+
+# Make changes
+# Run tests
+make test
+
+# Commit to phase-c-observability branch
+git add .
+git commit -m "feat: add correlation ID middleware"
+
+# Push to remote
+git push -u origin phase-c-observability
+
+# When complete, create PR
+gh pr create --title "Phase C: Observability Layer" \
+  --body-file docs/plans/2025-11-01-phase-c-observability-design.md \
+  --base main --head phase-c-observability
+```
+
+### Cleanup After Merge
+
+```bash
+# After PR merged to main
+cd ../..  # Return to main repo root
+
+# Remove worktree
+git worktree remove worktree/phase-c-observability
+
+# Delete branch (if desired)
+git branch -d phase-c-observability
+
+# Stop Phase C containers
+docker-compose -p commandcenter-phase-c down -v
+```
+
+---
+
+## Phase 6: Detailed Implementation Plan
+
+### Overview
+
+This section provides bite-sized, actionable tasks for implementing Phase C. Each task is designed to be completable in 1-4 hours and includes acceptance criteria.
+
+### Week 1: Foundation (Correlation & Error Tracking)
+
+#### Task 1.1: Create Correlation ID Middleware
+
+**File**: `backend/app/middleware/correlation.py`
+
+**Steps**:
+1. Create `backend/app/middleware/` directory if not exists
+2. Implement `CorrelationIDMiddleware` class (see Architecture section for code)
+3. Add docstrings and type hints
+4. Handle edge cases (missing headers, malformed UUIDs)
+
+**Acceptance Criteria**:
+- File exists at correct path
+- Class inherits from `BaseHTTPMiddleware`
+- Generates UUID if `X-Request-ID` header missing
+- Extracts existing `X-Request-ID` if present
+- Stores in `request.state.request_id`
+- Adds to response headers
+- Performance: < 0.5ms overhead per request
+
+**Verification**:
+```bash
+# Start server
+make dev
+
+# Test header extraction
+curl -H "X-Request-ID: test123" http://localhost:8100/health
+# Response should include: X-Request-ID: test123
+
+# Test UUID generation
+curl http://localhost:8100/health
+# Response should include: X-Request-ID: <valid-uuid>
+```
+
+#### Task 1.2: Register Middleware in FastAPI
+
+**File**: `backend/app/main.py`
+
+**Steps**:
+1. Import `CorrelationIDMiddleware`
+2. Add middleware registration after app initialization
+3. Ensure order: Correlation middleware → CORS → other middleware
+4. Verify middleware active in startup logs
+
+**Code Addition**:
+```python
+from app.middleware.correlation import CorrelationIDMiddleware
+
+# After app = FastAPI()
+app.add_middleware(CorrelationIDMiddleware)
+```
+
+**Acceptance Criteria**:
+- Import statement added
+- Middleware registered before route definitions
+- No import errors on server start
+- All requests receive `X-Request-ID` header
+
+**Verification**:
+```bash
+# Check logs show middleware registered
+docker-compose -p commandcenter-phase-c logs backend | grep -i correlation
+
+# Test multiple endpoints
+for endpoint in /health /api/v1/repositories /api/v1/technologies; do
+  curl -I http://localhost:8100$endpoint | grep X-Request-ID
+done
+```
+
+#### Task 1.3: Add Error Counter Metric
+
+**File**: `backend/app/utils/metrics.py`
+
+**Steps**:
+1. Open existing `metrics.py`
+2. Add `error_counter` Prometheus Counter with labels
+3. Export in module `__all__`
+4. Add docstring explaining metric purpose
+
+**Code Addition**:
+```python
+from prometheus_client import Counter
+
+error_counter = Counter(
+    'commandcenter_errors_total',
+    'Total errors by endpoint and type',
+    ['endpoint', 'status_code', 'error_type']
+)
+
+__all__ = [..., 'error_counter']
+```
+
+**Acceptance Criteria**:
+- Metric defined with correct name and labels
+- Counter (not Gauge or Histogram)
+- Exported in `__all__`
+- No syntax errors
+
+**Verification**:
+```bash
+# Check metric registered
+curl http://localhost:8100/metrics | grep commandcenter_errors_total
+# Should show metric with help text
+```
+
+#### Task 1.4: Enhance Global Exception Handler
+
+**File**: `backend/app/main.py`
+
+**Steps**:
+1. Locate existing `@app.exception_handler(Exception)`
+2. Import `error_counter` from `app.utils.metrics`
+3. Extract `request_id` from `request.state`
+4. Increment `error_counter` with labels
+5. Enhance log entry with structured fields
+6. Include `request_id` in error response JSON
+
+**Code Changes** (see Architecture section for complete code)
+
+**Acceptance Criteria**:
+- Exception handler increments `error_counter`
+- Log entry includes: request_id, endpoint, method, error_type, user_id
+- Error response includes `request_id` field
+- Stack trace logged (exc_info=True)
+
+**Verification**:
+```bash
+# Trigger error endpoint (create test endpoint if needed)
+curl http://localhost:8100/api/v1/trigger-test-error
+
+# Check metric incremented
+curl http://localhost:8100/metrics | grep commandcenter_errors_total
+# Should show count > 0
+
+# Check logs
+docker-compose -p commandcenter-phase-c logs backend | tail -20
+# Should show structured log with request_id
+```
+
+#### Task 1.5: Write Unit Tests for Middleware
+
+**File**: `backend/tests/middleware/test_correlation.py`
+
+**Steps**:
+1. Create `tests/middleware/` directory
+2. Write test cases:
+   - `test_generates_uuid_when_header_missing()`
+   - `test_extracts_existing_request_id()`
+   - `test_adds_request_id_to_response_headers()`
+   - `test_stores_request_id_in_request_state()`
+   - `test_middleware_doesnt_fail_on_error()`
+
+**Example Test**:
+```python
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_generates_uuid_when_header_missing():
+    response = client.get("/health")
+    assert "X-Request-ID" in response.headers
+    assert len(response.headers["X-Request-ID"]) == 36  # UUID length
+
+def test_extracts_existing_request_id():
+    response = client.get("/health", headers={"X-Request-ID": "test123"})
+    assert response.headers["X-Request-ID"] == "test123"
+```
+
+**Acceptance Criteria**:
+- All 5 test cases pass
+- Tests use TestClient (not manual HTTP calls)
+- Tests are independent (no shared state)
+- Coverage > 90% for middleware module
+
+**Verification**:
+```bash
+pytest backend/tests/middleware/test_correlation.py -v
+# All tests should pass
+```
+
+#### Task 1.6: Write Integration Tests for Error Flow
+
+**File**: `backend/tests/integration/test_error_tracking.py`
+
+**Steps**:
+1. Create test endpoint that raises exception
+2. Write test that triggers error and verifies:
+   - Metric incremented
+   - Log entry created with request_id
+   - Error response includes request_id
+
+**Example Test**:
+```python
+async def test_error_tracked_end_to_end():
+    # Trigger error
+    response = await async_client.get("/api/v1/trigger-test-error")
+
+    # Verify response includes request_id
+    assert "request_id" in response.json()
+    request_id = response.json()["request_id"]
+
+    # Verify metric incremented (query Prometheus)
+    metrics = await get_prometheus_metrics()
+    assert metrics["commandcenter_errors_total"] > 0
+```
+
+**Acceptance Criteria**:
+- Test creates real error (not mocked)
+- Verifies metric increment
+- Verifies structured logging
+- Test is idempotent (can run multiple times)
+
+**Verification**:
+```bash
+pytest backend/tests/integration/test_error_tracking.py -v
+```
+
+#### Task 1.7: Load Test Middleware Performance
+
+**File**: `backend/tests/performance/test_middleware_overhead.py`
+
+**Steps**:
+1. Create performance test suite
+2. Measure baseline latency (health endpoint, 1000 iterations)
+3. Enable middleware
+4. Measure with-middleware latency (same endpoint, 1000 iterations)
+5. Assert overhead < 1ms
+
+**Example Test** (see Architecture section for complete code)
+
+**Acceptance Criteria**:
+- Test runs 1000+ iterations for statistical significance
+- Measures both baseline and with-middleware latency
+- Asserts overhead < 1ms (P95 or average)
+- Test passes consistently
+
+**Verification**:
+```bash
+pytest backend/tests/performance/test_middleware_overhead.py -v
+# Should report: "Middleware overhead: 0.3ms (acceptable)"
+```
+
+#### Task 1.8: Deploy to Dev Environment & Verify
+
+**Steps**:
+1. Ensure all tests pass: `make test`
+2. Build containers: `docker-compose -p commandcenter-phase-c build`
+3. Start services: `docker-compose -p commandcenter-phase-c up -d`
+4. Check health: `make health`
+5. Verify middleware active: `curl -I http://localhost:8100/health | grep X-Request-ID`
+6. Verify metrics endpoint: `curl http://localhost:8100/metrics | grep commandcenter_errors_total`
+
+**Acceptance Criteria**:
+- All containers running
+- Health checks pass
+- All API responses include `X-Request-ID`
+- Error metric visible in `/metrics`
+- No performance regression (baseline latency check)
+
+**Verification**:
+```bash
+# Run smoke tests
+./scripts/smoke-test.sh
+
+# Check logs for errors
+docker-compose -p commandcenter-phase-c logs | grep -i error
+```
+
+---
+
+### Week 2: Database Observability
+
+#### Task 2.1: Create Database Migration for Exporter User
+
+**File**: `backend/alembic/versions/XXXX_add_exporter_user.py`
+
+**Steps**:
+1. Generate migration: `alembic revision -m "add exporter user for postgres_exporter"`
+2. Implement `upgrade()`:
+   - Create `exporter_user` role
+   - Grant `CONNECT` on database
+   - Grant `pg_monitor` role
+3. Implement `downgrade()`:
+   - Revoke grants
+   - Drop `exporter_user` role
+
+**Migration Code**:
+```python
+from alembic import op
+
+def upgrade():
+    op.execute("""
+        CREATE USER exporter_user WITH PASSWORD 'EXPORTER_PASSWORD_PLACEHOLDER';
+        GRANT CONNECT ON DATABASE commandcenter TO exporter_user;
+        GRANT pg_monitor TO exporter_user;
+    """)
+
+def downgrade():
+    op.execute("""
+        REVOKE pg_monitor FROM exporter_user;
+        REVOKE CONNECT ON DATABASE commandcenter FROM exporter_user;
+        DROP USER exporter_user;
+    """)
+```
+
+**Acceptance Criteria**:
+- Migration file created
+- Both upgrade and downgrade implemented
+- Password uses environment variable (not hardcoded)
+- Migration applies cleanly: `alembic upgrade head`
+
+**Verification**:
+```bash
+# Apply migration
+docker-compose -p commandcenter-phase-c exec backend alembic upgrade head
+
+# Check user created
+docker-compose -p commandcenter-phase-c exec postgres psql -U commandcenter -d commandcenter \
+  -c "\du exporter_user"
+# Should show exporter_user role
+
+# Test downgrade
+docker-compose -p commandcenter-phase-c exec backend alembic downgrade -1
+# User should be removed
+```
+
+#### Task 2.2: Add postgres-exporter Service to Docker Compose
+
+**File**: `docker-compose.prod.yml`
+
+**Steps**:
+1. Add `postgres-exporter` service (see Architecture section for config)
+2. Use `prometheuscommunity/postgres-exporter:latest` image
+3. Set `DATA_SOURCE_NAME` environment variable with connection string
+4. Expose port 9287 (Phase C worktree allocation)
+5. Add `depends_on: postgres`
+
+**Service Definition** (see Architecture section)
+
+**Acceptance Criteria**:
+- Service defined in docker-compose.prod.yml
+- Port mapped correctly
+- Connection string uses exporter_user
+- Service starts successfully
+
+**Verification**:
+```bash
+# Start exporter
+docker-compose -p commandcenter-phase-c -f docker-compose.prod.yml up -d postgres-exporter
+
+# Check health
+curl http://localhost:9287/metrics | head -20
+# Should show PostgreSQL metrics
+
+# Check logs
+docker-compose -p commandcenter-phase-c logs postgres-exporter
+# Should show "Listening on :9187"
+```
+
+#### Task 2.3: Configure Prometheus to Scrape Exporter
+
+**File**: `monitoring/prometheus.yml`
+
+**Steps**:
+1. Add postgres-exporter scrape job
+2. Configure scrape interval: 15s
+3. Set target: `postgres-exporter:9187`
+4. Add labels: `job=postgres, instance=commandcenter-phase-c`
+
+**Config Addition**:
+```yaml
+scrape_configs:
+  # Existing jobs...
+
+  - job_name: 'postgres'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          instance: 'commandcenter-phase-c'
+```
+
+**Acceptance Criteria**:
+- Scrape job added to prometheus.yml
+- Valid YAML syntax
+- Prometheus reloads config without errors
+- Exporter metrics appear in Prometheus
+
+**Verification**:
+```bash
+# Restart Prometheus
+docker-compose -p commandcenter-phase-c restart prometheus
+
+# Check Prometheus targets
+curl http://localhost:9190/api/v1/targets | jq '.data.activeTargets[] | select(.job=="postgres")'
+# Should show postgres-exporter target as "up"
+
+# Query metric
+curl 'http://localhost:9190/api/v1/query?query=pg_stat_database_numbackends' | jq
+# Should return PostgreSQL connection metrics
+```
+
+#### Task 2.4: Add SQLAlchemy Event Listener for Query Comments
+
+**File**: `backend/app/db/session.py`
+
+**Steps**:
+1. Import SQLAlchemy event
+2. Implement `before_cursor_execute` listener
+3. Extract `request_id` from connection context
+4. Prepend SQL comment: `/* request_id: xyz */`
+5. Register listener on Engine
+
+**Code Addition** (see Architecture section for complete code)
+
+**Acceptance Criteria**:
+- Event listener registered
+- Comments added to all queries
+- request_id extracted from context
+- No performance impact (< 0.1ms per query)
+
+**Verification**:
+```bash
+# Enable pg_stat_statements in PostgreSQL
+docker-compose -p commandcenter-phase-c exec postgres psql -U commandcenter -d commandcenter \
+  -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+
+# Make API request
+curl -H "X-Request-ID: test123" http://localhost:8100/api/v1/repositories
+
+# Check pg_stat_statements for comment
+docker-compose -p commandcenter-phase-c exec postgres psql -U commandcenter -d commandcenter \
+  -c "SELECT query FROM pg_stat_statements WHERE query LIKE '%request_id: test123%' LIMIT 5;"
+# Should show queries with /* request_id: test123 */ comments
+```
+
+#### Task 2.5: Create Database Performance Dashboard
+
+**File**: `monitoring/grafana/dashboards/database-performance.json`
+
+**Steps**:
+1. Create dashboard JSON with 6 panels:
+   - Active Connections (gauge + graph)
+   - Query Duration Percentiles (heatmap)
+   - Top 10 Slowest Queries (table)
+   - Connection Pool Saturation (%)
+   - Table Sizes (bar chart)
+   - Index Usage (table)
+2. Use postgres_exporter metrics
+3. Add variables: time range, database name
+4. Set refresh interval: 30s
+
+**Key Panels**:
+
+**Active Connections**:
+```json
+{
+  "targets": [{
+    "expr": "pg_stat_database_numbackends{datname='commandcenter'}"
+  }],
+  "title": "Active Connections"
+}
+```
+
+**Query Duration P95**:
+```json
+{
+  "targets": [{
+    "expr": "histogram_quantile(0.95, rate(pg_stat_statements_mean_time_bucket[5m]))"
+  }],
+  "title": "Query Duration P95"
+}
+```
+
+**Acceptance Criteria**:
+- Dashboard JSON valid (import into Grafana without errors)
+- All 6 panels display data
+- Variables work (time range selection)
+- Dashboard loads in < 3s
+
+**Verification**:
+```bash
+# Import dashboard
+curl -X POST http://admin:admin@localhost:3101/api/dashboards/db \
+  -H "Content-Type: application/json" \
+  -d @monitoring/grafana/dashboards/database-performance.json
+
+# Open in browser
+open http://localhost:3101/d/database-performance
+# Verify all panels show data
+```
+
+#### Task 2.6: Test Query Comment Injection
+
+**File**: `backend/tests/integration/test_query_comments.py`
+
+**Steps**:
+1. Create test that makes API request with known request_id
+2. Query pg_stat_statements for comment
+3. Assert comment contains request_id
+
+**Example Test**:
+```python
+async def test_query_comments_include_request_id():
+    request_id = "test-query-comment-123"
+
+    # Make API request
+    await async_client.get("/api/v1/repositories", headers={"X-Request-ID": request_id})
+
+    # Query pg_stat_statements
+    result = await db.execute(
+        text("SELECT query FROM pg_stat_statements WHERE query LIKE :pattern"),
+        {"pattern": f"%request_id: {request_id}%"}
+    )
+    queries = result.fetchall()
+
+    # Assert at least one query has comment
+    assert len(queries) > 0
+    assert request_id in queries[0]['query']
+```
+
+**Acceptance Criteria**:
+- Test creates real database queries
+- Verifies comment appears in pg_stat_statements
+- Test is deterministic (no race conditions)
+
+**Verification**:
+```bash
+pytest backend/tests/integration/test_query_comments.py -v
+```
+
+#### Task 2.7: Deploy to Staging & Verify
+
+**Steps**:
+1. Ensure all Week 2 tests pass
+2. Apply database migration: `alembic upgrade head`
+3. Start postgres-exporter: `docker-compose up -d postgres-exporter`
+4. Verify exporter metrics in Prometheus
+5. Import database dashboard into Grafana
+6. Load test: Run 1000 queries, verify comment overhead < 1%
+
+**Acceptance Criteria**:
+- postgres-exporter running and scraped by Prometheus
+- Database dashboard shows real data
+- Query comments visible in pg_stat_statements
+- No performance regression
+
+**Verification**:
+```bash
+# Load test
+./scripts/load-test.sh --duration 60s --rps 100
+
+# Check performance overhead
+# Compare query latency before/after comment injection
+```
+
+---
+
+### Week 3: Dashboards & Alerts
+
+#### Task 3.1: Create Error Tracking Dashboard
+
+**File**: `monitoring/grafana/dashboards/error-tracking.json`
+
+**Panels**:
+1. Error Rate Over Time (line chart)
+2. Errors by Endpoint (bar chart)
+3. Error Type Distribution (pie chart)
+4. Recent Errors (table from Loki)
+5. Request ID Lookup (input → filter logs)
+
+**Example Panel - Error Rate**:
+```json
+{
+  "targets": [{
+    "expr": "rate(commandcenter_errors_total[5m])"
+  }],
+  "title": "Error Rate (per second)"
+}
+```
+
+**Acceptance Criteria**:
+- All 5 panels defined
+- Error data displayed correctly
+- Request ID lookup filters Loki logs
+- Dashboard loads quickly (< 3s)
+
+**Verification**: Import and verify visually
+
+#### Task 3.2: Create Celery Deep-Dive Dashboard
+
+**File**: `monitoring/grafana/dashboards/celery-deep-dive.json`
+
+**Panels**:
+1. Tasks Executed per Minute (line chart)
+2. Task Duration by Type (histogram)
+3. Task Failure Rate (%)
+4. Queue Depth Over Time
+5. Worker Status (up/down indicators)
+
+**Key Metric - Task Duration**:
+```json
+{
+  "targets": [{
+    "expr": "histogram_quantile(0.95, rate(celery_task_duration_seconds_bucket[5m]))"
+  }],
+  "title": "Task Duration P95"
+}
+```
+
+**Acceptance Criteria**:
+- All 5 panels defined
+- Celery metrics displayed
+- Worker status accurate
+
+**Verification**: Trigger background jobs, verify dashboard updates
+
+#### Task 3.3: Create Golden Signals Dashboard
+
+**File**: `monitoring/grafana/dashboards/golden-signals.json`
+
+**Panels** (Google SRE's Four Golden Signals):
+1. Latency: Request duration P50/P95/P99
+2. Traffic: Requests per second by endpoint
+3. Errors: Error rate (%)
+4. Saturation: CPU, memory, connection pools
+
+**Example - Latency**:
+```json
+{
+  "targets": [
+    {"expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "P50"},
+    {"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "P95"},
+    {"expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))", "legendFormat": "P99"}
+  ],
+  "title": "API Latency"
+}
+```
+
+**Acceptance Criteria**:
+- All 4 golden signals represented
+- Actionable insights (not vanity metrics)
+- Dashboard useful for on-call engineers
+
+**Verification**: Use during simulated incident
+
+#### Task 3.4: Add Alert Rules to alerts.yml
+
+**File**: `monitoring/alerts.yml`
+
+**Steps**:
+1. Add Phase C alert group
+2. Implement 5 rules (see Architecture section):
+   - HighErrorRate (> 5% for 5 minutes)
+   - DatabasePoolExhausted (> 90% for 2 minutes)
+   - SlowAPIResponses (P95 > 1s for 5 minutes)
+   - CeleryWorkerDown (< 1 worker for 1 minute)
+   - DiskSpaceLow (< 10% for 5 minutes)
+3. Set appropriate severities (critical/warning)
+4. Add descriptive annotations
+
+**Example Rule** (see Architecture section for complete rules)
+
+**Acceptance Criteria**:
+- All 5 rules defined
+- Valid PromQL expressions
+- Appropriate thresholds and durations
+- Descriptive annotations
+
+**Verification**:
+```bash
+# Validate alerts.yml syntax
+promtool check rules monitoring/alerts.yml
+
+# Reload AlertManager
+docker-compose -p commandcenter-phase-c restart alertmanager
+
+# Check rules loaded
+curl http://localhost:9093/api/v1/rules | jq '.data.groups[] | select(.name=="phase_c_alerts")'
+```
+
+#### Task 3.5: Configure AlertManager Notification Channels
+
+**File**: `monitoring/alertmanager.yml`
+
+**Steps**:
+1. Add Slack receiver (if Slack webhook available)
+2. Add email receiver (if SMTP configured)
+3. Configure routing: critical → Slack, warning → email
+4. Set grouping: by alert name
+5. Configure repeat interval: 4 hours
+
+**Config Example**:
+```yaml
+receivers:
+  - name: 'slack'
+    slack_configs:
+      - api_url: 'SLACK_WEBHOOK_URL'
+        channel: '#commandcenter-alerts'
+        title: '{{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+route:
+  receiver: 'slack'
+  group_by: ['alertname']
+  repeat_interval: 4h
+  routes:
+    - match:
+        severity: critical
+      receiver: 'slack'
+    - match:
+        severity: warning
+      receiver: 'email'
+```
+
+**Acceptance Criteria**:
+- Notification channels configured
+- Routing rules defined
+- Test alert sent successfully
+
+**Verification**:
+```bash
+# Send test alert
+curl -X POST http://localhost:9093/api/v1/alerts -d '[{
+  "labels": {"alertname": "TestAlert", "severity": "critical"},
+  "annotations": {"description": "Test alert from Phase C setup"}
+}]'
+
+# Check Slack/email received
+```
+
+#### Task 3.6: Test Alert Firing Manually
+
+**Steps**:
+1. Trigger HighErrorRate: Send 100 error requests
+2. Trigger DatabasePoolExhausted: Open 90% of connections
+3. Trigger SlowAPIResponses: Inject artificial delay
+4. Trigger CeleryWorkerDown: Stop Celery container
+5. Verify alerts fire within expected timeframes
+
+**Test Script**:
+```bash
+#!/bin/bash
+# test-alerts.sh
+
+# Test HighErrorRate
+for i in {1..100}; do
+  curl http://localhost:8100/api/v1/trigger-test-error
+done
+
+# Wait 5 minutes
+sleep 300
+
+# Check if alert fired
+curl http://localhost:9093/api/v1/alerts | jq '.data[] | select(.labels.alertname=="HighErrorRate")'
+```
+
+**Acceptance Criteria**:
+- All 5 alerts can be triggered manually
+- Alerts fire within expected duration (for=X)
+- Alerts resolve when condition clears
+- Notifications sent to configured channels
+
+**Verification**: Run test script, verify alerts in AlertManager UI
+
+#### Task 3.7: Document Runbooks for Each Alert
+
+**File**: `docs/runbooks/phase-c-alerts.md`
+
+**Structure**:
+For each alert, document:
+1. **Alert Name**
+2. **Description**: What condition triggered it
+3. **Impact**: What's broken for users
+4. **Investigation Steps**: How to diagnose root cause
+5. **Resolution Steps**: How to fix
+6. **Escalation**: When to escalate
+
+**Example Runbook**:
+```markdown
+## HighErrorRate
+
+**Description**: Error rate > 5% for 5 minutes
+
+**Impact**: Users experiencing high failure rate for API requests
+
+**Investigation**:
+1. Open Error Tracking dashboard
+2. Identify which endpoint(s) have errors
+3. Click spike → view Loki logs
+4. Extract request_id from error log
+5. Search all logs for that request_id
+6. Check Database dashboard for slow queries
+
+**Resolution**:
+1. If slow query: Optimize query or add index
+2. If external service down: Enable circuit breaker
+3. If bug: Hotfix and deploy
+4. If spike: Scale up backend containers
+
+**Escalation**: If unresolved after 30 minutes, escalate to on-call engineer
+```
+
+**Acceptance Criteria**:
+- Runbook for all 5 alerts
+- Clear investigation steps
+- Actionable resolution steps
+- Escalation criteria defined
+
+**Verification**: Review with team for clarity
+
+---
+
+### Week 4: Production Rollout
+
+#### Task 4.1: Deploy Phase C to Production
+
+**Steps**:
+1. Merge `phase-c-observability` branch to `main`
+2. Update production `.env` with Phase C variables
+3. Apply database migrations: `alembic upgrade head`
+4. Build containers: `docker-compose -f docker-compose.prod.yml build`
+5. Start services: `docker-compose -f docker-compose.prod.yml up -d`
+6. Verify health: `make health`
+7. Import Grafana dashboards
+8. Reload AlertManager rules
+
+**Deployment Checklist**:
+- [ ] All tests pass in CI/CD
+- [ ] Staging validation complete
+- [ ] Database migration tested
+- [ ] Rollback plan documented
+- [ ] Team notified of deployment
+- [ ] Monitoring dashboard open during deployment
+
+**Acceptance Criteria**:
+- Production deployment successful
+- No errors in logs
+- All health checks pass
+- Dashboards displaying data
+
+**Verification**:
+```bash
+# Check all services healthy
+curl https://commandcenter.yourcompany.com/health
+
+# Verify correlation IDs in production
+curl -I https://commandcenter.yourcompany.com/api/v1/repositories | grep X-Request-ID
+
+# Check Prometheus targets
+curl https://prometheus.yourcompany.com/api/v1/targets
+```
+
+#### Task 4.2: Monitor for 48 Hours
+
+**Steps**:
+1. Open all 4 dashboards in Grafana
+2. Monitor error rates (should be stable)
+3. Monitor database performance (no degradation)
+4. Monitor middleware overhead (< 1ms confirmed)
+5. Check for alerts (expect 0 false positives)
+6. Collect team feedback on dashboards
+
+**Monitoring Checklist**:
+- [ ] Error rate stable (compare to pre-Phase-C)
+- [ ] P95 latency stable (< 1ms increase)
+- [ ] Database connection pool healthy (< 50% utilization)
+- [ ] Celery tasks processing normally
+- [ ] No unexpected alerts fired
+- [ ] Dashboards loading quickly (< 3s)
+
+**Acceptance Criteria**:
+- No production incidents caused by Phase C
+- Error tracking working (verify with synthetic error)
+- Correlation IDs present in all logs
+
+**Verification**: Daily check-ins with team
+
+#### Task 4.3: Enable Alerts Gradually
+
+**Steps**:
+1. **Day 1**: Enable warning alerts only
+   - DatabasePoolExhausted (warning)
+   - SlowAPIResponses (warning)
+   - DiskSpaceLow (warning)
+2. **Day 2**: Tune thresholds based on false positives
+3. **Day 3**: Enable critical alerts
+   - HighErrorRate (critical)
+   - CeleryWorkerDown (critical)
+4. **Day 4**: Monitor alert actionability
+
+**Tuning Process**:
+- Track all alerts fired in spreadsheet
+- For each alert: Was it actionable? (yes/no)
+- If false positive: Adjust threshold or duration
+- Target: < 5% false positive rate
+
+**Acceptance Criteria**:
+- All alerts enabled by Day 3
+- False positive rate < 5%
+- At least 1 real issue caught by alerts
+
+**Verification**: Alert log analysis
+
+#### Task 4.4: Collect Team Feedback on Dashboards
+
+**Steps**:
+1. Send survey to engineering team:
+   - Which dashboards are most useful?
+   - Which panels are confusing?
+   - What's missing?
+   - How often do you use them?
+2. Hold 30-minute dashboard review session
+3. Document requested changes
+4. Prioritize improvements for iteration
+
+**Survey Questions**:
+1. How often do you use the dashboards? (daily/weekly/never)
+2. Which dashboard is most useful for debugging? (multiple choice)
+3. Which panels are confusing or unclear? (free text)
+4. What metrics are missing that would help you? (free text)
+5. Overall satisfaction: 1-10 scale
+
+**Acceptance Criteria**:
+- Survey responses from 80%+ of team
+- At least 3 actionable improvement suggestions
+- Overall satisfaction score > 7/10
+
+**Verification**: Survey results doc
+
+#### Task 4.5: Iterate on Alert Thresholds
+
+**Steps**:
+1. Review all alerts fired in first week
+2. Calculate false positive rate per alert
+3. For alerts with > 10% false positive:
+   - Increase threshold OR
+   - Increase duration OR
+   - Add additional conditions
+4. Update `monitoring/alerts.yml`
+5. Deploy updated rules
+
+**Example Iteration**:
+```yaml
+# Before
+- alert: HighErrorRate
+  expr: (rate(commandcenter_errors_total[5m]) / rate(http_requests_total[5m])) > 0.05
+  for: 5m
+
+# After (reduced false positives)
+- alert: HighErrorRate
+  expr: (rate(commandcenter_errors_total[5m]) / rate(http_requests_total[5m])) > 0.08
+  for: 10m  # Increased duration
+```
+
+**Acceptance Criteria**:
+- False positive rate < 5% for all alerts
+- At least 2 alert thresholds tuned based on data
+- Team agrees alerts are actionable
+
+**Verification**: Week 2 alert log analysis
+
+#### Task 4.6: Document Correlation ID Debugging Workflow
+
+**File**: `docs/debugging-with-correlation-ids.md`
+
+**Content**:
+1. **Overview**: What are correlation IDs and why useful
+2. **Finding a Request ID**: From error logs, dashboards, user reports
+3. **Tracing a Request**: How to search Loki for all logs with ID
+4. **Cross-System Correlation**: API → Celery → Database
+5. **Dashboard Drill-Down**: Using Grafana to investigate
+6. **Example Scenarios**: Real debugging examples
+
+**Example Scenario**:
+```markdown
+### Scenario: User Reports Slow API Response
+
+1. User provides timestamp: 2025-11-05 14:32:15
+2. Open Golden Signals dashboard, zoom to that time
+3. Identify spike in P95 latency on `/api/v1/repositories/{id}/sync`
+4. Click spike → drill into Loki logs for that endpoint + timerange
+5. Find log entry: "Slow query detected" with request_id: abc123
+6. Search Loki: `{request_id="abc123"}` → see full request trace
+7. Check Database dashboard: "Top 10 Slowest Queries" for request_id
+8. Identify: Full table scan on `repositories` table
+9. Resolution: Add index on frequently queried column
+```
+
+**Acceptance Criteria**:
+- Document covers all use cases
+- Includes screenshots of dashboards
+- Step-by-step instructions clear
+- Reviewed by at least 2 team members
+
+**Verification**: Team walkthrough
+
+#### Task 4.7: Train Team on New Dashboards
+
+**Steps**:
+1. Schedule 60-minute training session
+2. **Demo 1**: Error Tracking Dashboard (15 min)
+   - Trigger error, show in dashboard
+   - Demonstrate request_id lookup
+3. **Demo 2**: Database Performance Dashboard (15 min)
+   - Show connection pool metrics
+   - Explain slow query analysis
+4. **Demo 3**: Debugging Workflow (20 min)
+   - Walk through real incident
+   - Show correlation across systems
+5. **Q&A** (10 min)
+6. Share recording and docs
+
+**Training Materials**:
+- Slide deck with dashboard screenshots
+- Hands-on exercise: "Debug this synthetic error"
+- Cheat sheet: Common PromQL/LogQL queries
+
+**Acceptance Criteria**:
+- Training session held with 80%+ attendance
+- Recording shared in team channel
+- At least 3 team members complete hands-on exercise
+- Follow-up survey: > 8/10 usefulness rating
+
+**Verification**: Attendance log + survey
+
+#### Task 4.8: Retrospective & Documentation
+
+**Steps**:
+1. Hold Phase C retrospective meeting (60 min)
+2. **Discuss**:
+   - What went well?
+   - What didn't go well?
+   - What would we do differently?
+   - What did we learn?
+3. Document lessons learned
+4. Update `docs/PROJECT.md` with Phase C completion
+5. Plan Phase D (OpenTelemetry) kickoff
+
+**Retrospective Format**:
+- **Start**: What should we start doing?
+- **Stop**: What should we stop doing?
+- **Continue**: What should we continue doing?
+
+**Documentation Updates**:
+- Update PROJECT.md: Phase C status = Complete
+- Create Phase C completion report
+- Archive Phase C planning docs
+- Update observability maturity score (60% → 85%)
+
+**Acceptance Criteria**:
+- Retrospective held with full team
+- Lessons learned documented
+- PROJECT.md updated
+- Phase D planning scheduled
+
+**Verification**: Meeting notes published
+
+---
+
+**Phase C Implementation Complete!** 🎉
+
+**Next Phase**: Phase D - OpenTelemetry Distributed Tracing
