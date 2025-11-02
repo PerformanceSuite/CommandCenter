@@ -6,8 +6,9 @@ Main entry point for the backend API
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
+import logging
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,9 +24,10 @@ from app.routers import webhooks, github_features, rate_limits, research_tasks, 
 from app.routers import research_orchestration, mcp, jobs, batch, schedules, export
 from app.routers import webhooks_ingestion, ingestion_sources
 from app.services import redis_service
-from app.utils.metrics import setup_custom_metrics
+from app.utils.metrics import setup_custom_metrics, track_error
 from app.utils.logging import setup_logging
 from app.middleware import limiter, add_security_headers, LoggingMiddleware
+from app.middleware.correlation import CorrelationIDMiddleware
 
 
 @asynccontextmanager
@@ -79,6 +81,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+# Add correlation ID middleware (MUST be first to ensure all logs have request_id)
+app.add_middleware(CorrelationIDMiddleware)
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
@@ -205,15 +210,55 @@ metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 
-# Global exception handler
+# Phase C: Enhanced global exception handler with correlation tracking
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
-    """Global exception handler for unhandled errors"""
+async def global_exception_handler(request: Request, exc: Exception):
+    """Enhanced global exception handler with correlation ID and metrics.
+
+    Features:
+    - Extracts correlation ID from request.state
+    - Increments error counter metric
+    - Structured logging with request context
+    - Returns request_id in error response for debugging
+    """
+    # Extract correlation ID (set by CorrelationIDMiddleware)
+    request_id = getattr(request.state, "request_id", "unknown")
+
+    # Extract endpoint information
+    endpoint = request.url.path
+    method = request.method
+    error_type = type(exc).__name__
+
+    # Track error in Prometheus
+    track_error(
+        endpoint=endpoint,
+        status_code=500,
+        error_type=error_type
+    )
+
+    # Get logger and log with structured context
+    logger = logging.getLogger(__name__)
+    logger.error(
+        "Unhandled exception",
+        extra={
+            "request_id": request_id,
+            "endpoint": endpoint,
+            "method": method,
+            "error_type": error_type,
+            "error_message": str(exc),
+            # Include user_id if available from auth
+            "user_id": getattr(request.state, "user_id", None),
+        },
+        exc_info=True  # Include full stack trace
+    )
+
+    # Return error response with request_id for correlation
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
             "detail": str(exc) if settings.debug else "An unexpected error occurred",
+            "request_id": request_id,  # Allow clients to reference in support requests
         },
     )
 

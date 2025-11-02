@@ -101,6 +101,13 @@ job_queue_size = Gauge(
     ["status"],
 )
 
+# Phase C: Error tracking metric
+error_counter = Counter(
+    "commandcenter_errors_total",
+    "Total errors by endpoint, status code, and error type",
+    ["endpoint", "status_code", "error_type"],
+)
+
 # Application info
 app_info = Info("commandcenter_app", "Command Center application information")
 
@@ -176,3 +183,21 @@ def update_job_queue_sizes(pending: int = 0, running: int = 0, completed: int = 
     job_queue_size.labels(status="running").set(running)
     job_queue_size.labels(status="completed").set(completed)
     job_queue_size.labels(status="failed").set(failed)
+
+
+def track_error(endpoint: str, status_code: int, error_type: str):
+    """Track application errors.
+
+    Args:
+        endpoint: The API endpoint where error occurred
+        status_code: HTTP status code
+        error_type: Python exception class name
+
+    Example:
+        >>> track_error("/api/v1/repositories", 500, "ValueError")
+    """
+    error_counter.labels(
+        endpoint=endpoint,
+        status_code=str(status_code),
+        error_type=error_type
+    ).inc()
