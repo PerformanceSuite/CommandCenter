@@ -1,6 +1,82 @@
 # CommandCenter Project Memory
 
-## Session: 2025-11-02 (LATEST)
+## Session: 2025-11-01 (LATEST)
+**Duration**: ~1.5 hours
+**Branch**: feature/phase-c-observability (worktree created)
+
+### Work Completed:
+**Phase C Observability Layer - Planning & Design**
+
+✅ **Comprehensive Observability Inventory**
+- Explored existing CommandCenter observability (60% maturity baseline)
+  - Production-ready: Prometheus, Grafana, Loki, structured logging, health checks
+  - Gaps: Distributed tracing (10%), error tracking (30%), DB observability (25%)
+- Explored hub-prototype architecture and patterns
+  - Event streaming with correlation IDs (valuable pattern to extract)
+  - JSONL event logs with temporal replay
+  - Separate service for multi-project orchestration
+- Key files analyzed:
+  - `/backend/app/utils/metrics.py` (179 lines) - Custom Prometheus metrics
+  - `/backend/app/services/health_service.py` (226 lines) - Component health checks
+  - `/monitoring/grafana/dashboards/commandcenter-overview.json` - Existing dashboard
+  - `/hub-prototype/src/hub/mockBus.ts` - Correlation ID pattern
+
+✅ **Phase C Design Completed via Brainstorming Skill**
+- **Approach**: Pragmatic Quick Wins (incremental, developer-experience optimized)
+- **Scope**: 4 critical capabilities decided
+  1. Enhanced error tracking (Loki + Prometheus, NO Sentry Cloud)
+  2. Database observability (postgres_exporter)
+  3. Request correlation IDs (extracted from hub-prototype)
+  4. Operational dashboards (4 new Grafana dashboards)
+  5. Proactive alerting (5 new AlertManager rules)
+- **Success Criteria**: MTTD <5min, MTTR -50%, dashboard adoption, <5% false positives
+
+✅ **Design Document Written**
+- Created `docs/plans/2025-11-01-phase-c-observability-design.md` (926 lines)
+- Comprehensive architecture with correlation flow diagrams
+- 4-week phased rollout plan (Foundation, DB Observability, Dashboards, Production)
+- Implementation details: Middleware, error handlers, Celery correlation, SQL comments
+- Testing strategy: Unit, integration, load tests
+- Trade-off analysis: Self-hosted vs Sentry Cloud, OpenTelemetry deferred to Phase D
+- Committed: `73c126d docs: Phase C Observability Layer design document`
+
+✅ **Worktree Setup**
+- Created worktree: `.worktrees/phase-c-observability`
+- Branch: `feature/phase-c-observability`
+- Verified: Clean baseline, ready for implementation
+
+### Key Decisions:
+- **Self-hosted error tracking**: Use existing Loki/Prometheus instead of Sentry Cloud ($0 cost, full control)
+- **Defer OpenTelemetry**: Phase D - correlation IDs provide 80% value with 20% effort
+- **Extract hub-prototype patterns**: Correlation ID middleware, event streaming concepts
+- **4-week incremental rollout**: Week 1 (middleware), Week 2 (DB), Week 3 (dashboards), Week 4 (production)
+
+### Files Created/Modified:
+- `docs/plans/2025-11-01-phase-c-observability-design.md` (NEW, 926 lines) - Complete Phase C design
+- `.worktrees/phase-c-observability/` (NEW) - Implementation worktree
+
+### Commits Made:
+- `73c126d` - docs: Phase C Observability Layer design document
+
+### What's Left to Do:
+1. **Next Session**: Create detailed implementation plan using writing-plans skill
+2. **Phase C Implementation** (4 weeks):
+   - Week 1: Correlation ID middleware + enhanced error tracking
+   - Week 2: postgres_exporter + database dashboards
+   - Week 3: Grafana dashboards (errors, DB, Celery, Golden Signals)
+   - Week 4: AlertManager rules + production deployment
+3. **Testing**: Unit tests for middleware, integration tests for correlation flow
+4. **Documentation**: Runbooks for each alert, debugging workflows
+
+### Next Session Recommendations:
+- Continue in worktree: `.worktrees/phase-c-observability`
+- Run `/superpowers:write-plan` to create implementation plan from design doc
+- Start with Week 1 tasks (correlation middleware, error metrics)
+- Keep commits atomic (one feature per commit)
+
+---
+
+## Session: 2025-11-02
 **Duration**: ~2 hours
 **Branch**: main (Phase B merged!)
 
@@ -530,4 +606,10 @@ Created 6 GitHub issues tracking all failing tests:
 1. Monitor PR #63 CI completion → Merge when passing
 2. Complete PR #72: Fix forward refs, re-enable strict Flake8
 3. Begin Phase C: Observability Layer (Prometheus, logging, tracing)
+
+---
+
+**Last Updated**: 2025-11-01
+**Total Sessions**: 7
+**Memory Size**: ~600 lines (OK - under 800 line threshold)
 
