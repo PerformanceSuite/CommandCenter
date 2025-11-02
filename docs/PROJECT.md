@@ -13,24 +13,30 @@ Personal AI Operating System for Knowledge Work - Phase C Planning Complete, Rea
     - 50+ new tests added for ingestion flows
     - Full CI/CD integration with non-blocking linting
 - **Active Work**:
-  - **Phase C Week 1**: Correlation IDs & Error Tracking (COMPLETE ✅)
+  - **Phase C Week 2**: Database Observability (Tasks 2.6-2.7 COMPLETE ✅)
     - **Worktree**: `.worktrees/phase-c-observability` (branch: feature/phase-c-observability)
     - **Design**: `docs/plans/2025-11-01-phase-c-observability-design.md`
-    - **Status**: All 8 tasks complete, committed (dd07185), PR #73 updated
-    - **Implementation**: Correlation ID middleware, error tracking metrics, comprehensive tests
-    - **Blocker**: lxml dependency issue (add `lxml[html_clean]` to requirements.txt)
-    - **Next**: Fix dependency, verify tests, proceed to Week 2 (Database Observability)
+    - **Status**: Tasks 2.1-2.7 complete (Week 2 complete!)
+    - **Latest**: Commit 4738656 - Query comment integration tests
+    - **Implementation**:
+      - ✅ Task 2.1-2.4: Database exporter user, postgres-exporter service, prometheus config (dbb9e18)
+      - ✅ Task 2.5: Database performance dashboard (451aa11)
+      - ✅ Task 2.6: Query comment integration tests (4738656)
+      - ✅ Task 2.7: Staging deployment (postgres-exporter running, metrics verified)
+      - ✅ Week 3: Dashboards and alert rules complete (f9f5de0)
+    - **Next**: Week 4 - Load testing & production rollout
+  - **Phase C Week 1**: Correlation IDs & Error Tracking (COMPLETE ✅)
+    - All 8 tasks complete, committed (dd07185)
   - **PR #72**: Flake8 Linting Cleanup (Post-Phase-B)
     - **Status**: COMPLETE ✅ (Commit 9eb1bc7)
     - **Result**: All 1,245 Flake8 errors resolved
     - **Remaining**: 369 MyPy type errors (deferred)
-- **Last Work**: 2025-11-02 01:40 - Phase C Week 1 implementation complete ✅
-  - Implemented all 8 Week 1 tasks (correlation IDs, error tracking, tests)
-  - Created CorrelationIDMiddleware with X-Request-ID propagation
-  - Enhanced exception handler with metrics and correlation context
-  - Added 16 comprehensive tests (unit, integration, performance)
-  - Identified lxml dependency blocker (unrelated to Phase C)
-  - Commit: dd07185 (feat: Phase C Week 1 - correlation IDs and error tracking)
+- **Last Work**: 2025-11-02 15:45 - Phase C Week 2 Tasks 2.6-2.7 complete ✅
+  - Created comprehensive query comment integration tests (6 tests)
+  - Deployed postgres-exporter to staging environment
+  - Verified metrics endpoint exposing database performance data
+  - Tests cover: request ID propagation, performance overhead, SQL injection safety
+  - Commit: 4738656 (feat(observability): Add query comment integration tests)
 - **Infrastructure Status**: 67% → Planning for 85%
   - Celery Task System: ✅ Production-ready
   - RAG Backend (KnowledgeBeast v3.0): ✅ Production-ready
