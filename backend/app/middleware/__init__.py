@@ -1,14 +1,14 @@
-"""
-Middleware for security, rate limiting, logging, and other cross-cutting concerns
-"""
+"""Middleware components for CommandCenter."""
 
-from app.middleware.logging import LoggingMiddleware
-from app.middleware.rate_limit import limiter, RateLimitExceeded
-from app.middleware.security_headers import add_security_headers
+from .correlation import CorrelationIDMiddleware
+from .rate_limit import limiter
+from .security_headers import SecurityHeadersMiddleware, add_security_headers
+from .logging import LoggingMiddleware
 
 __all__ = [
-    "LoggingMiddleware",
+    "CorrelationIDMiddleware",
     "limiter",
-    "RateLimitExceeded",
+    "SecurityHeadersMiddleware",
     "add_security_headers",
+    "LoggingMiddleware",
 ]

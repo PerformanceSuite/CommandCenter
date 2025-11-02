@@ -101,6 +101,13 @@ job_queue_size = Gauge(
     ["status"],
 )
 
+# Error tracking metrics
+error_counter = Counter(
+    "commandcenter_errors_total",
+    "Total errors by endpoint and type",
+    ["endpoint", "status_code", "error_type"],
+)
+
 # Application info
 app_info = Info("commandcenter_app", "Command Center application information")
 
