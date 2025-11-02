@@ -144,6 +144,56 @@ alembic downgrade -1
 alembic history
 ```
 
+## Development Workflow
+
+### Pre-commit Hooks
+
+We use pre-commit hooks to enforce code quality standards before commits reach CI. This catches issues early and keeps the codebase consistent.
+
+**Installation** (one-time setup):
+
+```bash
+# Install pre-commit (if not already installed)
+pip install pre-commit
+
+# Install hooks from .pre-commit-config.yaml
+cd /path/to/CommandCenter
+pre-commit install
+```
+
+**What gets checked**:
+- **Black** - Code formatting (Python 3.11, 100 char line length)
+- **isort** - Import organization (compatible with Black)
+- **Flake8** - Linting (PEP 8 compliance, max line 120)
+- **MyPy** - Static type checking (app/ directory only)
+- **General** - Trailing whitespace, EOF newlines, YAML syntax, large files
+
+**Usage**:
+
+```bash
+# Hooks run automatically on git commit
+git commit -m "feat: add new feature"
+
+# Manually run on all files
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run black --all-files
+
+# Update hook versions
+pre-commit autoupdate
+
+# Bypass hooks (emergency only)
+git commit --no-verify -m "urgent fix"
+```
+
+**What happens on commit**:
+1. Black auto-formats your code
+2. isort organizes imports
+3. Flake8 checks for style violations
+4. MyPy validates types
+5. If any check fails, commit is blocked (fix and retry)
+
 ## Testing
 
 ```bash

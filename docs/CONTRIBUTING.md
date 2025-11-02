@@ -117,7 +117,21 @@ Report unacceptable behavior to the project maintainers.
    alembic upgrade head
    ```
 
-5. **Verify setup**
+5. **Install pre-commit hooks**
+
+   ```bash
+   # Install pre-commit (if not already installed)
+   pip install pre-commit
+
+   # Install hooks from .pre-commit-config.yaml
+   cd /path/to/CommandCenter
+   pre-commit install
+
+   # Verify installation
+   pre-commit run --all-files
+   ```
+
+6. **Verify setup**
 
    ```bash
    # Start backend (from backend directory)
@@ -279,6 +293,48 @@ npm run type-check
 ---
 
 ## Development Workflow
+
+### Pre-commit Hooks (Required)
+
+All commits must pass our pre-commit hooks. These run automatically before each commit to enforce code quality.
+
+**What gets checked:**
+- **Black** - Python code formatting
+- **isort** - Import organization
+- **Flake8** - Linting and style checks
+- **MyPy** - Type checking
+- **General** - Trailing whitespace, EOF newlines, YAML syntax, large files, merge conflicts
+
+**Daily usage:**
+
+```bash
+# Hooks run automatically on commit
+git add modified_file.py
+git commit -m "feat: add new feature"
+# Pre-commit hooks run here - if they fail, fix and retry
+
+# Manually run all hooks
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run black
+
+# Update to latest hook versions
+pre-commit autoupdate
+```
+
+**If hooks fail:**
+
+1. **Black/isort**: Auto-formatted your code - review changes and re-commit
+2. **Flake8**: Fix linting errors shown in output
+3. **MyPy**: Add type hints or fix type errors
+
+**Emergency bypass** (use sparingly):
+
+```bash
+# Only for urgent hotfixes - discuss with team first
+git commit --no-verify -m "hotfix: critical bug"
+```
 
 ### Branch Strategy
 
