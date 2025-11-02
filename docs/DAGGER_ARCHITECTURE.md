@@ -436,6 +436,463 @@ except Exception as e:
 - `dagger.ConnectionError`: Dagger engine unreachable
 - Standard Python exceptions for other issues
 
+## Production Hardening (Phase A)
+
+### Overview
+
+Phase A adds production-grade reliability, observability, and security to the Dagger orchestration layer. These features transform the basic container management into a robust system suitable for production workloads.
+
+### 1. Log Retrieval
+
+**Feature**: Programmatic access to container logs via Dagger SDK
+
+**Implementation** (`commandcenter.py:212-250`):
+```python
+async def get_logs(self, service_name: str, tail: int = 100) -> str:
+    """
+    Retrieve logs from a specific service container.
+
+    Args:
+        service_name: Name of service (postgres, redis, backend, frontend)
+        tail: Number of lines to retrieve from end of logs
+
+    Returns:
+        String containing log lines
+    """
+    container = self._service_containers[service_name]
+    logs = await container.stdout()
+
+    if tail:
+        log_lines = logs.split('\n')
+        logs = '\n'.join(log_lines[-tail:])
+
+    return logs
+```
+
+**API Endpoint** (`logs.py:15-35`):
+```python
+@router.get("/{project_id}/logs/{service_name}")
+async def get_service_logs(
+    project_id: int,
+    service_name: str,
+    tail: int = Query(default=100, ge=1, le=10000)
+):
+    orchestration = OrchestrationService(db)
+    logs = await orchestration.get_project_logs(project_id, service_name, tail)
+    return {"project_id": project_id, "service": service_name, "logs": logs}
+```
+
+**Usage**:
+```bash
+# Via API
+curl http://localhost:9001/api/v1/projects/1/logs/backend?tail=50
+
+# Returns last 50 lines of backend container logs
+```
+
+**Benefits**:
+- Real-time debugging without SSH/docker exec
+- Tail support for performance (avoid downloading GB of logs)
+- Service registry tracks running containers
+- REST API for UI integration
+
+### 2. Health Check System
+
+**Feature**: Automated health monitoring for all services using native tools
+
+**Implementation**:
+
+**PostgreSQL Health** (`commandcenter.py:262-287`):
+```python
+@retry_with_backoff(max_attempts=2, initial_delay=1.0)
+async def check_postgres_health(self) -> dict:
+    """Check PostgreSQL health using pg_isready"""
+    container = self._service_containers.get("postgres")
+    result = await container.with_exec([
+        "pg_isready", "-U", "commandcenter"
+    ]).stdout()
+
+    healthy = "accepting connections" in result
+    return {
+        "healthy": healthy,
+        "service": "postgres",
+        "message": result.strip()
+    }
+```
+
+**Redis Health** (`commandcenter.py:293-317`):
+```python
+@retry_with_backoff(max_attempts=2, initial_delay=1.0)
+async def check_redis_health(self) -> dict:
+    """Check Redis health using redis-cli ping"""
+    container = self._service_containers.get("redis")
+    result = await container.with_exec([
+        "redis-cli", "ping"
+    ]).stdout()
+
+    healthy = "PONG" in result
+    return {"healthy": healthy, "service": "redis", "message": result.strip()}
+```
+
+**Backend/Frontend Health** (`commandcenter.py:324-378`):
+```python
+async def check_backend_health(self) -> dict:
+    """Check backend health via HTTP /health endpoint"""
+    result = await container.with_exec([
+        "curl", "-f", "http://localhost:8000/health"
+    ]).stdout()
+
+    healthy = "ok" in result.lower() or "healthy" in result.lower()
+    return {"healthy": healthy, "service": "backend"}
+```
+
+**Aggregated Status** (`commandcenter.py:386-407`):
+```python
+async def health_status(self) -> dict:
+    """Get aggregated health status for all services"""
+    services = {
+        "postgres": await self.check_postgres_health(),
+        "redis": await self.check_redis_health(),
+        "backend": await self.check_backend_health(),
+        "frontend": await self.check_frontend_health()
+    }
+
+    overall_healthy = all(svc["healthy"] for svc in services.values())
+
+    return {
+        "overall_healthy": overall_healthy,
+        "services": services,
+        "timestamp": str(datetime.now())
+    }
+```
+
+**Benefits**:
+- Native health check commands (pg_isready, redis-cli)
+- Per-service status reporting
+- Aggregated overall health
+- Retry logic for transient failures
+- Timestamp tracking for monitoring
+
+### 3. Resource Limits
+
+**Feature**: Prevent resource exhaustion with CPU and memory limits
+
+**Configuration** (`commandcenter.py:18-28`):
+```python
+@dataclass
+class ResourceLimits:
+    """Resource limits for CommandCenter containers"""
+    postgres_cpu: float = 1.0         # 1 CPU core
+    postgres_memory_mb: int = 2048    # 2 GB RAM
+    redis_cpu: float = 0.5            # 0.5 CPU cores
+    redis_memory_mb: int = 512        # 512 MB RAM
+    backend_cpu: float = 1.0          # 1 CPU core
+    backend_memory_mb: int = 1024     # 1 GB RAM
+    frontend_cpu: float = 0.5         # 0.5 CPU cores
+    frontend_memory_mb: int = 512     # 512 MB RAM
+```
+
+**Application** (`commandcenter.py:77-94`):
+```python
+async def build_postgres(self) -> dagger.Container:
+    limits = self.config.resource_limits
+
+    return (
+        self.client.container()
+        .from_("postgres:15-alpine")
+        # ... other config ...
+        .with_resource_limit("cpu", str(limits.postgres_cpu))
+        .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
+    )
+```
+
+**Customization**:
+```python
+# Custom limits for high-load projects
+custom_limits = ResourceLimits(
+    postgres_cpu=2.0,          # Double CPU for large DB
+    postgres_memory_mb=4096,   # 4 GB for query cache
+    backend_cpu=2.0,
+    backend_memory_mb=2048
+)
+
+config = CommandCenterConfig(
+    # ... other config ...
+    resource_limits=custom_limits
+)
+```
+
+**Benefits**:
+- Prevent single project from consuming all resources
+- Predictable performance under load
+- Easy to adjust per-project requirements
+- Defaults suitable for development workloads
+
+### 4. Security Hardening
+
+**Feature**: Non-root container execution following security best practices
+
+**User IDs** (`commandcenter.py:55-58`):
+```python
+class CommandCenterStack:
+    # User IDs for non-root execution
+    POSTGRES_USER_ID = 999    # Standard postgres UID
+    REDIS_USER_ID = 999       # Standard redis UID
+    APP_USER_ID = 1000        # Standard non-privileged user
+```
+
+**Application** (`commandcenter.py:77-94`, `96-110`, `112-144`, `146-168`):
+```python
+# PostgreSQL runs as UID 999
+async def build_postgres(self) -> dagger.Container:
+    return (
+        self.client.container()
+        .from_("postgres:15-alpine")
+        .with_user(str(self.POSTGRES_USER_ID))  # Run as postgres user
+        # ... rest of config
+    )
+
+# Redis runs as UID 999
+async def build_redis(self) -> dagger.Container:
+    return (
+        self.client.container()
+        .from_("redis:7-alpine")
+        .with_user(str(self.REDIS_USER_ID))     # Run as redis user
+        # ... rest of config
+    )
+
+# Backend and Frontend run as UID 1000
+async def build_backend(self, postgres_host, redis_host) -> dagger.Container:
+    return (
+        self.client.container()
+        .from_("python:3.11-slim")
+        .with_user(str(self.APP_USER_ID))       # Run as non-root
+        # ... rest of config
+    )
+```
+
+**Security Benefits**:
+- Principle of least privilege
+- Container escape mitigation
+- Filesystem permission isolation
+- Standard practice for production containers
+
+**Verification**:
+```bash
+# Check container user
+docker exec <container_id> whoami
+# Should NOT return "root"
+```
+
+### 5. Retry Logic with Exponential Backoff
+
+**Feature**: Automatic retry for transient failures in network/I/O operations
+
+**Implementation** (`retry.py:11-64`):
+```python
+def retry_with_backoff(
+    max_attempts: int = 3,
+    initial_delay: float = 1.0,
+    backoff_factor: float = 2.0,
+    max_delay: float = 60.0
+):
+    """
+    Decorator that retries async functions with exponential backoff.
+
+    Args:
+        max_attempts: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds before first retry
+        backoff_factor: Multiplier for delay after each attempt (default: 2.0)
+        max_delay: Maximum delay between retries in seconds
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            delay = initial_delay
+            last_exception = None
+
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    last_exception = e
+
+                    if attempt == max_attempts:
+                        logger.error(f"{func.__name__} failed after {max_attempts} attempts")
+                        raise
+
+                    logger.warning(
+                        f"{func.__name__} failed (attempt {attempt}/{max_attempts}): {e}. "
+                        f"Retrying in {delay:.2f}s..."
+                    )
+
+                    await asyncio.sleep(delay)
+                    delay = min(delay * backoff_factor, max_delay)
+
+            raise last_exception
+        return wrapper
+    return decorator
+```
+
+**Application**:
+```python
+@retry_with_backoff(max_attempts=3, initial_delay=2.0)
+async def start(self) -> dict:
+    """Start all CommandCenter containers (with retry)"""
+    # Transient failures (network, Docker API) will auto-retry
+    # ... start logic
+
+@retry_with_backoff(max_attempts=2, initial_delay=1.0)
+async def check_postgres_health(self) -> dict:
+    """Check PostgreSQL health (with retry)"""
+    # Database startup delays handled automatically
+    # ... health check logic
+```
+
+**Retry Behavior**:
+```
+Attempt 1: Fails → Wait 2.0s
+Attempt 2: Fails → Wait 4.0s (2.0 * 2.0)
+Attempt 3: Fails → Raise exception (max attempts reached)
+
+Attempt 1: Fails → Wait 1.0s
+Attempt 2: Succeeds → Return result
+```
+
+**Benefits**:
+- Handles transient Docker API failures
+- Manages database startup timing issues
+- Prevents false negatives in health checks
+- Exponential backoff prevents overwhelming systems
+- Configurable per-operation (start vs health check)
+
+### 6. Service Restart Capability
+
+**Feature**: Graceful restart of individual services without full stack restart
+
+**Implementation** (`commandcenter.py:409-464`):
+```python
+@retry_with_backoff(max_attempts=3, initial_delay=2.0)
+async def restart_service(self, service_name: str) -> dict:
+    """
+    Restart a specific service container.
+
+    Args:
+        service_name: Name of service to restart (postgres, redis, backend, frontend)
+
+    Returns:
+        Dict with restart status
+    """
+    # Validate service name
+    if service_name not in self.VALID_SERVICES:
+        raise ValueError(f"Invalid service name: {service_name}")
+
+    # Verify service exists in registry
+    if service_name not in self._service_containers:
+        raise RuntimeError(f"Service {service_name} not found in registry")
+
+    # Rebuild the container based on service type
+    if service_name == "postgres":
+        new_container = await self.build_postgres()
+    elif service_name == "redis":
+        new_container = await self.build_redis()
+    elif service_name == "backend":
+        new_container = await self.build_backend("postgres", "redis")
+    elif service_name == "frontend":
+        new_container = await self.build_frontend(f"http://backend:{self.config.backend_port}")
+
+    # Update registry with new container
+    self._service_containers[service_name] = new_container
+
+    # Start as service
+    _ = new_container.as_service()
+
+    return {
+        "success": True,
+        "service": service_name,
+        "message": f"Service {service_name} restarted successfully"
+    }
+```
+
+**Usage**:
+```python
+# Restart backend after config change
+result = await stack.restart_service("backend")
+
+# Restart database after migration
+result = await stack.restart_service("postgres")
+```
+
+**Benefits**:
+- Zero downtime for other services
+- Faster than full stack restart
+- Useful for config updates, migrations, debugging
+- Maintains service dependencies (backend still sees postgres)
+
+### 7. Service Registry
+
+**Feature**: Track running containers for log retrieval, health checks, and restarts
+
+**Implementation** (`commandcenter.py:64`, `169-187`, `252-257`):
+```python
+class CommandCenterStack:
+    def __init__(self, config: CommandCenterConfig):
+        self._service_containers: dict[str, dagger.Container] = {}
+
+    async def start(self) -> dict:
+        # Build containers
+        postgres = await self.build_postgres()
+        redis = await self.build_redis()
+        backend = await self.build_backend("postgres", "redis")
+        frontend = await self.build_frontend(...)
+
+        # Store in registry for later access
+        self._service_containers["postgres"] = postgres
+        self._service_containers["redis"] = redis
+        self._service_containers["backend"] = backend
+        self._service_containers["frontend"] = frontend
+
+        # Start as services
+        # ...
+
+    async def _get_service_container(self, service_name: str) -> dagger.Container:
+        """Get container for a service from registry"""
+        if service_name not in self._service_containers:
+            raise RuntimeError(f"Service {service_name} not found in registry")
+        return self._service_containers[service_name]
+```
+
+**Benefits**:
+- Central container reference storage
+- Enables log retrieval without rebuilding containers
+- Supports health checks on running services
+- Required for restart functionality
+- Lifetime matches stack lifetime (cleaned up on __aexit__)
+
+### Testing
+
+All production features include comprehensive unit tests:
+
+- `tests/unit/test_dagger_logs.py` - Log retrieval (3 tests)
+- `tests/unit/test_dagger_health.py` - Health checks (3 tests)
+- `tests/unit/test_dagger_resources.py` - Resource limits (3 tests)
+- `tests/security/test_dagger_security.py` - Non-root execution (1 test)
+- `tests/unit/test_dagger_retry.py` - Retry logic (5 tests)
+- `tests/unit/test_dagger_restart.py` - Service restart (6 tests)
+
+**Total: 21 unit tests validating production hardening**
+
+### Production Readiness Checklist
+
+- [x] Log retrieval for debugging
+- [x] Health checks for monitoring
+- [x] Resource limits for stability
+- [x] Security hardening (non-root)
+- [x] Retry logic for resilience
+- [x] Service restart for operations
+- [x] Service registry for tracking
+- [x] Comprehensive test coverage
+
 ## Future Enhancements
 
 ### 1. Persistent Services
