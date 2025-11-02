@@ -16,9 +16,7 @@ class RepositoryRepository(BaseRepository[Repository]):
     def __init__(self):
         super().__init__(Repository)
 
-    async def get_by_full_name(
-        self, db: AsyncSession, full_name: str
-    ) -> Optional[Repository]:
+    async def get_by_full_name(self, db: AsyncSession, full_name: str) -> Optional[Repository]:
         """
         Get repository by full name (owner/name)
 
@@ -99,9 +97,7 @@ class RepositoryRepository(BaseRepository[Repository]):
         )
         return list(result.scalars().all())
 
-    async def get_recently_synced(
-        self, db: AsyncSession, limit: int = 10
-    ) -> List[Repository]:
+    async def get_recently_synced(self, db: AsyncSession, limit: int = 10) -> List[Repository]:
         """
         Get recently synced repositories
 

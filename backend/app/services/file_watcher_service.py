@@ -5,7 +5,7 @@ File watcher service for monitoring local directories
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional, Callable, Dict
+from typing import List, Callable, Dict
 from dataclasses import dataclass
 from pathlib import Path
 import fnmatch
@@ -243,9 +243,7 @@ class FileWatcherService:
         # Remove entries older than 1 hour when dict grows beyond 1000 entries
         if len(self._last_processed) > 1000:
             cutoff = now - timedelta(hours=1)
-            self._last_processed = {
-                k: v for k, v in self._last_processed.items() if v > cutoff
-            }
+            self._last_processed = {k: v for k, v in self._last_processed.items() if v > cutoff}
             self.logger.debug(
                 f"Cleaned up debounce cache, {len(self._last_processed)} entries remain"
             )
@@ -302,9 +300,7 @@ class FileChangeHandler(FileSystemEventHandler):
             return
 
         # Trigger callback
-        event = FileChangeEvent(
-            event_type=event_type, file_path=file_path, is_directory=False
-        )
+        event = FileChangeEvent(event_type=event_type, file_path=file_path, is_directory=False)
 
         self.callback(event)
 

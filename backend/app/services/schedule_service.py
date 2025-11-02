@@ -111,9 +111,7 @@ class ScheduleService:
         )
         if conflicts:
             conflict_names = [s.name for s in conflicts]
-            logger.warning(
-                f"Schedule conflicts detected with: {', '.join(conflict_names)}"
-            )
+            logger.warning(f"Schedule conflicts detected with: {', '.join(conflict_names)}")
             # Note: We log conflicts but don't block creation
             # Users may want overlapping schedules
 
@@ -149,9 +147,7 @@ class ScheduleService:
         await self.db.commit()
         await self.db.refresh(schedule)
 
-        logger.info(
-            f"Created schedule {schedule.id} ({name}) with next run at {next_run}"
-        )
+        logger.info(f"Created schedule {schedule.id} ({name}) with next run at {next_run}")
 
         return schedule
 
@@ -174,9 +170,7 @@ class ScheduleService:
             ValueError: If schedule not found or validation fails
         """
         # Fetch schedule
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -185,9 +179,7 @@ class ScheduleService:
         # Validate updates
         if "cron_expression" in updates:
             if not self._validate_cron(updates["cron_expression"]):
-                raise ValueError(
-                    f"Invalid cron expression: {updates['cron_expression']}"
-                )
+                raise ValueError(f"Invalid cron expression: {updates['cron_expression']}")
 
         if "timezone" in updates:
             if not self._validate_timezone(updates["timezone"]):
@@ -200,8 +192,7 @@ class ScheduleService:
 
         # Recalculate next run if schedule changed
         if any(
-            k in updates
-            for k in ["frequency", "cron_expression", "interval_seconds", "timezone"]
+            k in updates for k in ["frequency", "cron_expression", "interval_seconds", "timezone"]
         ):
             schedule.next_run_at = self._calculate_next_run(
                 frequency=schedule.frequency,
@@ -228,9 +219,7 @@ class ScheduleService:
         Raises:
             ValueError: If schedule not found
         """
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -255,9 +244,7 @@ class ScheduleService:
             ValueError: If schedule not found or not active
         """
         # Fetch schedule
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -312,9 +299,7 @@ class ScheduleService:
             success: Whether execution was successful
             error: Error message if failed
         """
-        result = await self.db.execute(
-            select(Schedule).where(Schedule.id == schedule_id)
-        )
+        result = await self.db.execute(select(Schedule).where(Schedule.id == schedule_id))
         schedule = result.scalar_one_or_none()
 
         if not schedule:
@@ -378,9 +363,7 @@ class ScheduleService:
 
         return schedules
 
-    async def get_schedule_statistics(
-        self, project_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_schedule_statistics(self, project_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get schedule statistics.
 
@@ -598,16 +581,12 @@ class ScheduleService:
         conflicts = []
         if task_parameters:
             for schedule in schedules:
-                if self._has_parameter_overlap(
-                    task_parameters, schedule.task_parameters
-                ):
+                if self._has_parameter_overlap(task_parameters, schedule.task_parameters):
                     conflicts.append(schedule)
 
         return conflicts
 
-    def _has_parameter_overlap(
-        self, params1: Dict[str, Any], params2: Dict[str, Any]
-    ) -> bool:
+    def _has_parameter_overlap(self, params1: Dict[str, Any], params2: Dict[str, Any]) -> bool:
         """
         Check if two parameter sets overlap.
 

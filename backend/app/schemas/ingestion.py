@@ -4,7 +4,7 @@ Pydantic schemas for ingestion sources
 
 from datetime import datetime
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 from app.models.ingestion_source import SourceType, SourceStatus
 

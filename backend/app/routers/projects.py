@@ -74,8 +74,7 @@ def validate_project_path(path: str) -> Path:
     if not is_allowed:
         allowed_str = ", ".join(str(d) for d in ALLOWED_ANALYSIS_DIRS)
         raise ValueError(
-            f"Path '{path}' is not within allowed analysis directories. "
-            f"Allowed: {allowed_str}"
+            f"Path '{path}' is not within allowed analysis directories. " f"Allowed: {allowed_str}"
         )
 
     return project_path
@@ -88,16 +87,12 @@ def validate_project_path(path: str) -> Path:
     summary="Create a new project",
     description="Create a new isolated project workspace",
 )
-async def create_project(
-    project: ProjectCreate, db: AsyncSession = Depends(get_db)
-) -> Project:
+async def create_project(project: ProjectCreate, db: AsyncSession = Depends(get_db)) -> Project:
     """Create a new project"""
 
     # Check if project with same owner and name already exists
     result = await db.execute(
-        select(Project).filter(
-            Project.owner == project.owner, Project.name == project.name
-        )
+        select(Project).filter(Project.owner == project.owner, Project.name == project.name)
     )
     existing = result.scalar_one_or_none()
 
@@ -152,9 +147,7 @@ async def get_project(project_id: int, db: AsyncSession = Depends(get_db)) -> Pr
     summary="Get project with statistics",
     description="Retrieve project with entity counts",
 )
-async def get_project_stats(
-    project_id: int, db: AsyncSession = Depends(get_db)
-) -> dict:
+async def get_project_stats(project_id: int, db: AsyncSession = Depends(get_db)) -> dict:
     """Get project with entity counts"""
     result = await db.execute(select(Project).filter(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -176,16 +169,12 @@ async def get_project_stats(
     tech_count = tech_result.scalar()
 
     task_result = await db.execute(
-        select(func.count(ResearchTask.id)).filter(
-            ResearchTask.project_id == project_id
-        )
+        select(func.count(ResearchTask.id)).filter(ResearchTask.project_id == project_id)
     )
     task_count = task_result.scalar()
 
     knowledge_result = await db.execute(
-        select(func.count(KnowledgeEntry.id)).filter(
-            KnowledgeEntry.project_id == project_id
-        )
+        select(func.count(KnowledgeEntry.id)).filter(KnowledgeEntry.project_id == project_id)
     )
     knowledge_count = knowledge_result.scalar()
 
@@ -342,9 +331,7 @@ async def get_analysis_statistics(
     total_analyses = total_result.scalar()
 
     # Count unique projects
-    unique_result = await db.execute(
-        select(func.count(ProjectAnalysis.project_path.distinct()))
-    )
+    unique_result = await db.execute(select(func.count(ProjectAnalysis.project_path.distinct())))
     unique_projects = unique_result.scalar()
 
     # Get all analyses to aggregate stats

@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.services.rate_limit_service import RateLimitService
-from app.schemas import RateLimitStatusResponse, GitHubRateLimitResponse
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +62,7 @@ async def track_rate_limit(
     """
     try:
         rate_limit_service = RateLimitService(github)
-        await rate_limit_service.store_rate_limit_status(
-            db, token=settings.github_token
-        )
+        await rate_limit_service.store_rate_limit_status(db, token=settings.github_token)
 
         return {
             "status": "success",

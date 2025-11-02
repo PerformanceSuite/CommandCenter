@@ -93,9 +93,7 @@ async def batch_analyze(
         )
 
 
-@router.post(
-    "/export", response_model=BatchExportResponse, status_code=status.HTTP_202_ACCEPTED
-)
+@router.post("/export", response_model=BatchExportResponse, status_code=status.HTTP_202_ACCEPTED)
 async def batch_export(
     request: BatchExportRequest,
     db: AsyncSession = Depends(get_db),
@@ -161,9 +159,7 @@ async def batch_export(
         )
 
 
-@router.post(
-    "/import", response_model=BatchImportResponse, status_code=status.HTTP_202_ACCEPTED
-)
+@router.post("/import", response_model=BatchImportResponse, status_code=status.HTTP_202_ACCEPTED)
 async def batch_import(
     request: BatchImportRequest,
     db: AsyncSession = Depends(get_db),

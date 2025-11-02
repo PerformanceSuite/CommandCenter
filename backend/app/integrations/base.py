@@ -7,7 +7,7 @@ Provides common functionality for OAuth, webhooks, rate limiting, and error hand
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -21,19 +21,16 @@ logger = logging.getLogger(__name__)
 class IntegrationError(Exception):
     """Base exception for integration errors."""
 
-    pass
 
 
 class IntegrationAuthError(IntegrationError):
     """Authentication/authorization error."""
 
-    pass
 
 
 class IntegrationRateLimitError(IntegrationError):
     """Rate limit exceeded."""
 
-    pass
 
 
 class BaseIntegration(ABC):
@@ -119,9 +116,7 @@ class BaseIntegration(ABC):
                 await self.refresh_token()
                 integration = await self.load()
             else:
-                raise IntegrationAuthError(
-                    "Access token expired and no refresh token available"
-                )
+                raise IntegrationAuthError("Access token expired and no refresh token available")
 
         try:
             return decrypt_value(integration.access_token_encrypted)
@@ -147,9 +142,7 @@ class BaseIntegration(ABC):
         integration.access_token_encrypted = encrypt_value(access_token)
 
         if expires_in:
-            integration.token_expires_at = datetime.utcnow() + timedelta(
-                seconds=expires_in
-            )
+            integration.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
         if refresh_token:
             integration.refresh_token_encrypted = encrypt_value(refresh_token)
@@ -172,9 +165,7 @@ class BaseIntegration(ABC):
             IntegrationAuthError: If refresh fails
         """
         # Override in subclasses that support token refresh
-        raise IntegrationAuthError(
-            f"{self.integration_type} does not support token refresh"
-        )
+        raise IntegrationAuthError(f"{self.integration_type} does not support token refresh")
 
     async def record_success(self) -> None:
         """Record successful operation."""
@@ -229,9 +220,7 @@ class BaseIntegration(ABC):
             "success_count": integration.success_count,
             "success_rate": integration.success_rate,
             "last_sync_at": (
-                integration.last_sync_at.isoformat()
-                if integration.last_sync_at
-                else None
+                integration.last_sync_at.isoformat() if integration.last_sync_at else None
             ),
             "last_error": integration.last_error,
         }
@@ -249,9 +238,7 @@ class BaseIntegration(ABC):
         integration.rate_limit_reset_at = reset_at
         await self.db.commit()
 
-    def verify_webhook_signature(
-        self, payload: bytes, signature: str, secret: str
-    ) -> bool:
+    def verify_webhook_signature(self, payload: bytes, signature: str, secret: str) -> bool:
         """
         Verify webhook signature (HMAC-SHA256).
 
@@ -281,7 +268,6 @@ class BaseIntegration(ABC):
         Raises:
             IntegrationError: If connection fails
         """
-        pass
 
     @abstractmethod
     async def get_display_name(self) -> str:
@@ -291,7 +277,6 @@ class BaseIntegration(ABC):
         Returns:
             Display name (e.g., "GitHub: username/repo")
         """
-        pass
 
 
 class WebhookIntegration(BaseIntegration):
@@ -302,9 +287,7 @@ class WebhookIntegration(BaseIntegration):
     """
 
     @abstractmethod
-    async def handle_webhook(
-        self, event_type: str, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def handle_webhook(self, event_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle incoming webhook event.
 
@@ -318,7 +301,6 @@ class WebhookIntegration(BaseIntegration):
         Raises:
             IntegrationError: If processing fails
         """
-        pass
 
     @abstractmethod
     def get_webhook_secret(self) -> str:
@@ -328,7 +310,6 @@ class WebhookIntegration(BaseIntegration):
         Returns:
             Webhook secret
         """
-        pass
 
 
 class OAuthIntegration(BaseIntegration):
@@ -350,12 +331,9 @@ class OAuthIntegration(BaseIntegration):
         Returns:
             Authorization URL
         """
-        pass
 
     @abstractmethod
-    async def exchange_code_for_token(
-        self, code: str, redirect_uri: str
-    ) -> Dict[str, Any]:
+    async def exchange_code_for_token(self, code: str, redirect_uri: str) -> Dict[str, Any]:
         """
         Exchange authorization code for access token.
 
@@ -369,4 +347,3 @@ class OAuthIntegration(BaseIntegration):
         Raises:
             IntegrationAuthError: If exchange fails
         """
-        pass

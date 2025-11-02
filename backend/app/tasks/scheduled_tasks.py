@@ -42,9 +42,7 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def run_dispatcher():
         """Inner async function to run the dispatcher."""
@@ -62,9 +60,7 @@ def dispatch_due_schedules(self, limit: int = 100) -> Dict[str, Any]:
                 # Execute each due schedule
                 for schedule in due_schedules:
                     try:
-                        logger.info(
-                            f"Executing schedule {schedule.id} ({schedule.name})"
-                        )
+                        logger.info(f"Executing schedule {schedule.id} ({schedule.name})")
                         job = await service.execute_schedule(schedule.id)
 
                         dispatched.append(
@@ -158,9 +154,7 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def run_cleanup():
         """Inner async function to run the cleanup."""
@@ -196,9 +190,7 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                         }
                     )
 
-                    logger.info(
-                        f"Disabled expired schedule {schedule.id} ({schedule.name})"
-                    )
+                    logger.info(f"Disabled expired schedule {schedule.id} ({schedule.name})")
 
                 await session.commit()
 
@@ -208,9 +200,7 @@ def cleanup_expired_schedules(self) -> Dict[str, Any]:
                     "schedules": disabled_schedules,
                 }
 
-                logger.info(
-                    f"Schedule cleanup completed: {disabled_count} schedules disabled"
-                )
+                logger.info(f"Schedule cleanup completed: {disabled_count} schedules disabled")
 
                 return result
 
@@ -252,9 +242,7 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def run_monitor():
         """Inner async function to run the monitor."""
@@ -264,9 +252,7 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 issues = []
 
                 # Get all enabled schedules
-                result = await session.execute(
-                    select(Schedule).where(Schedule.enabled == True)
-                )
+                result = await session.execute(select(Schedule).where(Schedule.enabled == True))
                 schedules = result.scalars().all()
 
                 for schedule in schedules:
@@ -290,9 +276,7 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                     if schedule.last_run_at:
                         time_since_run = now - schedule.last_run_at
                         # Alert if hasn't run in 7 days (for non-once schedules)
-                        if schedule.frequency != "once" and time_since_run > timedelta(
-                            days=7
-                        ):
+                        if schedule.frequency != "once" and time_since_run > timedelta(days=7):
                             issues.append(
                                 {
                                     "schedule_id": schedule.id,
@@ -347,9 +331,7 @@ def monitor_schedule_health(self) -> Dict[str, Any]:
                 elif warnings:
                     logger.info(f"Found {len(warnings)} schedule warnings")
 
-                logger.info(
-                    f"Schedule health monitoring completed: {len(issues)} total issues"
-                )
+                logger.info(f"Schedule health monitoring completed: {len(issues)} total issues")
 
                 return result
 
@@ -392,9 +374,7 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def run_execution():
         """Inner async function to run the execution."""
@@ -406,9 +386,7 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
                 job = await service.execute_schedule(schedule_id)
 
                 # Get updated schedule for stats
-                result = await session.execute(
-                    select(Schedule).where(Schedule.id == schedule_id)
-                )
+                result = await session.execute(select(Schedule).where(Schedule.id == schedule_id))
                 schedule = result.scalar_one_or_none()
 
                 # Record success
@@ -430,16 +408,12 @@ def execute_single_schedule(self, schedule_id: int) -> Dict[str, Any]:
                     ),
                 }
 
-                logger.info(
-                    f"Successfully executed schedule {schedule_id}, created job {job.id}"
-                )
+                logger.info(f"Successfully executed schedule {schedule_id}, created job {job.id}")
 
                 return result_data
 
             except Exception as e:
-                logger.error(
-                    f"Failed to execute schedule {schedule_id}: {e}", exc_info=True
-                )
+                logger.error(f"Failed to execute schedule {schedule_id}: {e}", exc_info=True)
 
                 # Record failure
                 await service.record_execution_result(

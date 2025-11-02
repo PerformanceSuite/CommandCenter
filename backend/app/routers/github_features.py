@@ -84,14 +84,10 @@ async def get_repository_info(
         Repository information
     """
     try:
-        return await github_service.get_repository_info(
-            owner, repo, use_cache=use_cache
-        )
+        return await github_service.get_repository_info(owner, repo, use_cache=use_cache)
     except Exception as e:
         logger.error(f"Failed to get repository info: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/{owner}/{repo}/pulls")
@@ -121,9 +117,7 @@ async def list_pull_requests(
         )
     except Exception as e:
         logger.error(f"Failed to list pull requests: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/{owner}/{repo}/issues")
@@ -149,14 +143,10 @@ async def list_issues(
     """
     try:
         label_list = labels.split(",") if labels else None
-        return await github_service.list_issues(
-            owner, repo, state=state, labels=label_list
-        )
+        return await github_service.list_issues(owner, repo, state=state, labels=label_list)
     except Exception as e:
         logger.error(f"Failed to list issues: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.post("/{owner}/{repo}/labels", status_code=status.HTTP_201_CREATED)
@@ -189,9 +179,7 @@ async def create_label(
         )
     except Exception as e:
         logger.error(f"Failed to create label: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.patch("/{owner}/{repo}/labels/{label_name}")
@@ -226,14 +214,10 @@ async def update_label(
         )
     except Exception as e:
         logger.error(f"Failed to update label: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.delete(
-    "/{owner}/{repo}/labels/{label_name}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/{owner}/{repo}/labels/{label_name}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_label(
     owner: str,
     repo: str,
@@ -255,9 +239,7 @@ async def delete_label(
         )
     except Exception as e:
         logger.error(f"Failed to delete label: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/{owner}/{repo}/workflows")
@@ -281,9 +263,7 @@ async def list_workflows(
         return await github_service.list_workflows(owner, repo)
     except Exception as e:
         logger.error(f"Failed to list workflows: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.patch("/{owner}/{repo}/settings")
@@ -307,14 +287,10 @@ async def update_repository_settings(
     """
     try:
         settings_dict = settings.model_dump(exclude_unset=True)
-        return await github_service.update_repository_settings(
-            owner, repo, settings_dict
-        )
+        return await github_service.update_repository_settings(owner, repo, settings_dict)
     except Exception as e:
         logger.error(f"Failed to update repository settings: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.post("/{owner}/{repo}/cache/invalidate", status_code=status.HTTP_200_OK)
@@ -339,6 +315,4 @@ async def invalidate_cache(
         return {"status": "success", "message": f"Cache invalidated for {owner}/{repo}"}
     except Exception as e:
         logger.error(f"Failed to invalidate cache: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

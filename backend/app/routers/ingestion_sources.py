@@ -3,7 +3,7 @@ API endpoints for managing ingestion sources
 """
 
 import logging
-from typing import List, Optional
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -19,7 +19,6 @@ from app.schemas.ingestion import (
 from app.tasks.ingestion_tasks import (
     scrape_rss_feed,
     scrape_documentation,
-    process_webhook_payload,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,9 +31,7 @@ router = APIRouter(prefix="/api/ingestion", tags=["ingestion"])
     response_model=IngestionSourceResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_source(
-    source: IngestionSourceCreate, db: AsyncSession = Depends(get_db)
-):
+async def create_source(source: IngestionSourceCreate, db: AsyncSession = Depends(get_db)):
     """
     Create a new ingestion source.
     """
@@ -93,9 +90,7 @@ async def get_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get ingestion source by ID.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
@@ -113,9 +108,7 @@ async def update_source(
     """
     Update ingestion source.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
@@ -139,9 +132,7 @@ async def delete_source(source_id: int, db: AsyncSession = Depends(get_db)):
     """
     Delete ingestion source.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
@@ -160,9 +151,7 @@ async def trigger_manual_run(source_id: int, db: AsyncSession = Depends(get_db))
     """
     Manually trigger ingestion source run.
     """
-    result = await db.execute(
-        select(IngestionSource).filter(IngestionSource.id == source_id)
-    )
+    result = await db.execute(select(IngestionSource).filter(IngestionSource.id == source_id))
     source = result.scalar_one_or_none()
 
     if not source:
@@ -179,13 +168,9 @@ async def trigger_manual_run(source_id: int, db: AsyncSession = Depends(get_db))
     elif source.type == SourceType.DOCUMENTATION:
         task = scrape_documentation.delay(source_id)
     elif source.type == SourceType.WEBHOOK:
-        raise HTTPException(
-            status_code=400, detail="Webhook sources cannot be triggered manually"
-        )
+        raise HTTPException(status_code=400, detail="Webhook sources cannot be triggered manually")
     elif source.type == SourceType.FILE_WATCHER:
-        raise HTTPException(
-            status_code=400, detail="File watcher sources run automatically"
-        )
+        raise HTTPException(status_code=400, detail="File watcher sources run automatically")
 
     logger.info(f"Triggered manual run for source: {source.name} (task_id: {task.id})")
 

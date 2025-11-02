@@ -3,12 +3,10 @@ Technology detection engine for identifying frameworks, databases, and tools
 """
 
 import asyncio
-import json
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import yaml
 
 from app.schemas.project_analysis import DetectedTechnology
 
@@ -224,9 +222,7 @@ class TechnologyDetector:
                                         category=rule["category"],
                                         version=version,
                                         confidence=0.95,
-                                        file_path=str(
-                                            file_path.relative_to(project_path)
-                                        ),
+                                        file_path=str(file_path.relative_to(project_path)),
                                     )
                                 )
                                 break  # Found, no need to check other patterns
@@ -237,9 +233,7 @@ class TechnologyDetector:
 
         return technologies
 
-    async def _detect_from_directories(
-        self, project_path: Path
-    ) -> List[DetectedTechnology]:
+    async def _detect_from_directories(self, project_path: Path) -> List[DetectedTechnology]:
         """
         Detect technologies by directory structure.
 
@@ -266,9 +260,7 @@ class TechnologyDetector:
 
         return technologies
 
-    def _deduplicate(
-        self, technologies: List[DetectedTechnology]
-    ) -> List[DetectedTechnology]:
+    def _deduplicate(self, technologies: List[DetectedTechnology]) -> List[DetectedTechnology]:
         """
         Remove duplicate technologies, keeping highest confidence.
 

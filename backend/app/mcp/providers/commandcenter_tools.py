@@ -13,7 +13,7 @@ from app.mcp.providers.base import Tool, ToolParameter, ToolProvider, ToolResult
 from app.mcp.utils import ToolNotFoundError, InvalidParamsError
 from app.services.job_service import JobService
 from app.services.schedule_service import ScheduleService
-from app.models import ResearchTask, Technology, Repository, Project, Schedule
+from app.models import ResearchTask, Technology
 
 
 logger = logging.getLogger(__name__)
@@ -509,9 +509,7 @@ class CommandCenterToolProvider(ToolProvider):
                 "schedule_id": schedule.id,
                 "name": schedule.name,
                 "frequency": schedule.frequency,
-                "next_run_at": (
-                    schedule.next_run_at.isoformat() if schedule.next_run_at else None
-                ),
+                "next_run_at": (schedule.next_run_at.isoformat() if schedule.next_run_at else None),
                 "enabled": schedule.enabled,
                 "message": f"Schedule '{schedule.name}' created successfully",
             },

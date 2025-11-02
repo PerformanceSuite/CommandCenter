@@ -11,7 +11,6 @@ Provides endpoints for multi-agent research workflow:
 import logging
 import uuid
 from datetime import datetime
-from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -29,14 +28,12 @@ from app.schemas.research import (
     AgentResult,
     AgentResultMetadata,
     MonitoringAlert,
-    ModelInfo,
 )
 from app.services.research_agent_orchestrator import (
     research_orchestrator,
-    AgentRole,
 )
 from app.services.hackernews_service import HackerNewsService
-from app.services.ai_router import ai_router, AIProvider, ModelTier
+from app.services.ai_router import ai_router, AIProvider
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
@@ -109,9 +106,7 @@ async def technology_deep_dive(
                     }
                 )
 
-                logger.info(
-                    f"✅ Deep dive completed for {request.technology_name}: {task_id}"
-                )
+                logger.info(f"✅ Deep dive completed for {request.technology_name}: {task_id}")
 
             except Exception as e:
                 logger.error(f"❌ Deep dive failed for {request.technology_name}: {e}")
@@ -260,9 +255,7 @@ async def get_research_task_status(task_id: str):
     return ResearchOrchestrationResponse(**research_tasks[task_id])
 
 
-@router.post(
-    "/technologies/{technology_id}/monitor", response_model=TechnologyMonitorResponse
-)
+@router.post("/technologies/{technology_id}/monitor", response_model=TechnologyMonitorResponse)
 async def monitor_technology(
     technology_id: int,
     request: TechnologyMonitorRequest,
@@ -275,9 +268,7 @@ async def monitor_technology(
     """
     try:
         # Get technology from database
-        result = await db.execute(
-            select(Technology).filter(Technology.id == technology_id)
-        )
+        result = await db.execute(select(Technology).filter(Technology.id == technology_id))
         technology = result.scalar_one_or_none()
 
         if not technology:
@@ -373,9 +364,7 @@ async def get_available_models():
                     provider_models.append(
                         {
                             "model_id": model_id,
-                            "tier": model_info[
-                                "tier"
-                            ],  # Already a string in MODEL_INFO
+                            "tier": model_info["tier"],  # Already a string in MODEL_INFO
                             "cost_per_1m_tokens": model_info.get("cost_per_1m_tokens"),
                             "max_tokens": model_info.get("max_tokens", 4096),
                             "description": model_info.get("description"),
@@ -407,9 +396,7 @@ async def get_research_summary():
         completed_tasks = sum(
             1 for task in research_tasks.values() if task["status"] == "completed"
         )
-        failed_tasks = sum(
-            1 for task in research_tasks.values() if task["status"] == "failed"
-        )
+        failed_tasks = sum(1 for task in research_tasks.values() if task["status"] == "failed")
 
         # Count total agents deployed
         agents_deployed = 0
@@ -424,9 +411,7 @@ async def get_research_summary():
                         total_execution_time += result.metadata.execution_time_seconds
                         execution_count += 1
 
-        avg_execution_time = (
-            total_execution_time / execution_count if execution_count > 0 else 0.0
-        )
+        avg_execution_time = total_execution_time / execution_count if execution_count > 0 else 0.0
 
         # TODO: Calculate actual cost from usage data
         total_cost_usd = 0.0

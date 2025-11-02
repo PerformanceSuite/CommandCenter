@@ -12,7 +12,7 @@ from celery import Task
 from sqlalchemy import select
 
 from app.tasks import celery_app
-from app.models.ingestion_source import IngestionSource, SourceType, SourceStatus
+from app.models.ingestion_source import IngestionSource, SourceStatus
 from app.services.feed_scraper_service import FeedScraperService
 from app.services.documentation_scraper_service import DocumentationScraperService
 from app.services.rag_service import RAGService
@@ -51,9 +51,7 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def _scrape_feed():
         async with async_session_maker() as db:
@@ -101,9 +99,7 @@ def scrape_rss_feed(self, source_id: int) -> Dict[str, Any]:
                                 "url": entry.url,
                                 "author": entry.author,
                                 "published": (
-                                    entry.published.isoformat()
-                                    if entry.published
-                                    else None
+                                    entry.published.isoformat() if entry.published else None
                                 ),
                                 "tags": entry.tags,
                                 "source_type": "rss",
@@ -190,9 +186,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def _scrape_docs():
         async with async_session_maker() as db:
@@ -234,9 +228,7 @@ def scrape_documentation(self, source_id: int) -> Dict[str, Any]:
                 # Scrape pages
                 if use_sitemap and "sitemap_url" in config:
                     # Use sitemap
-                    sitemap_urls = await doc_scraper.fetch_sitemap(
-                        config["sitemap_url"]
-                    )
+                    sitemap_urls = await doc_scraper.fetch_sitemap(config["sitemap_url"])
                     pages = []
                     for url in sitemap_urls[:max_pages]:
                         if doc_scraper.is_allowed(url):
@@ -359,9 +351,7 @@ def process_webhook_payload(
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def _process_webhook():
         async with async_session_maker() as db:
@@ -404,9 +394,7 @@ def process_webhook_payload(
                             "metadata": {
                                 "event_type": "release",
                                 "tag": release.get("tag_name"),
-                                "repository": payload.get("repository", {}).get(
-                                    "full_name"
-                                ),
+                                "repository": payload.get("repository", {}).get("full_name"),
                                 "published_at": release.get("published_at"),
                             },
                         }
@@ -424,9 +412,7 @@ def process_webhook_payload(
                                     "event_type": "commit",
                                     "sha": commit.get("id"),
                                     "author": commit.get("author", {}).get("name"),
-                                    "repository": payload.get("repository", {}).get(
-                                        "full_name"
-                                    ),
+                                    "repository": payload.get("repository", {}).get("full_name"),
                                 },
                             }
                         )
@@ -450,9 +436,7 @@ def process_webhook_payload(
                 for doc in documents:
                     try:
                         metadata = doc.get("metadata", {})
-                        metadata.update(
-                            {"source_type": "webhook", "event_type": event_type}
-                        )
+                        metadata.update({"source_type": "webhook", "event_type": event_type})
 
                         if source:
                             metadata.update(
@@ -463,9 +447,7 @@ def process_webhook_payload(
                                 }
                             )
 
-                        await rag_service.add_document(
-                            content=doc["content"], metadata=metadata
-                        )
+                        await rag_service.add_document(content=doc["content"], metadata=metadata)
                         documents_ingested += 1
 
                     except Exception as e:
@@ -481,9 +463,7 @@ def process_webhook_payload(
                     source.last_error = None
                     await db.commit()
 
-                logger.info(
-                    f"Webhook processing complete: {documents_ingested} documents ingested"
-                )
+                logger.info(f"Webhook processing complete: {documents_ingested} documents ingested")
 
                 return {
                     "status": "success",
@@ -547,9 +527,7 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
 
     # Create async database connection
     engine = create_async_engine(settings.database_url, echo=False)
-    async_session_maker = async_sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def _process_file():
         async with async_session_maker() as db:
@@ -576,15 +554,9 @@ def process_file_change(self, source_id: int, event: FileChangeEvent) -> Dict[st
                 file_watcher = FileWatcherService()
 
                 # Get file path from event (handle both FileChangeEvent and dict)
-                file_path = (
-                    event.file_path
-                    if hasattr(event, "file_path")
-                    else event["file_path"]
-                )
+                file_path = event.file_path if hasattr(event, "file_path") else event["file_path"]
                 event_type = (
-                    event.event_type
-                    if hasattr(event, "event_type")
-                    else event["event_type"]
+                    event.event_type if hasattr(event, "event_type") else event["event_type"]
                 )
 
                 # Security: Validate file path to prevent path traversal

@@ -2,7 +2,7 @@
 Prometheus metrics service for monitoring GitHub operations
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Info
+from prometheus_client import Counter, Histogram, Gauge
 import time
 from functools import wraps
 from typing import Callable
@@ -65,13 +65,9 @@ webhook_processing_duration_seconds = Histogram(
 )
 
 # Cache metrics
-cache_hits_total = Counter(
-    "cache_hits_total", "Total number of cache hits", ["cache_type"]
-)
+cache_hits_total = Counter("cache_hits_total", "Total number of cache hits", ["cache_type"])
 
-cache_misses_total = Counter(
-    "cache_misses_total", "Total number of cache misses", ["cache_type"]
-)
+cache_misses_total = Counter("cache_misses_total", "Total number of cache misses", ["cache_type"])
 
 # Repository sync metrics
 repository_sync_total = Counter(
@@ -91,9 +87,7 @@ class MetricsService:
     """Service for recording application metrics"""
 
     @staticmethod
-    def record_github_api_request(
-        endpoint: str, method: str, status: str, duration: float
-    ):
+    def record_github_api_request(endpoint: str, method: str, status: str, duration: float):
         """
         Record a GitHub API request
 
@@ -103,13 +97,11 @@ class MetricsService:
             status: Response status (success/error)
             duration: Request duration in seconds
         """
-        github_api_requests_total.labels(
-            endpoint=endpoint, method=method, status=status
-        ).inc()
+        github_api_requests_total.labels(endpoint=endpoint, method=method, status=status).inc()
 
-        github_api_request_duration_seconds.labels(
-            endpoint=endpoint, method=method
-        ).observe(duration)
+        github_api_request_duration_seconds.labels(endpoint=endpoint, method=method).observe(
+            duration
+        )
 
     @staticmethod
     def record_github_api_error(endpoint: str, error_type: str):
@@ -132,9 +124,7 @@ class MetricsService:
             remaining: Remaining requests
             limit: Total limit
         """
-        github_api_rate_limit_remaining.labels(resource_type=resource_type).set(
-            remaining
-        )
+        github_api_rate_limit_remaining.labels(resource_type=resource_type).set(remaining)
         github_api_rate_limit_limit.labels(resource_type=resource_type).set(limit)
 
     @staticmethod
@@ -146,9 +136,7 @@ class MetricsService:
             event_type: Type of webhook event
             repository: Repository full name
         """
-        webhook_events_received_total.labels(
-            event_type=event_type, repository=repository
-        ).inc()
+        webhook_events_received_total.labels(event_type=event_type, repository=repository).inc()
 
     @staticmethod
     def record_webhook_processed(event_type: str, duration: float):
@@ -160,9 +148,7 @@ class MetricsService:
             duration: Processing duration in seconds
         """
         webhook_events_processed_total.labels(event_type=event_type).inc()
-        webhook_processing_duration_seconds.labels(event_type=event_type).observe(
-            duration
-        )
+        webhook_processing_duration_seconds.labels(event_type=event_type).observe(duration)
 
     @staticmethod
     def record_webhook_failed(event_type: str, error_type: str):
@@ -173,9 +159,7 @@ class MetricsService:
             event_type: Type of webhook event
             error_type: Type of error
         """
-        webhook_events_failed_total.labels(
-            event_type=event_type, error_type=error_type
-        ).inc()
+        webhook_events_failed_total.labels(event_type=event_type, error_type=error_type).inc()
 
     @staticmethod
     def record_cache_hit(cache_type: str = "github"):
@@ -240,9 +224,7 @@ def track_github_api_call(endpoint: str, method: str = "GET"):
                 raise
             finally:
                 duration = time.time() - start_time
-                MetricsService.record_github_api_request(
-                    endpoint, method, status, duration
-                )
+                MetricsService.record_github_api_request(endpoint, method, status, duration)
 
         return wrapper
 

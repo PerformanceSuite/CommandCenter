@@ -22,26 +22,18 @@ class BatchAnalyzeRequest(BaseModel):
     notify_on_complete: Optional[bool] = Field(
         default=True, description="Send notification when batch completes"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchExportRequest(BaseModel):
     """Schema for batch export request."""
 
-    analysis_ids: List[int] = Field(
-        ..., description="List of analysis IDs to export", min_length=1
-    )
-    format: str = Field(
-        ..., description="Export format (sarif, markdown, html, csv, json)"
-    )
+    analysis_ids: List[int] = Field(..., description="List of analysis IDs to export", min_length=1)
+    format: str = Field(..., description="Export format (sarif, markdown, html, csv, json)")
     parameters: Optional[Dict[str, Any]] = Field(
         default=None, description="Format-specific export parameters"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchImportRequest(BaseModel):
@@ -54,9 +46,7 @@ class BatchImportRequest(BaseModel):
     merge_strategy: Optional[str] = Field(
         default="skip", description="Conflict resolution (skip, overwrite, merge)"
     )
-    tags: Optional[Dict[str, Any]] = Field(
-        default=None, description="Custom tags for filtering"
-    )
+    tags: Optional[Dict[str, Any]] = Field(default=None, description="Custom tags for filtering")
 
 
 class BatchJobResponse(BaseModel):
@@ -71,12 +61,8 @@ class BatchJobResponse(BaseModel):
     failed_items: int = Field(default=0, description="Number of failed items")
     status: str = Field(..., description="Overall batch status")
     progress: int = Field(..., description="Progress percentage (0-100)")
-    started_at: Optional[datetime] = Field(
-        default=None, description="Batch start timestamp"
-    )
-    completed_at: Optional[datetime] = Field(
-        default=None, description="Batch completion timestamp"
-    )
+    started_at: Optional[datetime] = Field(default=None, description="Batch start timestamp")
+    completed_at: Optional[datetime] = Field(default=None, description="Batch completion timestamp")
     results: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="Individual item results"
     )
@@ -102,12 +88,8 @@ class BatchExportResponse(BatchJobResponse):
 class BatchImportResponse(BatchJobResponse):
     """Schema for batch import response with import-specific fields."""
 
-    imported_count: int = Field(
-        default=0, description="Number of successfully imported items"
-    )
-    skipped_count: int = Field(
-        default=0, description="Number of skipped items (duplicates)"
-    )
+    imported_count: int = Field(default=0, description="Number of successfully imported items")
+    skipped_count: int = Field(default=0, description="Number of skipped items (duplicates)")
     failed_count: int = Field(default=0, description="Number of failed imports")
     conflicts: Optional[List[Dict[str, Any]]] = Field(
         default=None, description="List of conflicts encountered"

@@ -27,7 +27,6 @@ class ResearchTaskBase(BaseModel):
 class ResearchTaskCreate(ResearchTaskBase):
     """Schema for creating a research task"""
 
-    pass
 
 
 class ResearchTaskUpdate(BaseModel):
@@ -62,7 +61,6 @@ class ResearchTaskInDB(ResearchTaskBase):
 class ResearchTaskResponse(ResearchTaskInDB):
     """Schema for research task API response"""
 
-    pass
 
 
 class KnowledgeEntryBase(BaseModel):
@@ -114,7 +112,6 @@ class KnowledgeEntryInDB(KnowledgeEntryBase):
 class KnowledgeEntryResponse(KnowledgeEntryInDB):
     """Schema for knowledge entry API response"""
 
-    pass
 
 
 class KnowledgeSearchRequest(BaseModel):
@@ -219,9 +216,7 @@ class TechnologyMonitorRequest(BaseModel):
     """Request schema for technology monitoring"""
 
     technology_id: int
-    sources: list[str] = Field(
-        default=["hackernews", "github"]
-    )  # hackernews, github, arxiv
+    sources: list[str] = Field(default=["hackernews", "github"])  # hackernews, github, arxiv
     days_back: int = Field(default=7, ge=1, le=30)
 
 

@@ -14,7 +14,6 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Dict, Any
 
 from app.database import get_db
 from app.mcp.server import MCPServer

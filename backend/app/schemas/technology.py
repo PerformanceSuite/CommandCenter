@@ -52,7 +52,6 @@ class TechnologyBase(BaseModel):
 class TechnologyCreate(TechnologyBase):
     """Schema for creating a technology"""
 
-    pass
 
 
 class TechnologyUpdate(BaseModel):
@@ -102,7 +101,6 @@ class TechnologyInDB(TechnologyBase):
 class TechnologyResponse(TechnologyInDB):
     """Schema for technology API response"""
 
-    pass
 
 
 class TechnologyListResponse(BaseModel):

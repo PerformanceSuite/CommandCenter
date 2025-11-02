@@ -14,7 +14,6 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
-import json
 
 from app.database import get_db
 from app.services.job_service import JobService
@@ -27,7 +26,6 @@ from app.schemas import (
     JobProgressResponse,
     JobStatisticsResponse,
 )
-from app.models import JobStatus
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 

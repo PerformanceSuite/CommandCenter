@@ -20,7 +20,6 @@ from app.config import settings
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models"""
 
-    pass
 
 
 class OptimizedDatabaseConfig:
@@ -191,9 +190,7 @@ def get_db_config() -> OptimizedDatabaseConfig:
         read_replicas = []
         if hasattr(settings, "read_replica_urls") and settings.read_replica_urls:
             read_replicas = [
-                url.strip()
-                for url in settings.read_replica_urls.split(",")
-                if url.strip()
+                url.strip() for url in settings.read_replica_urls.split(",") if url.strip()
             ]
 
         _db_config = OptimizedDatabaseConfig(

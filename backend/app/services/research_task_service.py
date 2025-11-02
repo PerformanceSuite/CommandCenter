@@ -7,13 +7,11 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-import json
-import os
 from pathlib import Path
 
 from app.models import ResearchTask, TaskStatus
 from app.repositories import ResearchTaskRepository
-from app.schemas import ResearchTaskCreate, ResearchTaskUpdate, ResearchTaskResponse
+from app.schemas import ResearchTaskCreate, ResearchTaskUpdate
 
 
 class ResearchTaskService:
@@ -126,9 +124,7 @@ class ResearchTaskService:
 
         return task
 
-    async def update_task(
-        self, task_id: int, task_data: ResearchTaskUpdate
-    ) -> ResearchTask:
+    async def update_task(self, task_id: int, task_data: ResearchTaskUpdate) -> ResearchTask:
         """
         Update research task
 
@@ -270,9 +266,7 @@ class ResearchTaskService:
         """
         return await self.repo.get_overdue(limit)
 
-    async def get_upcoming_tasks(
-        self, days: int = 7, limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
         Get upcoming tasks due within specified days
 
@@ -311,9 +305,7 @@ class ResearchTaskService:
 
         return stats
 
-    async def update_progress(
-        self, task_id: int, progress_percentage: int
-    ) -> ResearchTask:
+    async def update_progress(self, task_id: int, progress_percentage: int) -> ResearchTask:
         """
         Update task progress percentage
 

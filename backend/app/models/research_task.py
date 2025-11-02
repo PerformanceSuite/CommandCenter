@@ -86,9 +86,7 @@ class ResearchTask(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="research_tasks"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="research_tasks")
     technology: Mapped[Optional["Technology"]] = relationship(
         "Technology", back_populates="research_tasks"
     )

@@ -1,0 +1,30 @@
+{
+  "schema": "cc.event@1.0",
+  "topic": "tools.graphvis.health.degraded",
+  "timestamp": "2025-11-01T23:20:35Z",
+  "source": "graphvis",
+  "env": "staging",
+  "severity": "warning",
+  "version": "1.2.0",
+  "payload": {
+    "tool": "graphvis",
+    "status": "degraded",
+    "latency_ms": 2100,
+    "uptime_s": 98200,
+    "metrics": {
+      "cpu_pct": 83.2,
+      "mem_mb": 920,
+      "requests_5m": 640,
+      "errors_5m": 12
+    },
+    "details": "High CPU utilization due to topology recompute."
+  },
+  "links": {
+    "logs": "https://hub.local/logs/tools/graphvis/2025-11-01T23-20-35Z.log"
+  },
+  "signature": {
+    "alg": "ed25519",
+    "sig": "B64-FAKE-SIGNATURE-002",
+    "signer": "graphvis-runner"
+  }
+}

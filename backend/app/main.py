@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 import os
 
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -196,9 +196,7 @@ app.include_router(mcp.router)  # MCP (Model Context Protocol) endpoints
 app.include_router(jobs.router)  # Jobs API for async task management
 app.include_router(batch.router)  # Batch operations API for bulk analysis/import/export
 app.include_router(schedules.router)  # Schedule management for recurring tasks
-app.include_router(
-    export.router
-)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
+app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 

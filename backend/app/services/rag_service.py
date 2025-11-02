@@ -233,7 +233,7 @@ class RAGService:
 
         # Get all documents and extract unique categories
         # This could be optimized with a custom SQL query in production
-        stats = await self.backend.get_statistics()
+        await self.backend.get_statistics()
 
         # For now, return empty list - would need custom query to extract from metadata
         # This can be enhanced in PostgresBackend later

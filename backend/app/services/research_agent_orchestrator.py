@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 import json
 
-from app.services.ai_router import ai_router, AIProvider, ModelTier
+from app.services.ai_router import ai_router, AIProvider
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -349,9 +349,7 @@ You are an autonomous research agent in the CommandCenter multi-agent research s
                 "model": response["model"],
                 "provider": response["provider"],
                 "usage": response["usage"],
-                "execution_time_seconds": (
-                    datetime.utcnow() - self.start_time
-                ).total_seconds(),
+                "execution_time_seconds": (datetime.utcnow() - self.start_time).total_seconds(),
             }
 
             self.result = result
@@ -407,9 +405,7 @@ class ResearchAgentOrchestrator:
             agent = ResearchAgent(
                 role=AgentRole(task_def["role"]),
                 model=task_def.get("model", self.default_model),
-                provider=AIProvider(
-                    task_def.get("provider", self.default_provider.value)
-                ),
+                provider=AIProvider(task_def.get("provider", self.default_provider.value)),
                 temperature=task_def.get("temperature", 0.7),
                 max_tokens=task_def.get("max_tokens", 4096),
             )
@@ -517,11 +513,7 @@ class ResearchAgentOrchestrator:
                 # Extract agent role from metadata
                 role = result.get("_metadata", {}).get("role", f"agent_{i}")
                 # Get the main content (could be JSON or raw text)
-                content = (
-                    json.dumps(result, indent=2)
-                    if isinstance(result, dict)
-                    else str(result)
-                )
+                content = json.dumps(result, indent=2) if isinstance(result, dict) else str(result)
                 findings_text.append(f"=== {role.upper()} FINDINGS ===\n{content}\n")
 
         combined_findings = "\n\n".join(findings_text)

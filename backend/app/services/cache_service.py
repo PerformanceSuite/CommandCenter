@@ -229,9 +229,7 @@ class CacheService:
 # Convenience functions for common caching patterns
 
 
-async def cache_rag_query(
-    query: str, collection: str, results: list, ttl: int = 300
-) -> bool:
+async def cache_rag_query(query: str, collection: str, results: list, ttl: int = 300) -> bool:
     """
     Cache RAG query results
 

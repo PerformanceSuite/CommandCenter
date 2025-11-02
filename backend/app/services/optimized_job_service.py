@@ -7,13 +7,12 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, func, Integer
+from sqlalchemy import select, and_, func, Integer
 import sqlalchemy as sa
-from celery.result import AsyncResult
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from app.models import Job, JobStatus, JobType
+from app.models import Job, JobStatus
 
 
 class OptimizedJobService:
@@ -156,9 +155,7 @@ class OptimizedJobService:
             "count": len(jobs),
         }
 
-    async def get_statistics_optimized(
-        self, project_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def get_statistics_optimized(self, project_id: Optional[int] = None) -> Dict[str, Any]:
         """
         Get job statistics with optimized query.
         Uses aggregation functions instead of loading all records.
@@ -175,21 +172,11 @@ class OptimizedJobService:
         # Single query for all counts using conditional aggregation
         query = select(
             func.count(Job.id).label("total"),
-            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label(
-                "pending"
-            ),
-            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label(
-                "running"
-            ),
-            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label(
-                "completed"
-            ),
-            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label(
-                "failed"
-            ),
-            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label(
-                "cancelled"
-            ),
+            func.sum(func.cast(Job.status == JobStatus.PENDING, Integer)).label("pending"),
+            func.sum(func.cast(Job.status == JobStatus.RUNNING, Integer)).label("running"),
+            func.sum(func.cast(Job.status == JobStatus.COMPLETED, Integer)).label("completed"),
+            func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label("failed"),
+            func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label("cancelled"),
             func.avg(
                 func.case(
                     (
@@ -208,9 +195,7 @@ class OptimizedJobService:
         completed = stats.completed or 0
         failed = stats.failed or 0
         success_rate = (
-            (completed / (completed + failed) * 100)
-            if (completed + failed) > 0
-            else None
+            (completed / (completed + failed) * 100) if (completed + failed) > 0 else None
         )
 
         return {
@@ -266,9 +251,7 @@ class OptimizedJobService:
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(
                     self._executor,
-                    lambda: celery_app.control.revoke(
-                        job.celery_task_id, terminate=True
-                    ),
+                    lambda: celery_app.control.revoke(job.celery_task_id, terminate=True),
                 )
             except Exception as e:
                 # Log error but don't fail the cancellation
@@ -305,8 +288,7 @@ class OptimizedJobService:
                 status=status,
                 completed_at=(
                     datetime.utcnow()
-                    if status
-                    in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
+                    if status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]
                     else None
                 ),
             )
@@ -317,9 +299,7 @@ class OptimizedJobService:
 
         return result.rowcount
 
-    async def get_jobs_by_celery_ids(
-        self, celery_task_ids: List[str]
-    ) -> Dict[str, Job]:
+    async def get_jobs_by_celery_ids(self, celery_task_ids: List[str]) -> Dict[str, Job]:
         """
         Get multiple jobs by their Celery task IDs in a single query.
 
@@ -332,9 +312,7 @@ class OptimizedJobService:
         if not celery_task_ids:
             return {}
 
-        result = await self.db.execute(
-            select(Job).where(Job.celery_task_id.in_(celery_task_ids))
-        )
+        result = await self.db.execute(select(Job).where(Job.celery_task_id.in_(celery_task_ids)))
         jobs = result.scalars().all()
 
         return {job.celery_task_id: job for job in jobs}

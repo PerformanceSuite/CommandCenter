@@ -10,7 +10,6 @@ from typing import Optional, Any, Callable, Awaitable, List, TypeVar, Union, Dic
 from datetime import timedelta
 from functools import wraps
 import asyncio
-from contextlib import asynccontextmanager
 
 # Lazy imports
 try:
@@ -197,9 +196,7 @@ class OptimizedCacheService:
             print(f"Cache mget error: {e}")
             return {}
 
-    async def mset(
-        self, items: Dict[str, Any], ttl: Optional[timedelta] = None
-    ) -> bool:
+    async def mset(self, items: Dict[str, Any], ttl: Optional[timedelta] = None) -> bool:
         """Set multiple values in a single operation."""
         try:
             client = await self._get_client()

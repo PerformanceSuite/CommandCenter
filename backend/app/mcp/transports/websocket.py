@@ -5,7 +5,6 @@ Implements WebSocket-based communication for MCP protocol.
 """
 
 import asyncio
-import json
 from typing import Dict, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -32,9 +31,7 @@ class WebSocketTransport:
             app: Optional FastAPI app instance (creates new if not provided)
         """
         self.server = server
-        self.app = app or FastAPI(
-            title=f"MCP WebSocket Server: {server.server_info.name}"
-        )
+        self.app = app or FastAPI(title=f"MCP WebSocket Server: {server.server_info.name}")
         self._running = False
         self._logger = logger
         self._active_connections: Dict[str, WebSocket] = {}

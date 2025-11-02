@@ -11,12 +11,8 @@ class ScheduleBase(BaseModel):
     """Base schedule schema with common fields."""
 
     name: str = Field(..., min_length=1, max_length=255, description="Schedule name")
-    description: Optional[str] = Field(
-        None, max_length=512, description="Schedule description"
-    )
-    task_type: str = Field(
-        ..., min_length=1, max_length=50, description="Task type to execute"
-    )
+    description: Optional[str] = Field(None, max_length=512, description="Schedule description")
+    task_type: str = Field(..., min_length=1, max_length=50, description="Task type to execute")
     task_parameters: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Task-specific parameters"
     )
@@ -66,9 +62,7 @@ class ScheduleCreate(ScheduleBase):
     """Schema for creating a new schedule."""
 
     project_id: int = Field(..., gt=0, description="Project ID")
-    created_by: Optional[int] = Field(
-        None, gt=0, description="User ID who created schedule"
-    )
+    created_by: Optional[int] = Field(None, gt=0, description="User ID who created schedule")
 
 
 class ScheduleUpdate(BaseModel):

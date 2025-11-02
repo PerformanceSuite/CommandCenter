@@ -5,8 +5,7 @@ Implements SARIF 2.1.0 specification for GitHub code scanning integration.
 Reference: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 """
 
-from typing import Any, Dict, List, Optional
-from datetime import datetime
+from typing import Any, Dict, List
 import hashlib
 
 from app.exporters import BaseExporter
@@ -35,9 +34,7 @@ class SARIFExporter(BaseExporter):
     SARIF_KIND_REVIEW = "review"
     SARIF_KIND_NOTAPPLICABLE = "notApplicable"
 
-    def __init__(
-        self, project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"
-    ):
+    def __init__(self, project_analysis: Dict[str, Any], tool_name: str = "CommandCenter"):
         """
         Initialize SARIF exporter.
 
@@ -238,15 +235,11 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC004",
             "level": self.SARIF_LEVEL_NONE,
             "kind": self.SARIF_KIND_PASS,
-            "message": {
-                "text": f"Detected {name} {version} (confidence: {confidence}%)"
-            },
+            "message": {"text": f"Detected {name} {version} (confidence: {confidence}%)"},
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
@@ -279,9 +272,7 @@ class SARIFExporter(BaseExporter):
             "ruleId": "CC001",
             "level": self.SARIF_LEVEL_WARNING,
             "kind": self.SARIF_KIND_REVIEW,
-            "message": {
-                "text": f"Dependency '{name}' is outdated: {current} → {latest} available"
-            },
+            "message": {"text": f"Dependency '{name}' is outdated: {current} → {latest} available"},
             "locations": [
                 {
                     "physicalLocation": {
@@ -324,15 +315,11 @@ class SARIFExporter(BaseExporter):
             "locations": [
                 {
                     "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": self._path_to_uri(self.project_path)
-                        },
+                        "artifactLocation": {"uri": self._path_to_uri(self.project_path)},
                     }
                 }
             ],
-            "fingerprints": {
-                "commandCenter/v1": self._generate_fingerprint(f"gap-{title}")
-            },
+            "fingerprints": {"commandCenter/v1": self._generate_fingerprint(f"gap-{title}")},
             "properties": {
                 "category": category,
                 "priority": gap.get("priority", 3),

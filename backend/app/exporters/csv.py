@@ -5,10 +5,9 @@ Generates CSV files that can be imported into Excel, Google Sheets, etc.
 Multiple sheets exported as separate CSV files or ZIP archive.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 import csv
 import io
-from datetime import datetime
 
 from app.exporters import BaseExporter
 
@@ -116,9 +115,7 @@ class CSVExporter(BaseExporter):
 
         # Data rows
         for dep in self._get_dependency_list():
-            is_outdated = dep.get("is_outdated", False) or dep.get(
-                "needs_update", False
-            )
+            is_outdated = dep.get("is_outdated", False) or dep.get("needs_update", False)
             status = "Outdated" if is_outdated else "Current"
 
             writer.writerow(
@@ -154,9 +151,7 @@ class CSVExporter(BaseExporter):
         writer.writerow(["Lines of Code", metrics.get("lines_of_code", 0)])
         writer.writerow(["File Count", metrics.get("file_count", 0)])
         writer.writerow(["Complexity Score", metrics.get("complexity", 0)])
-        writer.writerow(
-            ["Documentation Coverage (%)", metrics.get("documentation_coverage", 0)]
-        )
+        writer.writerow(["Documentation Coverage (%)", metrics.get("documentation_coverage", 0)])
         writer.writerow(["Test Coverage (%)", metrics.get("test_coverage", 0)])
 
         # Add language breakdown if available
@@ -220,9 +215,7 @@ class CSVExporter(BaseExporter):
         writer.writerow(["CommandCenter Analysis Report"])
         writer.writerow(["Project", self.project_path])
         writer.writerow(["Analyzed At", self.analyzed_at])
-        writer.writerow(
-            ["Analysis Version", self.analysis.get("analysis_version", "2.0.0")]
-        )
+        writer.writerow(["Analysis Version", self.analysis.get("analysis_version", "2.0.0")])
         writer.writerow([])
 
         # Summary section
@@ -241,9 +234,7 @@ class CSVExporter(BaseExporter):
 
         # Technologies section
         writer.writerow(["DETECTED TECHNOLOGIES"])
-        writer.writerow(
-            ["Technology", "Version", "Category", "Confidence (%)", "Description"]
-        )
+        writer.writerow(["Technology", "Version", "Category", "Confidence (%)", "Description"])
         for tech in technologies:
             writer.writerow(
                 [
@@ -258,9 +249,7 @@ class CSVExporter(BaseExporter):
 
         # Dependencies section
         writer.writerow(["DEPENDENCIES"])
-        writer.writerow(
-            ["Package", "Current Version", "Latest Version", "Status", "Severity"]
-        )
+        writer.writerow(["Package", "Current Version", "Latest Version", "Status", "Severity"])
         for dep in dependencies:
             is_outdated = dep.get("is_outdated", False)
             status = "Outdated" if is_outdated else "Current"
@@ -286,9 +275,7 @@ class CSVExporter(BaseExporter):
 
         # Research gaps section
         writer.writerow(["RESEARCH GAPS"])
-        writer.writerow(
-            ["Title", "Description", "Category", "Priority", "Recommendation"]
-        )
+        writer.writerow(["Title", "Description", "Category", "Priority", "Recommendation"])
         for gap in research_gaps:
             writer.writerow(
                 [
@@ -323,8 +310,6 @@ class ExcelExporter(CSVExporter):
         """
         try:
             from openpyxl import Workbook
-            from openpyxl.styles import Font, Fill, PatternFill, Alignment
-            from openpyxl.utils import get_column_letter
         except ImportError:
             raise ImportError(
                 "openpyxl is required for Excel export. Install with: pip install openpyxl"
@@ -359,9 +344,7 @@ class ExcelExporter(CSVExporter):
         # Title
         ws["A1"] = "CommandCenter Analysis Report"
         ws["A1"].font = Font(size=16, bold=True, color="FFFFFF")
-        ws["A1"].fill = PatternFill(
-            start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-        )
+        ws["A1"].fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Metadata
         ws["A3"] = "Project:"
@@ -405,9 +388,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, tech in enumerate(self._get_technology_list(), 2):
@@ -436,9 +417,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, dep in enumerate(self._get_dependency_list(), 2):
@@ -509,9 +488,7 @@ class ExcelExporter(CSVExporter):
         for col, header in enumerate(headers, 1):
             cell = ws.cell(1, col, header)
             cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(
-                start_color="3B82F6", end_color="3B82F6", fill_type="solid"
-            )
+            cell.fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
 
         # Data
         for row, gap in enumerate(self._get_research_gaps_list(), 2):
@@ -526,9 +503,7 @@ class ExcelExporter(CSVExporter):
             ws.column_dimensions[get_column_letter(col)].width = 25
 
 
-def export_to_csv(
-    project_analysis: Dict[str, Any], export_type: str = "combined"
-) -> str:
+def export_to_csv(project_analysis: Dict[str, Any], export_type: str = "combined") -> str:
     """
     Convenience function to export analysis to CSV format.
 

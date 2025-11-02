@@ -89,11 +89,7 @@ class IngestionSource(Base):
     )
 
     # Relationships
-    project: Mapped["Project"] = relationship(
-        "Project", back_populates="ingestion_sources"
-    )
+    project: Mapped["Project"] = relationship("Project", back_populates="ingestion_sources")
 
     def __repr__(self) -> str:
-        return (
-            f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"
-        )
+        return f"<IngestionSource(id={self.id}, name='{self.name}', type='{self.type}')>"

@@ -113,9 +113,7 @@ def setup_custom_metrics(app: FastAPI):
         app: FastAPI application instance
     """
     # Set application info
-    app_info.info(
-        {"version": app.version, "title": app.title, "environment": "production"}
-    )
+    app_info.info({"version": app.version, "title": app.title, "environment": "production"})
 
     # Initialize gauges
     active_research_tasks.set(0)
@@ -163,9 +161,7 @@ def track_batch_operation(operation_type: str, success: bool = True):
 def track_batch_items(operation_type: str, count: int, success: bool = True):
     """Track batch items processed"""
     status = "success" if success else "error"
-    batch_items_processed.labels(operation_type=operation_type, status=status).inc(
-        count
-    )
+    batch_items_processed.labels(operation_type=operation_type, status=status).inc(count)
 
 
 def track_job_operation(job_type: str, success: bool = True):
@@ -174,9 +170,7 @@ def track_job_operation(job_type: str, success: bool = True):
     job_operations.labels(job_type=job_type, status=status).inc()
 
 
-def update_job_queue_sizes(
-    pending: int = 0, running: int = 0, completed: int = 0, failed: int = 0
-):
+def update_job_queue_sizes(pending: int = 0, running: int = 0, completed: int = 0, failed: int = 0):
     """Update job queue size gauges"""
     job_queue_size.labels(status="pending").set(pending)
     job_queue_size.labels(status="running").set(running)

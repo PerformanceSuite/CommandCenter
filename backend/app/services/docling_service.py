@@ -3,8 +3,7 @@ Docling Integration Service
 Processes various document formats (PDF, Markdown, text) into clean text for RAG
 """
 
-from typing import Optional, List, Dict, Any
-from pathlib import Path
+from typing import List, Dict, Any
 import tempfile
 import os
 
@@ -31,9 +30,7 @@ class DoclingService:
             ImportError: If Docling is not installed
         """
         if not DOCLING_AVAILABLE:
-            raise ImportError(
-                "Docling not installed. " "Install with: pip install docling"
-            )
+            raise ImportError("Docling not installed. " "Install with: pip install docling")
 
         # Initialize document converter with default options
         # Docling v1.20.0 API simplified - no need for format-specific options
@@ -148,9 +145,7 @@ class DoclingService:
 
         # Remove common PDF artifacts
         cleaned_text = re.sub(r"\x0c", "", cleaned_text)  # Form feed
-        cleaned_text = re.sub(
-            r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text
-        )  # Control chars
+        cleaned_text = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]", "", cleaned_text)  # Control chars
 
         return cleaned_text.strip()
 

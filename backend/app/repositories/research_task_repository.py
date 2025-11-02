@@ -113,9 +113,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
         )
         return list(result.scalars().all())
 
-    async def get_overdue(
-        self, db: AsyncSession, limit: int = 100
-    ) -> List[ResearchTask]:
+    async def get_overdue(self, db: AsyncSession, limit: int = 100) -> List[ResearchTask]:
         """
         Get overdue tasks
 
@@ -181,9 +179,7 @@ class ResearchTaskRepository(BaseRepository[ResearchTask]):
             Dictionary mapping status to count
         """
         result = await db.execute(
-            select(ResearchTask.status, func.count(ResearchTask.id)).group_by(
-                ResearchTask.status
-            )
+            select(ResearchTask.status, func.count(ResearchTask.id)).group_by(ResearchTask.status)
         )
         return {status.value: count for status, count in result}
 

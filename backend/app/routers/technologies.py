@@ -2,8 +2,8 @@
 Technology management endpoints
 """
 
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import Optional
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -58,9 +58,7 @@ async def get_technology(
     return await service.get_technology(technology_id)
 
 
-@router.post(
-    "/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=TechnologyResponse, status_code=status.HTTP_201_CREATED)
 async def create_technology(
     technology_data: TechnologyCreate,
     service: TechnologyService = Depends(get_technology_service),

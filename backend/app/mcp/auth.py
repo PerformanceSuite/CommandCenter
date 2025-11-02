@@ -4,8 +4,6 @@ MCP Authentication and Authorization module.
 Provides authentication validation and rate limiting for MCP sessions.
 """
 
-import hashlib
-import hmac
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional, Dict
@@ -96,9 +94,7 @@ class MCPRateLimiter:
     Implements per-session and global rate limits.
     """
 
-    def __init__(
-        self, requests_per_minute: int = 100, global_requests_per_minute: int = 1000
-    ):
+    def __init__(self, requests_per_minute: int = 100, global_requests_per_minute: int = 1000):
         """
         Initialize rate limiter.
 
@@ -121,9 +117,7 @@ class MCPRateLimiter:
             AsyncLimiter instance
         """
         if session_id not in self._session_limiters:
-            self._session_limiters[session_id] = AsyncLimiter(
-                self._requests_per_minute, 60
-            )
+            self._session_limiters[session_id] = AsyncLimiter(self._requests_per_minute, 60)
         return self._session_limiters[session_id]
 
     async def check_rate_limit(self, session_id: str) -> bool:

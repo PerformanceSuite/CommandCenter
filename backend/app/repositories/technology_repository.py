@@ -217,9 +217,7 @@ class TechnologyRepository(BaseRepository[Technology]):
             Dictionary mapping status to count
         """
         result = await db.execute(
-            select(Technology.status, func.count(Technology.id)).group_by(
-                Technology.status
-            )
+            select(Technology.status, func.count(Technology.id)).group_by(Technology.status)
         )
         return {status.value: count for status, count in result}
 
@@ -234,8 +232,6 @@ class TechnologyRepository(BaseRepository[Technology]):
             Dictionary mapping domain to count
         """
         result = await db.execute(
-            select(Technology.domain, func.count(Technology.id)).group_by(
-                Technology.domain
-            )
+            select(Technology.domain, func.count(Technology.id)).group_by(Technology.domain)
         )
         return {domain.value: count for domain, count in result}

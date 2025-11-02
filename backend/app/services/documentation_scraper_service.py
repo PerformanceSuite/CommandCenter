@@ -102,15 +102,11 @@ class DocumentationScraperService:
 
                 # Block link-local addresses (169.254.0.0/16, fe80::/10)
                 if ip.is_link_local:
-                    raise ValueError(
-                        f"Access to link-local address {ip} is not allowed"
-                    )
+                    raise ValueError(f"Access to link-local address {ip} is not allowed")
 
                 # Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7)
                 if ip.is_private:
-                    raise ValueError(
-                        f"Access to private IP address {ip} is not allowed"
-                    )
+                    raise ValueError(f"Access to private IP address {ip} is not allowed")
 
             except socket.gaierror:
                 # If hostname cannot be resolved, allow it (will fail naturally on request)
@@ -233,18 +229,11 @@ class DocumentationScraperService:
                 main_content = soup.body
 
             # Extract text content
-            content = (
-                main_content.get_text(separator="\n", strip=True)
-                if main_content
-                else ""
-            )
+            content = main_content.get_text(separator="\n", strip=True) if main_content else ""
 
             # Extract headings
             headings = (
-                [
-                    h.get_text(strip=True)
-                    for h in main_content.find_all(["h1", "h2", "h3", "h4"])
-                ]
+                [h.get_text(strip=True) for h in main_content.find_all(["h1", "h2", "h3", "h4"])]
                 if main_content
                 else []
             )

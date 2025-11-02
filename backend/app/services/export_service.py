@@ -57,8 +57,6 @@ class ExportService:
         writer.writeheader()
 
         for t in technologies:
-            writer.writerow(
-                {"id": t.id, "title": t.title, "domain": t.domain, "status": t.status}
-            )
+            writer.writerow({"id": t.id, "title": t.title, "domain": t.domain, "status": t.status})
 
         return output.getvalue()

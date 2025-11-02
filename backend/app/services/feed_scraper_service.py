@@ -10,7 +10,6 @@ from typing import List, Optional, Tuple
 from dataclasses import dataclass
 import feedparser
 from newspaper import Article
-from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +128,7 @@ class FeedScraperService:
         self.logger.info(f"Parsed {len(entries)} entries from feed")
         return entries
 
-    def _extract_full_content_blocking(
-        self, article_url: str, summary_fallback: str = ""
-    ) -> str:
+    def _extract_full_content_blocking(self, article_url: str, summary_fallback: str = "") -> str:
         """
         Extract full article content from URL (blocking I/O).
 
@@ -152,18 +149,14 @@ class FeedScraperService:
             if article.text:
                 return article.text
             else:
-                self.logger.warning(
-                    f"No content extracted from {article_url}, using summary"
-                )
+                self.logger.warning(f"No content extracted from {article_url}, using summary")
                 return summary_fallback
 
         except Exception as e:
             self.logger.error(f"Failed to extract content from {article_url}: {e}")
             return summary_fallback
 
-    async def extract_full_content(
-        self, article_url: str, summary_fallback: str = ""
-    ) -> str:
+    async def extract_full_content(self, article_url: str, summary_fallback: str = "") -> str:
         """
         Extract full article content from URL (async-safe).
 

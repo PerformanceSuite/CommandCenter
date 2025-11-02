@@ -132,9 +132,7 @@ async def list_schedules(
 
         # Apply pagination
         offset = (page - 1) * page_size
-        query = (
-            query.offset(offset).limit(page_size).order_by(Schedule.created_at.desc())
-        )
+        query = query.offset(offset).limit(page_size).order_by(Schedule.created_at.desc())
 
         # Execute query
         result = await db.execute(query)
@@ -303,9 +301,7 @@ async def execute_schedule(
         # If force is True, execute regardless of schedule state
         if request and request.force:
             # Get schedule
-            result = await db.execute(
-                select(Schedule).where(Schedule.id == schedule_id)
-            )
+            result = await db.execute(select(Schedule).where(Schedule.id == schedule_id))
             schedule = result.scalar_one_or_none()
 
             if not schedule:

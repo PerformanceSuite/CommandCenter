@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Technology, TechnologyDomain, TechnologyStatus
 from app.repositories import TechnologyRepository
-from app.schemas import TechnologyCreate, TechnologyUpdate, TechnologyResponse
+from app.schemas import TechnologyCreate, TechnologyUpdate
 
 
 class TechnologyService:
@@ -214,9 +214,7 @@ class TechnologyService:
         await self.repo.delete(technology)
         await self.db.commit()
 
-    async def update_status(
-        self, technology_id: int, new_status: TechnologyStatus
-    ) -> Technology:
+    async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
         """
         Update technology status
 
@@ -238,9 +236,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_priority(
-        self, technology_id: int, new_priority: int
-    ) -> Technology:
+    async def update_priority(self, technology_id: int, new_priority: int) -> Technology:
         """
         Update technology priority
 
@@ -268,9 +264,7 @@ class TechnologyService:
 
         return technology
 
-    async def update_relevance_score(
-        self, technology_id: int, new_score: int
-    ) -> Technology:
+    async def update_relevance_score(self, technology_id: int, new_score: int) -> Technology:
         """
         Update technology relevance score
 

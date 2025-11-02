@@ -12,7 +12,6 @@ Provides endpoints to export analysis in multiple formats:
 from fastapi import APIRouter, HTTPException, Query, Depends, Response, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
-from typing import Optional
 from enum import Enum
 import json
 import logging
@@ -22,7 +21,6 @@ from app.models.project_analysis import ProjectAnalysis
 from app.exporters.sarif import export_to_sarif
 from app.exporters.html import export_to_html
 from app.exporters.csv import export_to_csv, export_to_excel
-from app.exporters import ExportFormat
 from app.middleware import limiter
 
 router = APIRouter(prefix="/api/v1/export", tags=["Export"])
@@ -62,9 +60,7 @@ def _get_analysis_data(analysis: ProjectAnalysis) -> dict:
     return {
         "id": analysis.id,
         "project_path": analysis.project_path,
-        "analyzed_at": (
-            analysis.analyzed_at.isoformat() if analysis.analyzed_at else None
-        ),
+        "analyzed_at": (analysis.analyzed_at.isoformat() if analysis.analyzed_at else None),
         "analysis_version": analysis.analysis_version,
         "analysis_duration_ms": analysis.analysis_duration_ms,
         "detected_technologies": analysis.detected_technologies or {},
@@ -106,9 +102,7 @@ async def export_analysis_sarif(
     """
     logger.info(f"SARIF export requested for analysis {analysis_id}")
 
-    analysis = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
-    )
+    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for SARIF export")
@@ -134,9 +128,7 @@ async def export_analysis_sarif(
         )
 
     except Exception as e:
-        logger.error(
-            f"SARIF export failed for analysis {analysis_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"SARIF export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to export SARIF: {str(e)}")
 
 
@@ -170,9 +162,7 @@ async def export_analysis_html(
     """
     logger.info(f"HTML export requested for analysis {analysis_id}")
 
-    analysis = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
-    )
+    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for HTML export")
@@ -196,9 +186,7 @@ async def export_analysis_html(
         )
 
     except Exception as e:
-        logger.error(
-            f"HTML export failed for analysis {analysis_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"HTML export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to export HTML: {str(e)}")
 
 
@@ -207,9 +195,7 @@ async def export_analysis_html(
 async def export_analysis_csv(
     analysis_id: int,
     request: Request,
-    export_type: CSVExportType = Query(
-        CSVExportType.COMBINED, description="CSV type to generate"
-    ),
+    export_type: CSVExportType = Query(CSVExportType.COMBINED, description="CSV type to generate"),
     db: Session = Depends(get_db),
 ) -> Response:
     """
@@ -230,13 +216,9 @@ async def export_analysis_csv(
     Raises:
         HTTPException: 404 if analysis not found, 500 on export failure
     """
-    logger.info(
-        f"CSV export ({export_type.value}) requested for analysis {analysis_id}"
-    )
+    logger.info(f"CSV export ({export_type.value}) requested for analysis {analysis_id}")
 
-    analysis = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
-    )
+    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for CSV export")
@@ -261,9 +243,7 @@ async def export_analysis_csv(
         )
 
     except Exception as e:
-        logger.error(
-            f"CSV export failed for analysis {analysis_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"CSV export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to export CSV: {str(e)}")
 
 
@@ -300,9 +280,7 @@ async def export_analysis_excel(
     """
     logger.info(f"Excel export requested for analysis {analysis_id}")
 
-    analysis = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
-    )
+    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for Excel export")
@@ -333,9 +311,7 @@ async def export_analysis_excel(
             detail="Excel export requires openpyxl library. Install with: pip install openpyxl",
         )
     except Exception as e:
-        logger.error(
-            f"Excel export failed for analysis {analysis_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"Excel export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to export Excel: {str(e)}")
 
 
@@ -367,9 +343,7 @@ async def export_analysis_json(
     """
     logger.info(f"JSON export requested for analysis {analysis_id}")
 
-    analysis = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
-    )
+    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for JSON export")
@@ -395,9 +369,7 @@ async def export_analysis_json(
         )
 
     except Exception as e:
-        logger.error(
-            f"JSON export failed for analysis {analysis_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"JSON export failed for analysis {analysis_id}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to export JSON: {str(e)}")
 
 
@@ -495,9 +467,7 @@ async def get_available_formats() -> dict:
 async def export_batch_analyses(
     request: Request,
     analysis_ids: list[int],
-    format: ExportFormatEnum = Query(
-        ExportFormatEnum.JSON, description="Export format"
-    ),
+    format: ExportFormatEnum = Query(ExportFormatEnum.JSON, description="Export format"),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     """
@@ -519,9 +489,7 @@ async def export_batch_analyses(
     Raises:
         HTTPException: 400 for empty list, 404 if analyses not found
     """
-    logger.info(
-        f"Batch export requested for {len(analysis_ids)} analyses in {format.value} format"
-    )
+    logger.info(f"Batch export requested for {len(analysis_ids)} analyses in {format.value} format")
 
     if not analysis_ids:
         raise HTTPException(
@@ -530,9 +498,7 @@ async def export_batch_analyses(
         )
 
     # Verify all analyses exist
-    analyses = (
-        db.query(ProjectAnalysis).filter(ProjectAnalysis.id.in_(analysis_ids)).all()
-    )
+    analyses = db.query(ProjectAnalysis).filter(ProjectAnalysis.id.in_(analysis_ids)).all()
     found_ids = {a.id for a in analyses}
     missing_ids = set(analysis_ids) - found_ids
 

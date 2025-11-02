@@ -6,7 +6,7 @@ import logging
 import hmac
 import hashlib
 import os
-from typing import Dict, Any, Optional
+from typing import Optional
 from fastapi import APIRouter, Request, HTTPException, Query, Header, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 
-def verify_github_signature(
-    payload_body: bytes, signature_header: str, secret: str
-) -> bool:
+def verify_github_signature(payload_body: bytes, signature_header: str, secret: str) -> bool:
     """
     Verify GitHub webhook signature.
 
@@ -96,9 +94,7 @@ async def github_webhook(
         source_id=source.id, payload=payload, event_type=x_github_event
     )
 
-    logger.info(
-        f"Queued GitHub webhook processing: task_id={task.id}, event={x_github_event}"
-    )
+    logger.info(f"Queued GitHub webhook processing: task_id={task.id}, event={x_github_event}")
 
     return {"status": "accepted", "task_id": task.id, "event": x_github_event}
 
@@ -130,18 +126,14 @@ async def generic_webhook(
 
     if not expected_api_key:
         logger.error("GENERIC_WEBHOOK_API_KEY environment variable not configured")
-        raise HTTPException(
-            status_code=500, detail="Webhook API key not configured on server"
-        )
+        raise HTTPException(status_code=500, detail="Webhook API key not configured on server")
 
     if not x_api_key:
         logger.warning("Generic webhook request missing X-API-Key header")
         raise HTTPException(status_code=401, detail="Missing API key")
 
     if x_api_key != expected_api_key:
-        logger.warning(
-            f"Invalid API key provided for generic webhook: {x_api_key[:8]}..."
-        )
+        logger.warning(f"Invalid API key provided for generic webhook: {x_api_key[:8]}...")
         raise HTTPException(status_code=401, detail="Invalid API key")
 
     payload = await request.json()

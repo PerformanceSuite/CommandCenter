@@ -243,9 +243,7 @@ Use the CommandCenter resources (commandcenter://projects/{project_name}) to gat
 
         return PromptResult(messages=messages)
 
-    async def _prompt_evaluate_technology(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_evaluate_technology(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate technology evaluation prompt."""
         if "technology_name" not in arguments:
             raise InvalidParamsError("technology_name is required")
@@ -526,9 +524,7 @@ Retrieve current tasks from commandcenter://research/tasks and provide a priorit
 
         return PromptResult(messages=messages)
 
-    async def _prompt_architecture_review(
-        self, arguments: Dict[str, Any]
-    ) -> PromptResult:
+    async def _prompt_architecture_review(self, arguments: Dict[str, Any]) -> PromptResult:
         """Generate architecture review prompt."""
         if "system_name" not in arguments:
             raise InvalidParamsError("system_name is required")

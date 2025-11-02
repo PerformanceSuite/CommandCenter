@@ -52,9 +52,7 @@ class HealthService:
             result.scalar()
 
             # Get database stats
-            pool_status = (
-                db.get_bind().pool.status() if hasattr(db.get_bind(), "pool") else "N/A"
-            )
+            pool_status = db.get_bind().pool.status() if hasattr(db.get_bind(), "pool") else "N/A"
 
             response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
 
@@ -132,12 +130,8 @@ class HealthService:
             inspector = celery_app.control.inspect()
 
             # Timeout for worker inspection (2 seconds)
-            stats = await asyncio.wait_for(
-                asyncio.to_thread(inspector.stats), timeout=2.0
-            )
-            active_tasks = await asyncio.wait_for(
-                asyncio.to_thread(inspector.active), timeout=2.0
-            )
+            stats = await asyncio.wait_for(asyncio.to_thread(inspector.stats), timeout=2.0)
+            active_tasks = await asyncio.wait_for(asyncio.to_thread(inspector.active), timeout=2.0)
             registered_tasks = await asyncio.wait_for(
                 asyncio.to_thread(inspector.registered), timeout=2.0
             )
@@ -151,12 +145,8 @@ class HealthService:
 
             # Calculate metrics
             worker_count = len(stats) if stats else 0
-            total_active_tasks = sum(
-                len(tasks) for tasks in (active_tasks or {}).values()
-            )
-            total_registered_tasks = sum(
-                len(tasks) for tasks in (registered_tasks or {}).values()
-            )
+            total_active_tasks = sum(len(tasks) for tasks in (active_tasks or {}).values())
+            total_registered_tasks = sum(len(tasks) for tasks in (registered_tasks or {}).values())
 
             response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
 
