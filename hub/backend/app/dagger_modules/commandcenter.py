@@ -30,6 +30,8 @@ class CommandCenterConfig:
 class CommandCenterStack:
     """Defines and manages CommandCenter container stack using Dagger"""
 
+    VALID_SERVICES = ["postgres", "redis", "backend", "frontend"]
+
     def __init__(self, config: CommandCenterConfig):
         self.config = config
         self._connection: Optional[dagger.Connection] = None
@@ -158,6 +160,54 @@ class CommandCenterStack:
         except Exception as e:
             logger.error(f"Failed to start CommandCenter stack: {e}")
             raise
+
+    async def get_logs(
+        self,
+        service_name: str,
+        tail: int = 100,
+        follow: bool = False
+    ) -> str:
+        """
+        Retrieve logs from a specific service container.
+
+        Args:
+            service_name: Name of service (postgres, redis, backend, frontend)
+            tail: Number of lines to retrieve from end of logs
+            follow: If True, stream logs continuously (not implemented yet)
+
+        Returns:
+            String containing log lines
+
+        Raises:
+            ValueError: If service_name is invalid
+        """
+        if service_name not in self.VALID_SERVICES:
+            raise ValueError(f"Invalid service name: {service_name}. "
+                           f"Must be one of {self.VALID_SERVICES}")
+
+        if not self.client:
+            raise RuntimeError("Dagger client not initialized")
+
+        # Get the container for this service
+        container = await self._get_service_container(service_name)
+
+        # Retrieve stdout logs
+        logs = await container.stdout()
+
+        # Apply tail limit if specified
+        if tail:
+            log_lines = logs.split('\n')
+            logs = '\n'.join(log_lines[-tail:])
+
+        return logs
+
+    async def _get_service_container(self, service_name: str) -> dagger.Container:
+        """
+        Internal method to get container for a service.
+        To be implemented with service registry in later task.
+        """
+        # Placeholder - will be enhanced when we add service tracking
+        raise NotImplementedError("Service container retrieval not yet implemented")
 
     async def stop(self) -> dict:
         """Stop all CommandCenter containers"""
