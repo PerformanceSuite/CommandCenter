@@ -189,6 +189,32 @@ class OrchestrationService:
             "errors": "",
         }
 
+    async def get_project_logs(
+        self,
+        project_id: int,
+        service_name: str,
+        tail: int = 100
+    ) -> str:
+        """
+        Retrieve logs from a project's service container.
+
+        Args:
+            project_id: Project ID
+            service_name: Service name to get logs from
+            tail: Number of lines to retrieve
+
+        Returns:
+            Log string
+
+        Raises:
+            RuntimeError: If stack not running or logs unavailable
+        """
+        if project_id not in self._active_stacks:
+            raise RuntimeError(f"Project {project_id} is not running")
+
+        stack = self._active_stacks[project_id]
+        return await stack.get_logs(service_name, tail)
+
     async def _get_project(self, project_id: int) -> Project:
         """Get project or raise error"""
         result = await self.db.execute(select(Project).where(Project.id == project_id))

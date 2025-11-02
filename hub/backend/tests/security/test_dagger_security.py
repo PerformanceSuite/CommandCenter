@@ -1,66 +1,49 @@
-"""Dagger SDK orchestration security tests."""
 import pytest
+from unittest.mock import AsyncMock, MagicMock
+from app.dagger_modules.commandcenter import CommandCenterStack, CommandCenterConfig
+
+
+@pytest.fixture
+def mock_config():
+    return CommandCenterConfig(
+        project_name="test-project",
+        project_path="/tmp/test",
+        backend_port=8000,
+        frontend_port=3000,
+        postgres_port=5432,
+        redis_port=6379,
+        db_password="test123",
+        secret_key="secret123"
+    )
 
 
 @pytest.mark.asyncio
-async def test_dagger_containers_use_least_privilege(mock_dagger_client, project_config):
-    """Dagger containers run with minimal privileges (no root if possible)."""
-    from app.dagger_modules.commandcenter import CommandCenterStack
+async def test_containers_run_as_non_root_user(mock_config):
+    """Test that all containers execute as non-root users"""
+    stack = CommandCenterStack(mock_config)
+    mock_client = MagicMock()
+    mock_container = MagicMock()
 
-    stack = CommandCenterStack(mock_dagger_client, project_config)
+    # Setup mock chain
+    mock_container.from_ = MagicMock(return_value=mock_container)
+    mock_container.with_env_variable = MagicMock(return_value=mock_container)
+    mock_container.with_exposed_port = MagicMock(return_value=mock_container)
+    mock_container.with_resource_limit = MagicMock(return_value=mock_container)
+    mock_container.with_user = MagicMock(return_value=mock_container)
 
-    # Verify containers don't run as root (when possible)
-    # This is aspirational - actual implementation may vary
-    assert stack is not None
+    mock_client.container = MagicMock(return_value=mock_container)
+    stack.client = mock_client
 
+    # Build each container
+    await stack.build_postgres()
+    await stack.build_redis()
 
-@pytest.mark.asyncio
-async def test_dagger_secrets_not_logged(mock_dagger_client, project_config):
-    """Secrets passed to Dagger are not logged or exposed."""
-    from app.dagger_modules.commandcenter import CommandCenterStack
+    # Verify with_user was called (non-root execution)
+    assert mock_container.with_user.called
 
-    stack = CommandCenterStack(mock_dagger_client, project_config)
-
-    # Verify secret handling
-    secret_key = project_config.secrets.get("secret_key")
-    db_password = project_config.secrets.get("db_password")
-
-    assert secret_key is not None
-    assert db_password is not None
-
-
-@pytest.mark.asyncio
-async def test_dagger_host_filesystem_access_restricted(
-    mock_dagger_client, project_config
-):
-    """Dagger containers have restricted host filesystem access."""
-    from app.dagger_modules.commandcenter import CommandCenterStack
-
-    stack = CommandCenterStack(mock_dagger_client, project_config)
-
-    # Only project directory should be mounted
-    # No access to /etc, /var, /home, etc.
-    assert project_config.project_path is not None
-
-
-@pytest.mark.asyncio
-async def test_dagger_network_isolation(mock_dagger_client, project_config):
-    """Dagger stacks use isolated networks."""
-    from app.dagger_modules.commandcenter import CommandCenterStack
-
-    stack = CommandCenterStack(mock_dagger_client, project_config)
-
-    # Network should be project-specific
-    network_name = f"{project_config.project_name}_network"
-    assert network_name is not None
-
-
-@pytest.mark.asyncio
-async def test_dagger_container_resource_limits(mock_dagger_client, project_config):
-    """Dagger containers have resource limits (CPU, memory)."""
-    from app.dagger_modules.commandcenter import CommandCenterStack
-
-    stack = CommandCenterStack(mock_dagger_client, project_config)
-
-    # Verify resource limits are set (prevents resource exhaustion)
-    assert stack is not None
+    # Verify not running as root (UID 0)
+    user_calls = mock_container.with_user.call_args_list
+    for call in user_calls:
+        user_id = str(call[0][0])  # Get first positional argument
+        assert user_id != "0", "Container should not run as root (UID 0)"
+        assert user_id != "root", "Container should not run as root user"
