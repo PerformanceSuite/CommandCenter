@@ -52,6 +52,11 @@ class CommandCenterStack:
 
     VALID_SERVICES = ["postgres", "redis", "backend", "frontend"]
 
+    # User IDs for non-root execution
+    POSTGRES_USER_ID = 999
+    REDIS_USER_ID = 999
+    APP_USER_ID = 1000
+
     def __init__(self, config: CommandCenterConfig):
         self.config = config
         self._connection: Optional[dagger.Connection] = None
@@ -70,7 +75,7 @@ class CommandCenterStack:
             await self._connection.__aexit__(exc_type, exc_val, exc_tb)
 
     async def build_postgres(self) -> dagger.Container:
-        """Build PostgreSQL container with resource limits"""
+        """Build PostgreSQL container with resource limits and security"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
 
@@ -79,6 +84,7 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("postgres:15-alpine")
+            .with_user(str(self.POSTGRES_USER_ID))  # Run as non-root
             .with_env_variable("POSTGRES_USER", "commandcenter")
             .with_env_variable("POSTGRES_PASSWORD", self.config.db_password)
             .with_env_variable("POSTGRES_DB", "commandcenter")
@@ -88,7 +94,7 @@ class CommandCenterStack:
         )
 
     async def build_redis(self) -> dagger.Container:
-        """Build Redis container with resource limits"""
+        """Build Redis container with resource limits and security"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
 
@@ -97,13 +103,14 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("redis:7-alpine")
+            .with_user(str(self.REDIS_USER_ID))  # Run as non-root
             .with_exposed_port(6379)
             .with_resource_limit("cpu", str(limits.redis_cpu))
             .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
         )
 
     async def build_backend(self, postgres_host: str, redis_host: str) -> dagger.Container:
-        """Build CommandCenter backend container with resource limits"""
+        """Build CommandCenter backend container with resource limits and security"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
 
@@ -115,6 +122,7 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("python:3.11-slim")
+            .with_user(str(self.APP_USER_ID))  # Run as non-root
             # Install CommandCenter backend dependencies
             .with_exec(["pip", "install", "fastapi", "uvicorn[standard]",
                        "sqlalchemy", "asyncpg", "redis", "langchain",
@@ -136,7 +144,7 @@ class CommandCenterStack:
         )
 
     async def build_frontend(self, backend_url: str) -> dagger.Container:
-        """Build CommandCenter frontend container with resource limits"""
+        """Build CommandCenter frontend container with resource limits and security"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
 
@@ -145,6 +153,7 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("node:18-alpine")
+            .with_user(str(self.APP_USER_ID))  # Run as non-root
             # Install CommandCenter frontend dependencies
             .with_exec(["npm", "install", "-g", "vite", "react", "react-dom"])
             # Set environment variables
