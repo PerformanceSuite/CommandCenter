@@ -36,6 +36,7 @@ class CommandCenterStack:
         self.config = config
         self._connection: Optional[dagger.Connection] = None
         self.client = None  # Will be set to Client in __aenter__
+        self._service_containers: dict[str, dagger.Container] = {}  # Track containers
 
     async def __aenter__(self):
         """Initialize Dagger client"""
@@ -128,20 +129,22 @@ class CommandCenterStack:
         try:
             logger.info(f"Starting CommandCenter stack for project: {self.config.project_name}")
 
-            # Build and start containers
+            # Build containers
             postgres = await self.build_postgres()
             redis = await self.build_redis()
+            backend = await self.build_backend("postgres", "redis")
+            frontend = await self.build_frontend(f"http://backend:{self.config.backend_port}")
 
-            # Start postgres and redis first
+            # Store in registry for later access (logs, health checks)
+            self._service_containers["postgres"] = postgres
+            self._service_containers["redis"] = redis
+            self._service_containers["backend"] = backend
+            self._service_containers["frontend"] = frontend
+
+            # Start as services
             postgres_svc = postgres.as_service()
             redis_svc = redis.as_service()
-
-            # Build backend with service hostnames
-            backend = await self.build_backend("postgres", "redis")
             backend_svc = backend.as_service()
-
-            # Build frontend with backend URL
-            frontend = await self.build_frontend(f"http://backend:{self.config.backend_port}")
             frontend_svc = frontend.as_service()
 
             logger.info(f"CommandCenter stack started successfully for {self.config.project_name}")
@@ -202,12 +205,11 @@ class CommandCenterStack:
         return logs
 
     async def _get_service_container(self, service_name: str) -> dagger.Container:
-        """
-        Internal method to get container for a service.
-        To be implemented with service registry in later task.
-        """
-        # Placeholder - will be enhanced when we add service tracking
-        raise NotImplementedError("Service container retrieval not yet implemented")
+        """Get container for a service from registry"""
+        if service_name not in self._service_containers:
+            raise RuntimeError(f"Service {service_name} not found in registry. "
+                             f"Has start() been called?")
+        return self._service_containers[service_name]
 
     async def stop(self) -> dict:
         """Stop all CommandCenter containers"""
