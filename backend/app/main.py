@@ -208,6 +208,7 @@ app.include_router(ingestion_sources.router)  # Ingestion sources management API
 
 # Test endpoints for observability (only in dev/test environments)
 if settings.debug or os.getenv("ENVIRONMENT") in ["development", "test"]:
+
     @app.get("/api/v1/trigger-test-error")
     async def trigger_test_error():
         """Test endpoint that raises an exception for error tracking verification.
@@ -242,9 +243,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
     # Increment error metric with labels
     error_counter.labels(
-        endpoint=request.url.path,
-        status_code="500",
-        error_type=type(exc).__name__
+        endpoint=request.url.path, status_code="500", error_type=type(exc).__name__
     ).inc()
 
     # Structured error logging with correlation context
@@ -258,7 +257,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "error_message": str(exc),
             "user_id": getattr(request.state, "user_id", None),
         },
-        exc_info=True  # Include stack trace
+        exc_info=True,  # Include stack trace
     )
 
     return JSONResponse(
