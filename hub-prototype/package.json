@@ -1,0 +1,21 @@
+{
+  "name": "commandcenter-hub-prototype",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "version": "1.0.0",
+  "workspaces": [
+    "hub",
+    "hub-console",
+    "tools/*"
+  ],
+  "scripts": {
+    "hub:dev": "pnpm -C hub dev",
+    "hub:refresh": "pnpm -C hub refresh",
+    "hub:test": "pnpm -C hub test",
+    "hub:list": "pnpm -C hub list",
+    "hub:open": "pnpm -C hub open",
+    "hub:events": "pnpm -C hub events",
+    "console:dev": "pnpm -C hub-console dev",
+    "build-all-tools": "node hub/bin/build-all-tools.js"
+  }
+}

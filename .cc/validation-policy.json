@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "enforceOnOrAfter": "2025-11-15T00:00:00Z",
+  "phases": {
+    "events": "enforce",
+    "manifests": "warn",
+    "snapshots": "warn"
+  },
+  "minimums": {
+    "fixtures.events": 7,
+    "tools.manifests": 1,
+    "snapshots.files": 1
+  },
+  "canary": {
+    "manifestTemplateMustBeReplaced": true
+  }
+}

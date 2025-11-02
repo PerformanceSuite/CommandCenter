@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2025-11-02T02:03:49.300Z",
+  "projects": [
+    {
+      "projectId": "mrktzr",
+      "instanceId": "mrktzr-cpa-demo",
+      "name": "MRKTZR (CPA Demo)",
+      "owner": "commandcenter",
+      "env": "demo",
+      "rag": {
+        "corpusDir": "../../Projects/MRKTZR/docs",
+        "indexDir": "rag/index"
+      },
+      "tools": [
+        "mrktzr"
+      ],
+      "endpoints": {},
+      "discoveredAt": "2025-11-02T02:03:49.299Z"
+    },
+    {
+      "projectId": "veria",
+      "instanceId": "veria-dev",
+      "name": "Veria (Dev)",
+      "owner": "commandcenter",
+      "env": "dev",
+      "rag": {
+        "corpusDir": "../../Projects/Veria/docs",
+        "indexDir": "rag/index"
+      },
+      "tools": [
+        "veria"
+      ],
+      "endpoints": {
+        "api": "http://127.0.0.1:8082"
+      },
+      "health": {
+        "url": "http://127.0.0.1:8082/health"
+      },
+      "discoveredAt": "2025-11-02T02:03:49.300Z"
+    }
+  ]
+}

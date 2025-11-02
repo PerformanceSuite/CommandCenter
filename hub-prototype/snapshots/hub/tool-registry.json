@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2025-11-02T02:18:34.583Z",
+  "tools": [
+    {
+      "id": "example-tool",
+      "version": "0.1.0",
+      "categories": [
+        "utility",
+        "demo"
+      ],
+      "ports": {
+        "web": 5173,
+        "api": 7070
+      },
+      "healthUrl": "http://127.0.0.1:7070/health",
+      "endpoints": {
+        "web": "http://127.0.0.1:5173",
+        "api": "http://127.0.0.1:7070"
+      },
+      "discoveredAt": "2025-11-02T02:18:34.582Z"
+    },
+    {
+      "id": "mrktzr",
+      "version": "0.1.0",
+      "categories": [
+        "intel",
+        "outreach"
+      ],
+      "ports": {
+        "api": 8181
+      },
+      "healthUrl": "http://127.0.0.1:8181/health",
+      "endpoints": {
+        "api": "http://127.0.0.1:8181"
+      },
+      "discoveredAt": "2025-11-02T02:18:34.583Z"
+    }
+  ]
+}

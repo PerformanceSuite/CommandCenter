@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/event.schema.json",
+  "title": "Hub Event",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "origin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "tool",
+            "project"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string"
+    },
+    "payload": {}
+  },
+  "required": [
+    "id",
+    "correlationId",
+    "origin",
+    "timestamp",
+    "type"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "projectId": "mrktzr",
+  "instanceId": "mrktzr-cpa-demo",
+  "name": "MRKTZR (CPA Demo)",
+  "owner": "commandcenter",
+  "env": "demo",
+  "rag": { "corpusDir": "../../Projects/MRKTZR/docs", "indexDir": "rag/index" },
+  "tools": ["mrktzr"],
+  "endpoints": {},
+  "discoveredAt": ""
+}

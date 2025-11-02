@@ -1,0 +1,3 @@
+# Example Daggerfile (stub). Replace with actual build/test pipelines.
+FROM alpine:3.20
+RUN echo 'build example-tool' > /build.log

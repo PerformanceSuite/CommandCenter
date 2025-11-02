@@ -1,0 +1,20 @@
+{
+  "id": "example-tool",
+  "name": "Example Tool",
+  "version": "0.1.0",
+  "category": [
+    "utility",
+    "demo"
+  ],
+  "ports": {
+    "web": 5173,
+    "api": 7070
+  },
+  "health": {
+    "url": "http://127.0.0.1:7070/health"
+  },
+  "endpoints": {
+    "web": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:7070"
+  }
+}

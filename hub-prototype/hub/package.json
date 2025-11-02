@@ -1,0 +1,23 @@
+{
+  "name": "@commandcenter/hub",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "refresh": "tsx src/registry.ts --refresh",
+    "list": "tsx src/cli.ts list",
+    "open": "tsx src/cli.ts open",
+    "events": "tsx src/cli.ts events",
+    "test": "node -e \"console.log('No heavy tests yet')\"",
+    "projects": "tsx src/cli.ts projects",
+    "projects:refresh": "tsx src/cli.ts projects:refresh"
+  },
+  "dependencies": {
+    "fastify": "4.26.2"
+  },
+  "devDependencies": {
+    "tsx": "4.19.0",
+    "typescript": "5.6.3"
+  }
+}

@@ -1,0 +1,6 @@
+# Global hub orchestrator (stub). Wire to Node script for now.
+actions:
+  build-all:
+    description: Build all tools discovered in ./tools via Dagger (stub).
+    steps:
+      - run: node hub/bin/build-all-tools.js

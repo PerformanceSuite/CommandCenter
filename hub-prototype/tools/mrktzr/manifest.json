@@ -1,0 +1,9 @@
+{
+  "id": "mrktzr",
+  "name": "MRKTZR (Integrated)",
+  "version": "0.1.0",
+  "category": ["intel", "outreach"],
+  "ports": { "api": 8181 },
+  "health": { "url": "http://127.0.0.1:8181/health" },
+  "endpoints": { "api": "http://127.0.0.1:8181" }
+}

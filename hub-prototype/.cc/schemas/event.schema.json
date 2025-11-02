@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commandcenter.local/schemas/event.schema.json",
+  "title": "Hub Event",
+  "type": "object",
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "topic": { "type": "string" },
+    "payload": {}
+  },
+  "required": ["ts", "topic"]
+}

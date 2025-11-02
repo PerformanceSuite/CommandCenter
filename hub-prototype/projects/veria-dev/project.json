@@ -1,0 +1,12 @@
+{
+  "projectId": "veria",
+  "instanceId": "veria-dev",
+  "name": "Veria (Dev)",
+  "owner": "commandcenter",
+  "env": "dev",
+  "rag": { "corpusDir": "../../Projects/Veria/docs", "indexDir": "rag/index" },
+  "tools": ["veria"],
+  "endpoints": { "api": "http://127.0.0.1:8082" },
+  "health": { "url": "http://127.0.0.1:8082/health" },
+  "discoveredAt": ""
+}
