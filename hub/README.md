@@ -1,16 +1,16 @@
 # CommandCenter Hub
 
-**Multi-project launcher and management interface for CommandCenter**
+Multi-project management interface for CommandCenter instances.
 
-## What is Hub?
+## Features
 
-Hub is a lightweight web application that manages multiple CommandCenter instances. Instead of manually running each project's CommandCenter, Hub provides:
-
-- **Dashboard** showing all your projects
-- **One-click start/stop** for each CommandCenter instance
-- **Project browser** to add existing projects
-- **Automatic configuration** and port management
-- **Status monitoring** for all instances
+- **Project Management**: Create, start, stop, delete CommandCenter instances
+- **Port Isolation**: Automatic port allocation to avoid conflicts
+- **Background Tasks**: Non-blocking project operations with Celery
+- **Real-time Progress**: Live progress updates for long-running operations
+- **Monitoring Dashboard**: Celery Flower for task/worker monitoring
+- **Folder Browser**: Select project directories visually
+- **Status Tracking**: Real-time project status (stopped/starting/running/error)
 
 ## Quick Start
 
