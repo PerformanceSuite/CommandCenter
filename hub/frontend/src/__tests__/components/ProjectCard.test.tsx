@@ -28,7 +28,28 @@ vi.mock('../../services/api', () => ({
       start: vi.fn().mockResolvedValue({ success: true }),
       stop: vi.fn().mockResolvedValue({ success: true }),
     },
+    tasks: {
+      start: vi.fn().mockResolvedValue({
+        task_id: 'test-task-123',
+        status: 'pending',
+        message: 'Task started',
+      }),
+      stop: vi.fn().mockResolvedValue({
+        task_id: 'test-task-456',
+        status: 'pending',
+        message: 'Task started',
+      }),
+    },
   },
+}));
+
+// Mock useTaskStatus hook
+vi.mock('../../hooks/useTaskStatus', () => ({
+  useTaskStatus: vi.fn().mockReturnValue({
+    status: null,
+    isPolling: false,
+    error: null,
+  }),
 }));
 
 describe('ProjectCard', () => {
@@ -106,7 +127,7 @@ describe('ProjectCard', () => {
     await userEvent.click(startButton);
 
     await waitFor(() => {
-      expect(api.orchestration.start).toHaveBeenCalledWith(1);
+      expect(api.tasks.start).toHaveBeenCalledWith(1);
     });
   });
 
@@ -124,7 +145,7 @@ describe('ProjectCard', () => {
     await userEvent.click(stopButton);
 
     await waitFor(() => {
-      expect(api.orchestration.stop).toHaveBeenCalledWith(2);
+      expect(api.tasks.stop).toHaveBeenCalledWith(2);
     });
   });
 
@@ -226,5 +247,59 @@ describe('ProjectCard', () => {
 
     // Check for gray indicator (stopped)
     expect(stoppedContainer.querySelector('.bg-gray-500')).toBeInTheDocument();
+  });
+
+  it('disables start button while task is polling', () => {
+    const { useTaskStatus } = require('../../hooks/useTaskStatus');
+    useTaskStatus.mockReturnValue({
+      status: { state: 'BUILDING', progress: 50, status: 'Building...' },
+      isPolling: true,
+      error: null,
+    });
+
+    const project = createMockProject({ status: 'stopped' });
+    render(<ProjectCard project={project} onDelete={mockOnDelete} />);
+
+    const startButton = screen.getByRole('button', { name: /starting/i });
+    expect(startButton).toBeDisabled();
+  });
+
+  it('shows progress bar when task is running', () => {
+    const { useTaskStatus } = require('../../hooks/useTaskStatus');
+    useTaskStatus.mockReturnValue({
+      status: {
+        state: 'BUILDING',
+        progress: 60,
+        status: 'Building containers...',
+        ready: false,
+      },
+      isPolling: true,
+      error: null,
+    });
+
+    const project = createMockProject({ status: 'stopped' });
+    const { container } = render(<ProjectCard project={project} onDelete={mockOnDelete} />);
+
+    // Check for progress bar
+    expect(screen.getByText('60%')).toBeInTheDocument();
+    expect(screen.getByText('Building containers...')).toBeInTheDocument();
+
+    // Check for progress bar element
+    expect(container.querySelector('.bg-blue-500')).toBeInTheDocument();
+  });
+
+  it('does not show progress bar when no task is running', () => {
+    const { useTaskStatus } = require('../../hooks/useTaskStatus');
+    useTaskStatus.mockReturnValue({
+      status: null,
+      isPolling: false,
+      error: null,
+    });
+
+    const project = createMockProject({ status: 'stopped' });
+    render(<ProjectCard project={project} onDelete={mockOnDelete} />);
+
+    // Should not have progress percentage
+    expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
   });
 });
