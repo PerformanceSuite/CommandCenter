@@ -33,8 +33,8 @@ class TestStartProjectTask:
         mock_service.start_project = AsyncMock(return_value=expected_result)
         mock_service_class.return_value = mock_service
 
-        # Act
-        result = start_project_task(project_id)
+        # Act - Use apply() to run task synchronously
+        result = start_project_task.apply(args=[project_id]).result
 
         # Assert
         assert result["success"] is True
@@ -68,8 +68,8 @@ class TestStopProjectTask:
         mock_service.stop_project = AsyncMock(return_value=expected_result)
         mock_service_class.return_value = mock_service
 
-        # Act
-        result = stop_project_task(project_id)
+        # Act - Use apply() to run task synchronously
+        result = stop_project_task.apply(args=[project_id]).result
 
         # Assert
         assert result["success"] is True
@@ -99,8 +99,8 @@ class TestRestartProjectTask:
         mock_service.restart_service = AsyncMock(return_value=expected_result)
         mock_service_class.return_value = mock_service
 
-        # Act
-        result = restart_project_task(project_id, service_name)
+        # Act - Use apply() to run task synchronously
+        result = restart_project_task.apply(args=[project_id, service_name]).result
 
         # Assert
         assert result["success"] is True
@@ -131,8 +131,8 @@ class TestGetProjectLogsTask:
         mock_service.get_service_logs = AsyncMock(return_value=expected_logs)
         mock_service_class.return_value = mock_service
 
-        # Act
-        result = get_project_logs_task(project_id, service_name, lines)
+        # Act - Use apply() to run task synchronously
+        result = get_project_logs_task.apply(args=[project_id, service_name, lines]).result
 
         # Assert
         assert result["success"] is True
