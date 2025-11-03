@@ -1,3 +1,1 @@
-"""
-Integration tests for CommandCenter Hub
-"""
+# Integration tests for Hub background tasks

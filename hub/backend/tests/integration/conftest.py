@@ -1,67 +1,61 @@
-"""Integration test fixtures for Docker functionality.
-
-IMPORTANT: These tests use REAL Dagger SDK (not mocked).
-They create actual Docker containers for integration testing.
-"""
+"""Integration test fixtures for Hub background tasks"""
 import pytest
-import os
+import asyncio
+import time
+from celery.result import AsyncResult
+from app.celery_app import celery_app
+from app.database import AsyncSessionLocal, engine, Base
+from app.models import Project
 
 
-@pytest.fixture
-async def dagger_client():
-    """Real Dagger client for integration tests.
-
-    WARNING: Creates real containers. Cleanup is critical.
-    """
-    import dagger
-
-    async with dagger.Connection() as client:
-        yield client
-
-
-@pytest.fixture
-def temp_project_dir(tmp_path):
-    """Temporary project directory with minimal structure."""
-    project_dir = tmp_path / "test-project"
-    project_dir.mkdir()
-
-    # Create .env
-    (project_dir / ".env").write_text("""
-DATABASE_URL=postgresql://test:test@postgres:5432/test
-REDIS_URL=redis://redis:6379
-SECRET_KEY=test-secret-key
-BACKEND_PORT=18000
-FRONTEND_PORT=13000
-POSTGRES_PORT=15432
-REDIS_PORT=16379
-""")
-
-    # Create minimal structure
-    (project_dir / "backend").mkdir()
-    (project_dir / "backend" / "app").mkdir()
-    (project_dir / "backend" / "app" / "__init__.py").write_text("")
-    (project_dir / "frontend").mkdir()
-    (project_dir / "frontend" / "src").mkdir()
-
-    return str(project_dir)
+@pytest.fixture(scope="session")
+def celery_config():
+    """Celery configuration for tests"""
+    return {
+        'broker_url': 'redis://localhost:6379/1',  # Use DB 1 for tests
+        'result_backend': 'redis://localhost:6379/1',
+        'task_always_eager': False,  # Run tasks asynchronously
+        'task_eager_propagates': True,
+    }
 
 
-@pytest.fixture
-def project_config(temp_project_dir):
-    """Test project configuration with high ports."""
-    from app.models.project import CommandCenterConfig, PortSet
+@pytest.fixture(scope="session")
+def celery_worker_parameters():
+    """Celery worker parameters for tests"""
+    return {
+        'queues': ('celery',),
+        'loglevel': 'info',
+    }
 
-    return CommandCenterConfig(
-        project_name="integration-test",
-        project_path=temp_project_dir,
-        ports=PortSet(
-            backend=18000,
-            frontend=13000,
-            postgres=15432,
-            redis=16379
-        ),
-        secrets={
-            "secret_key": "integration-test-secret",
-            "db_password": "integration-test-password"
-        }
-    )
+
+@pytest.fixture(scope="function")
+async def test_db():
+    """Create test database"""
+    # Create tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield
+
+    # Drop tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(scope="function")
+async def test_project(test_db):
+    """Create a test project"""
+    async with AsyncSessionLocal() as db:
+        project = Project(
+            name="Integration Test Project",
+            path="/tmp/test-project",
+            status="stopped",
+            backend_port=8888,
+            frontend_port=3888,
+            postgres_port=5555,
+            redis_port=6666
+        )
+        db.add(project)
+        await db.commit()
+        await db.refresh(project)
+        return project
