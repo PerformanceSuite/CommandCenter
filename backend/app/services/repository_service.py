@@ -113,7 +113,8 @@ class RepositoryService:
             )
 
         # Create repository
-        # TODO: Get project_id from auth context once auth is implemented
+        # Note: Uses default project_id=1 for single-tenant development.
+        # See app.auth.project_context for multi-tenant roadmap.
         repository = await self.repo.create(
             **repository_data.model_dump(), full_name=full_name, project_id=1
         )

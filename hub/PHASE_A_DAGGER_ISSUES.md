@@ -66,8 +66,8 @@ failed to start host service: start upstream: exit code: 1
 
 ---
 
-### 3. ❌ CURRENT ISSUE: Port Mapping Not Implemented
-**Status**: Not fixed - architectural issue
+### 3. ✅ FIXED: Port Mapping Implementation
+**Status**: Fixed 2025-11-02
 **File**: `hub/backend/app/dagger_modules/commandcenter.py`
 
 **Problem**:
@@ -84,88 +84,132 @@ failed to start host service: start upstream: exit code: 1
 }
 ```
 
-**Missing Implementation**:
-- Need port tunneling/forwarding API to map:
-  - Container 5432 → Host 5442 (postgres)
-  - Container 6379 → Host 6389 (redis)
-  - Container 8000 → Host 8010 (backend)
-  - Container 3000 → Host 3010 (frontend)
+**Solution Found**:
+- Use `Service.up(ports=[...])` with `dagger.PortForward` objects
+- `PortForward(backend=5432, frontend=5442)` maps container:5432 → host:5442
+- Note: "frontend" = host port, "backend" = container port (opposite of docker-compose!)
 
-**Research Needed**:
-- Check Dagger SDK for port forwarding/tunneling methods
-- May need `.tunnel()` or similar API
-- Alternative: Use `Service.endpoint()` to get dynamic ports
+**Fix Applied** (lines 210-223):
+```python
+import dagger
+
+await postgres_svc.up(ports=[
+    dagger.PortForward(backend=5432, frontend=self.config.postgres_port)
+])
+await redis_svc.up(ports=[
+    dagger.PortForward(backend=6379, frontend=self.config.redis_port)
+])
+await backend_svc.up(ports=[
+    dagger.PortForward(backend=8000, frontend=self.config.backend_port)
+])
+await frontend_svc.up(ports=[
+    dagger.PortForward(backend=3000, frontend=self.config.frontend_port)
+])
+```
 
 ---
 
-### 4. ❌ ARCHITECTURAL: Services Don't Persist
-**Status**: Partially addressed with `.up()` calls
-**File**: `hub/backend/app/dagger_modules/commandcenter.py` (lines 203-206)
+### 4. ✅ FIXED: Service Persistence
+**Status**: Fixed 2025-11-02
+**File**: `hub/backend/app/dagger_modules/commandcenter.py`
 
 **Problem**:
 - Containers created with `.as_service()` but no mechanism to keep them running
 - Added `.up()` calls but services still may not persist after function returns
-- May need terminal sessions or persistent bindings
+- Services terminated when Python garbage collected Service objects
 
-**Current Code**:
+**Root Cause**:
+- Service references were local variables, garbage collected at end of function
+- Without references, Dagger engine terminates the services
+
+**Solution**:
+- Store Service references in instance variable `self._services` dict
+- Keeps Python references alive as long as CommandCenterStack instance exists
+- Services persist for entire stack lifecycle
+
+**Fix Applied**:
+
+Line 67 (in `__init__`):
 ```python
-postgres_svc = postgres.as_service()
-redis_svc = redis.as_service()
-backend_svc = backend.as_service()
-frontend_svc = frontend.as_service()
-
-# Keep services running by calling up() and storing endpoints
-await postgres_svc.up()
-await redis_svc.up()
-await backend_svc.up()
-await frontend_svc.up()
+self._services: dict[str, dagger.Service] = {}  # Track running services to keep them alive
 ```
 
-**Issue**:
-- Services may terminate when Dagger context closes
-- Need long-running service management
-- May need to export containers to Docker instead of running in Dagger engine
+Lines 225-231 (in `start()` method):
+```python
+# Store service references to keep them alive
+self._services = {
+    "postgres": postgres_svc,
+    "redis": redis_svc,
+    "backend": backend_svc,
+    "frontend": frontend_svc,
+}
+```
+
+Lines 507-508 (in `restart_service()` method):
+```python
+self._services[service_name] = new_service
+```
 
 ---
 
-### 5. ❌ DESIGN FLAW: Frontend/Backend Build Approach Wrong
-**Status**: Not addressed
-**File**: `hub/backend/app/dagger_modules/commandcenter.py` (lines 134-136, 167)
+### 5. ✅ FIXED: Frontend/Backend Build Process
+**Status**: Fixed 2025-11-02
+**File**: `hub/backend/app/dagger_modules/commandcenter.py`
 
 **Problem**:
-- Backend: Tries to `pip install` packages then run uvicorn with `.with_exec()`
-- Frontend: Tries to globally install vite/react then run `npm run dev`
-- This approach won't work because:
-  - No package.json or requirements.txt being used
-  - Can't run `npm run dev` without project dependencies
-  - Mount happens AFTER install, so can't access project files during install
+- Backend: Tried to `pip install` packages globally BEFORE mounting project directory
+- Frontend: Tried to globally install vite/react BEFORE mounting project directory
+- This approach didn't work because:
+  - No access to requirements.txt or package.json during install
+  - Can't run `npm run dev` without project dependencies installed
+  - Mount happened AFTER install, so couldn't access project files
 
-**Current Code**:
+**Old Code (broken)**:
 ```python
 # Backend
-.with_exec(["pip", "install", "fastapi", "uvicorn[standard]", ...])
-.with_mounted_directory("/workspace", project_dir)
+.with_exec(["pip", "install", "fastapi", "uvicorn[standard]", ...])  # No requirements.txt!
+.with_mounted_directory("/workspace", project_dir)  # Mount AFTER install
 .with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
 
 # Frontend
-.with_exec(["npm", "install", "-g", "vite", "react", "react-dom"])
+.with_exec(["npm", "install", "-g", "vite", "react", "react-dom"])  # Global install!
+.with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"])  # No package.json!
+```
+
+**New Code (working)**:
+
+Backend (lines 125-150):
+```python
+# Mount project directory FIRST
+project_dir = self.client.host().directory(self.config.project_path)
+
+.from_("python:3.11-slim")
+# Mount project directory BEFORE installing dependencies
+.with_mounted_directory("/workspace", project_dir)
+.with_workdir("/workspace/backend")
+# Install from requirements.txt in the mounted project
+.with_exec(["pip", "install", "-r", "requirements.txt"])
+.with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
+```
+
+Frontend (lines 159-181):
+```python
+# Mount project directory FIRST
+project_dir = self.client.host().directory(self.config.project_path)
+
+.from_("node:18-alpine")
+# Mount project directory BEFORE installing dependencies
+.with_mounted_directory("/workspace", project_dir)
+.with_workdir("/workspace/frontend")
+# Install from package.json in the mounted project
+.with_exec(["npm", "install"])
 .with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"])
 ```
 
-**Should Be**:
-```python
-# Backend
-.with_mounted_directory("/workspace", project_dir)
-.with_workdir("/workspace/backend")
-.with_exec(["pip", "install", "-r", "requirements.txt"])
-.with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
-
-# Frontend
-.with_mounted_directory("/workspace", project_dir)
-.with_workdir("/workspace/frontend")
-.with_exec(["npm", "install"])
-.with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0"])
-```
+**Key Changes**:
+1. Mount project directory BEFORE running install commands
+2. Set workdir to backend/frontend subdirectories
+3. Use project's requirements.txt and package.json instead of global installs
 
 ---
 
@@ -197,52 +241,56 @@ These tests pass but don't validate:
 
 ---
 
-## Recommendations
+## Status Update: 2025-11-02
 
-### Immediate Fixes Needed
+### ✅ All Critical Issues Fixed
 
-1. **Port Mapping** (Critical)
-   - Research Dagger SDK port forwarding API
-   - Implement host port → container port mapping
-   - Test with actual port conflicts
+1. **Port Mapping** (Critical) - ✅ FIXED
+   - Implemented using `Service.up(ports=[PortForward(...)])`
+   - All services now map custom ports correctly
+   - No more "address already in use" errors
 
-2. **Service Persistence** (Critical)
-   - Investigate proper service lifecycle management
-   - Consider exporting to Docker containers instead of Dagger engine
-   - Implement health checks and monitoring
+2. **Service Persistence** (Critical) - ✅ FIXED
+   - Store Service references in `self._services` dict
+   - Services persist as long as CommandCenterStack instance exists
+   - Verified with integration tests
 
-3. **Build Process** (High Priority)
-   - Fix backend/frontend builds to use project files
-   - Mount directory FIRST, then install dependencies
-   - Use requirements.txt and package.json
+3. **Build Process** (High Priority) - ✅ FIXED
+   - Mount project directory BEFORE installing dependencies
+   - Backend uses requirements.txt, frontend uses package.json
+   - Set workdir to backend/frontend subdirectories
 
-4. **Non-Root Execution** (Medium Priority)
-   - Research proper non-root container configuration
-   - May need custom Dockerfiles with proper user setup
-   - Can't just call .with_user() on standard images
+4. **Integration Testing** (High Priority) - ✅ COMPLETE
+   - Created 6 integration tests with real Dagger containers
+   - Created standalone test script for quick validation
+   - Tests verify port forwarding, persistence, and build process
 
-### Long-Term Solutions
+### ⏸️ Deferred Issues
 
-1. **Integration Testing**
-   - Add tests that actually start Dagger containers
-   - Test full stack startup end-to-end
-   - Validate port mapping and service persistence
+4. **Non-Root Execution** (Medium Priority) - DEFERRED
+   - `.with_user()` breaks container initialization
+   - Would require custom Dockerfiles with proper user setup
+   - Not critical for initial deployment
+   - Can be addressed in future iteration
 
-2. **Alternative Architecture**
-   - Consider using docker-compose via subprocess instead
-   - More mature, better documented, widely used
-   - Dagger may be too experimental for this use case
+5. **Resource Limits** (Low Priority) - DEFERRED
+   - `.with_resource_limit()` not available in dagger-io 0.19.4
+   - Not essential for development/testing
+   - Can be implemented when SDK supports it or via Docker export
 
-3. **Dagger Version Upgrade**
-   - Check if newer Dagger versions have:
-     - Resource limit APIs
-     - Better port forwarding
-     - Improved service management
+### Next Steps
+
+1. ✅ Verify fixes with integration tests
+2. ⏳ Update documentation (in progress)
+3. ⏳ Test full Hub orchestration flow
+4. ⏳ Commit fixes with detailed message
+5. ⏳ Update Phase A status in PROJECT.md
 
 ---
 
-## Files Modified This Session
+## Files Modified - 2025-11-02 Session
 
+### Previous Session (Issues Discovery)
 ```
 hub/backend/app/dagger_modules/commandcenter.py
 - Commented out all .with_resource_limit() calls (doesn't exist in SDK)
@@ -255,6 +303,33 @@ hub/backend/app/main.py
 
 hub/backend/data/hub.db
 - Deleted and recreated (schema mismatch: cc_path vs path column)
+```
+
+### Current Session (Fixes Implementation)
+```
+hub/backend/app/dagger_modules/commandcenter.py
+- Line 67: Added _services dict to __init__ (service persistence)
+- Lines 125-150: Fixed backend build (mount before install, use requirements.txt)
+- Lines 159-181: Fixed frontend build (mount before install, use package.json)
+- Lines 210-223: Implemented port forwarding in start()
+- Lines 225-231: Store service references to keep alive
+- Lines 493-508: Implemented port forwarding in restart_service()
+
+hub/backend/tests/integration/test_dagger_port_forwarding.py
+- NEW: 6 integration tests with real Dagger containers
+- Tests: port forwarding, service persistence, build process
+
+hub/backend/test_port_forwarding_standalone.py
+- NEW: Standalone test script (no pytest dependencies)
+- 3 focused tests for quick validation
+
+hub/PHASE_A_FIXES_2025-11-02.md
+- NEW: Comprehensive documentation of all fixes
+
+hub/PHASE_A_DAGGER_ISSUES.md
+- Updated issues #3, #4, #5 from "❌" to "✅ FIXED"
+- Added fix details with code examples
+- Added status update section
 ```
 
 ---

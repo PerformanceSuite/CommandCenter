@@ -2,8 +2,8 @@
 Test utilities and helper functions
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,12 +16,13 @@ from app.models.user import User
 from app.utils.crypto import hash_password
 
 
-async def create_test_repository(db: AsyncSession, **kwargs) -> Repository:
+async def create_test_repository(db: AsyncSession, project_id: int = 1, **kwargs) -> Repository:
     """
     Create a test repository in the database
 
     Args:
         db: Database session
+        project_id: Project ID for isolation (default: 1)
         **kwargs: Repository attributes to override
 
     Returns:
@@ -40,6 +41,7 @@ async def create_test_repository(db: AsyncSession, **kwargs) -> Repository:
         "stars": 100,
         "forks": 10,
         "language": "Python",
+        "project_id": project_id,
     }
     defaults.update(kwargs)
 
@@ -50,23 +52,29 @@ async def create_test_repository(db: AsyncSession, **kwargs) -> Repository:
     return repository
 
 
-async def create_test_technology(db: AsyncSession, **kwargs) -> Technology:
+async def create_test_technology(db: AsyncSession, project_id: int = 1, **kwargs) -> Technology:
     """
     Create a test technology in the database
 
     Args:
         db: Database session
+        project_id: Project ID for isolation (default: 1)
         **kwargs: Technology attributes to override
 
     Returns:
         Created technology
     """
+    from app.models import TechnologyDomain, TechnologyStatus
+
     defaults = {
-        "name": "Python",
-        "category": "language",
-        "ring": "adopt",
+        "title": "Python",
+        "vendor": "Python Software Foundation",
+        "domain": TechnologyDomain.AI_ML,
+        "status": TechnologyStatus.INTEGRATED,
         "description": "A high-level programming language",
-        "moved": 0,
+        "relevance_score": 90,
+        "priority": 5,
+        "project_id": project_id,
     }
     defaults.update(kwargs)
 

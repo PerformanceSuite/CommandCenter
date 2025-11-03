@@ -57,7 +57,8 @@ jobs:
         run: black --check --diff app/
 
       # Linting - catches common errors quickly
-      # TODO: Re-enable after fixing Phase B linting errors (see PR #72)
+      # NOTE: Non-blocking to avoid CI failures during incremental cleanup
+      # Known issues: E501 (line length), F821 (TYPE_CHECKING forward refs)
       - name: Run Flake8
         working-directory: backend
         run: |

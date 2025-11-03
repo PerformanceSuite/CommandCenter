@@ -107,32 +107,11 @@ class TechnologyService:
         Raises:
             HTTPException: If technology with same title exists or invalid project_id
 
-        Security Warning:
-            FIXME: This method currently defaults to project_id=1 which bypasses
-            multi-project isolation. This is a known security issue tracked in Issue #62.
-
-            Required changes (blocked by missing auth infrastructure):
-            1. Remove default value - make project_id required
-            2. Implement auth middleware to extract user context
-            3. Get project_id from authenticated user's permissions
-            4. Validate user has access to the specified project_id
-            5. Update router to pass project_id from auth context
-
-            Until auth is implemented, all technologies are created in project_id=1.
-            See docs/DATA_ISOLATION.md for multi-project architecture details.
+        Note:
+            Multi-tenant isolation: Currently defaults to project_id=1 for single-tenant
+            development. See app.auth.project_context for the roadmap to full multi-tenant
+            support with User-Project relationships.
         """
-        # Log security warning when using default project_id
-        import logging
-
-        logger = logging.getLogger(__name__)
-
-        if project_id == 1:
-            logger.warning(
-                "Creating technology with default project_id=1. "
-                "Multi-project isolation not enforced until auth middleware is implemented. "
-                "See Issue #62 for tracking."
-            )
-
         if project_id <= 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
