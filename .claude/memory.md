@@ -1,6 +1,46 @@
 # CommandCenter Project Memory
 
-## Session: 2025-11-02 16:53 (LATEST)
+## Session: 2025-11-02 18:30 (LATEST)
+**Branch**: main
+**Duration**: ~3 hours
+
+### Work Completed:
+- ✅ **Fixed Hub Folder Browser** - Resolved folder picker "Not Found" issue
+  - Updated Vite proxy configuration (port 9001 → 9002)
+  - Fixed `VITE_API_URL` environment variable
+  - Installed `asyncpg` dependency
+  - Configured correct SQLite database path
+- ✅ **Cleaned Docker Containers** - Removed 11 old CommandCenter containers causing restart loops
+- ✅ **Investigated Dagger Performance** - Documented severe performance issues with Hub orchestration
+  - Dagger takes 20-30+ minutes for first project start (blocking)
+  - Created detailed issue document: `hub/ISSUE_DAGGER_PERFORMANCE.md`
+  - Proposed solutions: background tasks, WebSocket progress, hybrid docker-compose approach
+
+### Key Decisions:
+- Hub frontend requires `VITE_API_URL=http://localhost:9002` environment variable
+- Hub backend uses SQLite (`DATABASE_URL="sqlite+aiosqlite:///./data/hub.db"`)
+- Dagger orchestration is too slow for production use - recommend docker-compose alternative
+
+### Blockers/Issues:
+- **Dagger Performance**: Hub's synchronous Dagger orchestration blocks API for 20-30 minutes
+- **No Background Processing**: All orchestration runs in request cycle, no async tasks
+- **Missing Progress Feedback**: Users have no visibility into long-running operations
+
+### Next Steps:
+1. **High Priority**: File GitHub issue from `ISSUE_DAGGER_PERFORMANCE.md`
+2. **Critical**: Implement background task system (Celery) for async Dagger operations
+3. **Important**: Add progress updates via WebSocket or polling
+4. **Consider**: Switch to docker-compose for faster, more reliable orchestration
+
+### Files Created/Modified:
+- `hub/frontend/vite.config.ts` - Fixed proxy port
+- `hub/backend/data/hub.db` - SQLite database
+- `hub/ISSUE_DAGGER_PERFORMANCE.md` - Performance issue documentation
+- `hub/NEXT_SESSION_NOTES.md` - Session handoff notes
+
+---
+
+## Session: 2025-11-02 16:53
 **Branch**: main
 **Duration**: ~45 minutes
 **Context**: Phase A Dagger Fixes - Port Forwarding, Service Persistence, Build Process
