@@ -52,11 +52,20 @@ vi.mock('../../hooks/useTaskStatus', () => ({
   }),
 }));
 
+import { useTaskStatus } from '../../hooks/useTaskStatus';
+
 describe('ProjectCard', () => {
   const mockOnDelete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Reset to default mock return value
+    (useTaskStatus as any).mockReturnValue({
+      status: null,
+      isPolling: false,
+      error: null,
+    });
   });
 
   it('renders project information correctly', () => {
@@ -250,8 +259,7 @@ describe('ProjectCard', () => {
   });
 
   it('disables start button while task is polling', () => {
-    const { useTaskStatus } = require('../../hooks/useTaskStatus');
-    useTaskStatus.mockReturnValue({
+    (useTaskStatus as any).mockReturnValue({
       status: { state: 'BUILDING', progress: 50, status: 'Building...' },
       isPolling: true,
       error: null,
@@ -265,8 +273,7 @@ describe('ProjectCard', () => {
   });
 
   it('shows progress bar when task is running', () => {
-    const { useTaskStatus } = require('../../hooks/useTaskStatus');
-    useTaskStatus.mockReturnValue({
+    (useTaskStatus as any).mockReturnValue({
       status: {
         state: 'BUILDING',
         progress: 60,
@@ -289,8 +296,7 @@ describe('ProjectCard', () => {
   });
 
   it('does not show progress bar when no task is running', () => {
-    const { useTaskStatus } = require('../../hooks/useTaskStatus');
-    useTaskStatus.mockReturnValue({
+    (useTaskStatus as any).mockReturnValue({
       status: null,
       isPolling: false,
       error: null,
