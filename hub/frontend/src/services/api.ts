@@ -6,6 +6,8 @@ import type {
   ProjectStats,
   FilesystemBrowseResponse,
   OperationResponse,
+  TaskResponse,
+  TaskStatus,
 } from '../types';
 
 const API_BASE = '/api';
@@ -90,6 +92,31 @@ export const filesystemApi = {
   },
 };
 
+// Task API (Background Operations)
+export const tasksApi = {
+  // Start project in background
+  start: (id: number): Promise<TaskResponse> =>
+    fetchJSON(`${API_BASE}/orchestration/${id}/start`, {
+      method: 'POST',
+    }),
+
+  // Stop project in background
+  stop: (id: number): Promise<TaskResponse> =>
+    fetchJSON(`${API_BASE}/orchestration/${id}/stop`, {
+      method: 'POST',
+    }),
+
+  // Restart service in background
+  restart: (id: number, serviceName: string): Promise<TaskResponse> =>
+    fetchJSON(`${API_BASE}/orchestration/${id}/restart/${serviceName}`, {
+      method: 'POST',
+    }),
+
+  // Get task status
+  getStatus: (taskId: string): Promise<TaskStatus> =>
+    fetchJSON(`${API_BASE}/task-status/${taskId}`),
+};
+
 // Convenience exports
 export const deleteProject = (id: number, deleteFiles: boolean = false) =>
   projectsApi.delete(id, deleteFiles);
@@ -99,6 +126,7 @@ export const api = {
   projects: projectsApi,
   orchestration: orchestrationApi,
   filesystem: filesystemApi,
+  tasks: tasksApi,
 };
 
 export default api;

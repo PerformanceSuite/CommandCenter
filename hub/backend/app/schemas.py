@@ -94,3 +94,25 @@ class OrchestrationResponse(BaseModel):
     message: str
     project_id: int
     status: Optional[str] = None
+
+
+# Task Schemas for Background Operations
+
+class TaskResponse(BaseModel):
+    """Response when submitting a background task"""
+
+    task_id: str = Field(..., description="Celery task ID for polling status")
+    status: str = Field(..., description="Initial status (pending)")
+    message: str = Field(..., description="Human-readable message")
+
+
+class TaskStatusResponse(BaseModel):
+    """Response when polling task status"""
+
+    task_id: str = Field(..., description="Celery task ID")
+    state: str = Field(..., description="Celery task state (PENDING, BUILDING, SUCCESS, etc)")
+    ready: bool = Field(..., description="True if task is complete")
+    status: str = Field(..., description="Human-readable status message")
+    progress: int = Field(..., description="Progress percentage (0-100)")
+    result: Optional[dict] = Field(None, description="Task result if successful")
+    error: Optional[str] = Field(None, description="Error message if failed")

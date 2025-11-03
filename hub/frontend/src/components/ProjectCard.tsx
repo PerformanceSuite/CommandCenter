@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import type { Project } from '../types';
 import { deleteProject, api } from '../services/api';
+import { useTaskStatus } from '../hooks/useTaskStatus';
+import { ProgressBar } from './common/ProgressBar';
 
 interface ProjectCardProps {
   project: Project;
@@ -11,6 +13,20 @@ interface ProjectCardProps {
 function ProjectCard({ project, onDelete }: ProjectCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [taskId, setTaskId] = useState<string | null>(null);
+
+  // Use the task status hook for polling
+  const { status, isPolling } = useTaskStatus(taskId);
+
+  // Reset task when complete and reload page
+  useEffect(() => {
+    if (status?.ready && status.state === 'SUCCESS') {
+      setTimeout(() => {
+        setTaskId(null);
+        window.location.reload();
+      }, 2000);
+    }
+  }, [status?.ready, status?.state]);
 
   const handleOpen = () => {
     // Add cache-busting query parameter to prevent browser from serving stale cached content
@@ -86,6 +102,17 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
         </div>
       </div>
 
+      {/* Progress Bar - shown when background task is running */}
+      {isPolling && status && (
+        <div className="col-span-full">
+          <ProgressBar
+            value={status.progress}
+            label={status.status}
+            status={status.state === 'FAILURE' ? 'error' : 'running'}
+          />
+        </div>
+      )}
+
       {/* Actions */}
       {!showConfirm ? (
         <>
@@ -94,17 +121,18 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
               onClick={async () => {
                 try {
                   toast.loading(`Starting ${project.name}...`, { id: `start-${project.id}` });
-                  await api.orchestration.start(project.id);
-                  toast.success(`${project.name} started!`, { id: `start-${project.id}` });
-                  setTimeout(() => window.location.reload(), 1000);
+                  const response = await api.tasks.start(project.id);
+                  setTaskId(response.task_id);
+                  toast.success(`${project.name} start initiated`, { id: `start-${project.id}` });
                 } catch (error) {
                   toast.error(`Failed to start ${project.name}`, { id: `start-${project.id}` });
                 }
               }}
-              className="px-6 py-2 bg-green-600 text-white border border-green-500 rounded-lg hover:bg-green-700 hover:border-green-600 transition-all font-semibold"
+              disabled={isPolling}
+              className="px-6 py-2 bg-green-600 text-white border border-green-500 rounded-lg hover:bg-green-700 hover:border-green-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               title="Start containers"
             >
-              Start
+              {isPolling ? 'Starting...' : 'Start'}
             </button>
           ) : project.status === 'running' ? (
             <>
@@ -119,17 +147,18 @@ function ProjectCard({ project, onDelete }: ProjectCardProps) {
                 onClick={async () => {
                   try {
                     toast.loading(`Stopping ${project.name}...`, { id: `stop-${project.id}` });
-                    await api.orchestration.stop(project.id);
-                    toast.success(`${project.name} stopped`, { id: `stop-${project.id}` });
-                    setTimeout(() => window.location.reload(), 1000);
+                    const response = await api.tasks.stop(project.id);
+                    setTaskId(response.task_id);
+                    toast.success(`${project.name} stop initiated`, { id: `stop-${project.id}` });
                   } catch (error) {
                     toast.error(`Failed to stop ${project.name}`, { id: `stop-${project.id}` });
                   }
                 }}
-                className="px-4 py-2 bg-yellow-600/20 text-yellow-400 border border-yellow-600/30 rounded-lg hover:bg-yellow-600/30 hover:border-yellow-600/50 transition-all"
+                disabled={isPolling}
+                className="px-4 py-2 bg-yellow-600/20 text-yellow-400 border border-yellow-600/30 rounded-lg hover:bg-yellow-600/30 hover:border-yellow-600/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Stop containers"
               >
-                Stop
+                {isPolling ? 'Stopping...' : 'Stop'}
               </button>
             </>
           ) : (
