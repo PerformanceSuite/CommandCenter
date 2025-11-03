@@ -12,131 +12,128 @@ Multi-project management interface for CommandCenter instances.
 - **Folder Browser**: Select project directories visually
 - **Status Tracking**: Real-time project status (stopped/starting/running/error)
 
+## Architecture
+
+### Technology Stack
+
+**Backend:**
+- FastAPI (API server)
+- Celery (background tasks)
+- Redis (message broker)
+- SQLite (project registry)
+- Dagger (container orchestration)
+
+**Frontend:**
+- React 18 + TypeScript
+- Vite (build tool)
+- TailwindCSS (styling)
+- Vitest (testing)
+
+### Background Task System
+
+Hub uses Celery for asynchronous project operations:
+
+```
+User → Hub API → Celery Queue → Worker → Dagger → Docker
+         ↓           ↓              ↓
+      Task ID    Redis Store    Progress Updates
+```
+
+**Benefits:**
+- API responds in < 100ms (just queues task)
+- No 20-30 min blocking during first start
+- Real-time progress updates every 2 seconds
+- Concurrent operations on multiple projects
+
+**Monitoring:**
+- Flower dashboard at http://localhost:5555
+- View active tasks, worker status, performance metrics
+
 ## Quick Start
 
+### Docker (Production)
+
 ```bash
-# Start Hub
-cd hub
-docker-compose up -d
+# Start all services
+docker-compose -f docker-compose.monitoring.yml up -d
 
 # Access Hub
 open http://localhost:9000
+
+# Monitor tasks
+open http://localhost:5555
 ```
 
-## Architecture
+### Development
 
-```
-Hub (Port 9000/9001)
-├── Dashboard - List all projects
-├── Add Project - Browse to existing project folder
-├── Start/Stop - Control CommandCenter instances
-└── Status - Monitor health of all instances
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
 
-Managed CommandCenter Instances:
-├── Performia        (Port 8000, 3000)
-├── AI Research      (Port 8010, 3010)
-└── E-commerce       (Port 8020, 3020)
-```
+## Documentation
 
-## Features
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
+- **[MONITORING.md](MONITORING.md)** - Celery Flower monitoring
+- **[TESTING.md](TESTING.md)** - Running tests
+- **[Design Doc](../docs/plans/2025-11-02-hub-background-tasks-design.md)** - Background tasks architecture
 
-- ✅ **Add Existing Projects** - Browse filesystem to select project folder
-- ✅ **Auto-Configuration** - Generates `.env` with unique ports
-- ✅ **Docker Management** - Start/stop CommandCenter via docker-compose
-- ✅ **Health Monitoring** - Real-time status of all instances
-- ✅ **Port Management** - Auto-assigns non-conflicting ports
-- ✅ **VIZTRTR Design** - Beautiful dark slate UI
+## Testing
 
-## Configuration
-
-### Environment Variables
-
-Hub backend can be configured with the following environment variables:
-
-**PROJECTS_ROOT** (optional)
-- Default: `~/Projects` (expands to user's home directory)
-- Purpose: Root directory where projects are located
-- Example: `PROJECTS_ROOT=/Users/yourname/workspace`
-- Used for Docker volume mount path translation
-
-**Database Configuration**
-- `DATABASE_URL` - SQLite database path (default: `sqlite:///./hub.db`)
-
-**Port Configuration**
-- Backend runs on port `9001` (configurable in `docker-compose.yml`)
-- Frontend runs on port `9000` (configurable in `docker-compose.yml`)
-- Managed projects auto-assign ports starting from `8000/3000` incrementing by 10
-
-### Docker Compose Services
-
-Hub starts only essential services for managed projects to avoid port conflicts:
-- `backend` - FastAPI server
-- `frontend` - React app
-- `postgres` - Database
-- `redis` - Cache/queue
-
-Optional services (excluded by default):
-- `flower` - Celery monitoring (port 5555)
-- `prometheus` - Metrics collection (port 9090)
-- `celery` - Background worker
-
-To include optional services, modify `ESSENTIAL_SERVICES` in `hub/backend/app/services/orchestration_service.py`.
-
-## Development
-
-### Backend (FastAPI)
 ```bash
-cd hub/backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 9001
+# Backend unit tests
+cd backend
+pytest tests/unit/ -v
+
+# Backend integration tests (requires Redis)
+docker run -d -p 6379:6379 redis:7-alpine
+pytest tests/integration/ -v -m "not slow"
+
+# Frontend tests
+cd frontend
+npm test
+
+# End-to-end test
+./scripts/e2e-test.sh
 ```
 
-### Frontend (React + Vite)
+## Monitoring
+
+**Flower Dashboard** (http://localhost:5555):
+- Real-time task monitoring
+- Worker status and performance
+- Task history and statistics
+
+**Key Metrics:**
+- Task success rate: target > 95%
+- Average task duration: 10-30 min (first start), < 5 min (subsequent)
+- Queue depth: target < 10 tasks
+
+## Troubleshooting
+
+**Tasks not running:**
 ```bash
-cd hub/frontend
-npm install
-npm run dev  # Port 9000
+# Check worker logs
+docker logs hub-celery-worker
+
+# Check Redis
+docker exec hub-redis redis-cli ping
 ```
 
-## Usage
+**Slow tasks:**
+- First Dagger build: 20-30 min (normal)
+- Subsequent builds: 2-5 min (cached)
+- Check Flower for task duration
 
-### 1. Add a Project
+**Worker crashes:**
+```bash
+# Restart worker
+docker-compose -f docker-compose.monitoring.yml restart celery-worker
+```
 
-1. Click "+ Add Project" on Hub dashboard
-2. Browse to your project folder (e.g., `/Users/you/performia/`)
-3. Hub creates `commandcenter/` subdirectory
-4. Automatically clones CC, configures ports, starts services
+See [DEPLOYMENT.md](DEPLOYMENT.md#troubleshooting) for more details.
 
-### 2. Manage Projects
+## Contributing
 
-- **Start** - Spins up CommandCenter instance
-- **Stop** - Gracefully stops all services
-- **Open** - Opens CommandCenter UI in browser
-- **View Logs** - See docker-compose logs
+See [../CONTRIBUTING.md](../CONTRIBUTING.md)
 
-### 3. View Status
+## License
 
-Each project card shows:
-- Running status (green dot = running)
-- Repository count
-- Technology count
-- Health status
-
-## Tech Stack
-
-- **Backend**: FastAPI, SQLAlchemy, Docker SDK
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
-- **Database**: SQLite (project registry)
-- **Orchestration**: Docker Compose
-
-## Design System
-
-Uses VIZTRTR color palette:
-- Dark slate backgrounds (#0f172a, #1e293b)
-- Blue primary buttons (#3b82f6)
-- Status colors (green, yellow, red)
-- Glow effects for active states
-
----
-
-**Built for the PerformanceSuite ecosystem**
+See [../LICENSE](../LICENSE)
