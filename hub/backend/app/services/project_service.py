@@ -12,6 +12,8 @@ from sqlalchemy import select, func, case
 from app.models import Project
 from app.schemas import ProjectCreate, ProjectUpdate, ProjectStats
 from app.services.port_service import PortService
+from app.events.service import EventService
+from app.config import get_nats_url
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +117,25 @@ class ProjectService:
         await self.db.commit()
         await self.db.refresh(project)
 
+        # Emit project.created event
+        try:
+            event_service = EventService(nats_url=get_nats_url(), db_session=self.db)
+            await event_service.connect()
+            await event_service.publish(
+                subject=f"hub.{event_service.hub_id}.project.created",
+                payload={
+                    "project_id": project.id,
+                    "project_name": project.name,
+                    "project_slug": project.slug,
+                    "project_path": project.path,
+                    "backend_port": project.backend_port,
+                    "frontend_port": project.frontend_port,
+                }
+            )
+            await event_service.disconnect()
+        except Exception as e:
+            logger.warning(f"Failed to publish project.created event: {e}")
+
         return project
 
     async def update_project(
@@ -172,6 +193,23 @@ class ProjectService:
                 await orchestration_service.stop_project(project_id)
             except Exception as e:
                 logger.warning(f"Failed to stop project {project.name} during deletion: {e}")
+
+        # Emit project.deleted event
+        try:
+            event_service = EventService(nats_url=get_nats_url(), db_session=self.db)
+            await event_service.connect()
+            await event_service.publish(
+                subject=f"hub.{event_service.hub_id}.project.deleted",
+                payload={
+                    "project_id": project.id,
+                    "project_name": project.name,
+                    "project_slug": project.slug,
+                    "deleted_files": delete_files,
+                }
+            )
+            await event_service.disconnect()
+        except Exception as e:
+            logger.warning(f"Failed to publish project.deleted event: {e}")
 
         # Delete from database
         await self.db.delete(project)

@@ -11,6 +11,8 @@ from sqlalchemy import select
 
 from app.models import Project
 from app.dagger_modules.commandcenter import CommandCenterStack, CommandCenterConfig
+from app.events.service import EventService
+from app.config import get_nats_url
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +104,23 @@ class OrchestrationService:
             project.last_started = datetime.now(timezone.utc)
             await self.db.commit()
 
+            # Emit project.started event
+            try:
+                event_service = EventService(nats_url=get_nats_url(), db_session=self.db)
+                await event_service.connect()
+                await event_service.publish(
+                    subject=f"hub.{event_service.hub_id}.project.started",
+                    payload={
+                        "project_id": project.id,
+                        "project_name": project.name,
+                        "backend_port": project.backend_port,
+                        "frontend_port": project.frontend_port,
+                    }
+                )
+                await event_service.disconnect()
+            except Exception as e:
+                logger.warning(f"Failed to publish project.started event: {e}")
+
             return {
                 "success": True,
                 "message": "Project started successfully via Dagger",
@@ -140,6 +159,21 @@ class OrchestrationService:
             project.status = "stopped"
             project.last_stopped = datetime.now(timezone.utc)
             await self.db.commit()
+
+            # Emit project.stopped event
+            try:
+                event_service = EventService(nats_url=get_nats_url(), db_session=self.db)
+                await event_service.connect()
+                await event_service.publish(
+                    subject=f"hub.{event_service.hub_id}.project.stopped",
+                    payload={
+                        "project_id": project.id,
+                        "project_name": project.name,
+                    }
+                )
+                await event_service.disconnect()
+            except Exception as e:
+                logger.warning(f"Failed to publish project.stopped event: {e}")
 
             return {
                 "success": True,
