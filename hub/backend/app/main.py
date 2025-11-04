@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from app.database import engine, Base
 from app.routers import projects, orchestration, filesystem, logs, tasks, events, health
+from app.correlation.middleware import correlation_middleware
 
 
 @asynccontextmanager
@@ -37,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add correlation middleware (before route handlers)
+app.middleware("http")(correlation_middleware)
 
 # Include routers
 app.include_router(health.router)  # Health check endpoints (no prefix)

@@ -2,8 +2,8 @@
 import pytest
 import asyncio
 import time
-from celery.result import AsyncResult
-from app.celery_app import celery_app
+# from celery.result import AsyncResult
+# from app.celery_app import celery_app
 from app.database import AsyncSessionLocal, engine, Base
 from app.models import Project
 
