@@ -1,6 +1,46 @@
 # CommandCenter Project Memory
 
-## Session: 2025-11-03 14:32 (LATEST)
+## Session: 2025-11-03 15:52 (LATEST)
+**Duration**: ~45 minutes
+**Branch**: main
+
+### Work Completed:
+- ✅ **Repository Cleanup**:
+  - Removed untracked backup directories
+  - Archived Phase A tracking docs to hub/docs/archive/
+  - Moved 5 session scripts from root to scripts/
+- ✅ **Hub Prototype Analysis**:
+  - Discovered hub-prototype/ (TypeScript reference implementation)
+  - Extracted Phase 2-3 bundle (event correlation system)
+  - Created comprehensive analysis: docs/HUB_PROTOTYPE_ANALYSIS.md
+- ⚠️ **Strategic Pause**:
+  - Identified 13+ phase documents requiring review
+  - Architectural mismatch: TypeScript prototype vs Python Hub
+  - User requested session end for full context gathering
+
+### Key Findings:
+- hub-prototype: TypeScript tool registry + event bus (Fastify + Next.js)
+- Python Hub: Multi-project manager (FastAPI + Dagger SDK)
+- Phase 2-3: Event correlation (correlationId, origin, EventStreamer)
+- Phases 2-12 blueprints exist but integration strategy unclear
+
+### Critical Questions (Unanswered):
+1. Are prototype and Hub meant to integrate or separate?
+2. Do Phases 2-12 assume TypeScript or Python foundation?
+3. Event system: Pure Python or hybrid approach?
+4. Relationship between "tools" (prototype) and "projects" (Hub)?
+
+### Next Session Priorities:
+1. **MUST READ FIRST**: All phase documents in hub-prototype/
+   - Phase_2&3_prompt.md, Phase_4-6_prompt.md
+   - Extract Phase 4-6 bundles
+   - Review Phases 7-12 blueprints
+2. Answer architectural vision questions
+3. Start fresh brainstorming with full context
+
+---
+
+## Session: 2025-11-03 14:32
 **Duration**: ~1 hour
 **Branch**: feature/hub-background-tasks (worktree: .worktrees/hub-background-tasks)
 
@@ -14,25 +54,11 @@
 - **Commit**: 7a561b5 - feat(hub): Phase 2 - Background task orchestration complete
 - **Files**: 11 changed (+1069/-180 lines)
 
-### Key Decisions:
-- Used `bind=True` on Celery tasks for progress tracking via `self.update_state()`
-- Implemented `_run_async()` helper to bridge async OrchestrationService with sync Celery workers
-- Conditional `update_state` calls (check for `self and hasattr`) to support both unit tests and production
-- Custom Celery states: BUILDING, RUNNING, STOPPING, RESTARTING, FETCHING
-
-### Testing Results:
-- Unit tests: 6/10 passing (schemas + celery_app config ✅)
-- Task execution tests require real Celery worker (not direct invocation)
-- Integration verified: Celery worker discovers 4 tasks, connects to Redis ✅
-- All imports successful, code compiles without errors ✅
-
 ### Next Steps:
 1. **Phase 3: Frontend Updates** (READY TO START)
    - Implement `useTaskStatus` polling hook
    - Update ProjectCard UI with progress bars
-   - Add error handling and loading states
 2. Test end-to-end flow with real backend + frontend
-3. Integration tests with actual Celery worker
 
 ---
 
