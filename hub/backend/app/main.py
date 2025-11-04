@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from app.database import engine, Base
 from app.routers import projects, orchestration, filesystem, logs, tasks, events, health
 from app.correlation.middleware import correlation_middleware
+from app.streaming.sse import router as sse_router
 
 
 @asynccontextmanager
@@ -44,6 +45,7 @@ app.middleware("http")(correlation_middleware)
 
 # Include routers
 app.include_router(health.router)  # Health check endpoints (no prefix)
+app.include_router(sse_router)  # SSE streaming endpoints (must be before events router)
 app.include_router(events.router)  # Event endpoints
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
