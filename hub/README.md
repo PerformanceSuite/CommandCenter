@@ -49,6 +49,29 @@ User → Hub API → Celery Queue → Worker → Dagger → Docker
 - Flower dashboard at http://localhost:5555
 - View active tasks, worker status, performance metrics
 
+## Event System
+
+Hub uses an event-driven architecture with NATS message bus. All state changes are captured as events for observability, integration, and replay.
+
+**Quick Start:**
+```bash
+# Stream events in real-time
+websocat ws://localhost:9001/api/events/stream?subject=hub.>
+
+# Query historical events
+curl http://localhost:9001/api/events?limit=10
+
+# Check NATS health
+curl http://localhost:9001/health/nats
+```
+
+**Documentation:** See `docs/EVENT_SYSTEM.md` for full details.
+
+**Endpoints:**
+- `POST /api/events` - Publish event
+- `GET /api/events` - Query events
+- `WS /api/events/stream` - Real-time stream
+
 ## Quick Start
 
 ### Docker (Production)
