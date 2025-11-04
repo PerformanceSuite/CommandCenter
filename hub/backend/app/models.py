@@ -1,40 +1,11 @@
 """
-Database models for Hub
+Database models for Hub - DEPRECATED
+
+This file is maintained for backward compatibility.
+Import from app.models instead.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from sqlalchemy.sql import func
-from app.database import Base
+# Import and re-export from new models package
+from app.models import Base, Project, Event
 
-
-class Project(Base):
-    """CommandCenter project instance"""
-
-    __tablename__ = "projects"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False, index=True)
-    slug = Column(String, unique=True, nullable=False, index=True)
-    path = Column(String, nullable=False)  # Full path to project folder
-
-    # Configuration (Dagger handles orchestration, no compose_project_name needed)
-    backend_port = Column(Integer, unique=True, nullable=False)
-    frontend_port = Column(Integer, unique=True, nullable=False)
-    postgres_port = Column(Integer, unique=True, nullable=False)
-    redis_port = Column(Integer, unique=True, nullable=False)
-
-    # Status
-    status = Column(String, default="stopped")  # creating, running, stopped, error, starting, stopping
-    health = Column(String, default="unknown")  # healthy, unhealthy, unknown
-    is_configured = Column(Boolean, default=False)
-
-    # Stats (cached from CC API)
-    repo_count = Column(Integer, default=0)
-    tech_count = Column(Integer, default=0)
-    task_count = Column(Integer, default=0)
-
-    # Timestamps
-    last_started = Column(DateTime(timezone=True), nullable=True)
-    last_stopped = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+__all__ = ["Base", "Project", "Event"]
