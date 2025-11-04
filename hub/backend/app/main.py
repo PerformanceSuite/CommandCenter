@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import engine, Base
-from app.routers import projects, orchestration, filesystem, logs, tasks
+from app.routers import projects, orchestration, filesystem, logs, tasks, events
 
 
 @asynccontextmanager
@@ -39,6 +39,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(events.router)  # Event endpoints
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")
