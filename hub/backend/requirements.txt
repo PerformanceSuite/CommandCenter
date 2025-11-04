@@ -14,3 +14,9 @@ opentelemetry-exporter-otlp-proto-grpc>=1.38.0
 celery==5.3.4
 redis==5.0.1
 flower==2.0.1
+
+# CLI tools
+click>=8.1.7
+dateparser>=1.2.0
+rich>=13.7.0
+pytest>=7.4.0
