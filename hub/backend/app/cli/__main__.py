@@ -7,6 +7,7 @@ Usage:
 """
 import click
 from app.cli import __version__
+from app.cli.commands import query
 
 
 @click.group()
@@ -20,7 +21,8 @@ def cli(ctx):
     ctx.ensure_object(dict)
 
 
-# Subcommands will be added in subsequent tasks
+# Register subcommands
+cli.add_command(query)
 
 
 if __name__ == '__main__':
