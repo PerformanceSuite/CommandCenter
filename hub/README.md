@@ -72,6 +72,23 @@ curl http://localhost:9001/health/nats
 - `GET /api/events` - Query events
 - `WS /api/events/stream` - Real-time stream
 
+## CLI Tools
+
+**Query and monitor events:**
+
+```bash
+# Install CLI
+cd backend && pip install -e .
+
+# Query events
+hub query --subject "hub.test.*" --since "1h"
+
+# Stream live events
+hub follow --subject "hub.>"
+```
+
+See [CLI Usage Guide](docs/CLI_USAGE.md) for complete documentation.
+
 ## Quick Start
 
 ### Docker (Production)
