@@ -1,5 +1,6 @@
 """Database models for Hub backend."""
-from app.models.event import Event, Base
+from app.database import Base
+from app.models.event import Event
 from app.models.project import Project
 
-__all__ = ["Event", "Base", "Project"]
+__all__ = ["Base", "Event", "Project"]

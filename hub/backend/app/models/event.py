@@ -1,10 +1,12 @@
 """Event model for event sourcing and audit trail."""
 from datetime import datetime, timezone
+from typing import Any, Optional
 from uuid import UUID, uuid4
 from sqlalchemy import Column, String, JSON, DateTime, Index, TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.engine import Dialect
+
+from app.database import Base
 
 
 class GUID(TypeDecorator):
@@ -16,13 +18,13 @@ class GUID(TypeDecorator):
     impl = CHAR
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect: Dialect) -> Any:
         if dialect.name == 'postgresql':
             return dialect.type_descriptor(PG_UUID(as_uuid=True))
         else:
             return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: Optional[UUID], dialect: Dialect) -> Optional[str]:
         if value is None:
             return value
         elif dialect.name == 'postgresql':
@@ -33,7 +35,7 @@ class GUID(TypeDecorator):
             else:
                 return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Optional[str], dialect: Dialect) -> Optional[UUID]:
         if value is None:
             return value
         else:
@@ -41,11 +43,6 @@ class GUID(TypeDecorator):
                 return value
             else:
                 return UUID(value) if value else None
-
-
-class Base(AsyncAttrs, DeclarativeBase):
-    """Base class for async SQLAlchemy models."""
-    pass
 
 
 class Event(Base):

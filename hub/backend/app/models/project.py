@@ -1,7 +1,7 @@
 """Project model for Hub."""
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.sql import func
-from app.models.event import Base
+from app.database import Base
 
 
 class Project(Base):
