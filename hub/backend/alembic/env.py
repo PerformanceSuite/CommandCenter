@@ -22,6 +22,21 @@ Base = declarative_base()
 
 # Now we need to recreate the model definition here for migrations
 # Since we can't import from app.models due to async engine creation
+#
+# TECHNICAL DEBT: Model definitions duplicated from app/models.py
+# This duplication exists because:
+# 1. app.database creates an async engine which conflicts with Alembic's sync engine
+# 2. Alembic needs access to model metadata for autogenerate to work
+# 3. Importing app.models triggers app.database import, causing async/sync conflict
+#
+# The duplicated models are:
+# - GUID (custom TypeDecorator for UUID handling)
+# - Project (from app/models/project.py)
+# - Event (from app/models/event.py)
+#
+# IMPORTANT: When modifying models in app/models/, these definitions must be
+# updated manually to match. Future improvements could use a shared base or
+# refactor database.py to avoid async engine creation on import.
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, Index, TypeDecorator, CHAR
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
