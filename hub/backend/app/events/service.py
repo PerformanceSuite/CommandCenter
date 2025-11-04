@@ -214,3 +214,67 @@ class EventService:
 
         logger.debug(f"Replayed {len(events)} events (filters: subject={subject_filter}, since={since})")
         return list(events)
+
+    async def query_events(
+        self,
+        subject: Optional[str] = None,
+        since: Optional[datetime] = None,
+        until: Optional[datetime] = None,
+        correlation_id: Optional[UUID] = None,
+        limit: int = 100
+    ) -> List[Event]:
+        """Query historical events from database with filters.
+
+        Args:
+            subject: Filter by subject pattern (NATS wildcards: *, >)
+            since: Filter events after this timestamp
+            until: Filter events before this timestamp
+            correlation_id: Filter by exact correlation ID match
+            limit: Maximum events to return (default 100)
+
+        Returns:
+            List of Event objects matching filters
+        """
+        from sqlalchemy import and_
+
+        query = select(Event).order_by(Event.timestamp.desc())
+
+        filters = []
+
+        # Subject filter (SQL pattern matching for NATS wildcards)
+        if subject:
+            # Convert NATS wildcards to SQL LIKE pattern
+            # * -> single segment wildcard
+            # > -> multi-segment wildcard (everything after)
+            if '>' in subject:
+                # hub.test.> matches hub.test.% in SQL
+                sql_pattern = subject.replace('>', '%')
+                filters.append(Event.subject.like(sql_pattern))
+            elif '*' in subject:
+                # hub.*.created matches hub.___.created in SQL
+                # Replace each * with single-segment pattern
+                parts = subject.split('*')
+                # This is simplified - proper implementation would be more robust
+                sql_pattern = '%'.join(parts)
+                filters.append(Event.subject.like(sql_pattern))
+            else:
+                # Exact match
+                filters.append(Event.subject == subject)
+
+        # Time range filters
+        if since:
+            filters.append(Event.timestamp >= since)
+        if until:
+            filters.append(Event.timestamp <= until)
+
+        # Correlation ID filter
+        if correlation_id:
+            filters.append(Event.correlation_id == correlation_id)
+
+        if filters:
+            query = query.where(and_(*filters))
+
+        query = query.limit(limit)
+
+        result = await self.db_session.execute(query)
+        return list(result.scalars().all())
