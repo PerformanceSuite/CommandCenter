@@ -37,14 +37,16 @@ async def lifespan(app: FastAPI):
 
     # Initialize and start Federation Service
     federation_service = None
+    federation_db_session = None
     if nats_bridge:
-        async with AsyncSessionLocal() as db_session:
-            federation_service = FederationService(
-                db_session=db_session,
-                nats_bridge=nats_bridge
-            )
-            await federation_service.start()
-            logger.info(f"✅ Federation started - Hub ID: {get_hub_id()}")
+        # Create long-lived session for federation service
+        federation_db_session = AsyncSessionLocal()
+        federation_service = FederationService(
+            db_session=federation_db_session,
+            nats_bridge=nats_bridge
+        )
+        await federation_service.start()
+        logger.info(f"✅ Federation started - Hub ID: {get_hub_id()}")
 
     # Store in app state for access by routers
     app.state.nats_bridge = nats_bridge
@@ -55,6 +57,8 @@ async def lifespan(app: FastAPI):
     # Cleanup
     if federation_service:
         await federation_service.stop()
+    if federation_db_session:
+        await federation_db_session.close()
     if nats_bridge:
         await nats_bridge.disconnect()
     await engine.dispose()

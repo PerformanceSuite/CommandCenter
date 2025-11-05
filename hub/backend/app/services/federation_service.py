@@ -11,7 +11,7 @@ import logging
 import socket
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

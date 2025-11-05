@@ -20,7 +20,7 @@ class HubRegistry(Base):
         uptime_seconds: Hub uptime in seconds
         first_seen: Timestamp when Hub was first discovered
         last_seen: Timestamp of last presence heartbeat
-        metadata: Extensible JSON field for future metadata
+        extra_data: Extensible JSON field for future metadata
     """
 
     __tablename__ = "hub_registry"
@@ -35,8 +35,8 @@ class HubRegistry(Base):
     project_path = Column(String, nullable=True)
 
     # Hub state
-    projects = Column(JSON, default=list)  # List of project IDs
-    services = Column(JSON, default=list)  # List of service names
+    projects = Column(JSON, default=lambda: [])  # List of project IDs
+    services = Column(JSON, default=lambda: [])  # List of service names
 
     # Metrics (minimal for Phase 5)
     project_count = Column(Integer, default=0)
@@ -48,7 +48,7 @@ class HubRegistry(Base):
     last_seen = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Extension point for additional metadata
-    extra_data = Column(JSON, default=dict)
+    extra_data = Column(JSON, default=lambda: {})
 
     def __repr__(self):
         return (
