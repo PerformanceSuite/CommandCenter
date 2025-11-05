@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import engine, Base
-from app.routers import projects, orchestration, filesystem, logs, tasks, events, health
+from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc
 from app.correlation.middleware import correlation_middleware
 from app.streaming.sse import router as sse_router
 
@@ -47,6 +47,7 @@ app.middleware("http")(correlation_middleware)
 app.include_router(health.router)  # Health check endpoints (no prefix)
 app.include_router(sse_router)  # SSE streaming endpoints (must be before events router)
 app.include_router(events.router)  # Event endpoints
+app.include_router(rpc.router)  # JSON-RPC endpoint
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")

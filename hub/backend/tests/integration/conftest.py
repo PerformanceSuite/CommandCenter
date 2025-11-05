@@ -10,12 +10,20 @@ from app.models import Project
 
 @pytest.fixture(scope="session")
 def celery_config():
-    """Celery configuration for tests"""
+    """Celery configuration for tests
+
+    Uses Redis on localhost (assumes Redis is running locally).
+    For CI environments, consider using docker-compose or pytest-docker.
+    """
+    import os
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/1')
+
     return {
-        'broker_url': 'redis://localhost:6379/1',  # Use DB 1 for tests
-        'result_backend': 'redis://localhost:6379/1',
+        'broker_url': redis_url,  # Use DB 1 for tests
+        'result_backend': redis_url,
         'task_always_eager': False,  # Run tasks asynchronously
         'task_eager_propagates': True,
+        'broker_connection_retry_on_startup': True,  # Retry connection on startup
     }
 
 

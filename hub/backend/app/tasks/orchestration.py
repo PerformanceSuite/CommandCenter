@@ -3,8 +3,7 @@ import asyncio
 import logging
 from typing import Any
 
-from celery import shared_task
-
+from app.celery_app import celery_app
 from app.database import AsyncSessionLocal
 from app.services.orchestration_service import OrchestrationService
 
@@ -21,7 +20,7 @@ def _run_async(coro):
         loop.close()
 
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def start_project_task(self, project_id: int) -> dict[str, Any]:
     """
     Start CommandCenter project via Dagger (background task)
@@ -83,7 +82,7 @@ def start_project_task(self, project_id: int) -> dict[str, Any]:
         }
 
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def stop_project_task(self, project_id: int) -> dict[str, Any]:
     """
     Stop CommandCenter project (background task)
@@ -125,7 +124,7 @@ def stop_project_task(self, project_id: int) -> dict[str, Any]:
         }
 
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
 def restart_project_task(
     self,
     project_id: int,
@@ -175,7 +174,7 @@ def restart_project_task(
         }
 
 
-@shared_task(bind=True)
+@celery_app.task(bind=True)
 def get_project_logs_task(
     self,
     project_id: int,
