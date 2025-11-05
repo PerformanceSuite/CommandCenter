@@ -22,6 +22,7 @@ services:
       - PORT=9001
       - CORS_ORIGINS=http://localhost:9000,http://127.0.0.1:9000
       - PROJECTS_ROOT=${PROJECTS_ROOT:-/Users/danielconnolly/Projects}
+      - NATS_URL=nats://nats:4222
     command: uvicorn app.main:app --host 0.0.0.0 --port 9001 --reload
     restart: unless-stopped
     networks:
@@ -49,8 +50,27 @@ services:
     networks:
       - hub-network
 
+  nats:
+    image: nats:2.10-alpine
+    container_name: commandcenter-hub-nats
+    ports:
+      - "4222:4222"  # Client connections
+      - "8222:8222"  # HTTP monitoring
+    command:
+      - "-js"              # Enable JetStream for persistence
+      - "-m"
+      - "8222"            # Monitoring port
+      - "-D"              # Debug mode (development)
+    restart: unless-stopped
+    networks:
+      - hub-network
+    volumes:
+      - nats_data:/data
+
 volumes:
   hub_db:
+    driver: local
+  nats_data:
     driver: local
 
 networks:

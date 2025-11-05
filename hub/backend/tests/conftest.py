@@ -6,6 +6,7 @@ This module provides comprehensive test fixtures for:
 - Test clients (FastAPI TestClient)
 - Mock Dagger SDK
 - Project factories
+- Celery configuration
 """
 
 import pytest
@@ -256,3 +257,18 @@ def mock_port_unavailable():
         mock_sock.__exit__ = MagicMock(return_value=None)
         mock_socket.return_value = mock_sock
         yield mock_socket
+
+
+# ============================================================================
+# Celery Configuration
+# ============================================================================
+
+@pytest.fixture(scope='session', autouse=True)
+def celery_config():
+    """Configure Celery for testing"""
+    from celery import current_app
+    current_app.conf.update(
+        task_always_eager=True,
+        task_eager_propagates=True,
+    )
+    return current_app

@@ -1,142 +1,179 @@
 # CommandCenter Hub
 
-**Multi-project launcher and management interface for CommandCenter**
-
-## What is Hub?
-
-Hub is a lightweight web application that manages multiple CommandCenter instances. Instead of manually running each project's CommandCenter, Hub provides:
-
-- **Dashboard** showing all your projects
-- **One-click start/stop** for each CommandCenter instance
-- **Project browser** to add existing projects
-- **Automatic configuration** and port management
-- **Status monitoring** for all instances
-
-## Quick Start
-
-```bash
-# Start Hub
-cd hub
-docker-compose up -d
-
-# Access Hub
-open http://localhost:9000
-```
-
-## Architecture
-
-```
-Hub (Port 9000/9001)
-├── Dashboard - List all projects
-├── Add Project - Browse to existing project folder
-├── Start/Stop - Control CommandCenter instances
-└── Status - Monitor health of all instances
-
-Managed CommandCenter Instances:
-├── Performia        (Port 8000, 3000)
-├── AI Research      (Port 8010, 3010)
-└── E-commerce       (Port 8020, 3020)
-```
+Multi-project management interface for CommandCenter instances.
 
 ## Features
 
-- ✅ **Add Existing Projects** - Browse filesystem to select project folder
-- ✅ **Auto-Configuration** - Generates `.env` with unique ports
-- ✅ **Docker Management** - Start/stop CommandCenter via docker-compose
-- ✅ **Health Monitoring** - Real-time status of all instances
-- ✅ **Port Management** - Auto-assigns non-conflicting ports
-- ✅ **VIZTRTR Design** - Beautiful dark slate UI
+- **Project Management**: Create, start, stop, delete CommandCenter instances
+- **Port Isolation**: Automatic port allocation to avoid conflicts
+- **Background Tasks**: Non-blocking project operations with Celery
+- **Real-time Progress**: Live progress updates for long-running operations
+- **Monitoring Dashboard**: Celery Flower for task/worker monitoring
+- **Folder Browser**: Select project directories visually
+- **Status Tracking**: Real-time project status (stopped/starting/running/error)
 
-## Configuration
+## Architecture
 
-### Environment Variables
+### Technology Stack
 
-Hub backend can be configured with the following environment variables:
+**Backend:**
+- FastAPI (API server)
+- Celery (background tasks)
+- Redis (message broker)
+- SQLite (project registry)
+- Dagger (container orchestration)
 
-**PROJECTS_ROOT** (optional)
-- Default: `~/Projects` (expands to user's home directory)
-- Purpose: Root directory where projects are located
-- Example: `PROJECTS_ROOT=/Users/yourname/workspace`
-- Used for Docker volume mount path translation
+**Frontend:**
+- React 18 + TypeScript
+- Vite (build tool)
+- TailwindCSS (styling)
+- Vitest (testing)
 
-**Database Configuration**
-- `DATABASE_URL` - SQLite database path (default: `sqlite:///./hub.db`)
+### Background Task System
 
-**Port Configuration**
-- Backend runs on port `9001` (configurable in `docker-compose.yml`)
-- Frontend runs on port `9000` (configurable in `docker-compose.yml`)
-- Managed projects auto-assign ports starting from `8000/3000` incrementing by 10
+Hub uses Celery for asynchronous project operations:
 
-### Docker Compose Services
-
-Hub starts only essential services for managed projects to avoid port conflicts:
-- `backend` - FastAPI server
-- `frontend` - React app
-- `postgres` - Database
-- `redis` - Cache/queue
-
-Optional services (excluded by default):
-- `flower` - Celery monitoring (port 5555)
-- `prometheus` - Metrics collection (port 9090)
-- `celery` - Background worker
-
-To include optional services, modify `ESSENTIAL_SERVICES` in `hub/backend/app/services/orchestration_service.py`.
-
-## Development
-
-### Backend (FastAPI)
-```bash
-cd hub/backend
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 9001
+```
+User → Hub API → Celery Queue → Worker → Dagger → Docker
+         ↓           ↓              ↓
+      Task ID    Redis Store    Progress Updates
 ```
 
-### Frontend (React + Vite)
+**Benefits:**
+- API responds in < 100ms (just queues task)
+- No 20-30 min blocking during first start
+- Real-time progress updates every 2 seconds
+- Concurrent operations on multiple projects
+
+**Monitoring:**
+- Flower dashboard at http://localhost:5555
+- View active tasks, worker status, performance metrics
+
+## Event System
+
+Hub uses an event-driven architecture with NATS message bus. All state changes are captured as events for observability, integration, and replay.
+
+**Quick Start:**
 ```bash
-cd hub/frontend
-npm install
-npm run dev  # Port 9000
+# Stream events in real-time
+websocat ws://localhost:9001/api/events/stream?subject=hub.>
+
+# Query historical events
+curl http://localhost:9001/api/events?limit=10
+
+# Check NATS health
+curl http://localhost:9001/health/nats
 ```
 
-## Usage
+**Documentation:** See `docs/EVENT_SYSTEM.md` for full details.
 
-### 1. Add a Project
+**Endpoints:**
+- `POST /api/events` - Publish event
+- `GET /api/events` - Query events
+- `WS /api/events/stream` - Real-time stream
 
-1. Click "+ Add Project" on Hub dashboard
-2. Browse to your project folder (e.g., `/Users/you/performia/`)
-3. Hub creates `commandcenter/` subdirectory
-4. Automatically clones CC, configures ports, starts services
+## CLI Tools
 
-### 2. Manage Projects
+**Query and monitor events:**
 
-- **Start** - Spins up CommandCenter instance
-- **Stop** - Gracefully stops all services
-- **Open** - Opens CommandCenter UI in browser
-- **View Logs** - See docker-compose logs
+```bash
+# Install CLI
+cd backend && pip install -e .
 
-### 3. View Status
+# Query events
+hub query --subject "hub.test.*" --since "1h"
 
-Each project card shows:
-- Running status (green dot = running)
-- Repository count
-- Technology count
-- Health status
+# Stream live events
+hub follow --subject "hub.>"
+```
 
-## Tech Stack
+See [CLI Usage Guide](docs/CLI_USAGE.md) for complete documentation.
 
-- **Backend**: FastAPI, SQLAlchemy, Docker SDK
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
-- **Database**: SQLite (project registry)
-- **Orchestration**: Docker Compose
+## Quick Start
 
-## Design System
+### Docker (Production)
 
-Uses VIZTRTR color palette:
-- Dark slate backgrounds (#0f172a, #1e293b)
-- Blue primary buttons (#3b82f6)
-- Status colors (green, yellow, red)
-- Glow effects for active states
+```bash
+# Start all services
+docker-compose -f docker-compose.monitoring.yml up -d
 
----
+# Access Hub
+open http://localhost:9000
 
-**Built for the PerformanceSuite ecosystem**
+# Monitor tasks
+open http://localhost:5555
+```
+
+### Development
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
+
+## Documentation
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide
+- **[MONITORING.md](MONITORING.md)** - Celery Flower monitoring
+- **[TESTING.md](TESTING.md)** - Running tests
+- **[Design Doc](../docs/plans/2025-11-02-hub-background-tasks-design.md)** - Background tasks architecture
+
+## Testing
+
+```bash
+# Backend unit tests
+cd backend
+pytest tests/unit/ -v
+
+# Backend integration tests (requires Redis)
+docker run -d -p 6379:6379 redis:7-alpine
+pytest tests/integration/ -v -m "not slow"
+
+# Frontend tests
+cd frontend
+npm test
+
+# End-to-end test
+./scripts/e2e-test.sh
+```
+
+## Monitoring
+
+**Flower Dashboard** (http://localhost:5555):
+- Real-time task monitoring
+- Worker status and performance
+- Task history and statistics
+
+**Key Metrics:**
+- Task success rate: target > 95%
+- Average task duration: 10-30 min (first start), < 5 min (subsequent)
+- Queue depth: target < 10 tasks
+
+## Troubleshooting
+
+**Tasks not running:**
+```bash
+# Check worker logs
+docker logs hub-celery-worker
+
+# Check Redis
+docker exec hub-redis redis-cli ping
+```
+
+**Slow tasks:**
+- First Dagger build: 20-30 min (normal)
+- Subsequent builds: 2-5 min (cached)
+- Check Flower for task duration
+
+**Worker crashes:**
+```bash
+# Restart worker
+docker-compose -f docker-compose.monitoring.yml restart celery-worker
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md#troubleshooting) for more details.
+
+## Contributing
+
+See [../CONTRIBUTING.md](../CONTRIBUTING.md)
+
+## License
+
+See [../LICENSE](../LICENSE)

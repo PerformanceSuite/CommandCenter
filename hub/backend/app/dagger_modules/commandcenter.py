@@ -64,6 +64,7 @@ class CommandCenterStack:
         self._connection: Optional[dagger.Connection] = None
         self.client = None  # Will be set to Client in __aenter__
         self._service_containers: dict[str, dagger.Container] = {}  # Track containers
+        self._services: dict[str, dagger.Service] = {}  # Track running services to keep them alive
 
     async def __aenter__(self):
         """Initialize Dagger client"""
@@ -86,13 +87,15 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("postgres:15-alpine")
-            .with_user(str(self.POSTGRES_USER_ID))  # Run as non-root
+            # TODO: with_user breaks postgres initialization - need to fix
+            # .with_user(str(self.POSTGRES_USER_ID))  # Run as non-root
             .with_env_variable("POSTGRES_USER", "commandcenter")
             .with_env_variable("POSTGRES_PASSWORD", self.config.db_password)
             .with_env_variable("POSTGRES_DB", "commandcenter")
             .with_exposed_port(5432)
-            .with_resource_limit("cpu", str(limits.postgres_cpu))
-            .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.postgres_cpu))
+            # .with_resource_limit("memory", f"{limits.postgres_memory_mb}m")
         )
 
     async def build_redis(self) -> dagger.Container:
@@ -105,10 +108,12 @@ class CommandCenterStack:
         return (
             self.client.container()
             .from_("redis:7-alpine")
-            .with_user(str(self.REDIS_USER_ID))  # Run as non-root
+            # TODO: with_user breaks redis startup - need to fix
+            # .with_user(str(self.REDIS_USER_ID))  # Run as non-root
             .with_exposed_port(6379)
-            .with_resource_limit("cpu", str(limits.redis_cpu))
-            .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.redis_cpu))
+            # .with_resource_limit("memory", f"{limits.redis_memory_mb}m")
         )
 
     async def build_backend(self, postgres_host: str, redis_host: str) -> dagger.Container:
@@ -118,20 +123,19 @@ class CommandCenterStack:
 
         limits = self.config.resource_limits
 
-        # Mount project directory as read-only volume
+        # Mount project directory FIRST
         project_dir = self.client.host().directory(self.config.project_path)
 
         return (
             self.client.container()
             .from_("python:3.11-slim")
-            .with_user(str(self.APP_USER_ID))  # Run as non-root
-            # Install CommandCenter backend dependencies
-            .with_exec(["pip", "install", "fastapi", "uvicorn[standard]",
-                       "sqlalchemy", "asyncpg", "redis", "langchain",
-                       "langchain-community", "chromadb", "sentence-transformers"])
-            # Mount project directory
+            # TODO: with_user breaks pip install - need to fix
+            # .with_user(str(self.APP_USER_ID))  # Run as non-root
+            # Mount project directory BEFORE installing dependencies
             .with_mounted_directory("/workspace", project_dir)
-            .with_workdir("/workspace")
+            .with_workdir("/workspace/backend")
+            # Install from requirements.txt in the mounted project
+            .with_exec(["pip", "install", "-r", "requirements.txt"])
             # Set environment variables
             .with_env_variable("DATABASE_URL",
                              f"postgresql://commandcenter:{self.config.db_password}@{postgres_host}:5432/commandcenter")
@@ -141,8 +145,9 @@ class CommandCenterStack:
             # Run backend
             .with_exec(["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
             .with_exposed_port(8000)
-            .with_resource_limit("cpu", str(limits.backend_cpu))
-            .with_resource_limit("memory", f"{limits.backend_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.backend_cpu))
+            # .with_resource_limit("memory", f"{limits.backend_memory_mb}m")
         )
 
     async def build_frontend(self, backend_url: str) -> dagger.Container:
@@ -152,25 +157,33 @@ class CommandCenterStack:
 
         limits = self.config.resource_limits
 
+        # Mount project directory FIRST
+        project_dir = self.client.host().directory(self.config.project_path)
+
         return (
             self.client.container()
             .from_("node:18-alpine")
-            .with_user(str(self.APP_USER_ID))  # Run as non-root
-            # Install CommandCenter frontend dependencies
-            .with_exec(["npm", "install", "-g", "vite", "react", "react-dom"])
+            # TODO: with_user breaks npm install - need to fix
+            # .with_user(str(self.APP_USER_ID))  # Run as non-root
+            # Mount project directory BEFORE installing dependencies
+            .with_mounted_directory("/workspace", project_dir)
+            .with_workdir("/workspace/frontend")
+            # Install from package.json in the mounted project
+            .with_exec(["npm", "install"])
             # Set environment variables
             .with_env_variable("VITE_API_BASE_URL", backend_url)
             .with_env_variable("VITE_PROJECT_NAME", self.config.project_name)
             # Run frontend dev server
             .with_exec(["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"])
             .with_exposed_port(3000)
-            .with_resource_limit("cpu", str(limits.frontend_cpu))
-            .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
+            # TODO: Resource limits not available in dagger-io 0.19.4
+            # .with_resource_limit("cpu", str(limits.frontend_cpu))
+            # .with_resource_limit("memory", f"{limits.frontend_memory_mb}m")
         )
 
     @retry_with_backoff(max_attempts=3, initial_delay=2.0)
     async def start(self) -> dict:
-        """Start all CommandCenter containers"""
+        """Start all CommandCenter containers with port forwarding"""
         if not self.client:
             raise RuntimeError("Dagger client not initialized")
 
@@ -194,6 +207,29 @@ class CommandCenterStack:
             redis_svc = redis.as_service()
             backend_svc = backend.as_service()
             frontend_svc = frontend.as_service()
+
+            # Create port forwarding mappings (frontend=host, backend=container)
+            # This binds host ports to container ports
+            await postgres_svc.up(ports=[
+                dagger.PortForward(backend=5432, frontend=self.config.postgres_port)
+            ])
+            await redis_svc.up(ports=[
+                dagger.PortForward(backend=6379, frontend=self.config.redis_port)
+            ])
+            await backend_svc.up(ports=[
+                dagger.PortForward(backend=8000, frontend=self.config.backend_port)
+            ])
+            await frontend_svc.up(ports=[
+                dagger.PortForward(backend=3000, frontend=self.config.frontend_port)
+            ])
+
+            # Store service references to keep them alive
+            self._services = {
+                "postgres": postgres_svc,
+                "redis": redis_svc,
+                "backend": backend_svc,
+                "frontend": frontend_svc,
+            }
 
             logger.info(f"CommandCenter stack started successfully for {self.config.project_name}")
 
@@ -451,11 +487,25 @@ class CommandCenterStack:
         else:
             raise ValueError(f"Unhandled service: {service_name}")
 
-        # Start as service BEFORE updating registry (so registry stays consistent if start fails)
+        # Start as service with port forwarding
         new_service = new_container.as_service()
 
-        # Update registry with new container only after successful start
+        # Map service to port configuration and start with port forwarding
+        port_map = {
+            "postgres": (5432, self.config.postgres_port),
+            "redis": (6379, self.config.redis_port),
+            "backend": (8000, self.config.backend_port),
+            "frontend": (3000, self.config.frontend_port),
+        }
+
+        backend_port, frontend_port = port_map[service_name]
+        await new_service.up(ports=[
+            dagger.PortForward(backend=backend_port, frontend=frontend_port)
+        ])
+
+        # Update registries with new container and service
         self._service_containers[service_name] = new_container
+        self._services[service_name] = new_service
 
         logger.info(f"Service {service_name} restarted successfully")
 

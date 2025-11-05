@@ -60,3 +60,21 @@ export interface OperationResponse {
   message: string;
   project?: Project;
 }
+
+// Task Status Types for Background Operations
+
+export interface TaskResponse {
+  task_id: string;
+  status: string;
+  message: string;
+}
+
+export interface TaskStatus {
+  task_id: string;
+  state: string;  // PENDING, BUILDING, RUNNING, SUCCESS, FAILURE, etc.
+  ready: boolean;
+  status: string;  // Human-readable status message
+  progress: number;  // 0-100
+  result?: any;
+  error?: string;
+}

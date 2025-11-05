@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.database import engine, Base
-from app.routers import projects, orchestration, filesystem, logs
+from app.routers import projects, orchestration, filesystem, logs, tasks, events, health
+from app.correlation.middleware import correlation_middleware
+from app.streaming.sse import router as sse_router
 
 
 @asynccontextmanager
@@ -32,17 +34,24 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:9000", "http://localhost:3000"],
+    allow_origins=["http://localhost:9000", "http://localhost:9003", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Add correlation middleware (before route handlers)
+app.middleware("http")(correlation_middleware)
+
 # Include routers
+app.include_router(health.router)  # Health check endpoints (no prefix)
+app.include_router(sse_router)  # SSE streaming endpoints (must be before events router)
+app.include_router(events.router)  # Event endpoints
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")
 app.include_router(logs.router)
+app.include_router(tasks.router)  # Background task endpoints
 
 
 @app.get("/")
@@ -53,9 +62,3 @@ async def root():
         "version": "1.0.0",
         "status": "running",
     }
-
-
-@app.get("/health")
-async def health():
-    """Health check endpoint"""
-    return {"status": "healthy"}

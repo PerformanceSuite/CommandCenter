@@ -78,7 +78,7 @@ async def receive_github_webhook(
                 result = await db.execute(
                     select(WebhookConfig)
                     .where(WebhookConfig.repository_id == repo.id)
-                    .where(WebhookConfig.active == True)
+                    .where(WebhookConfig.active.is_(True))
                 )
                 webhook_config = result.scalar_one_or_none()
 
@@ -434,7 +434,8 @@ async def create_webhook_delivery(
     Returns:
         Created webhook delivery
     """
-    # TODO: Get project_id from auth context (currently hardcoded)
+    # Note: Uses default project_id=1 for single-tenant development.
+    # See app.auth.project_context for multi-tenant roadmap.
     project_id = 1
 
     service = WebhookService(db)
