@@ -10,7 +10,7 @@ Supported Methods:
     - hub.health: Get Hub health status
 """
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Request, HTTPException, Depends
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/rpc", tags=["rpc"])
 # JSON-RPC 2.0 Schemas
 class JSONRPCRequest(BaseModel):
     """JSON-RPC 2.0 request schema."""
-    jsonrpc: str = Field(default="2.0", const=True)
+    jsonrpc: Literal["2.0"] = Field(default="2.0")
     id: Optional[Any] = Field(None, description="Request ID (string, number, or null)")
     method: str = Field(..., description="Method name (e.g., 'bus.publish')")
     params: Optional[Dict] = Field(None, description="Method parameters")
@@ -45,7 +45,7 @@ class JSONRPCError(BaseModel):
 
 class JSONRPCResponse(BaseModel):
     """JSON-RPC 2.0 response schema."""
-    jsonrpc: str = Field(default="2.0", const=True)
+    jsonrpc: Literal["2.0"] = Field(default="2.0")
     id: Optional[Any] = Field(None, description="Request ID (matches request)")
     result: Optional[Any] = Field(None, description="Result object (present on success)")
     error: Optional[JSONRPCError] = Field(None, description="Error object (present on failure)")

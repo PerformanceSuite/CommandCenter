@@ -6,11 +6,17 @@ Manages multiple CommandCenter instances
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import logging
 
-from app.database import engine, Base
-from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc
+from app.database import engine, Base, AsyncSessionLocal
+from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc, federation
 from app.correlation.middleware import correlation_middleware
 from app.streaming.sse import router as sse_router
+from app.events.bridge import NATSBridge
+from app.services.federation_service import FederationService
+from app.config import get_nats_url, get_hub_id
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -19,8 +25,38 @@ async def lifespan(app: FastAPI):
     # Create database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Initialize NATS Bridge
+    nats_bridge = NATSBridge(nats_url=get_nats_url())
+    try:
+        await nats_bridge.connect()
+        logger.info("✅ NATS Bridge connected")
+    except Exception as e:
+        logger.warning(f"Failed to connect NATS Bridge (federation disabled): {e}")
+        nats_bridge = None
+
+    # Initialize and start Federation Service
+    federation_service = None
+    if nats_bridge:
+        async with AsyncSessionLocal() as db_session:
+            federation_service = FederationService(
+                db_session=db_session,
+                nats_bridge=nats_bridge
+            )
+            await federation_service.start()
+            logger.info(f"✅ Federation started - Hub ID: {get_hub_id()}")
+
+    # Store in app state for access by routers
+    app.state.nats_bridge = nats_bridge
+    app.state.federation_service = federation_service
+
     yield
+
     # Cleanup
+    if federation_service:
+        await federation_service.stop()
+    if nats_bridge:
+        await nats_bridge.disconnect()
     await engine.dispose()
 
 
@@ -48,6 +84,7 @@ app.include_router(health.router)  # Health check endpoints (no prefix)
 app.include_router(sse_router)  # SSE streaming endpoints (must be before events router)
 app.include_router(events.router)  # Event endpoints
 app.include_router(rpc.router)  # JSON-RPC endpoint
+app.include_router(federation.router)  # Federation endpoints
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")
