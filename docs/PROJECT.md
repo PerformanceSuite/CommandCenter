@@ -1,7 +1,34 @@
 # CommandCenter
 
 ## Current Focus
-Personal AI Operating System for Knowledge Work - Phase A Dagger Production Fixes COMPLETE! ✅
+Personal AI Operating System for Knowledge Work - Event Infrastructure Complete! ✅
+
+## Development Roadmap
+
+📖 **[Full Phases 1-12 Roadmap](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md)** (2,880 lines, 32 weeks)
+
+**Vision**: Transform CommandCenter into a self-healing, AI-driven mesh with federated instances, real-time visualization, agent orchestration, and predictive intelligence.
+
+### Foundation & Events (Weeks 1-8)
+- ✅ **[Phase 1](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-1-event-system-bootstrap-week-1)**: Event System Bootstrap **COMPLETE**
+- ✅ **[Phase 2-3](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-2-3-event-streaming--correlation-weeks-2-3)**: Event Streaming & Correlation **COMPLETE**
+- 🔄 **[Phase 4](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-4-nats-bridge-week-4)**: NATS Bridge (Week 4)
+- 🔄 **[Phase 5](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-5-federation-prep-week-5)**: Federation Prep (Week 5)
+- 🔄 **[Phase 6](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-6-health--service-discovery-weeks-6-8)**: Health & Service Discovery (Weeks 6-8)
+
+### Graph & Visualization (Weeks 9-16)
+- 📋 **[Phase 7](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-7-graph-service-implementation-weeks-9-12)**: Graph-Service Implementation ([Blueprint](../hub-prototype/phase_7_8_graph_service_vislzr_integration_plan_command_center.md))
+- 📋 **[Phase 8](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-8-vislzr-frontend-weeks-13-16)**: VISLZR Frontend ([Blueprint](../hub-prototype/phase_7_8_graph_service_vislzr_integration_plan_command_center.md))
+
+### Intelligence & Automation (Weeks 17-27)
+- 📋 **[Phase 9](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-9-federation--cross-project-intelligence-weeks-17-20)**: Federation & Ecosystem Mode ([Blueprint](../hub-prototype/phase_9_federation_ecosystem_mode_implementation_blueprint.md))
+- 📋 **[Phase 10](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-10-agent-orchestration--workflow-automation-weeks-21-24)**: Agent Orchestration & Workflows ([Blueprint](../hub-prototype/phase_10_agent_orchestration_workflow_automation_blueprint.md))
+- 📋 **[Phase 11](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-11-compliance-security--partner-interfaces-weeks-25-27)**: Compliance & Security ([Blueprint](../hub-prototype/phase_11_compliance_security_partner_interfaces_blueprint.md))
+
+### Autonomous Systems (Weeks 28-32)
+- 📋 **[Phase 12](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-12-autonomous-mesh--predictive-intelligence-weeks-28-32)**: Autonomous Mesh & Predictive Intelligence ([Blueprint](../hub-prototype/phase_12_autonomous_mesh_predictive_intelligence_blueprint.md))
+
+**Legend**: ✅ Complete | 🔄 In Progress | 📋 Planned
 
 ## Status
 - **Phase**: Phase A - Dagger Production Hardening (**PRODUCTION-READY 2025-11-02** 🚀)
