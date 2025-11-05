@@ -83,7 +83,15 @@ def query(
     async def query_events():
         async for session in get_db():
             event_service = EventService(get_nats_url(), session)
-            await event_service.connect()
+
+            # Connecting to NATS is optional for read-only queries.
+            connected = False
+            try:
+                await event_service.connect()
+                connected = True
+            except Exception:
+                # Keep going – we can still query historical events from the DB.
+                pass
 
             try:
                 events = await event_service.query_events(
@@ -95,7 +103,8 @@ def query(
                 )
                 return events
             finally:
-                await event_service.disconnect()
+                if connected:
+                    await event_service.disconnect()
 
     # Run query
     try:
@@ -114,7 +123,11 @@ def query(
     except Exception as e:
         # For database connection errors, show friendly message
         error_msg = str(e)
-        if "unable to open database file" in error_msg or "connection" in error_msg.lower():
-            click.echo("Error: Cannot connect to database. Is the Hub backend running?", err=True)
+        lowered = error_msg.lower()
+        if "unable to open database file" in lowered or "connection" in lowered or "nats" in lowered:
+            click.echo(
+                "Error: Cannot connect to Hub services (database/NATS). Is the Hub backend running?",
+                err=True,
+            )
         else:
             click.echo(f"Error: {e}", err=True)
