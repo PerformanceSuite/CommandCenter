@@ -22,6 +22,9 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+# Alias for compatibility
+async_session_maker = AsyncSessionLocal
+
 
 class Base(AsyncAttrs, DeclarativeBase):
     """Base class for async SQLAlchemy models."""
@@ -29,6 +32,14 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 async def get_db():
+    """Get async database session."""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+# Alias for compatibility
+get_async_db = get_db
+
+async def get_async_session():
     """Dependency to get database session"""
     async with AsyncSessionLocal() as session:
         yield session

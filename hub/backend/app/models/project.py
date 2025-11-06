@@ -1,5 +1,6 @@
 """Project model for Hub."""
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -35,3 +36,6 @@ class Project(Base):
     last_stopped = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    services = relationship("Service", back_populates="project", cascade="all, delete-orphan")
