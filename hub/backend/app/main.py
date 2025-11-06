@@ -9,11 +9,12 @@ from contextlib import asynccontextmanager
 import logging
 
 from app.database import engine, Base, AsyncSessionLocal
-from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc, federation
+from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc, federation, services
 from app.correlation.middleware import correlation_middleware
 from app.streaming.sse import router as sse_router
 from app.events.bridge import NATSBridge
 from app.services.federation_service import FederationService
+from app.workers.health_worker import get_health_worker
 from app.config import get_nats_url, get_hub_id
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,21 @@ async def lifespan(app: FastAPI):
         await federation_service.start()
         logger.info(f"✅ Federation started - Hub ID: {get_hub_id()}")
 
+    # Start health check worker
+    health_worker = get_health_worker()
+    await health_worker.start()
+    logger.info("✅ Health check worker started")
+
     # Store in app state for access by routers
     app.state.nats_bridge = nats_bridge
     app.state.federation_service = federation_service
+    app.state.health_worker = health_worker
 
     yield
 
     # Cleanup
+    await health_worker.stop()
+    logger.info("Health check worker stopped")
     if federation_service:
         await federation_service.stop()
     if federation_db_session:
@@ -89,6 +98,7 @@ app.include_router(sse_router)  # SSE streaming endpoints (must be before events
 app.include_router(events.router)  # Event endpoints
 app.include_router(rpc.router)  # JSON-RPC endpoint
 app.include_router(federation.router)  # Federation endpoints
+app.include_router(services.router)  # Service health and discovery endpoints
 app.include_router(projects.router, prefix="/api")
 app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")
