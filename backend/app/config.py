@@ -3,10 +3,9 @@ Application configuration using Pydantic Settings
 Loads configuration from environment variables and .env file
 """
 
-import json
 from typing import Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -88,11 +87,20 @@ class Settings(BaseSettings):
         default=True, description="Whether to encrypt GitHub tokens in database"
     )
 
-    # CORS
-    cors_origins: str | list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"],
-        description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)",
+    # CORS (stored as string, converted to list via property)
+    cors_origins_raw: str = Field(
+        default="http://localhost:3000,http://localhost:5173",
+        description="Allowed CORS origins (comma-separated)",
+        alias="CORS_ORIGINS",
     )
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Parse cors_origins from comma-separated string"""
+        if not self.cors_origins_raw or not self.cors_origins_raw.strip():
+            return ["http://localhost:3000", "http://localhost:5173"]
+        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
+
     cors_allow_credentials: bool = Field(
         default=True, description="Allow credentials in CORS requests"
     )
@@ -136,23 +144,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
-
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS from JSON string if provided as string"""
-        if isinstance(v, str):
-            try:
-                # Try to parse as JSON array
-                parsed = json.loads(v)
-                if isinstance(parsed, list):
-                    return parsed
-                # If it's a single string, wrap in list
-                return [parsed]
-            except json.JSONDecodeError:
-                # Fallback: treat as comma-separated list
-                return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
 
     def get_postgres_url(self, for_asyncpg: bool = False) -> str:
         """

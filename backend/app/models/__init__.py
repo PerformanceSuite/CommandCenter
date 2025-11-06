@@ -2,6 +2,30 @@
 SQLAlchemy models for Command Center
 """
 
+# Phase 7: Graph Service Models
+from app.models.graph import (
+    AuditKind,
+    AuditStatus,
+    DependencyType,
+    GraphAudit,
+    GraphDependency,
+    GraphEvent,
+    GraphFile,
+    GraphHealthSample,
+    GraphLink,
+    GraphRepo,
+    GraphService,
+    GraphSpecItem,
+    GraphSymbol,
+    GraphTask,
+    HealthStatus,
+    LinkType,
+    ServiceType,
+    SpecItemSource,
+    SpecItemStatus,
+    SymbolKind,
+    TaskKind,
+)
 from app.models.ingestion_source import IngestionSource, SourceStatus, SourceType
 from app.models.integration import Integration, IntegrationStatus, IntegrationType
 from app.models.job import Job, JobStatus, JobType
@@ -41,4 +65,26 @@ __all__ = [
     "IngestionSource",
     "SourceType",
     "SourceStatus",
+    # Phase 7: Graph Service
+    "GraphRepo",
+    "GraphFile",
+    "GraphSymbol",
+    "GraphDependency",
+    "GraphService",
+    "GraphHealthSample",
+    "GraphSpecItem",
+    "GraphTask",
+    "GraphLink",
+    "GraphAudit",
+    "GraphEvent",
+    "SymbolKind",
+    "DependencyType",
+    "ServiceType",
+    "SpecItemStatus",
+    "SpecItemSource",
+    "TaskKind",
+    "HealthStatus",
+    "AuditKind",
+    "AuditStatus",
+    "LinkType",
 ]

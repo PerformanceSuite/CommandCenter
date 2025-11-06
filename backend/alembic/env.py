@@ -18,11 +18,27 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # Add the app directory to the path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.config import settings
-from app.database import Base
+from app.config import settings  # noqa: E402 - Must import after path setup
+from app.database import Base  # noqa: E402 - Must import after path setup
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models import KnowledgeEntry, Repository, ResearchTask, Technology
+from app.models import (  # noqa: F401, E402 - Models must be imported for Alembic
+    GraphAudit,
+    GraphDependency,
+    GraphEvent,
+    GraphFile,
+    GraphHealthSample,
+    GraphLink,
+    GraphRepo,
+    GraphService,
+    GraphSpecItem,
+    GraphSymbol,
+    GraphTask,
+    KnowledgeEntry,
+    Repository,
+    ResearchTask,
+    Technology,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
