@@ -61,9 +61,12 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Cleanup
-    await health_worker.stop()
-    logger.info("Health check worker stopped")
+    # Cleanup with timeout for graceful shutdown
+    try:
+        await asyncio.wait_for(health_worker.stop(), timeout=10.0)
+        logger.info("Health check worker stopped gracefully")
+    except asyncio.TimeoutError:
+        logger.warning("Health check worker shutdown timed out after 10 seconds")
     if federation_service:
         await federation_service.stop()
     if federation_db_session:

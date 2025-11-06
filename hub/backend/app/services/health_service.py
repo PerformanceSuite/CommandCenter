@@ -4,19 +4,21 @@ import time
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from dataclasses import dataclass, field
 
 import httpx
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database import AsyncSessionLocal as async_session_maker
+from app.database import async_session_maker
 from app.models.service import (
     Service, HealthCheck, HealthStatus,
     HealthMethod, ServiceType
 )
 from app.events.service import EventService
 from app.config import get_hub_id
+from app.metrics import metrics
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,6 +33,80 @@ class HealthTransition(str, Enum):
     DOWN_TO_UP = "down_to_up"
     UNKNOWN_TO_UP = "unknown_to_up"
     UNKNOWN_TO_DOWN = "unknown_to_down"
+
+
+@dataclass
+class CircuitBreakerState:
+    """Circuit breaker state for a service."""
+    failure_count: int = 0
+    last_failure: Optional[datetime] = None
+    backoff_until: Optional[datetime] = None
+    is_open: bool = False
+
+
+class CircuitBreaker:
+    """Circuit breaker pattern for health checks."""
+
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: int = 60,
+        backoff_factor: float = 2.0
+    ):
+        """Initialize circuit breaker.
+
+        Args:
+            failure_threshold: Number of failures before opening circuit
+            recovery_timeout: Base seconds before attempting recovery
+            backoff_factor: Exponential backoff multiplier
+        """
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.backoff_factor = backoff_factor
+        self._states: Dict[int, CircuitBreakerState] = {}
+
+    def is_open(self, service_id: int) -> bool:
+        """Check if circuit is open for a service."""
+        state = self._states.get(service_id)
+        if not state:
+            return False
+
+        if state.is_open and state.backoff_until:
+            # Check if recovery period has passed
+            if datetime.now(timezone.utc) >= state.backoff_until:
+                state.is_open = False
+                state.failure_count = 0
+                logger.info(f"Circuit breaker closed for service {service_id}")
+                return False
+
+        return state.is_open
+
+    def record_success(self, service_id: int):
+        """Record successful health check."""
+        if service_id in self._states:
+            self._states[service_id].failure_count = 0
+            self._states[service_id].is_open = False
+
+    def record_failure(self, service_id: int):
+        """Record failed health check."""
+        if service_id not in self._states:
+            self._states[service_id] = CircuitBreakerState()
+
+        state = self._states[service_id]
+        state.failure_count += 1
+        state.last_failure = datetime.now(timezone.utc)
+
+        if state.failure_count >= self.failure_threshold:
+            # Open circuit with exponential backoff
+            backoff_seconds = self.recovery_timeout * (
+                self.backoff_factor ** min(state.failure_count - self.failure_threshold, 5)
+            )
+            state.backoff_until = datetime.now(timezone.utc) + timedelta(seconds=backoff_seconds)
+            state.is_open = True
+            logger.warning(
+                f"Circuit breaker opened for service {service_id}. "
+                f"Backoff for {backoff_seconds} seconds"
+            )
 
 
 class HealthService:
@@ -51,59 +127,127 @@ class HealthService:
             HealthMethod.REDIS: self._check_redis_health,
             HealthMethod.EXEC: self._check_exec_health,
         }
+        # Connection pool for HTTP health checks
+        self._http_client = httpx.AsyncClient(
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30.0
+            ),
+            timeout=httpx.Timeout(5.0)
+        )
+        # Circuit breaker for failing services
+        self._circuit_breaker = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=30,
+            backoff_factor=2.0
+        )
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit - close HTTP client."""
+        await self._http_client.aclose()
 
     async def check_service_health(
         self,
         service: Service,
-        db: AsyncSession
+        db: AsyncSession,
+        max_retries: int = 3
     ) -> HealthCheck:
-        """Perform a health check on a service.
+        """Perform a health check on a service with retry logic.
 
         Args:
             service: Service to check
             db: Database session
+            max_retries: Maximum number of retry attempts
 
         Returns:
             HealthCheck record
         """
+        # Check circuit breaker
+        if self._circuit_breaker.is_open(service.id):
+            logger.debug(f"Circuit breaker open for service {service.id}, skipping check")
+            return HealthCheck(
+                service_id=service.id,
+                status=HealthStatus.DOWN,
+                error_message="Circuit breaker open - too many failures",
+                latency_ms=0,
+                details={"circuit_breaker": "open"},
+                checked_at=datetime.now(timezone.utc)
+            )
+
         start_time = time.time()
         status = HealthStatus.UNKNOWN
         error_message = None
         details = {}
+        last_error = None
 
-        try:
-            # Get the appropriate health checker
-            checker = self._health_checkers.get(service.health_method)
-            if not checker:
-                raise ValueError(f"Unknown health method: {service.health_method}")
+        # Retry logic with exponential backoff
+        for attempt in range(max_retries):
+            try:
+                # Get the appropriate health checker
+                checker = self._health_checkers.get(service.health_method)
+                if not checker:
+                    raise ValueError(f"Unknown health method: {service.health_method}")
 
-            # Perform the health check
-            is_healthy, check_details = await checker(service)
+                # Perform the health check
+                is_healthy, check_details = await checker(service)
 
-            # Calculate latency
-            latency_ms = (time.time() - start_time) * 1000
+                # Calculate latency
+                latency_ms = (time.time() - start_time) * 1000
 
-            # Determine status based on health and latency
-            if is_healthy:
-                if latency_ms > service.health_threshold:
-                    status = HealthStatus.DEGRADED
-                    details["reason"] = "High latency"
+                # Determine status based on health and latency
+                if is_healthy:
+                    if latency_ms > service.health_threshold:
+                        status = HealthStatus.DEGRADED
+                        details["reason"] = "High latency"
+                    else:
+                        status = HealthStatus.UP
+
+                    # Record success with circuit breaker
+                    self._circuit_breaker.record_success(service.id)
+                    break  # Success, exit retry loop
                 else:
-                    status = HealthStatus.UP
-            else:
+                    status = HealthStatus.DOWN
+                    details.update(check_details)
+                    last_error = check_details.get("error", "Health check failed")
+
+            except asyncio.TimeoutError:
                 status = HealthStatus.DOWN
+                last_error = "Health check timed out"
+                error_message = last_error
+            except Exception as e:
+                status = HealthStatus.DOWN
+                last_error = str(e)
+                error_message = str(e)
+                logger.error(f"Health check failed for {service.name}: {e}")
 
-            details.update(check_details)
+            # If check failed and we have retries left, wait with exponential backoff
+            if status == HealthStatus.DOWN and attempt < max_retries - 1:
+                wait_time = (2 ** attempt) * 0.5  # 0.5, 1, 2 seconds
+                logger.debug(f"Retrying health check for {service.name} in {wait_time}s (attempt {attempt+1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+            elif status != HealthStatus.DOWN:
+                break  # Success, exit retry loop
 
-        except asyncio.TimeoutError:
-            status = HealthStatus.DOWN
-            error_message = "Health check timed out"
-            latency_ms = service.health_timeout * 1000
-        except Exception as e:
-            status = HealthStatus.DOWN
-            error_message = str(e)
-            latency_ms = (time.time() - start_time) * 1000
-            logger.error(f"Health check failed for {service.name}: {e}")
+        # Record failure with circuit breaker if all retries failed
+        if status == HealthStatus.DOWN:
+            self._circuit_breaker.record_failure(service.id)
+            if error_message is None and last_error:
+                error_message = last_error
+
+        # Calculate final latency
+        latency_ms = (time.time() - start_time) * 1000
+
+        # Record metrics
+        metrics.record_health_check(
+            service_name=service.name,
+            status=status,
+            duration_seconds=latency_ms / 1000.0
+        )
 
         # Update service status
         old_status = service.health_status
@@ -166,30 +310,33 @@ class HealthService:
         """
         details = {}
 
-        async with httpx.AsyncClient(timeout=service.health_timeout) as client:
+        try:
+            # Use connection pool client with custom timeout
+            response = await self._http_client.get(
+                service.health_url,
+                timeout=service.health_timeout
+            )
+            details["status_code"] = response.status_code
+
+            # Check for successful status code
+            is_healthy = 200 <= response.status_code < 300
+
+            # Try to parse JSON response
             try:
-                response = await client.get(service.health_url)
-                details["status_code"] = response.status_code
+                json_data = response.json()
+                if isinstance(json_data, dict):
+                    details.update(json_data)
+            except:
+                details["response"] = response.text[:200]
 
-                # Check for successful status code
-                is_healthy = 200 <= response.status_code < 300
+            return is_healthy, details
 
-                # Try to parse JSON response
-                try:
-                    json_data = response.json()
-                    if isinstance(json_data, dict):
-                        details.update(json_data)
-                except:
-                    details["response"] = response.text[:200]
-
-                return is_healthy, details
-
-            except httpx.ConnectError:
-                details["error"] = "Connection refused"
-                return False, details
-            except httpx.TimeoutException:
-                details["error"] = "Request timed out"
-                return False, details
+        except httpx.ConnectError:
+            details["error"] = "Connection refused"
+            return False, details
+        except httpx.TimeoutException:
+            details["error"] = "Request timed out"
+            return False, details
 
     async def _check_tcp_health(
         self,
@@ -479,6 +626,37 @@ class HealthService:
         )
 
         return result.scalars().all()
+
+    async def cleanup_old_health_checks(
+        self,
+        retention_days: int = 7
+    ) -> int:
+        """Clean up old health check records.
+
+        Args:
+            retention_days: Number of days to retain health checks
+
+        Returns:
+            Number of records deleted
+        """
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
+
+        async with async_session_maker() as db:
+            # Count records to be deleted
+            result = await db.execute(
+                select(HealthCheck).where(HealthCheck.checked_at < cutoff_date)
+            )
+            records = result.scalars().all()
+            count = len(records)
+
+            if count > 0:
+                # Delete old records
+                for record in records:
+                    await db.delete(record)
+                await db.commit()
+                logger.info(f"Cleaned up {count} health check records older than {retention_days} days")
+
+            return count
 
     async def calculate_uptime(
         self,

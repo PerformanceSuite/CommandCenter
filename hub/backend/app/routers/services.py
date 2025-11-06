@@ -1,6 +1,8 @@
 """Service health and discovery API endpoints."""
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import defaultdict
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy import select, and_
@@ -13,7 +15,9 @@ from app.models.project import Project
 from app.services.health_service import HealthService
 from app.workers.health_worker import get_health_worker
 from app.schemas import Response
+from app.metrics import metrics
 from pydantic import BaseModel
+from fastapi.responses import PlainTextResponse
 import asyncio
 import json
 import logging
@@ -21,6 +25,49 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/services", tags=["services"])
+
+# Rate limiting for health check triggers
+class RateLimiter:
+    """Simple in-memory rate limiter."""
+
+    def __init__(self, max_calls: int = 5, window_seconds: int = 60):
+        """Initialize rate limiter.
+
+        Args:
+            max_calls: Maximum number of calls allowed
+            window_seconds: Time window in seconds
+        """
+        self.max_calls = max_calls
+        self.window_seconds = window_seconds
+        self._calls = defaultdict(list)
+
+    def is_allowed(self, key: str) -> bool:
+        """Check if a call is allowed for the given key.
+
+        Args:
+            key: Unique identifier (e.g., service_id)
+
+        Returns:
+            True if call is allowed, False if rate limited
+        """
+        now = time.time()
+
+        # Clean old calls
+        self._calls[key] = [
+            call_time for call_time in self._calls[key]
+            if now - call_time < self.window_seconds
+        ]
+
+        # Check rate limit
+        if len(self._calls[key]) >= self.max_calls:
+            return False
+
+        # Record call
+        self._calls[key].append(now)
+        return True
+
+# Create rate limiter instance
+health_check_limiter = RateLimiter(max_calls=5, window_seconds=60)
 
 
 class ServiceResponse(BaseModel):
@@ -240,13 +287,26 @@ async def trigger_health_check(
 ) -> Response:
     """Trigger an immediate health check for a service.
 
+    Rate limited to 5 requests per minute per service.
+
     Args:
         service_id: Service ID
         db: Database session
 
     Returns:
         Success response
+
+    Raises:
+        429: Too many requests (rate limited)
+        404: Service not found
     """
+    # Check rate limit
+    if not health_check_limiter.is_allowed(f"service_{service_id}"):
+        raise HTTPException(
+            429,
+            detail=f"Rate limit exceeded. Maximum 5 health check triggers per minute per service."
+        )
+
     worker = get_health_worker()
     triggered = await worker.trigger_immediate_check(service_id)
 
@@ -390,7 +450,41 @@ async def health_websocket(
             await asyncio.sleep(5)
 
     except WebSocketDisconnect:
-        logger.info("Health WebSocket disconnected")
+        logger.info("Health WebSocket client disconnected normally")
     except Exception as e:
         logger.error(f"Health WebSocket error: {e}")
-        await websocket.close()
+        try:
+            await websocket.close(code=1006, reason=str(e)[:120])  # Limit reason to 120 chars
+        except:
+            pass  # Connection already closed
+    finally:
+        # Ensure cleanup on any exit
+        logger.debug("WebSocket connection cleanup complete")
+
+
+@router.get("/metrics", response_class=PlainTextResponse)
+async def get_metrics(
+    db: AsyncSession = Depends(get_async_db)
+) -> str:
+    """Prometheus metrics endpoint.
+
+    Returns health monitoring metrics in Prometheus text format.
+    """
+    # Get current service counts
+    result = await db.execute(
+        select(Service)
+        .join(Project)
+        .where(Project.status == "running")
+    )
+    services = result.scalars().all()
+
+    # Count service states
+    up_count = sum(1 for s in services if s.health_status == HealthStatus.UP)
+    down_count = sum(1 for s in services if s.health_status == HealthStatus.DOWN)
+    degraded_count = sum(1 for s in services if s.health_status == HealthStatus.DEGRADED)
+
+    # Update metrics
+    metrics.update_service_counts(up_count, down_count, degraded_count)
+
+    # Return Prometheus formatted metrics
+    return metrics.format_prometheus()

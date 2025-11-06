@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_async_session, async_session_maker
+from app.database import async_session_maker
 from app.models.service import Service, HealthStatus
 from app.models.project import Project
 from app.services.health_service import HealthService
@@ -39,6 +39,9 @@ class HealthCheckWorker:
         self._check_intervals: Dict[int, int] = {}  # service_id -> interval
         self._last_summary = datetime.now(timezone.utc)
         self.summary_interval = 15  # seconds
+        self._last_cleanup = datetime.now(timezone.utc)
+        self.cleanup_interval = 3600  # 1 hour
+        self.retention_days = 7  # Keep 7 days of history
 
     async def start(self):
         """Start the health check worker."""
@@ -54,6 +57,9 @@ class HealthCheckWorker:
 
         # Start the health summary publisher
         asyncio.create_task(self._publish_health_summaries())
+
+        # Start the cleanup task
+        asyncio.create_task(self._cleanup_old_records())
 
     async def stop(self):
         """Stop the health check worker."""
@@ -112,9 +118,10 @@ class HealthCheckWorker:
         for service_id in list(self._tasks.keys()):
             if service_id not in active_ids:
                 logger.info(f"Cancelling health checks for service {service_id}")
-                self._tasks[service_id].cancel()
-                del self._tasks[service_id]
-                del self._check_intervals[service_id]
+                task = self._tasks.pop(service_id, None)
+                if task:
+                    task.cancel()
+                self._check_intervals.pop(service_id, None)
 
         # Start tasks for new services or update intervals
         for service in services:
@@ -275,6 +282,28 @@ class HealthCheckWorker:
 
             except Exception as e:
                 logger.error(f"Error publishing health summary: {e}")
+
+    async def _cleanup_old_records(self):
+        """Periodically clean up old health check records."""
+        while self._running:
+            try:
+                # Check if it's time for cleanup
+                now = datetime.now(timezone.utc)
+                if (now - self._last_cleanup).total_seconds() >= self.cleanup_interval:
+                    # Perform cleanup
+                    count = await self.health_service.cleanup_old_health_checks(
+                        retention_days=self.retention_days
+                    )
+                    if count > 0:
+                        logger.info(f"Cleaned up {count} old health check records")
+                    self._last_cleanup = now
+
+                # Sleep for 60 seconds before checking again
+                await asyncio.sleep(60)
+
+            except Exception as e:
+                logger.error(f"Error during health check cleanup: {e}")
+                await asyncio.sleep(60)
 
     async def trigger_immediate_check(self, service_id: int) -> bool:
         """Trigger an immediate health check for a service.

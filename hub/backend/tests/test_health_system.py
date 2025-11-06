@@ -2,6 +2,11 @@
 import asyncio
 import sys
 import os
+
+# Set test database URL before any imports
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test_health.db"
+os.environ["HUB_ID"] = "test-hub"
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime, timezone
