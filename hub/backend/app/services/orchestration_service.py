@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models import Project
+from app.models.service import Service, ServiceType, HealthMethod, HealthStatus
 from app.dagger_modules.commandcenter import CommandCenterStack, CommandCenterConfig
 from app.events.service import EventService
 from app.config import get_nats_url
@@ -104,6 +105,9 @@ class OrchestrationService:
             project.last_started = datetime.now(timezone.utc)
             await self.db.commit()
 
+            # Register services for health monitoring
+            await self._register_services(project)
+
             # Emit project.started event
             try:
                 event_service = EventService(nats_url=get_nats_url(), db_session=self.db)
@@ -159,6 +163,9 @@ class OrchestrationService:
             project.status = "stopped"
             project.last_stopped = datetime.now(timezone.utc)
             await self.db.commit()
+
+            # Unregister services from health monitoring
+            await self._unregister_services(project)
 
             # Emit project.stopped event
             try:
@@ -258,3 +265,125 @@ class OrchestrationService:
             raise ValueError(f"Project {project_id} not found")
 
         return project
+
+    async def _register_services(self, project: Project):
+        """Register services for health monitoring.
+
+        Args:
+            project: Project that was just started
+        """
+        logger.info(f"Registering services for project {project.name}")
+
+        # Define services to register
+        services_config = [
+            {
+                "name": "postgres",
+                "service_type": ServiceType.DATABASE,
+                "health_method": HealthMethod.POSTGRES,
+                "health_url": f"localhost:{project.postgres_port}",
+                "port": project.postgres_port,
+                "health_interval": 30,
+                "health_timeout": 5,
+                "health_threshold": 500,
+                "is_required": True,
+            },
+            {
+                "name": "redis",
+                "service_type": ServiceType.CACHE,
+                "health_method": HealthMethod.REDIS,
+                "health_url": f"localhost:{project.redis_port}",
+                "port": project.redis_port,
+                "health_interval": 30,
+                "health_timeout": 5,
+                "health_threshold": 100,
+                "is_required": True,
+            },
+            {
+                "name": "backend",
+                "service_type": ServiceType.API,
+                "health_method": HealthMethod.HTTP,
+                "health_url": f"http://localhost:{project.backend_port}/health",
+                "port": project.backend_port,
+                "health_interval": 15,
+                "health_timeout": 10,
+                "health_threshold": 1000,
+                "is_required": True,
+                "external_url": f"http://localhost:{project.backend_port}",
+            },
+            {
+                "name": "frontend",
+                "service_type": ServiceType.WEB,
+                "health_method": HealthMethod.HTTP,
+                "health_url": f"http://localhost:{project.frontend_port}/",
+                "port": project.frontend_port,
+                "health_interval": 30,
+                "health_timeout": 10,
+                "health_threshold": 2000,
+                "is_required": True,
+                "external_url": f"http://localhost:{project.frontend_port}",
+            },
+        ]
+
+        # Check if we have a NATS service running (port 4222)
+        if self._check_port_available(4222)[0] == False:  # Port is in use (NATS is running)
+            services_config.append({
+                "name": "nats",
+                "service_type": ServiceType.QUEUE,
+                "health_method": HealthMethod.HTTP,
+                "health_url": "http://localhost:8222/healthz",
+                "port": 4222,
+                "health_interval": 30,
+                "health_timeout": 5,
+                "health_threshold": 100,
+                "is_required": False,
+            })
+
+        # Delete existing services for this project (if any)
+        from sqlalchemy import delete
+        await self.db.execute(
+            delete(Service).where(Service.project_id == project.id)
+        )
+
+        # Create service records
+        for config in services_config:
+            service = Service(
+                project_id=project.id,
+                name=config["name"],
+                service_type=config["service_type"],
+                health_method=config["health_method"],
+                health_url=config["health_url"],
+                port=config["port"],
+                health_interval=config.get("health_interval", 30),
+                health_timeout=config.get("health_timeout", 5),
+                health_threshold=config.get("health_threshold", 1000),
+                health_retries=config.get("health_retries", 3),
+                is_required=config.get("is_required", True),
+                alerts_enabled=True,
+                health_status=HealthStatus.UNKNOWN,
+                external_url=config.get("external_url"),
+                started_at=datetime.now(timezone.utc),
+            )
+            self.db.add(service)
+
+        await self.db.commit()
+        logger.info(f"Registered {len(services_config)} services for project {project.name}")
+
+    async def _unregister_services(self, project: Project):
+        """Remove service registrations when project stops.
+
+        Args:
+            project: Project that was stopped
+        """
+        logger.info(f"Unregistering services for project {project.name}")
+
+        # Delete all services for this project
+        result = await self.db.execute(
+            select(Service).where(Service.project_id == project.id)
+        )
+        services = result.scalars().all()
+
+        for service in services:
+            await self.db.delete(service)
+
+        await self.db.commit()
+        logger.info(f"Unregistered {len(services)} services for project {project.name}")
