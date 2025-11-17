@@ -27,6 +27,7 @@ from app.routers import (
     dashboard,
     export,
     github_features,
+    graph,
     ingestion_sources,
     jobs,
     knowledge,
@@ -220,6 +221,7 @@ app.include_router(schedules.router)  # Schedule management for recurring tasks
 app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
+app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
 
 
 # Test endpoints for observability (only in dev/test environments)
