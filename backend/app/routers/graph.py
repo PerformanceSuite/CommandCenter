@@ -268,6 +268,7 @@ async def trigger_audit(
         target_entity=request.target_entity,
         target_id=request.target_id,
         kind=request.kind,
+        project_id=current_project_id,
     )
 
     return GraphAuditResponse.model_validate(audit)

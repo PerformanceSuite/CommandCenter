@@ -4,7 +4,9 @@ GraphService - Business logic for Phase 7 Graph Service
 Encapsulates all graph database operations with multi-tenant isolation.
 """
 
+import logging
 from typing import List, Literal, Optional, Sequence
+from uuid import uuid4
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +29,7 @@ from app.models.graph import (
     SpecItemStatus,
     TaskKind,
 )
+from app.nats_client import get_nats_client
 from app.schemas.graph import (
     DependencyGraph,
     GhostNode,
@@ -37,6 +40,9 @@ from app.schemas.graph import (
     SearchResults,
     SpecFilters,
 )
+from app.schemas.graph_events import AuditRequestedEvent, AuditResultEvent, GraphTaskCreatedEvent
+
+logger = logging.getLogger(__name__)
 
 
 class GraphService:
@@ -664,6 +670,22 @@ class GraphService:
         await self.db.commit()
         await self.db.refresh(task)
 
+        # Publish task creation event
+        nats_client = await get_nats_client()
+        if nats_client:
+            try:
+                event = GraphTaskCreatedEvent(
+                    task_id=task.id,
+                    project_id=project_id,
+                    title=title,
+                    kind=kind.value,
+                    spec_item_id=spec_item_id,
+                )
+                await nats_client.publish("graph.task.created", event.model_dump(mode="json"))
+                logger.debug(f"Published task created event: task_id={task.id}")
+            except Exception as e:
+                logger.error(f"Failed to publish task created event: {e}")
+
         return task
 
     async def trigger_audit(
@@ -671,6 +693,7 @@ class GraphService:
         target_entity: str,
         target_id: int,
         kind: AuditKind,
+        project_id: int,
     ) -> GraphAudit:
         """
         Trigger an audit for a target entity.
@@ -681,6 +704,7 @@ class GraphService:
             target_entity: Target table name
             target_id: Target entity ID
             kind: Audit type
+            project_id: Project ID for multi-tenant isolation
 
         Returns:
             Created GraphAudit instance (status=PENDING)
@@ -696,8 +720,33 @@ class GraphService:
         await self.db.commit()
         await self.db.refresh(audit)
 
-        # TODO: Publish NATS event for async audit processing
-        # await self.publish_audit_request(audit)
+        # Publish NATS event for async audit processing
+        nats_client = await get_nats_client()
+        if nats_client:
+            try:
+                correlation_id = uuid4()
+                event = AuditRequestedEvent(
+                    audit_id=audit.id,
+                    project_id=project_id,
+                    target_entity=target_entity,
+                    target_id=target_id,
+                    kind=kind,
+                    correlation_id=correlation_id,
+                )
+
+                subject = f"audit.requested.{kind.value}"
+                # Use model_dump with mode='json' to handle UUID serialization
+                event_dict = event.model_dump(mode="json")
+                await nats_client.publish(subject, event_dict, correlation_id)
+                logger.info(
+                    f"Published audit request: {subject} (audit_id={audit.id}, "
+                    f"correlation={correlation_id})"
+                )
+            except Exception as e:
+                logger.error(f"Failed to publish audit request to NATS: {e}")
+                # Don't fail the audit creation if NATS publish fails
+        else:
+            logger.warning("NATS client not available, audit request not published")
 
         return audit
 
@@ -738,3 +787,77 @@ class GraphService:
         await self.db.refresh(link)
 
         return link
+
+    async def update_audit_result(
+        self,
+        audit_id: int,
+        status: AuditStatus,
+        summary: str,
+        report_path: Optional[str] = None,
+        score: Optional[float] = None,
+    ) -> GraphAudit:
+        """
+        Update audit with results from agent.
+
+        Called when audit.result.* event is received from audit agents.
+
+        Args:
+            audit_id: Audit ID
+            status: Audit result status (completed, failed)
+            summary: Human-readable summary
+            report_path: Optional path to detailed report
+            score: Optional quality score (0-10)
+
+        Returns:
+            Updated GraphAudit instance
+        """
+        stmt = select(GraphAudit).filter(GraphAudit.id == audit_id)
+        result = await self.db.execute(stmt)
+        audit = result.scalar_one_or_none()
+
+        if not audit:
+            raise ValueError(f"Audit {audit_id} not found")
+
+        # Update audit record
+        audit.status = status
+        audit.summary = summary
+        audit.report_path = report_path
+        audit.score = score
+
+        await self.db.commit()
+        await self.db.refresh(audit)
+
+        logger.info(f"Updated audit {audit_id} with status={status}, score={score}")
+        return audit
+
+    async def start_audit_result_consumer(self) -> None:
+        """
+        Start consuming audit.result.* events from NATS.
+
+        Should be called on application startup to begin listening for
+        audit results from agents.
+        """
+        nats_client = await get_nats_client()
+        if not nats_client:
+            logger.warning("NATS client not available, audit result consumer not started")
+            return
+
+        async def handle_audit_result(subject: str, data: dict):
+            """Handle audit.result.* events"""
+            try:
+                event = AuditResultEvent(**data)
+                await self.update_audit_result(
+                    audit_id=event.audit_id,
+                    status=event.status,
+                    summary=event.summary,
+                    report_path=event.report_path,
+                    score=event.score,
+                )
+                logger.info(
+                    f"Processed audit result: audit_id={event.audit_id}, status={event.status}"
+                )
+            except Exception as e:
+                logger.error(f"Error processing audit result event from {subject}: {e}")
+
+        await nats_client.subscribe("audit.result.*", handle_audit_result)
+        logger.info("Started audit result consumer (subscribed to audit.result.*)")

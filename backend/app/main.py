@@ -21,6 +21,7 @@ from app.config import settings
 from app.database import close_db, get_db, init_db
 from app.middleware import LoggingMiddleware, add_security_headers, limiter
 from app.middleware.correlation import CorrelationIDMiddleware
+from app.nats_client import init_nats_client, shutdown_nats_client
 from app.routers import (
     auth,
     batch,
@@ -76,10 +77,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     await mcp.initialize_mcp_server()
     print("MCP server initialized")
 
+    # Initialize NATS (Phase 7: Graph Service events)
+    try:
+        await init_nats_client(settings.nats_url)
+        print(f"NATS client initialized ({settings.nats_url})")
+    except Exception as e:
+        # NATS is optional - continue without it
+        print(f"Warning: NATS client failed to initialize: {e}")
+
     yield
 
     # Shutdown
     print("Shutting down Command Center API...")
+    await shutdown_nats_client()
+    print("NATS client shutdown")
     await mcp.shutdown_mcp_server()
     print("MCP server shutdown")
     await redis_service.disconnect()

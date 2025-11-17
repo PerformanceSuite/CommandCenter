@@ -115,6 +115,10 @@ class AuditKind(str, Enum):
     COMPLIANCE = "compliance"
     PERFORMANCE = "performance"
     TEST_COVERAGE = "testCoverage"
+    # Phase 7 audit types
+    COMPLETENESS = "completeness"  # TODO/spec coverage, docstrings
+    CONSISTENCY = "consistency"  # Naming conventions, code style
+    DRIFT = "drift"  # Code vs spec divergence
 
 
 class AuditStatus(str, Enum):

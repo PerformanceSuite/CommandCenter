@@ -7,6 +7,7 @@ Supports Python, TypeScript/JavaScript with incremental updates.
 
 import asyncio
 import hashlib
+import logging
 import os
 import sys
 from pathlib import Path
@@ -30,7 +31,11 @@ from app.models.graph import (  # noqa: E402
     SpecItemSource,
     SpecItemStatus,
 )
+from app.nats_client import NATSClient  # noqa: E402
 from app.parsers.python_parser import PythonParser  # noqa: E402
+from app.schemas.graph_events import GraphIndexedEvent  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 # Supported file extensions by language
 LANGUAGE_EXTENSIONS = {
@@ -220,10 +225,42 @@ class GraphIndexer:
                 if self.stats["errors"] > 0:
                     click.echo(f"  ⚠️  Errors: {self.stats['errors']}", err=True)
 
+                # Publish indexing completion event to NATS
+                await self._publish_indexed_event(repo)
+
             finally:
                 await engine.dispose()
 
         return self.stats
+
+    async def _publish_indexed_event(self, repo: GraphRepo) -> None:
+        """Publish graph.indexed event to NATS after indexing completes."""
+        try:
+            # Connect to NATS
+            nats_client = NATSClient(settings.nats_url)
+            await nats_client.connect()
+
+            try:
+                # Create event
+                event = GraphIndexedEvent(
+                    project_id=self.project_id,
+                    repo_id=repo.id,
+                    files_processed=self.stats["files_processed"],
+                    symbols_extracted=self.stats["symbols_extracted"],
+                    todos_extracted=self.stats["todos_extracted"],
+                    incremental=self.stats["files_skipped"] > 0,
+                )
+
+                # Publish to project-specific subject
+                subject = f"graph.indexed.{self.project_id}"
+                await nats_client.publish(subject, event.model_dump(mode="json"))
+                click.echo(f"  📡 Published indexing event to NATS: {subject}")
+            finally:
+                await nats_client.disconnect()
+
+        except Exception as e:
+            # Don't fail indexing if NATS publishing fails
+            click.echo(f"  ⚠️  Failed to publish to NATS: {e}", err=True)
 
     async def _get_or_create_repo(self, session: AsyncSession) -> GraphRepo:
         """Get existing repository or create new one"""
