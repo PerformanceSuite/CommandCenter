@@ -3,6 +3,7 @@ import logger from '../utils/logger';
 import config from '../config';
 import healthRoutes from './routes/health';
 import agentRoutes from './routes/agents';
+import workflowRoutes from './routes/workflows';
 
 export function createServer() {
   const app = express();
@@ -22,6 +23,7 @@ export function createServer() {
   // Routes
   app.use('/api', healthRoutes);
   app.use('/api', agentRoutes);
+  app.use('/api', workflowRoutes);
 
   // Error handler
   app.use(
