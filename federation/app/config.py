@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     class Config:
         # Look for .env in the federation directory (parent of app/)
         env_file = str(Path(__file__).parent.parent / ".env")
+        # Allow extra environment variables (from docker-compose, etc)
+        extra = "ignore"
 
 
 settings = Settings()
