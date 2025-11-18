@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  postgres-fed-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: commandcenter
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: commandcenter_fed_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commandcenter -d commandcenter_fed_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    tmpfs:
+      - /var/lib/postgresql/data  # Faster tests with in-memory storage
+
+networks:
+  default:
+    name: federation-test

@@ -1,3 +1,4 @@
+import os
 import pytest
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -16,8 +17,13 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def test_db():
     """Create test database."""
+    # Allow configurable test database URL for different environments
+    test_db_url = os.getenv(
+        "TEST_DATABASE_URL",
+        "postgresql+asyncpg://commandcenter:changeme@localhost:5432/commandcenter_fed_test"
+    )
     engine = create_async_engine(
-        "postgresql+asyncpg://commandcenter:changeme@localhost:5432/commandcenter_fed_test",
+        test_db_url,
         echo=False,
     )
 

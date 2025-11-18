@@ -47,9 +47,18 @@ class HeartbeatWorker:
             # Update heartbeat in database
             async with get_async_session() as db:
                 service = CatalogService(db)
-                await service.update_heartbeat(project_slug)
-                logger.debug(f"Updated heartbeat for {project_slug}")
+                try:
+                    await service.update_heartbeat(project_slug)
+                    logger.info(f"Updated heartbeat for {project_slug}")
+                except ValueError as e:
+                    # Project not found in catalog - this is expected for new projects
+                    logger.warning(
+                        f"Heartbeat for unknown project '{project_slug}': {e}. "
+                        f"Project must be registered via config/projects.yaml or API first."
+                    )
 
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in heartbeat message: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"Error handling heartbeat: {e}", exc_info=True)
 
