@@ -1,7 +1,7 @@
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.project import Project, ProjectStatus
 
 
@@ -35,7 +35,7 @@ class CatalogService:
             project.hub_url = hub_url
             project.mesh_namespace = mesh_namespace
             project.tags = tags
-            project.updated_at = datetime.utcnow()
+            project.updated_at = datetime.now(timezone.utc)
         else:
             # Create new
             project = Project(
@@ -62,13 +62,16 @@ class CatalogService:
             update(Project)
             .where(Project.slug == slug)
             .values(
-                last_heartbeat_at=datetime.utcnow(),
+                last_heartbeat_at=datetime.now(timezone.utc),
                 status=ProjectStatus.ONLINE,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(timezone.utc)
             )
         )
-        await self.db.execute(stmt)
+        result = await self.db.execute(stmt)
         await self.db.commit()
+
+        if result.rowcount == 0:
+            raise ValueError(f"Project '{slug}' not found in catalog")
 
     async def get_projects(
         self,
@@ -99,7 +102,7 @@ class CatalogService:
 
         Returns number of projects marked stale.
         """
-        stale_threshold = datetime.utcnow() - timedelta(seconds=90)
+        stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=90)
 
         stmt = (
             update(Project)
@@ -109,7 +112,7 @@ class CatalogService:
             )
             .values(
                 status=ProjectStatus.OFFLINE,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(timezone.utc)
             )
         )
         result = await self.db.execute(stmt)

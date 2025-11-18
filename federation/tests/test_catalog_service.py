@@ -1,4 +1,6 @@
 import pytest
+from datetime import datetime, timezone
+from freezegun import freeze_time
 from app.services.catalog_service import CatalogService
 from app.models.project import ProjectStatus
 
@@ -67,3 +69,47 @@ async def test_get_projects_filter_by_status(db_session):
     offline = await service.get_projects(status_filter=ProjectStatus.OFFLINE)
     assert len(offline) == 1
     assert offline[0].slug == "project2"
+
+
+@pytest.mark.asyncio
+async def test_mark_stale_projects(db_session):
+    """Test that projects are marked offline after 90s without heartbeat."""
+    service = CatalogService(db_session)
+
+    # Register and activate project
+    await service.register_project(
+        slug="commandcenter",
+        name="CommandCenter",
+        hub_url="http://localhost:8000",
+        mesh_namespace="hub.commandcenter",
+        tags=[]
+    )
+
+    # Start time: 2025-01-01 12:00:00
+    with freeze_time("2025-01-01 12:00:00"):
+        await service.update_heartbeat("commandcenter")
+        project = await service.get_project("commandcenter")
+        assert project.status == ProjectStatus.ONLINE
+
+    # Move time forward 89 seconds - should still be online
+    with freeze_time("2025-01-01 12:01:29"):
+        count = await service.mark_stale_projects()
+        assert count == 0
+        project = await service.get_project("commandcenter")
+        assert project.status == ProjectStatus.ONLINE
+
+    # Move time forward 91 seconds - should be marked offline
+    with freeze_time("2025-01-01 12:01:31"):
+        count = await service.mark_stale_projects()
+        assert count == 1
+        project = await service.get_project("commandcenter")
+        assert project.status == ProjectStatus.OFFLINE
+
+
+@pytest.mark.asyncio
+async def test_update_heartbeat_missing_project(db_session):
+    """Test that update_heartbeat raises ValueError for missing project."""
+    service = CatalogService(db_session)
+
+    with pytest.raises(ValueError, match="Project 'nonexistent' not found in catalog"):
+        await service.update_heartbeat("nonexistent")
