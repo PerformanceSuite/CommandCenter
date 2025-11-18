@@ -42,8 +42,16 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
     - Integration tests (8 scenarios, full NATS flow coverage)
     - Dagger health checks (startup validation with retry)
     - YAML config validation (fail-fast with clear errors)
-  - **Status**: Federation service production-ready! 🚀
-  - **Commits**: `8c07b42` → `be648ab` (6 hardening commits)
+  - ✅ **Production Deployment Infrastructure** (Completed 2025-11-18)
+    - Docker Compose stack (5 services: postgres, nats, federation, prometheus, grafana)
+    - Prometheus metrics collection (15s scrape interval)
+    - Grafana dashboards (8 panels: heartbeats, status, NATS throughput)
+    - Comprehensive deployment guide (DEPLOYMENT.md, 600+ lines)
+    - Production environment template (.env.template)
+    - Pydantic Settings config fix (allow extra env vars)
+    - **Note**: Alembic migration chain needs reconciliation (worktree vs main)
+  - **Status**: Federation service code production-ready! Deployment infrastructure complete! 🚀
+  - **Commits**: `8c07b42` → `01c361e` (8 commits total: 6 hardening + 1 deployment + 1 config fix)
 - 📋 **[Phase 10](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-10-agent-orchestration--workflow-automation-weeks-21-24)**: Agent Orchestration & Workflows ([Blueprint](../hub-prototype/phase_10_agent_orchestration_workflow_automation_blueprint.md))
 - 📋 **[Phase 11](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-11-compliance-security--partner-interfaces-weeks-25-27)**: Compliance & Security ([Blueprint](../hub-prototype/phase_11_compliance_security_partner_interfaces_blueprint.md))
 
@@ -208,12 +216,18 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
   - Privacy-first architecture (data isolation, local embeddings, self-hosted)
 - **Next Steps**:
   1. ✅ Review and merge PR #86 (KnowledgeBeast migration) - COMPLETE
-  2. Deploy federation service to production
-  3. Integrate Hub with Federation catalog
-  4. Phase 10: Multi-tenant isolation audit
-  5. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
-  6. Knowledge Graph + KnowledgeBeast integration
-- **Latest Session**: 2025-11-18 - KnowledgeBeast migration merged + cleanup (PR #86)
+  2. ✅ Create federation deployment infrastructure - COMPLETE
+  3. Fix Alembic migration chain (reconcile worktree vs main)
+  4. Deploy and verify federation service (run migrations)
+  5. Integrate Hub with Federation catalog
+  6. Phase 10: Multi-tenant isolation audit
+  7. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
+  8. Knowledge Graph + KnowledgeBeast integration
+- **Latest Session**: 2025-11-18 - Federation deployment infrastructure + KnowledgeBeast migration
+  - PR #86 merged: KnowledgeBeast vendored to monorepo
+  - Federation deployment: Docker Compose + Prometheus + Grafana + DEPLOYMENT.md
+  - Config fix: Pydantic Settings now allows extra environment variables
+  - Commits: `f2625ff` → `01c361e` (4 commits)
 
 ## Quick Commands
 ```bash
