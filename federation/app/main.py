@@ -5,6 +5,8 @@ from app.config import settings
 from app.routers import projects_router
 from app.workers import HeartbeatWorker
 from app.loader import load_projects_from_yaml
+from app.utils.metrics import setup_metrics
+from prometheus_client import make_asgi_app
 import logging
 
 logging.basicConfig(level=settings.LOG_LEVEL.upper())
@@ -38,8 +40,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Setup Prometheus metrics
+setup_metrics(app)
+
 # Include routers
 app.include_router(projects_router)
+
+# Mount Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 @app.get("/health")
