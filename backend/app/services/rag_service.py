@@ -56,8 +56,8 @@ class RAGService:
         # This is used to generate embeddings for queries and documents
         self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
 
-        # Build connection string from settings (asyncpg format without +asyncpg)
-        connection_string = settings.get_postgres_url(for_asyncpg=True)
+        # Build connection string from settings
+        connection_string = settings.get_postgres_url()
 
         # Initialize KnowledgeBeast PostgresBackend
         self.backend = PostgresBackend(
@@ -122,11 +122,7 @@ class RAGService:
         # Use hybrid search (vector + keyword) for best results
         # alpha=0.7 means 70% vector, 30% keyword
         results = await self.backend.query_hybrid(
-            query_embedding=query_embedding,
-            query_text=question,
-            top_k=k,
-            alpha=0.7,
-            where=where,
+            query_embedding=query_embedding, query_text=question, top_k=k, alpha=0.7, where=where
         )
 
         # Format results to match expected API
@@ -233,7 +229,7 @@ class RAGService:
 
         # Get all documents and extract unique categories
         # This could be optimized with a custom SQL query in production
-        await self.backend.get_statistics()
+        # stats = await self.backend.get_statistics()  # TODO: Use for category extraction
 
         # For now, return empty list - would need custom query to extract from metadata
         # This can be enhanced in PostgresBackend later
