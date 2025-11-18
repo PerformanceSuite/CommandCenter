@@ -1,6 +1,6 @@
 """Initial schema - projects table
 
-Revision ID: 001
+Revision ID: 001_projects_table
 Revises:
 Create Date: 2025-11-18
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '001'
+revision: str = '001_projects_table'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

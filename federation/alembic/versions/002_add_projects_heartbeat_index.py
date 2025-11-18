@@ -1,7 +1,7 @@
 """Add projects last_heartbeat_at status index
 
 Revision ID: 002_heartbeat_idx
-Revises: 001_initial_schema_projects_table
+Revises: 001_projects_table
 Create Date: 2025-11-18 00:00:00
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '002_heartbeat_idx'
-down_revision: Union[str, None] = '001_initial_schema_projects_table'
+down_revision: Union[str, None] = '001_projects_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
