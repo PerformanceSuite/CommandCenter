@@ -14,7 +14,7 @@ from app.services.health_service import HealthService
 from app.config import get_hub_id
 
 if TYPE_CHECKING:
-    from app.services.event_service import EventService
+    from app.events.service import EventService
 
 logger = logging.getLogger(__name__)
 

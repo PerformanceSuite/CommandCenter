@@ -77,7 +77,7 @@ class FederationService:
 
         # Subscribe to presence announcements from other Hubs
         await self.nats_bridge.subscribe_nats_to_internal(
-            subject="hub.global.presence",
+            subject_filter="hub.global.presence",
             handler=self._handle_presence_announcement
         )
 
