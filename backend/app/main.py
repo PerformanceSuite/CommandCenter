@@ -3,6 +3,7 @@ Command Center FastAPI Application
 Main entry point for the backend API
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -21,12 +22,14 @@ from app.config import settings
 from app.database import close_db, get_db, init_db
 from app.middleware import LoggingMiddleware, add_security_headers, limiter
 from app.middleware.correlation import CorrelationIDMiddleware
+from app.nats_client import init_nats_client, shutdown_nats_client
 from app.routers import (
     auth,
     batch,
     dashboard,
     export,
     github_features,
+    graph,
     ingestion_sources,
     jobs,
     knowledge,
@@ -42,6 +45,7 @@ from app.routers import (
     webhooks_ingestion,
 )
 from app.services import redis_service
+from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
 from app.utils.metrics import error_counter, setup_custom_metrics
 
@@ -75,10 +79,39 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     await mcp.initialize_mcp_server()
     print("MCP server initialized")
 
+    # Initialize NATS (Phase 7: Graph Service events)
+    heartbeat = None
+    heartbeat_task = None
+    try:
+        await init_nats_client(settings.nats_url)
+        print(f"NATS client initialized ({settings.nats_url})")
+
+        # Start federation heartbeat (Phase 9: Federation)
+        heartbeat = FederationHeartbeat()
+        heartbeat_task = asyncio.create_task(heartbeat.start_heartbeat_loop())
+        print("Federation heartbeat started")
+    except Exception as e:
+        # NATS is optional - continue without it
+        print(f"Warning: NATS client failed to initialize: {e}")
+
     yield
 
     # Shutdown
     print("Shutting down Command Center API...")
+
+    # Stop heartbeat
+    if heartbeat:
+        heartbeat.stop()
+    if heartbeat_task:
+        heartbeat_task.cancel()
+        try:
+            await heartbeat_task
+        except asyncio.CancelledError:
+            pass
+        print("Federation heartbeat stopped")
+
+    await shutdown_nats_client()
+    print("NATS client shutdown")
     await mcp.shutdown_mcp_server()
     print("MCP server shutdown")
     await redis_service.disconnect()
@@ -220,6 +253,7 @@ app.include_router(schedules.router)  # Schedule management for recurring tasks
 app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
+app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
 
 
 # Test endpoints for observability (only in dev/test environments)

@@ -1,0 +1,10 @@
+projects:
+  - slug: commandcenter
+    name: CommandCenter
+    hub_url: http://localhost:8000
+    mesh_namespace: hub.commandcenter
+    tags:
+      - python
+      - fastapi
+      - rag
+    allow_fanout: []

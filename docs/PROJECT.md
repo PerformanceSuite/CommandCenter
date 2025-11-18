@@ -17,11 +17,26 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
 - ✅ **[Phase 6](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-6-health--service-discovery-weeks-6-8)**: Health & Service Discovery **COMPLETE**
 
 ### Graph & Visualization (Weeks 9-16)
-- 📋 **[Phase 7](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-7-graph-service-implementation-weeks-9-12)**: Graph-Service Implementation ([Blueprint](../hub-prototype/phase_7_8_graph_service_vislzr_integration_plan_command_center.md))
+- 🔄 **[Phase 7](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-7-graph-service-implementation-weeks-9-12)**: Graph Service Implementation ([Design Doc](plans/2025-11-06-phase-7-graph-service-implementation.md))
+  - ✅ **Week 1**: Core Service Layer (GraphService, Router, Schemas)
+  - ✅ **Week 2**: Python AST Parser & Graph Indexer CLI
+  - ⏭️ **Week 3**: TypeScript/JavaScript Parser (Deferred - not needed for Python-only backend)
+  - ✅ **Week 4**: NATS Integration & Stub Audit Agents
 - 📋 **[Phase 8](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-8-vislzr-frontend-weeks-13-16)**: VISLZR Frontend ([Blueprint](../hub-prototype/phase_7_8_graph_service_vislzr_integration_plan_command_center.md))
 
 ### Intelligence & Automation (Weeks 17-27)
-- 📋 **[Phase 9](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-9-federation--cross-project-intelligence-weeks-17-20)**: Federation & Ecosystem Mode ([Blueprint](../hub-prototype/phase_9_federation_ecosystem_mode_implementation_blueprint.md))
+- 🔄 **[Phase 9](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-9-federation--cross-project-intelligence-weeks-17-20)**: Federation & Ecosystem Mode **IN PROGRESS** (Started 2025-11-18)
+  - ✅ **Week 1-2**: Federation Service Foundation
+    - Federation service skeleton (port 8001)
+    - Database schema (`commandcenter_fed`)
+    - CatalogService with project registration
+    - REST API endpoints (GET/POST /api/fed/projects)
+    - NATS heartbeat worker
+    - Backend heartbeat publisher
+    - Dagger orchestration module
+    - Documentation complete
+  - 📋 **Week 3-4**: Metrics & VISLZR (planned)
+  - **Tasks 4-8 complete** (8 of 8 tasks), foundation ready for Week 3-4
 - 📋 **[Phase 10](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-10-agent-orchestration--workflow-automation-weeks-21-24)**: Agent Orchestration & Workflows ([Blueprint](../hub-prototype/phase_10_agent_orchestration_workflow_automation_blueprint.md))
 - 📋 **[Phase 11](plans/2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md#phase-11-compliance-security--partner-interfaces-weeks-25-27)**: Compliance & Security ([Blueprint](../hub-prototype/phase_11_compliance_security_partner_interfaces_blueprint.md))
 
@@ -123,7 +138,28 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
     - ✅ Federation-ready health summaries via NATS
     - **10 files created/modified**, +1,500 lines
     - **All tests passing** - health system fully operational
-- **Last Work**: 2025-11-05 - Phase 6: Health & Service Discovery
+  - **Phase 7**: Graph Service Implementation **IN PROGRESS** 🔄 (Started 2025-11-06)
+    - ✅ **Week 1** (Completed 2025-11-06): Core Service Layer
+      - GraphService business logic (747 lines)
+      - REST API endpoints (8 routes in graph.py)
+      - Pydantic schemas for requests/responses
+      - Multi-tenant isolation via project_id filtering
+      - Manual integration tests (all passing)
+    - ✅ **Week 2** (Completed 2025-11-17): Code Indexer
+      - Python AST parser (335 lines) - extracts symbols, dependencies, TODOs
+      - Graph indexer CLI with incremental updates (SHA-256 hashing)
+      - Tested on CommandCenter backend: 378 files, 5,462 symbols, 42 TODOs
+    - ✅ **Week 4** (Completed 2025-11-17): NATS Integration & Audit Agents
+      - NATS 2.10-alpine service added to docker-compose
+      - NATSClient wrapper for pub/sub
+      - Event schemas (AuditRequestedEvent, GraphIndexedEvent, etc.)
+      - 3 stub audit agents (completeness, consistency, drift)
+      - End-to-end event flow: trigger → NATS → agent → result
+      - Database migration for new audit kinds
+    - **Week 3**: Skipped (TypeScript parser not needed for Python-only backend)
+    - **Status**: 3/4 weeks complete, Milestone 1 achieved ✅
+    - **13 files created/modified**, +2,800 lines total
+- **Last Work**: 2025-11-17 - Phase 7 Week 4: NATS Integration & Stub Audit Agents
   - 2,880-line design document with complete architecture
   - Hybrid modular monolith approach with NATS event bus
   - 32-week timeline covering event infrastructure through autonomous intelligence

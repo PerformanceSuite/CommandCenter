@@ -1,0 +1,5 @@
+{
+  "name": "federation-stack",
+  "sdk": "python",
+  "source": "dagger_modules"
+}
