@@ -1,0 +1,173 @@
+{
+  "dashboard": {
+    "title": "Federation Service Overview",
+    "tags": ["federation", "commandcenter"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Heartbeat Metrics - Total Received",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "heartbeat_total",
+            "legendFormat": "Total Heartbeats"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Projects Online",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(catalog_projects_by_status{status=\"online\"})",
+            "legendFormat": "Online Projects"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Projects Offline",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(catalog_projects_by_status{status=\"offline\"})",
+            "legendFormat": "Offline Projects"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Stale Projects Detected",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "stale_projects_total",
+            "legendFormat": "Stale Projects"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 5,
+        "title": "Heartbeat Rate (per minute)",
+        "type": "graph",
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(heartbeat_total[1m]) * 60",
+            "legendFormat": "Heartbeats/min"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Heartbeats/min"},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "NATS Messages Published",
+        "type": "graph",
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(nats_publish_total[1m]) * 60",
+            "legendFormat": "Messages/min"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Messages/min"},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Project Status Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 9, "w": 8, "x": 0, "y": 17},
+        "targets": [
+          {
+            "expr": "catalog_projects_by_status",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "values": ["value", "percent"]
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Catalog Operations",
+        "type": "graph",
+        "gridPos": {"h": 9, "w": 16, "x": 8, "y": 17},
+        "targets": [
+          {
+            "expr": "rate(catalog_register_total[5m]) * 60",
+            "legendFormat": "Registrations/min"
+          },
+          {
+            "expr": "rate(catalog_lookup_total[5m]) * 60",
+            "legendFormat": "Lookups/min"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Operations/min"},
+          {"show": false}
+        ]
+      }
+    ]
+  }
+}

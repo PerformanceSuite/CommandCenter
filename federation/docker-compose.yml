@@ -1,0 +1,135 @@
+# Federation Service - Production Docker Compose
+# Provides federation catalog, heartbeat monitoring, and cross-project orchestration
+
+version: "3.8"
+
+services:
+  # PostgreSQL Database (Federation Catalog)
+  postgres:
+    image: postgres:16-alpine
+    container_name: federation-postgres
+    environment:
+      POSTGRES_USER: commandcenter
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: commandcenter_fed
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commandcenter -d commandcenter_fed"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - federation
+
+  # NATS Message Broker (Heartbeat Communication)
+  nats:
+    image: nats:2.10-alpine
+    container_name: federation-nats
+    command:
+      - "--http_port"
+      - "8222"
+      - "--port"
+      - "4222"
+    ports:
+      - "${NATS_PORT:-4223}:4222"      # Client connections
+      - "${NATS_HTTP_PORT:-8223}:8222" # Monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - federation
+
+  # Federation Service (FastAPI)
+  federation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: federation-service
+    environment:
+      DATABASE_URL: postgresql+asyncpg://commandcenter:${DB_PASSWORD:-changeme}@postgres:5432/commandcenter_fed
+      NATS_URL: nats://nats:4222
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SERVICE_PORT: 8001
+      FEDERATION_API_KEYS: ${FEDERATION_API_KEYS:-[]}
+      HEARTBEAT_STALE_THRESHOLD_SECONDS: ${HEARTBEAT_STALE_THRESHOLD_SECONDS:-90}
+      HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS: ${HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS:-60}
+    ports:
+      - "${FEDERATION_PORT:-8001}:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - federation
+    volumes:
+      # Mount config directory for projects.yaml
+      - ./config:/app/config:ro
+
+  # Prometheus (Metrics Collection)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: federation-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "${PROMETHEUS_PORT:-9091}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - federation
+    restart: unless-stopped
+    networks:
+      - federation
+
+  # Grafana (Metrics Visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: federation-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - federation
+
+volumes:
+  postgres_data:
+    name: federation_postgres_data
+  prometheus_data:
+    name: federation_prometheus_data
+  grafana_data:
+    name: federation_grafana_data
+
+networks:
+  federation:
+    name: federation_network
+    driver: bridge
