@@ -64,18 +64,24 @@ class HeartbeatWorker:
 
     async def _stale_checker_loop(self):
         """Periodically check for stale projects."""
+        logger.info(
+            f"Starting stale checker (threshold={settings.HEARTBEAT_STALE_THRESHOLD_SECONDS}s, "
+            f"interval={settings.HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS}s)"
+        )
         while self.running:
             try:
                 async with get_async_session() as db:
                     service = CatalogService(db)
-                    stale_count = await service.mark_stale_projects()
+                    stale_count = await service.mark_stale_projects(
+                        settings.HEARTBEAT_STALE_THRESHOLD_SECONDS
+                    )
                     if stale_count > 0:
                         logger.info(f"Marked {stale_count} projects as offline")
 
             except Exception as e:
                 logger.error(f"Error in stale checker: {e}", exc_info=True)
 
-            await asyncio.sleep(60)  # Check every 60 seconds
+            await asyncio.sleep(settings.HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS)
 
     async def stop(self):
         """Stop the heartbeat worker."""

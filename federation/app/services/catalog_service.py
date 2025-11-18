@@ -96,13 +96,17 @@ class CatalogService:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def mark_stale_projects(self) -> int:
+    async def mark_stale_projects(self, stale_threshold_seconds: int = 90) -> int:
         """
-        Mark projects as offline if no heartbeat in 90 seconds.
+        Mark projects as offline if no heartbeat within threshold.
 
-        Returns number of projects marked stale.
+        Args:
+            stale_threshold_seconds: Seconds without heartbeat before marking offline
+
+        Returns:
+            Number of projects marked stale.
         """
-        stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=90)
+        stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=stale_threshold_seconds)
 
         stmt = (
             update(Project)

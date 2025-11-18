@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "info"
     SERVICE_PORT: int = 8001
 
+    # Heartbeat monitoring configuration
+    HEARTBEAT_STALE_THRESHOLD_SECONDS: int = 90
+    HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS: int = 60
+
     class Config:
         # Look for .env in the federation directory (parent of app/)
         env_file = str(Path(__file__).parent.parent / ".env")
