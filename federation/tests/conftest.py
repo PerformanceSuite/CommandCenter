@@ -1,6 +1,8 @@
 import os
 import pytest
 import asyncio
+import subprocess
+import time
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from app.database import Base
 from app.models import Project
@@ -45,3 +47,53 @@ async def db_session(test_db):
 
     async with async_session() as session:
         yield session
+
+
+@pytest.fixture(scope="session")
+def nats_server():
+    """
+    Start embedded NATS server for integration tests.
+
+    Assumes nats-server is installed on the system:
+    - macOS: brew install nats-server
+    - Linux: Download from https://github.com/nats-io/nats-server/releases
+
+    Falls back to using existing NATS server at NATS_URL if nats-server not found.
+    """
+    nats_process = None
+
+    try:
+        # Try to start nats-server on port 4222
+        nats_process = subprocess.Popen(
+            ["nats-server", "--port", "4222"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Wait for NATS to be ready
+        time.sleep(1)
+
+        # Check if process started successfully
+        if nats_process.poll() is not None:
+            raise Exception("NATS server failed to start")
+
+        yield nats_process
+
+    except FileNotFoundError:
+        # nats-server not found - assume external NATS server is running
+        print("\nWARNING: nats-server not found. Using NATS_URL from environment.")
+        print("Install with: brew install nats-server (macOS)")
+        yield None
+
+    except Exception as e:
+        print(f"\nWARNING: Failed to start NATS server: {e}")
+        print("Using NATS_URL from environment instead.")
+        yield None
+
+    finally:
+        if nats_process:
+            nats_process.terminate()
+            try:
+                nats_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                nats_process.kill()
