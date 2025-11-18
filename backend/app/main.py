@@ -80,15 +80,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     print("MCP server initialized")
 
     # Initialize NATS (Phase 7: Graph Service events)
-    heartbeat = None
+    app.state.heartbeat = None
     heartbeat_task = None
     try:
         await init_nats_client(settings.nats_url)
         print(f"NATS client initialized ({settings.nats_url})")
 
         # Start federation heartbeat (Phase 9: Federation)
-        heartbeat = FederationHeartbeat()
-        heartbeat_task = asyncio.create_task(heartbeat.start_heartbeat_loop())
+        app.state.heartbeat = FederationHeartbeat()
+        heartbeat_task = asyncio.create_task(app.state.heartbeat.start_heartbeat_loop())
         print("Federation heartbeat started")
     except Exception as e:
         # NATS is optional - continue without it
@@ -100,8 +100,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     print("Shutting down Command Center API...")
 
     # Stop heartbeat
-    if heartbeat:
-        heartbeat.stop()
+    if app.state.heartbeat:
+        app.state.heartbeat.stop()
     if heartbeat_task:
         heartbeat_task.cancel()
         try:
@@ -194,11 +194,12 @@ async def health_check() -> JSONResponse:
 
 @app.get("/health/detailed", tags=["health"])
 async def detailed_health_check(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Detailed health check with component status.
-    Checks PostgreSQL, Redis, and Celery workers.
+    Checks PostgreSQL, Redis, Celery workers, and Federation heartbeat.
 
     Returns:
         200: All components healthy
@@ -206,7 +207,9 @@ async def detailed_health_check(
     """
     from app.services.health_service import health_service
 
-    health_status = await health_service.get_overall_health(db)
+    # Get heartbeat worker from app state
+    heartbeat_worker = getattr(request.app.state, "heartbeat", None)
+    health_status = await health_service.get_overall_health(db, heartbeat_worker)
 
     status_code = 200
     if health_status["status"] == "unhealthy":

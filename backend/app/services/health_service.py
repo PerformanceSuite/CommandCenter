@@ -175,12 +175,57 @@ class HealthService:
             }
 
     @staticmethod
-    async def get_overall_health(db: Optional[AsyncSession] = None) -> Dict[str, Any]:
+    def check_federation_heartbeat(heartbeat_worker=None) -> Dict[str, Any]:
+        """
+        Check federation heartbeat worker status.
+
+        Args:
+            heartbeat_worker: FederationHeartbeat instance from app.state
+
+        Returns:
+            Health check result with status
+        """
+        try:
+            if heartbeat_worker is None:
+                return {
+                    "status": HealthStatus.DEGRADED,
+                    "message": "Heartbeat worker not initialized (NATS unavailable)",
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                }
+
+            if not heartbeat_worker.running:
+                return {
+                    "status": HealthStatus.UNHEALTHY,
+                    "error": "Heartbeat worker not running",
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                }
+
+            return {
+                "status": HealthStatus.HEALTHY,
+                "project_slug": heartbeat_worker.project_slug,
+                "interval_seconds": heartbeat_worker.interval,
+                "mesh_namespace": heartbeat_worker.mesh_namespace,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+
+        except Exception as e:
+            logger.error(f"Federation heartbeat check failed: {e}")
+            return {
+                "status": HealthStatus.UNHEALTHY,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+
+    @staticmethod
+    async def get_overall_health(
+        db: Optional[AsyncSession] = None, heartbeat_worker=None
+    ) -> Dict[str, Any]:
         """
         Get comprehensive health status for all components.
 
         Args:
             db: Optional database session (if None, DB check is skipped)
+            heartbeat_worker: Optional FederationHeartbeat instance
 
         Returns:
             Overall health status with component details
@@ -200,6 +245,9 @@ class HealthService:
         results = {}
         for name, check in checks.items():
             results[name] = await check
+
+        # Add federation heartbeat check (synchronous)
+        results["federation_heartbeat"] = HealthService.check_federation_heartbeat(heartbeat_worker)
 
         # Determine overall status
         statuses = [result["status"] for result in results.values()]
