@@ -193,9 +193,12 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
 - **Docker Testing**: Complete infrastructure ✅
 - **Hub**: Dagger SDK orchestration + 95 tests ✅ (21 new Phase A tests)
 - **RAG Backend**: KnowledgeBeast v3.0 (libs/knowledgebeast/) with PostgresBackend ✅
-  - 🔄 **Migration PR #86**: Fresh PR created (replaces #54 with merge conflicts)
-  - Docker build fixed, imports verified, tests passing
-  - Pending review and merge
+  - ✅ **Migration COMPLETE** (PR #86 merged 2025-11-18)
+  - Vendored in monorepo (libs/knowledgebeast/)
+  - PostgresBackend replaces ChromaDB
+  - Hybrid search: Vector + keyword (RRF)
+  - Docker build context fixed (./ for libs/ access)
+  - Cleanup commit (8114d76) removed accidental files
 - **USS Version**: v2.1 with auto-commit + /re-init support
 - **Hygiene Score**: ✅ Clean (root directory professional)
 - **Vision**: "Your Personal AI Operating System for Knowledge Work"
@@ -204,13 +207,13 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
   - Unified ecosystem hub (GitHub, Notion, Slack, Obsidian, Zotero, Linear, ArXiv, YouTube, Browser)
   - Privacy-first architecture (data isolation, local embeddings, self-hosted)
 - **Next Steps**:
-  1. Review and merge PR #86 (KnowledgeBeast migration)
+  1. ✅ Review and merge PR #86 (KnowledgeBeast migration) - COMPLETE
   2. Deploy federation service to production
   3. Integrate Hub with Federation catalog
   4. Phase 10: Multi-tenant isolation audit
   5. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
   6. Knowledge Graph + KnowledgeBeast integration
-- **Latest Session**: 2025-11-02 18:30 - Hub folder browser fix + Dagger performance investigation (~3 hours)
+- **Latest Session**: 2025-11-18 - KnowledgeBeast migration merged + cleanup (PR #86)
 
 ## Quick Commands
 ```bash
