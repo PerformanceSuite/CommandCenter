@@ -3,9 +3,10 @@ Application configuration using Pydantic Settings
 Loads configuration from environment variables and .env file
 """
 
+import json
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -50,12 +51,6 @@ class Settings(BaseSettings):
         description="Redis connection URL (e.g., redis://localhost:6379/0)",
     )
 
-    # NATS Configuration (Phase 7: Graph Service)
-    nats_url: str = Field(
-        default="nats://nats:4222",
-        description="NATS server URL for event-driven architecture",
-    )
-
     # RAG/Knowledge Base (Legacy)
     knowledge_base_path: str = Field(
         default="./docs/knowledge-base/chromadb",
@@ -93,20 +88,11 @@ class Settings(BaseSettings):
         default=True, description="Whether to encrypt GitHub tokens in database"
     )
 
-    # CORS (stored as string, converted to list via property)
-    cors_origins_raw: str = Field(
-        default="http://localhost:3000,http://localhost:5173",
-        description="Allowed CORS origins (comma-separated)",
-        alias="CORS_ORIGINS",
+    # CORS
+    cors_origins: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:5173"],
+        description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)",
     )
-
-    @property
-    def cors_origins(self) -> list[str]:
-        """Parse cors_origins from comma-separated string"""
-        if not self.cors_origins_raw or not self.cors_origins_raw.strip():
-            return ["http://localhost:3000", "http://localhost:5173"]
-        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
-
     cors_allow_credentials: bool = Field(
         default=True, description="Allow credentials in CORS requests"
     )
@@ -151,14 +137,25 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
-    def get_postgres_url(self, for_asyncpg: bool = False) -> str:
-        """
-        Construct PostgreSQL URL from components
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from JSON string if provided as string"""
+        if isinstance(v, str):
+            try:
+                # Try to parse as JSON array
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+                # If it's a single string, wrap in list
+                return [parsed]
+            except json.JSONDecodeError:
+                # Fallback: treat as comma-separated list
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
-        Args:
-            for_asyncpg: If True, return asyncpg format (postgresql://),
-                        otherwise return SQLAlchemy format (postgresql+asyncpg://)
-        """
+    def get_postgres_url(self) -> str:
+        """Construct PostgreSQL URL from components"""
         if all(
             [
                 self.postgres_user,
@@ -167,16 +164,11 @@ class Settings(BaseSettings):
                 self.postgres_db,
             ]
         ):
-            scheme = "postgresql" if for_asyncpg else "postgresql+asyncpg"
             return (
-                f"{scheme}://{self.postgres_user}:{self.postgres_password}"
+                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
                 f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
             )
-        # Strip +asyncpg if for_asyncpg and database_url contains it
-        url = self.database_url
-        if for_asyncpg and "+asyncpg" in url:
-            url = url.replace("postgresql+asyncpg://", "postgresql://")
-        return url
+        return self.database_url
 
 
 # Global settings instance

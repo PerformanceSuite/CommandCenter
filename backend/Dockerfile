@@ -20,17 +20,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy libs directory first (needed for editable installs in requirements.txt)
+# Copy libs directory first (needed for knowledgebeast editable install)
 COPY libs/ /app/libs/
 
 # Copy only requirements to leverage Docker cache
 COPY backend/requirements.txt .
 
-# Fix the knowledgebeast path for Docker context (../libs -> ./libs)
-RUN sed -i 's|../libs/knowledgebeast|./libs/knowledgebeast|g' requirements.txt
-
-# Install dependencies (including editable knowledgebeast from libs/)
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Install dependencies (replace relative path with absolute for Docker)
+# The -e ../libs/knowledgebeast becomes -e /app/libs/knowledgebeast
+RUN sed -i 's|^\-e \.\./libs/knowledgebeast|-e /app/libs/knowledgebeast|' requirements.txt && \
+    pip install --user --no-cache-dir -r requirements.txt
 
 # -----------------------------------------------------------------------------
 # 2. Runtime Stage: Create the final, lean image
@@ -55,10 +54,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed Python packages from the builder stage
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-# Copy libs directory (needed for editable knowledgebeast package)
-COPY --chown=appuser:appuser libs/ /app/libs/
+# Copy libs directory (for editable knowledgebeast install)
+COPY --from=builder --chown=appuser:appuser /app/libs /app/libs
 
-# Copy the application code from backend directory
+# Copy the application code
 COPY --chown=appuser:appuser backend/ .
 
 # Create necessary directories and set permissions
