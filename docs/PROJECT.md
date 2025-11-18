@@ -221,16 +221,23 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
   2. ✅ Create federation deployment infrastructure - COMPLETE
   3. ✅ Fix Alembic migration chain - COMPLETE
   4. ✅ Deploy and verify federation service - COMPLETE
-  5. Integrate Hub with Federation catalog
-  6. Phase 10: Multi-tenant isolation audit
-  7. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
-  8. Knowledge Graph + KnowledgeBeast integration
-- **Latest Session**: 2025-11-18 - Federation service deployed and operational
-  - Fixed Alembic migration chain (revision ID mismatch + VARCHAR(32) limit)
-  - Applied database migrations successfully (projects table created)
-  - All 5 federation services running and healthy
-  - Endpoints verified: health, catalog API, Prometheus metrics
-  - Commit: `1075e61` - Migration chain fixes
+  5. ✅ Integrate Hub with Federation catalog - CODE COMPLETE (blocked by Hub startup issues)
+  6. Fix Hub backend import errors (EventService, Response schema)
+  7. Phase 10: Multi-tenant isolation audit
+  8. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
+  9. Knowledge Graph + KnowledgeBeast integration
+- **Latest Session**: 2025-11-18 - Hub federation integration code complete
+  - Added project_slug and mesh_namespace config functions
+  - Modified FederationService to publish dual heartbeats:
+    * hub.global.presence (Hub-to-Hub discovery)
+    * hub.presence.<project_slug> (federation catalog tracking)
+  - Fixed health_worker TYPE_CHECKING import issue
+  - Integration code ready for testing
+  - **Blocker**: Hub backend has pre-existing import errors preventing startup
+    * ModuleNotFoundError: app.services.event_service
+    * ImportError: cannot import Response from app.schemas
+  - Federation catalog operational (project registered, status: offline)
+  - Commit: `0d3586d` - Hub federation catalog heartbeat integration
 
 ## Quick Commands
 ```bash
