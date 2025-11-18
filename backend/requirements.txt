@@ -36,6 +36,7 @@ docling>=2.5.5
 
 # KnowledgeBeast v0.1.0 (local project) for RAG
 -e ../libs/knowledgebeast  # Editable install from monorepo libs/
+structlog>=24.1.0  # Required by KnowledgeBeast (missing from pyproject.toml)
 dagger-io>=0.9.0  # For building custom Postgres image
 
 # GitHub integration
