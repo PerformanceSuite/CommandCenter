@@ -225,10 +225,10 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
   6. ✅ Fix Hub backend import errors - COMPLETE
   7. ✅ Multi-tenant isolation audit - COMPLETE (Report: `docs/MULTI_TENANT_ISOLATION_AUDIT_2025-11-18.md`)
   8. ✅ Implement P0 security fixes - COMPLETE (removed hardcoded project_id=1)
-  9. Phase 10: Agent Orchestration & Workflow Automation
+  9. ✅ Phase 10: Agent Orchestration Design - COMPLETE (Design doc: `docs/plans/2025-11-18-phase-10-agent-orchestration-design.md`)
   10. Phase 11: Observability stack (Loki, OpenTelemetry, Alertmanager)
   11. Knowledge Graph + KnowledgeBeast integration
-- **Latest Session**: 2025-11-18 - P0 security fixes complete
+- **Latest Session**: 2025-11-18 - Phase 10 design complete
   - ✅ **Hub Federation Integration**: Code complete, Hub backend operational
     * Fixed all import errors (EventService, Response schema, NATSBridge)
     * Federation Service publishing heartbeats
@@ -246,6 +246,17 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
     * **Webhooks router create_webhook_delivery()**: Added required `project_id` parameter with HTTPException on invalid values
     * **All methods now**: Require project_id explicitly, validate > 0, raise errors on None/invalid
     * **Security posture**: Multi-tenant data isolation now enforced at service layer
+  - ✅ **Phase 10: Agent Orchestration Design**: Comprehensive design document created
+    * **Architecture**: Dagger-powered agent execution + TypeScript/Prisma orchestration service
+    * **Vercel-inspired**: Human-in-the-loop approvals, structured outputs (Zod), risk-based automation
+    * **Database**: Agent/Workflow/AgentRun/WorkflowApproval models (Prisma schema)
+    * **Integration**: NATS event bridge to Python backend (workflow.trigger.*, graph.file.updated)
+    * **Safety**: Risk levels (AUTO vs APPROVAL_REQUIRED), sandboxed Dagger containers
+    * **UI**: VISLZR workflow builder, execution monitor, approval interface
+    * **Observability**: OpenTelemetry tracing, Prometheus metrics, Grafana dashboards
+    * **Initial agents**: security-scanner, compliance-checker, notifier, patcher, code-reviewer
+    * **Design doc**: `docs/plans/2025-11-18-phase-10-agent-orchestration-design.md` (1200+ lines)
+    * **Commit**: `b9a1b86`
   - **Architecture Note**: Hub publishes to local NATS, federation listens on separate NATS.
     Cross-NATS routing needed for end-to-end testing (future work).
 
