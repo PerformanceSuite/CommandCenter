@@ -3,8 +3,10 @@ import json
 import time
 from nats.aio.client import Client as NATS
 from typing import Optional
+from pydantic import ValidationError
 from app.database import get_async_session
 from app.services.catalog_service import CatalogService
+from app.schemas.heartbeat import HeartbeatMessage
 from app.config import settings
 from app.utils.metrics import (
     track_heartbeat_message,
@@ -50,7 +52,7 @@ class HeartbeatWorker:
         self.stale_checker_task = asyncio.create_task(self._stale_checker_loop())
 
     async def _handle_heartbeat(self, msg):
-        """Handle incoming heartbeat message."""
+        """Handle incoming heartbeat message with Pydantic validation."""
         start_time = time.time()
         project_slug = "unknown"
 
@@ -60,13 +62,10 @@ class HeartbeatWorker:
 
             # Measure NATS message processing time
             with nats_message_processing_duration.labels(subject=msg.subject).time():
+                # Parse and validate message with Pydantic
                 data = json.loads(msg.data.decode())
-                project_slug = data.get("project_slug", "unknown")
-
-                if not project_slug or project_slug == "unknown":
-                    logger.warning(f"Heartbeat missing project_slug: {data}")
-                    track_heartbeat_message(project_slug, success=False)
-                    return
+                heartbeat = HeartbeatMessage(**data)
+                project_slug = heartbeat.project_slug
 
                 # Measure heartbeat processing time
                 with heartbeat_processing_duration.labels(project_slug=project_slug).time():
@@ -87,6 +86,10 @@ class HeartbeatWorker:
 
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in heartbeat message: {e}", exc_info=True)
+            track_nats_message(msg.subject, success=False)
+            track_heartbeat_message(project_slug, success=False)
+        except ValidationError as e:
+            logger.error(f"Invalid heartbeat message format: {e}", exc_info=True)
             track_nats_message(msg.subject, success=False)
             track_heartbeat_message(project_slug, success=False)
         except Exception as e:
