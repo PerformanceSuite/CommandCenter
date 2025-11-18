@@ -6,11 +6,10 @@ import {
 } from './types';
 
 export class DaggerAgentExecutor {
-  private client: Client | null = null;
-
   async connect(): Promise<void> {
-    this.client = await connect();
-    logger.info('Connected to Dagger engine');
+    // Dagger SDK connect() doesn't return a reusable client
+    // Connection is managed per-operation via connect()
+    logger.info('Dagger SDK ready');
   }
 
   async executeAgent(
@@ -18,45 +17,46 @@ export class DaggerAgentExecutor {
     input: unknown,
     config: AgentExecutionConfig
   ): Promise<AgentExecutionResult> {
-    if (!this.client) {
-      throw new Error('Dagger client not connected');
-    }
-
     const startTime = Date.now();
 
     try {
-      // 1. Create isolated container
-      let container = this.client
-        .container()
-        .from('node:20-alpine')
-        .withDirectory('/workspace', this.client.host().directory('.'))
-        .withWorkdir('/workspace')
-        .withExec(['npm', 'install']);
+      let result: string = '';
 
-      // 2. Inject secrets (if needed)
-      if (config.secrets) {
-        for (const [key, value] of Object.entries(config.secrets)) {
-          const secret = this.client.setSecret(key, value);
-          container = container.withSecretVariable(key, secret);
+      // Connect to Dagger for this operation
+      await connect(async (client) => {
+        // 1. Create isolated container
+        let container = client
+          .container()
+          .from('node:20-alpine')
+          .withDirectory('/workspace', client.host().directory('.'))
+          .withWorkdir('/workspace')
+          .withExec(['npm', 'install']);
+
+        // 2. Inject secrets (if needed)
+        if (config.secrets) {
+          for (const [key, value] of Object.entries(config.secrets)) {
+            const secret = client.setSecret(key, value);
+            container = container.withSecretVariable(key, secret);
+          }
         }
-      }
 
-      // 3. Apply resource limits
-      container = container.withEnvVariable(
-        'NODE_OPTIONS',
-        `--max-old-space-size=${config.maxMemoryMb}`
-      );
+        // 3. Apply resource limits
+        container = container.withEnvVariable(
+          'NODE_OPTIONS',
+          `--max-old-space-size=${config.maxMemoryMb}`
+        );
 
-      // 4. Execute agent with timeout
-      const result = await container
-        .withExec([
-          'timeout',
-          config.timeoutSeconds.toString(),
-          'node',
-          agentPath,
-          JSON.stringify(input),
-        ])
-        .stdout();
+        // 4. Execute agent with timeout
+        result = await container
+          .withExec([
+            'timeout',
+            config.timeoutSeconds.toString(),
+            'node',
+            agentPath,
+            JSON.stringify(input),
+          ])
+          .stdout();
+      });
 
       // 5. Parse and validate output
       const output = JSON.parse(result);
@@ -78,10 +78,8 @@ export class DaggerAgentExecutor {
   }
 
   async close(): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      logger.info('Dagger connection closed');
-    }
+    // Dagger SDK manages connection lifecycle automatically
+    logger.info('Dagger SDK cleanup complete');
   }
 }
 

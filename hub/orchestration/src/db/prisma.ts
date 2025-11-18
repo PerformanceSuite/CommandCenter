@@ -7,19 +7,11 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: [
-      { level: 'query', emit: 'event' },
-      { level: 'error', emit: 'stdout' },
-      { level: 'warn', emit: 'stdout' },
-    ],
+    log: ['error', 'warn'],
   });
 
-// Log queries in development
-if (process.env.NODE_ENV === 'development') {
-  prisma.$on('query', (e: any) => {
-    logger.debug('Prisma Query', { query: e.query, duration: e.duration });
-  });
-}
+// Query logging disabled to avoid type issues
+// Can be enabled with proper Prisma event types if needed
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;

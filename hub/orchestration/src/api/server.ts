@@ -2,6 +2,7 @@ import express from 'express';
 import logger from '../utils/logger';
 import config from '../config';
 import healthRoutes from './routes/health';
+import agentRoutes from './routes/agents';
 
 export function createServer() {
   const app = express();
@@ -20,6 +21,7 @@ export function createServer() {
 
   // Routes
   app.use('/api', healthRoutes);
+  app.use('/api', agentRoutes);
 
   // Error handler
   app.use(

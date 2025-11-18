@@ -12,14 +12,14 @@ export class WorkflowRunner {
    * Topological sort of workflow nodes into execution batches
    * Nodes in the same batch can run in parallel
    */
-  private topologicalSort(nodes: WorkflowNode[]): WorkflowNode[][] {
-    const batches: WorkflowNode[][] = [];
+  private topologicalSort<T extends WorkflowNode>(nodes: T[]): T[][] {
+    const batches: T[][] = [];
     const remaining = new Set(nodes);
     const completed = new Set<string>();
 
     while (remaining.size > 0) {
       // Find nodes with all dependencies satisfied
-      const batch: WorkflowNode[] = [];
+      const batch: T[] = [];
 
       for (const node of remaining) {
         const allDepsCompleted = node.dependsOn.every(depId =>
@@ -132,10 +132,10 @@ export class WorkflowRunner {
       data: {
         agentId: node.agentId,
         workflowRunId: workflowRun.id,
-        inputJson: inputs,
-        outputJson: result.output || null,
+        inputJson: inputs as any,
+        outputJson: (result.output as any) || null,
         status: result.success ? 'SUCCESS' : 'FAILED',
-        error: result.error,
+        error: result.error || null,
         durationMs: result.executionTimeMs,
         finishedAt: new Date(),
       },
