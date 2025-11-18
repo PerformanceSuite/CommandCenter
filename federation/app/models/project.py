@@ -22,7 +22,7 @@ class Project(Base):
     hub_url = Column(String(500), nullable=False)
     mesh_namespace = Column(String(100))
     status = Column(
-        SQLEnum(ProjectStatus, name="project_status", create_type=True),
+        SQLEnum(ProjectStatus, name="project_status", create_type=True, values_callable=lambda obj: [e.value for e in obj]),
         default=ProjectStatus.OFFLINE,
         nullable=False,
         index=True

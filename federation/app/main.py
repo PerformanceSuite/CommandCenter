@@ -1,6 +1,7 @@
 # federation/app/main.py
 from fastapi import FastAPI
 from app.config import settings
+from app.routers import projects_router
 import logging
 
 logging.basicConfig(level=settings.LOG_LEVEL.upper())
@@ -11,6 +12,9 @@ app = FastAPI(
     version="0.9.0",
     description="Multi-project catalog and orchestration"
 )
+
+# Include routers
+app.include_router(projects_router)
 
 
 @app.get("/health")
