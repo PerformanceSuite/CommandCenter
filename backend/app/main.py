@@ -3,6 +3,7 @@ Command Center FastAPI Application
 Main entry point for the backend API
 """
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -44,6 +45,7 @@ from app.routers import (
     webhooks_ingestion,
 )
 from app.services import redis_service
+from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
 from app.utils.metrics import error_counter, setup_custom_metrics
 
@@ -78,9 +80,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     print("MCP server initialized")
 
     # Initialize NATS (Phase 7: Graph Service events)
+    heartbeat = None
+    heartbeat_task = None
     try:
         await init_nats_client(settings.nats_url)
         print(f"NATS client initialized ({settings.nats_url})")
+
+        # Start federation heartbeat (Phase 9: Federation)
+        heartbeat = FederationHeartbeat()
+        heartbeat_task = asyncio.create_task(heartbeat.start_heartbeat_loop())
+        print("Federation heartbeat started")
     except Exception as e:
         # NATS is optional - continue without it
         print(f"Warning: NATS client failed to initialize: {e}")
@@ -89,6 +98,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Shutdown
     print("Shutting down Command Center API...")
+
+    # Stop heartbeat
+    if heartbeat:
+        heartbeat.stop()
+    if heartbeat_task:
+        heartbeat_task.cancel()
+        try:
+            await heartbeat_task
+        except asyncio.CancelledError:
+            pass
+        print("Federation heartbeat stopped")
+
     await shutdown_nats_client()
     print("NATS client shutdown")
     await mcp.shutdown_mcp_server()
