@@ -5,11 +5,16 @@ from app.database import get_db
 from app.services.catalog_service import CatalogService
 from app.schemas.project import ProjectCreate, ProjectResponse
 from app.models.project import ProjectStatus
+from app.auth import verify_api_key
 import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/fed", tags=["federation"])
+router = APIRouter(
+    prefix="/api/fed",
+    tags=["federation"],
+    dependencies=[Depends(verify_api_key)]  # Apply auth to all endpoints
+)
 
 
 @router.get("/projects", response_model=List[ProjectResponse])

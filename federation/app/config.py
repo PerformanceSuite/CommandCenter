@@ -16,6 +16,14 @@ class Settings(BaseSettings):
     HEARTBEAT_STALE_THRESHOLD_SECONDS: int = 90
     HEARTBEAT_STALE_CHECK_INTERVAL_SECONDS: int = 60
 
+    # API Authentication
+    FEDERATION_API_KEYS: list[str] = []  # Comma-separated in env: "key1,key2,key3"
+
+    @property
+    def api_keys_set(self) -> set[str]:
+        """Get API keys as a set for fast lookup."""
+        return set(self.FEDERATION_API_KEYS)
+
     class Config:
         # Look for .env in the federation directory (parent of app/)
         env_file = str(Path(__file__).parent.parent / ".env")
