@@ -1,7 +1,7 @@
 """Background worker for periodic health checks."""
 import asyncio
 import logging
-from typing import Optional, Dict, Set
+from typing import Optional, Dict, Set, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, and_
@@ -11,8 +11,10 @@ from app.database import async_session_maker
 from app.models.service import Service, HealthStatus
 from app.models.project import Project
 from app.services.health_service import HealthService
-from app.services.event_service import EventService
 from app.config import get_hub_id
+
+if TYPE_CHECKING:
+    from app.services.event_service import EventService
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ class HealthCheckWorker:
     def __init__(
         self,
         health_service: Optional[HealthService] = None,
-        event_service: Optional[EventService] = None
+        event_service: Optional["EventService"] = None
     ):
         """Initialize the health check worker.
 
