@@ -3,6 +3,8 @@ import natsClient from './events/nats-client';
 import daggerExecutor from './dagger/executor';
 import prisma from './db/prisma';
 import logger from './utils/logger';
+import { EventBridge } from './services/event-bridge';
+import { WorkflowRunner } from './services/workflow-runner';
 
 async function main() {
   try {
@@ -14,6 +16,14 @@ async function main() {
 
     await natsClient.connect();
     await daggerExecutor.connect();
+
+    // Initialize event bridge and workflow runner
+    const workflowRunner = new WorkflowRunner(prisma, daggerExecutor);
+    const eventBridge = new EventBridge(prisma, natsClient);
+    eventBridge.setWorkflowRunner(workflowRunner);
+
+    // Start event bridge
+    await eventBridge.start();
 
     // Start HTTP server
     const server = startServer();
