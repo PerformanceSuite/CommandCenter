@@ -1,0 +1,13 @@
+# hub/observability/grafana/provisioning/dashboards/dashboards.yml
+apiVersion: 1
+
+providers:
+  - name: 'CommandCenter Dashboards'
+    orgId: 1
+    folder: 'CommandCenter'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
