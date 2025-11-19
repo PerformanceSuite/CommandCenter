@@ -257,6 +257,14 @@ Personal AI Operating System for Knowledge Work - Event Infrastructure Complete!
     * **Initial agents**: security-scanner, compliance-checker, notifier, patcher, code-reviewer
     * **Design doc**: `docs/plans/2025-11-18-phase-10-agent-orchestration-design.md` (1200+ lines)
     * **Commit**: `b9a1b86`
+  - ✅ **Phase 10: Implementation (Foundation)** - MERGED via PR #87
+    * **TypeScript Service**: `hub/orchestration/` with Dagger SDK integration
+    * **Database Schema**: 7 models (Agent, Workflow, WorkflowRun, etc.) via Prisma
+    * **API Endpoints**: Agent Registry + Workflow CRUD operations
+    * **Event Bridge**: NATS pattern-based routing for automatic triggers
+    * **Test Coverage**: 54 passing tests (TDD approach)
+    * **Remaining Work**: Issue #88 (Docker), #89 (Approval), #90 (Templating)
+    * **PR**: #87 (merged 2025-11-19)
   - **Architecture Note**: Hub publishes to local NATS, federation listens on separate NATS.
     Cross-NATS routing needed for end-to-end testing (future work).
 
