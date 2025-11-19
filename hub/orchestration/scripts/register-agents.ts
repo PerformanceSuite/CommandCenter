@@ -43,9 +43,54 @@ async function registerSecurityScanner() {
   return response.data;
 }
 
+async function registerNotifier() {
+  const agent = {
+    projectId: 1,
+    name: 'notifier',
+    type: 'SCRIPT',
+    description: 'Sends notifications via Slack, Discord, or console',
+    entryPath: 'agents/notifier/index.ts',
+    version: '1.0.0',
+    riskLevel: 'AUTO',
+    capabilities: [
+      {
+        name: 'send',
+        description: 'Send notification to specified channel',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            channel: { type: 'string', enum: ['slack', 'discord', 'console'] },
+            message: { type: 'string' },
+            severity: { type: 'string', enum: ['info', 'warning', 'error', 'critical'] },
+            metadata: { type: 'object' },
+            webhookUrl: { type: 'string' },
+          },
+          required: ['channel', 'message'],
+        },
+        outputSchema: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            channel: { type: 'string' },
+            messageId: { type: 'string' },
+            timestamp: { type: 'string' },
+            error: { type: 'string' },
+          },
+          required: ['success', 'channel', 'timestamp'],
+        },
+      },
+    ],
+  };
+
+  const response = await axios.post(`${API_BASE}/api/agents`, agent);
+  console.log('Notifier registered:', response.data);
+  return response.data;
+}
+
 async function main() {
   try {
     await registerSecurityScanner();
+    await registerNotifier();
     process.exit(0);
   } catch (error: any) {
     console.error('Registration failed:', error.response?.data || error.message);
