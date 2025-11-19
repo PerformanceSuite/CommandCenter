@@ -169,8 +169,8 @@ export class WorkflowRunner {
       if (approval.status === 'APPROVED') {
         logger.info('Approval granted', {
           approvalId,
-          approvedBy: approval.approvedBy,
-          approvedAt: approval.respondedAt,
+          respondedBy: approval.respondedBy,
+          respondedAt: approval.respondedAt,
         });
         return;
       }
@@ -178,11 +178,11 @@ export class WorkflowRunner {
       if (approval.status === 'REJECTED') {
         logger.warn('Approval rejected', {
           approvalId,
-          rejectedBy: approval.approvedBy,
-          reason: approval.reason,
+          rejectedBy: approval.respondedBy,
+          notes: approval.notes,
         });
         throw new Error(
-          `Workflow node rejected: ${approval.reason || 'No reason provided'}`
+          `Workflow node rejected: ${approval.notes || 'No reason provided'}`
         );
       }
 
@@ -194,7 +194,7 @@ export class WorkflowRunner {
       where: { id: approvalId },
       data: {
         status: 'REJECTED',
-        reason: 'Approval timeout after 24 hours',
+        notes: 'Approval timeout after 24 hours',
         respondedAt: new Date(),
       },
     });

@@ -126,12 +126,12 @@ describe('Approval API', () => {
         .post(`/api/approvals/${approval.id}/decision`)
         .send({
           decision: 'APPROVED',
-          approvedBy: 'test@example.com',
+          respondedBy: 'test@example.com',
         });
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('APPROVED');
-      expect(response.body.approvedBy).toBe('test@example.com');
+      expect(response.body.respondedBy).toBe('test@example.com');
       expect(response.body.respondedAt).toBeTruthy();
 
       // Verify workflow status updated
@@ -189,13 +189,13 @@ describe('Approval API', () => {
         .post(`/api/approvals/${approval.id}/decision`)
         .send({
           decision: 'REJECTED',
-          reason: 'Too risky',
-          approvedBy: 'test@example.com',
+          notes: 'Too risky',
+          respondedBy: 'test@example.com',
         });
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('REJECTED');
-      expect(response.body.reason).toBe('Too risky');
+      expect(response.body.notes).toBe('Too risky');
 
       // Verify workflow status updated to FAILED
       const updatedWorkflowRun = await prisma.workflowRun.findUnique({
@@ -218,7 +218,7 @@ describe('Approval API', () => {
         .post(`/api/approvals/${approval.id}/decision`)
         .send({
           decision: 'INVALID',
-          approvedBy: 'test@example.com',
+          respondedBy: 'test@example.com',
         });
 
       expect(response.status).toBe(400);
@@ -230,7 +230,7 @@ describe('Approval API', () => {
         .post('/api/approvals/non-existent-id/decision')
         .send({
           decision: 'APPROVED',
-          approvedBy: 'test@example.com',
+          respondedBy: 'test@example.com',
         });
 
       expect(response.status).toBe(404);
@@ -242,7 +242,7 @@ describe('Approval API', () => {
           workflowRunId: 'workflow-123',
           nodeId: 'node-123',
           status: 'APPROVED',
-          approvedBy: 'admin@example.com',
+          respondedBy: 'admin@example.com',
           requestedAt: new Date(),
           respondedAt: new Date(),
         },
@@ -252,7 +252,7 @@ describe('Approval API', () => {
         .post(`/api/approvals/${approval.id}/decision`)
         .send({
           decision: 'APPROVED',
-          approvedBy: 'test@example.com',
+          respondedBy: 'test@example.com',
         });
 
       expect(response.status).toBe(400);

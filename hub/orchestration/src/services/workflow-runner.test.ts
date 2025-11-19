@@ -4,7 +4,7 @@ import { WorkflowRunner } from './workflow-runner';
 describe('WorkflowRunner', () => {
   describe('topologicalSort', () => {
     it('should sort nodes with dependencies', () => {
-      const runner = new WorkflowRunner(null as any, null as any);
+      const runner = new WorkflowRunner(null as any, null as any, null as any);
 
       const nodes = [
         { id: 'c', dependsOn: ['a', 'b'] },
@@ -21,7 +21,7 @@ describe('WorkflowRunner', () => {
     });
 
     it('should batch independent nodes together', () => {
-      const runner = new WorkflowRunner(null as any, null as any);
+      const runner = new WorkflowRunner(null as any, null as any, null as any);
 
       const nodes = [
         { id: 'a', dependsOn: [] },

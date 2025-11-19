@@ -40,7 +40,7 @@ router.get('/approvals', async (req, res) => {
 router.post('/approvals/:id/decision', async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reason, approvedBy } = req.body;
+    const { decision, notes, respondedBy } = req.body;
 
     // Validate decision
     if (!['APPROVED', 'REJECTED'].includes(decision)) {
@@ -49,9 +49,9 @@ router.post('/approvals/:id/decision', async (req, res) => {
         .json({ error: 'Decision must be APPROVED or REJECTED' });
     }
 
-    // Validate approvedBy
-    if (!approvedBy || typeof approvedBy !== 'string') {
-      return res.status(400).json({ error: 'approvedBy is required' });
+    // Validate respondedBy
+    if (!respondedBy || typeof respondedBy !== 'string') {
+      return res.status(400).json({ error: 'respondedBy is required' });
     }
 
     // Find approval
@@ -75,8 +75,8 @@ router.post('/approvals/:id/decision', async (req, res) => {
       where: { id },
       data: {
         status: decision,
-        approvedBy,
-        reason,
+        respondedBy,
+        notes,
         respondedAt: new Date(),
       },
     });
@@ -84,7 +84,7 @@ router.post('/approvals/:id/decision', async (req, res) => {
     logger.info('Approval decision recorded', {
       approvalId: id,
       decision,
-      approvedBy,
+      respondedBy,
     });
 
     // Resume workflow if approved
@@ -107,7 +107,7 @@ router.post('/approvals/:id/decision', async (req, res) => {
       });
       logger.info('Workflow failed due to rejection', {
         workflowRunId: approval.workflowRunId,
-        reason,
+        notes,
       });
     }
 
