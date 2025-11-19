@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
 import { WorkflowBuilder } from './components/WorkflowBuilder/WorkflowBuilder';
+import { WorkflowExecutionMonitor } from './components/WorkflowExecutionMonitor';
 import { ApprovalQueue } from './components/ApprovalQueue/ApprovalQueue';
 import { ApprovalBadge } from './components/ApprovalBadge/ApprovalBadge';
 
@@ -81,6 +82,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/workflows" element={<WorkflowBuilder />} />
+            <Route path="/workflows/:workflowId/runs" element={
+              <WorkflowExecutionMonitor workflowId={window.location.pathname.split('/')[2]} />
+            } />
             <Route path="/approvals" element={<ApprovalQueue />} />
           </Routes>
         </main>

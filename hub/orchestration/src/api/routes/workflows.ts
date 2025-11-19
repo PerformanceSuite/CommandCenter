@@ -260,4 +260,138 @@ router.get('/workflows/:id/runs', async (req, res) => {
   }
 });
 
+// GET /api/workflows/:workflowId/runs/:runId - Get single workflow run with details
+router.get('/workflows/:workflowId/runs/:runId', async (req, res) => {
+  try {
+    const { workflowId, runId } = req.params;
+
+    const workflowRun = await prisma.workflowRun.findUnique({
+      where: { id: runId },
+      include: {
+        workflow: {
+          include: {
+            nodes: {
+              include: {
+                agent: true,
+              },
+            },
+          },
+        },
+        agentRuns: {
+          include: {
+            agent: true,
+          },
+          orderBy: { startedAt: 'asc' },
+        },
+        approvals: {
+          orderBy: { requestedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!workflowRun) {
+      return res.status(404).json({ error: 'Workflow run not found' });
+    }
+
+    if (workflowRun.workflowId !== workflowId) {
+      return res.status(400).json({
+        error: 'Workflow run does not belong to specified workflow',
+      });
+    }
+
+    res.json(workflowRun);
+  } catch (error: any) {
+    logger.error('Failed to get workflow run', { error });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/workflows/runs/:runId/agent-runs - Get agent runs for workflow run
+router.get('/workflows/runs/:runId/agent-runs', async (req, res) => {
+  try {
+    const { runId } = req.params;
+
+    // Verify workflow run exists
+    const workflowRun = await prisma.workflowRun.findUnique({
+      where: { id: runId },
+    });
+
+    if (!workflowRun) {
+      return res.status(404).json({ error: 'Workflow run not found' });
+    }
+
+    const agentRuns = await prisma.agentRun.findMany({
+      where: { workflowRunId: runId },
+      include: {
+        agent: {
+          include: {
+            capabilities: true,
+          },
+        },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    res.json(agentRuns);
+  } catch (error: any) {
+    logger.error('Failed to list agent runs', { error });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/workflows/runs/:runId/retry - Retry failed workflow run
+router.post('/workflows/runs/:runId/retry', async (req, res) => {
+  try {
+    const { runId } = req.params;
+
+    // Get original workflow run
+    const originalRun = await prisma.workflowRun.findUnique({
+      where: { id: runId },
+      include: {
+        workflow: true,
+      },
+    });
+
+    if (!originalRun) {
+      return res.status(404).json({ error: 'Workflow run not found' });
+    }
+
+    if (originalRun.status !== 'FAILED') {
+      return res.status(400).json({
+        error: 'Can only retry failed workflow runs',
+        currentStatus: originalRun.status,
+      });
+    }
+
+    // Create new workflow run with same context
+    const newRun = await prisma.workflowRun.create({
+      data: {
+        workflowId: originalRun.workflowId,
+        trigger: 'retry',
+        contextJson: originalRun.contextJson,
+        status: 'PENDING',
+      },
+    });
+
+    // Execute workflow asynchronously
+    workflowRunner.executeWorkflow(newRun.id).catch((error) => {
+      logger.error('Workflow retry execution failed', {
+        workflowRunId: newRun.id,
+        originalRunId: runId,
+        error,
+      });
+    });
+
+    res.status(202).json({
+      workflowRunId: newRun.id,
+      originalRunId: runId,
+      status: 'PENDING',
+      message: 'Workflow retry started',
+    });
+  } catch (error: any) {
+    logger.error('Failed to retry workflow', { error });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
