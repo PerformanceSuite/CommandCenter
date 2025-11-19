@@ -70,3 +70,29 @@ def get_hub_name() -> str:
 def get_hub_version() -> str:
     """Get Hub version from environment."""
     return os.getenv("HUB_VERSION", "1.0.0")
+
+
+@lru_cache
+def get_project_slug() -> str:
+    """Get project slug for federation catalog.
+
+    Used as the unique identifier in the federation service catalog.
+    Must match the slug registered in federation config/projects.yaml.
+
+    Returns:
+        str: Project slug (e.g., 'commandcenter')
+    """
+    return os.getenv("PROJECT_SLUG", "commandcenter")
+
+
+@lru_cache
+def get_mesh_namespace() -> str:
+    """Get NATS mesh namespace for this project.
+
+    Format: hub.<project_slug>
+
+    Returns:
+        str: Mesh namespace (e.g., 'hub.commandcenter')
+    """
+    project_slug = get_project_slug()
+    return os.getenv("MESH_NAMESPACE", f"hub.{project_slug}")

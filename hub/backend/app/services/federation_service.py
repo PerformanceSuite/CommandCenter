@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import get_hub_id, get_hub_name, get_hub_version
+from app.config import get_hub_id, get_hub_name, get_hub_version, get_project_slug, get_mesh_namespace
 from app.events.bridge import NATSBridge
 from app.models.hub_registry import HubRegistry
 from app.models.project import Project
@@ -56,6 +56,8 @@ class FederationService:
         self.hub_id = get_hub_id()
         self.hub_name = get_hub_name()
         self.version = get_hub_version()
+        self.project_slug = get_project_slug()
+        self.mesh_namespace = get_mesh_namespace()
         self.start_time = datetime.utcnow()
 
         # Background task handles
@@ -75,7 +77,7 @@ class FederationService:
 
         # Subscribe to presence announcements from other Hubs
         await self.nats_bridge.subscribe_nats_to_internal(
-            subject="hub.global.presence",
+            subject_filter="hub.global.presence",
             handler=self._handle_presence_announcement
         )
 
@@ -127,10 +129,12 @@ class FederationService:
     async def _publish_presence(self):
         """Publish presence announcement to NATS.
 
-        Publishes to: hub.global.presence
-        Payload includes: hub_id, name, version, hostname, project_path, timestamp
+        Publishes to two subjects:
+        1. hub.global.presence - For Hub-to-Hub discovery
+        2. hub.presence.<project_slug> - For federation catalog heartbeats
         """
-        payload = {
+        # Hub-to-Hub presence (existing format)
+        hub_payload = {
             "hub_id": self.hub_id,
             "name": self.hub_name,
             "version": self.version,
@@ -141,10 +145,24 @@ class FederationService:
 
         await self.nats_bridge.publish_internal_to_nats(
             topic="hub.global.presence",
-            payload=payload
+            payload=hub_payload
         )
 
-        logger.debug(f"Published presence: {self.hub_id}")
+        # Federation catalog heartbeat (new format for Phase 9)
+        # Matches federation/app/schemas/heartbeat.py HeartbeatMessage schema
+        catalog_payload = {
+            "project_slug": self.project_slug,
+            "mesh_namespace": self.mesh_namespace,
+            "timestamp": datetime.utcnow().isoformat(),
+            "hub_url": f"http://localhost:9001"  # TODO: Make configurable
+        }
+
+        await self.nats_bridge.publish_internal_to_nats(
+            topic=f"hub.presence.{self.project_slug}",
+            payload=catalog_payload
+        )
+
+        logger.debug(f"Published presence: {self.hub_id} (catalog: {self.project_slug})")
 
     async def _handle_presence_announcement(self, event_data: Dict[str, Any]):
         """Handle presence announcement from another Hub.

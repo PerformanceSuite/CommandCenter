@@ -422,6 +422,7 @@ async def list_webhook_events(
 )
 async def create_webhook_delivery(
     delivery_data: WebhookDeliveryCreate,
+    project_id: int,
     db: AsyncSession = Depends(get_db),
 ) -> WebhookDelivery:
     """
@@ -429,14 +430,25 @@ async def create_webhook_delivery(
 
     Args:
         delivery_data: Webhook delivery data
+        project_id: Project ID for isolation (REQUIRED - must come from authenticated context)
         db: Database session
 
     Returns:
         Created webhook delivery
+
+    Raises:
+        HTTPException: If project_id is invalid
+
+    Note:
+        Multi-tenant isolation: project_id is required and must come from authenticated
+        user context. See app.auth.project_context for the roadmap to full multi-tenant
+        support with User-Project relationships.
     """
-    # Note: Uses default project_id=1 for single-tenant development.
-    # See app.auth.project_context for multi-tenant roadmap.
-    project_id = 1
+    if not project_id or project_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="project_id is required and must be a positive integer",
+        )
 
     service = WebhookService(db)
     try:

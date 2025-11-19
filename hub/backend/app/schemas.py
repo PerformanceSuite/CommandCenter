@@ -7,6 +7,13 @@ from typing import Optional
 from datetime import datetime
 
 
+class Response(BaseModel):
+    """Generic API response"""
+
+    success: bool
+    message: str
+
+
 class ProjectBase(BaseModel):
     """Base schema for project"""
 

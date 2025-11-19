@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Agent Registry
+// ============================================================================
+
+model Agent {
+  id            String   @id @default(cuid())
+  projectId     Int
+  name          String
+  type          AgentType
+  description   String?
+  entryPath     String
+  version       String
+  riskLevel     RiskLevel
+  registeredAt  DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  capabilities  AgentCapability[]
+  runs          AgentRun[]
+  workflowNodes WorkflowNode[]
+
+  @@unique([projectId, name])
+  @@index([projectId, type])
+  @@map("agents")
+}
+
+model AgentCapability {
+  id          String @id @default(cuid())
+  agentId     String
+  name        String
+  description String?
+  inputSchema Json
+  outputSchema Json
+
+  agent       Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, name])
+  @@map("agent_capabilities")
+}
+
+model AgentRun {
+  id          String      @id @default(cuid())
+  agentId     String
+  workflowRunId String?
+  inputJson   Json
+  outputJson  Json?
+  status      RunStatus
+  error       String?
+  startedAt   DateTime    @default(now())
+  finishedAt  DateTime?
+  durationMs  Int?
+
+  agent       Agent       @relation(fields: [agentId], references: [id])
+  workflowRun WorkflowRun? @relation(fields: [workflowRunId], references: [id])
+
+  @@index([agentId, status])
+  @@index([workflowRunId])
+  @@map("agent_runs")
+}
+
+// ============================================================================
+// Workflow System
+// ============================================================================
+
+model Workflow {
+  id          String         @id @default(cuid())
+  projectId   Int
+  name        String
+  description String?
+  trigger     Json
+  status      WorkflowStatus
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  nodes       WorkflowNode[]
+  runs        WorkflowRun[]
+
+  @@unique([projectId, name])
+  @@index([projectId, status])
+  @@map("workflows")
+}
+
+model WorkflowNode {
+  id          String   @id @default(cuid())
+  workflowId  String
+  agentId     String
+  action      String
+  inputsJson  Json
+  dependsOn   String[]
+  approvalRequired Boolean @default(false)
+
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  agent       Agent    @relation(fields: [agentId], references: [id])
+
+  @@index([workflowId])
+  @@map("workflow_nodes")
+}
+
+model WorkflowRun {
+  id          String      @id @default(cuid())
+  workflowId  String
+  trigger     String
+  contextJson Json
+  status      RunStatus
+  startedAt   DateTime    @default(now())
+  finishedAt  DateTime?
+
+  workflow    Workflow    @relation(fields: [workflowId], references: [id])
+  agentRuns   AgentRun[]
+  approvals   WorkflowApproval[]
+
+  @@index([workflowId, status])
+  @@index([startedAt])
+  @@map("workflow_runs")
+}
+
+model WorkflowApproval {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  nodeId        String
+  status        ApprovalStatus
+  requestedAt   DateTime    @default(now())
+  respondedAt   DateTime?
+  respondedBy   String?
+  notes         String?
+
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+
+  @@index([workflowRunId, status])
+  @@map("workflow_approvals")
+}
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum AgentType {
+  LLM
+  RULE
+  API
+  SCRIPT
+}
+
+enum RiskLevel {
+  AUTO
+  APPROVAL_REQUIRED
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  WAITING_APPROVAL
+}
+
+enum WorkflowStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

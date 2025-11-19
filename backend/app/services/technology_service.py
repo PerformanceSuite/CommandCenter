@@ -92,31 +92,29 @@ class TechnologyService:
         return await self.repo.get_by_title(title)
 
     async def create_technology(
-        self, technology_data: TechnologyCreate, project_id: int = 1
+        self, technology_data: TechnologyCreate, project_id: int
     ) -> Technology:
         """
         Create new technology
 
         Args:
             technology_data: Technology creation data
-            project_id: Project ID for isolation (default: 1)
+            project_id: Project ID for isolation (REQUIRED - must come from authenticated context)
 
         Returns:
             Created technology
 
         Raises:
             HTTPException: If technology with same title exists or invalid project_id
+            ValueError: If project_id is None or invalid
 
         Note:
-            Multi-tenant isolation: Currently defaults to project_id=1 for single-tenant
-            development. See app.auth.project_context for the roadmap to full multi-tenant
+            Multi-tenant isolation: project_id is required and must come from authenticated
+            user context. See app.auth.project_context for the roadmap to full multi-tenant
             support with User-Project relationships.
         """
-        if project_id <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid project_id. Must be a positive integer.",
-            )
+        if not project_id or project_id <= 0:
+            raise ValueError("project_id is required and must be a positive integer")
 
         # Check if technology with same title exists
         existing = await self.repo.get_by_title(technology_data.title)

@@ -89,19 +89,31 @@ class RepositoryService:
         """
         return await self.repo.get_by_full_name(full_name)
 
-    async def create_repository(self, repository_data: RepositoryCreate) -> Repository:
+    async def create_repository(
+        self, repository_data: RepositoryCreate, project_id: int
+    ) -> Repository:
         """
         Create new repository
 
         Args:
             repository_data: Repository creation data
+            project_id: Project ID for isolation (REQUIRED - must come from authenticated context)
 
         Returns:
             Created repository
 
         Raises:
             HTTPException: If repository already exists
+            ValueError: If project_id is None or invalid
+
+        Note:
+            Multi-tenant isolation: project_id is required and must come from authenticated
+            user context. See app.auth.project_context for the roadmap to full multi-tenant
+            support with User-Project relationships.
         """
+        if not project_id or project_id <= 0:
+            raise ValueError("project_id is required and must be a positive integer")
+
         # Check if repository already exists
         full_name = f"{repository_data.owner}/{repository_data.name}"
         existing = await self.repo.get_by_full_name(full_name)
@@ -113,10 +125,8 @@ class RepositoryService:
             )
 
         # Create repository
-        # Note: Uses default project_id=1 for single-tenant development.
-        # See app.auth.project_context for multi-tenant roadmap.
         repository = await self.repo.create(
-            **repository_data.model_dump(), full_name=full_name, project_id=1
+            **repository_data.model_dump(), full_name=full_name, project_id=project_id
         )
 
         await self.db.commit()
@@ -225,7 +235,7 @@ class RepositoryService:
                 )
 
     async def import_from_github(
-        self, owner: str, name: str, access_token: Optional[str] = None
+        self, owner: str, name: str, project_id: int, access_token: Optional[str] = None
     ) -> Repository:
         """
         Import repository from GitHub
@@ -233,6 +243,7 @@ class RepositoryService:
         Args:
             owner: Repository owner
             name: Repository name
+            project_id: Project ID for isolation (REQUIRED - must come from authenticated context)
             access_token: Optional access token
 
         Returns:
@@ -240,7 +251,10 @@ class RepositoryService:
 
         Raises:
             HTTPException: If import fails
+            ValueError: If project_id is None or invalid
         """
+        if not project_id or project_id <= 0:
+            raise ValueError("project_id is required and must be a positive integer")
         # Check if already exists
         full_name = f"{owner}/{name}"
         existing = await self.repo.get_by_full_name(full_name)
@@ -271,6 +285,7 @@ class RepositoryService:
                     language=repo_info.get("language"),
                     github_id=repo_info.get("github_id"),
                     access_token=access_token,
+                    project_id=project_id,
                 )
 
                 await self.db.commit()
