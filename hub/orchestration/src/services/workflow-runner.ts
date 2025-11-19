@@ -2,6 +2,14 @@ import { PrismaClient, WorkflowNode } from '@prisma/client';
 import { DaggerAgentExecutor } from '../dagger/executor';
 import { NatsClient } from '../events/nats-client';
 import logger from '../utils/logger';
+import { trace, SpanStatusCode } from '@opentelemetry/api';
+import {
+  workflowRunCounter,
+  workflowDuration,
+  activeWorkflows,
+} from '../metrics/workflow-metrics';
+
+const tracer = trace.getTracer('workflow-runner');
 
 export class WorkflowRunner {
   constructor(
@@ -50,68 +58,147 @@ export class WorkflowRunner {
   }
 
   async executeWorkflow(workflowRunId: string): Promise<void> {
-    const workflowRun = await this.prisma.workflowRun.findUnique({
-      where: { id: workflowRunId },
-      include: {
-        workflow: {
+    return tracer.startActiveSpan('workflow.execute', async (span) => {
+      const startTime = Date.now();
+
+      try {
+        const workflowRun = await this.prisma.workflowRun.findUnique({
+          where: { id: workflowRunId },
           include: {
-            nodes: {
+            workflow: {
               include: {
-                agent: {
+                nodes: {
                   include: {
-                    capabilities: true,
+                    agent: {
+                      include: {
+                        capabilities: true,
+                      },
+                    },
                   },
                 },
               },
             },
           },
-        },
-      },
-    });
+        });
 
-    if (!workflowRun) {
-      throw new Error(`WorkflowRun ${workflowRunId} not found`);
-    }
+        if (!workflowRun) {
+          const error = new Error(`WorkflowRun ${workflowRunId} not found`);
+          span.recordException(error);
+          span.setStatus({ code: SpanStatusCode.ERROR, message: 'Not found' });
+          span.end();
+          throw error;
+        }
 
-    // Initialize context and output tracking for template resolution
-    const context = (workflowRun.contextJson as Record<string, any>) || {};
-    const previousOutputs = new Map<string, any>();
+        // Add span attributes
+        span.setAttribute('workflow.run.id', workflowRunId);
+        span.setAttribute('workflow.id', workflowRun.workflow.id);
+        span.setAttribute('workflow.name', workflowRun.workflow.name);
+        span.setAttribute('workflow.trigger', workflowRun.trigger);
 
-    const dag = this.topologicalSort(workflowRun.workflow.nodes);
+        // Increment active workflows
+        activeWorkflows.add(1);
 
-    logger.info('Executing workflow', {
-      workflowRunId,
-      workflowName: workflowRun.workflow.name,
-      batches: dag.length,
-      context,
-    });
+        // Update status to RUNNING
+        await this.prisma.workflowRun.update({
+          where: { id: workflowRunId },
+          data: { status: 'RUNNING', startedAt: new Date() },
+        });
 
-    // Execute batches sequentially, nodes in batch in parallel
-    for (const batch of dag) {
-      await Promise.all(
-        batch.map(async node => {
-          const output = await this.executeNode(
-            node,
-            workflowRun,
-            context,
-            previousOutputs
+        // Initialize context and output tracking for template resolution
+        const context = (workflowRun.contextJson as Record<string, any>) || {};
+        const previousOutputs = new Map<string, any>();
+
+        const dag = this.topologicalSort(workflowRun.workflow.nodes);
+
+        logger.info('Executing workflow', {
+          workflowRunId,
+          workflowName: workflowRun.workflow.name,
+          batches: dag.length,
+          context,
+        });
+
+        // Execute batches sequentially, nodes in batch in parallel
+        for (const batch of dag) {
+          await Promise.all(
+            batch.map(async node => {
+              const output = await this.executeNode(
+                node,
+                workflowRun,
+                context,
+                previousOutputs
+              );
+              // Store output for downstream nodes
+              previousOutputs.set(node.id, output);
+            })
           );
-          // Store output for downstream nodes
-          previousOutputs.set(node.id, output);
-        })
-      );
-    }
+        }
 
-    // Mark workflow complete
-    await this.prisma.workflowRun.update({
-      where: { id: workflowRunId },
-      data: {
-        status: 'SUCCESS',
-        finishedAt: new Date(),
-      },
+        const duration = Date.now() - startTime;
+
+        // Mark workflow complete
+        await this.prisma.workflowRun.update({
+          where: { id: workflowRunId },
+          data: {
+            status: 'SUCCESS',
+            finishedAt: new Date(),
+          },
+        });
+
+        // Success - record metrics
+        span.setStatus({ code: SpanStatusCode.OK });
+        span.setAttribute('workflow.status', 'SUCCESS');
+        span.setAttribute('workflow.duration.ms', duration);
+
+        workflowRunCounter.add(1, {
+          status: 'SUCCESS',
+          workflow_id: workflowRun.workflow.id,
+          trigger_type: workflowRun.trigger,
+        });
+
+        workflowDuration.record(duration, {
+          workflow_id: workflowRun.workflow.id,
+          status: 'SUCCESS',
+        });
+
+        logger.info('Workflow completed', { workflowRunId });
+      } catch (error: any) {
+        const duration = Date.now() - startTime;
+
+        // Record error
+        span.recordException(error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error.message,
+        });
+        span.setAttribute('workflow.status', 'FAILED');
+        span.setAttribute('error.type', error.constructor.name);
+
+        // Get workflow info for metrics (may be undefined if error early)
+        const workflowRun = await this.prisma.workflowRun
+          .findUnique({
+            where: { id: workflowRunId },
+            include: { workflow: true },
+          })
+          .catch(() => null);
+
+        workflowRunCounter.add(1, {
+          status: 'FAILED',
+          workflow_id: workflowRun?.workflow?.id || 'unknown',
+          trigger_type: workflowRun?.trigger || 'unknown',
+        });
+
+        workflowDuration.record(duration, {
+          workflow_id: workflowRun?.workflow?.id || 'unknown',
+          status: 'FAILED',
+        });
+
+        throw error;
+      } finally {
+        // Decrement active workflows
+        activeWorkflows.add(-1);
+        span.end();
+      }
     });
-
-    logger.info('Workflow completed', { workflowRunId });
   }
 
   /**
