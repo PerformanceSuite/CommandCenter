@@ -1,3 +1,5 @@
+import './instrumentation'; // MUST be first import for auto-instrumentation
+
 import { startServer } from './api/server';
 import natsClient from './events/nats-client';
 import daggerExecutor from './dagger/executor';
