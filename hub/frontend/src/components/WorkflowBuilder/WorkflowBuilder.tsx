@@ -10,13 +10,73 @@ import ReactFlow, {
   useEdgesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { WorkflowNode, WorkflowEdge } from './types';
+import { WorkflowNode, WorkflowEdge, Workflow } from './types';
 import { AgentNode } from './nodes/AgentNode';
 import { AgentPalette } from './AgentPalette';
 import { NodeConfigPanel } from './NodeConfigPanel';
+import { useCreateWorkflow, useUpdateWorkflow, useWorkflows } from '../../hooks/useWorkflows';
 
 const nodeTypes = {
   agent: AgentNode,
+};
+
+// Helper functions
+const convertNodesToBackend = (
+  nodes: WorkflowNode[],
+  edges: WorkflowEdge[]
+): Workflow['nodes'] => {
+  return nodes.map((node) => {
+    const dependencies = edges
+      .filter((edge) => edge.target === node.id)
+      .map((edge) => edge.source);
+
+    return {
+      agentId: node.data.agentId,
+      action: node.data.action,
+      inputsJson: node.data.inputs,
+      dependsOn: dependencies,
+      approvalRequired: node.data.approvalRequired,
+    };
+  });
+};
+
+const convertNodesFromBackend = (
+  workflow: Workflow
+): { nodes: WorkflowNode[]; edges: WorkflowEdge[] } => {
+  const nodes: WorkflowNode[] = [];
+  const edges: WorkflowEdge[] = [];
+  const nodeIdMap = new Map<number, string>();
+
+  workflow.nodes.forEach((node, index) => {
+    const nodeId = `node-${index}`;
+    nodeIdMap.set(index, nodeId);
+
+    nodes.push({
+      id: nodeId,
+      type: 'agent',
+      position: { x: 100 + index * 250, y: 100 },
+      data: {
+        agentId: node.agentId,
+        agentName: node.agentId.split('-').pop() || 'agent',
+        action: node.action,
+        inputs: node.inputsJson,
+        approvalRequired: node.approvalRequired,
+      },
+    });
+
+    node.dependsOn.forEach((depNodeId) => {
+      const sourceNodeId = nodeIdMap.get(parseInt(depNodeId));
+      if (sourceNodeId) {
+        edges.push({
+          id: `edge-${sourceNodeId}-${nodeId}`,
+          source: sourceNodeId,
+          target: nodeId,
+        });
+      }
+    });
+  });
+
+  return { nodes, edges };
 };
 
 interface WorkflowBuilderProps {
@@ -26,11 +86,30 @@ interface WorkflowBuilderProps {
 
 export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
   projectId,
+  workflowId,
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WorkflowEdge>([]);
   const [workflowName, setWorkflowName] = useState('New Workflow');
   const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
+
+  const createWorkflow = useCreateWorkflow();
+  const updateWorkflow = useUpdateWorkflow();
+  const { data: workflows } = useWorkflows(projectId);
+
+  // Load existing workflow if workflowId provided
+  React.useEffect(() => {
+    if (workflowId && workflows) {
+      const workflow = workflows.find((w) => w.id === workflowId);
+      if (workflow) {
+        setWorkflowName(workflow.name);
+        const { nodes: loadedNodes, edges: loadedEdges } =
+          convertNodesFromBackend(workflow);
+        setNodes(loadedNodes);
+        setEdges(loadedEdges);
+      }
+    }
+  }, [workflowId, workflows, setNodes, setEdges]);
 
   const onConnect = React.useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
@@ -80,8 +159,8 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
   }, []);
 
   const onNodeClick = React.useCallback(
-    (_event: React.MouseEvent, node: WorkflowNode) => {
-      setSelectedNode(node);
+    (_event: React.MouseEvent, node: any) => {
+      setSelectedNode(node as WorkflowNode);
     },
     []
   );
@@ -99,9 +178,33 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
     [setNodes]
   );
 
-  const handleSave = () => {
-    console.log('Save workflow:', { workflowName, nodes, edges });
-    // Will implement in Task 25
+  const handleSave = async () => {
+    const workflowData: Workflow = {
+      projectId,
+      name: workflowName,
+      description: `Created via workflow builder`,
+      trigger: {
+        event: 'manual',
+        pattern: 'manual',
+      },
+      status: 'DRAFT',
+      nodes: convertNodesToBackend(nodes as WorkflowNode[], edges),
+    };
+
+    try {
+      if (workflowId) {
+        await updateWorkflow.mutateAsync({
+          id: workflowId,
+          workflow: workflowData,
+        });
+        alert('Workflow updated successfully!');
+      } else {
+        const created = await createWorkflow.mutateAsync(workflowData);
+        alert(`Workflow created with ID: ${created.id}`);
+      }
+    } catch (error: any) {
+      alert(`Failed to save workflow: ${error.message}`);
+    }
   };
 
   return (
