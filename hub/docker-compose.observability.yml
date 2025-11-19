@@ -70,7 +70,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_SERVER_ROOT_URL=http://localhost:3003
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
@@ -78,7 +78,7 @@ services:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
-      - "3001:3000"
+      - "3003:3000"
     depends_on:
       - prometheus
       - tempo

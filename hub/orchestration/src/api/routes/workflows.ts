@@ -368,7 +368,7 @@ router.post('/workflows/runs/:runId/retry', async (req, res) => {
       data: {
         workflowId: originalRun.workflowId,
         trigger: 'retry',
-        contextJson: originalRun.contextJson,
+        contextJson: originalRun.contextJson || {},
         status: 'PENDING',
       },
     });
