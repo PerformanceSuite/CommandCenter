@@ -1,0 +1,39 @@
+{
+  "projectId": 1,
+  "name": "scan-and-notify",
+  "description": "Scan repository for security issues and notify via console",
+  "trigger": {
+    "event": "graph.file.updated",
+    "pattern": "graph.file.updated"
+  },
+  "status": "ACTIVE",
+  "nodes": [
+    {
+      "id": "scan-node",
+      "agentName": "security-scanner",
+      "action": "scan",
+      "inputsJson": {
+        "repositoryPath": "{{ context.repositoryPath }}",
+        "scanType": "all"
+      },
+      "dependsOn": [],
+      "approvalRequired": false
+    },
+    {
+      "id": "notify-node",
+      "agentName": "notifier",
+      "action": "send",
+      "inputsJson": {
+        "channel": "console",
+        "message": "Security scan complete: {{ nodes.scan-node.output.summary.total }} findings (Critical: {{ nodes.scan-node.output.summary.critical }}, High: {{ nodes.scan-node.output.summary.high }})",
+        "severity": "{{ nodes.scan-node.output.summary.critical > 0 ? 'critical' : 'info' }}",
+        "metadata": {
+          "scannedFiles": "{{ nodes.scan-node.output.scannedFiles }}",
+          "duration": "{{ nodes.scan-node.output.scanDurationMs }}ms"
+        }
+      },
+      "dependsOn": ["scan-node"],
+      "approvalRequired": false
+    }
+  ]
+}
