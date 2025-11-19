@@ -12,6 +12,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { WorkflowNode, WorkflowEdge } from './types';
 import { AgentNode } from './nodes/AgentNode';
+import { AgentPalette } from './AgentPalette';
 
 const nodeTypes = {
   agent: AgentNode,
@@ -25,7 +26,7 @@ interface WorkflowBuilderProps {
 export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
   projectId,
 }) => {
-  const [nodes, , onNodesChange] = useNodesState<WorkflowNode>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WorkflowEdge>([]);
   const [workflowName, setWorkflowName] = useState('New Workflow');
 
@@ -33,6 +34,48 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  const onDragOver = React.useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = React.useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      const agentData = event.dataTransfer.getData('application/json');
+      if (!agentData) return;
+
+      const agent = JSON.parse(agentData);
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
+      const position = {
+        x: event.clientX - reactFlowBounds.left - 90,
+        y: event.clientY - reactFlowBounds.top - 50,
+      };
+
+      const newNode: WorkflowNode = {
+        id: `${agent.name}-${Date.now()}`,
+        type: 'agent',
+        position,
+        data: {
+          agentId: agent.id,
+          agentName: agent.name,
+          action: agent.capabilities[0]?.name || 'execute',
+          inputs: {},
+          approvalRequired: false,
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [setNodes]
+  );
+
+  const onDragStart = React.useCallback((event: React.DragEvent, agent: any) => {
+    event.dataTransfer.setData('application/json', JSON.stringify(agent));
+    event.dataTransfer.effectAllowed = 'move';
+  }, []);
 
   const handleSave = () => {
     console.log('Save workflow:', { workflowName, nodes, edges });
@@ -76,20 +119,27 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
           Save Workflow
         </button>
       </div>
-      <div style={{ flex: 1 }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <AgentPalette projectId={projectId} onDragStart={onDragStart} />
+        <div
+          style={{ flex: 1, position: 'relative' }}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
         >
-          <Background />
-          <Controls />
-          <MiniMap />
-        </ReactFlow>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Background />
+            <Controls />
+            <MiniMap />
+          </ReactFlow>
+        </div>
       </div>
     </div>
   );
