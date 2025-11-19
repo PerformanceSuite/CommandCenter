@@ -128,34 +128,69 @@ export class WorkflowRunner {
       template: templateString,
     });
 
-    // Replace {{ context.* }} and {{ nodes.*.output.* }}
-    const resolved = templateString.replace(
-      /\{\{\s*(context|nodes)\.([^}]+)\s*\}\}/g,
+    // Replace standalone "{{ context.* }}" or embedded {{ context.* }}
+    // Use two separate patterns to avoid partial quote matching
+    let resolved = templateString;
+
+    // First pass: Replace standalone templates (with surrounding quotes)
+    resolved = resolved.replace(
+      /"\{\{\s*(context|nodes)\.([^}]+)\s*\}\}"/g,
       (match, source, path) => {
+        const trimmedPath = path.trim();
+
         if (source === 'context') {
-          const value = this.getNestedValue(context, path);
+          const value = this.getNestedValue(context, trimmedPath);
           if (value !== undefined) {
             return JSON.stringify(value);
           }
         } else if (source === 'nodes') {
-          // Convert previousOutputs Map to object for getNestedValue
           const outputsObj: Record<string, any> = {};
           previousOutputs.forEach((value, key) => {
             outputsObj[key] = { output: value };
           });
-
-          const value = this.getNestedValue(outputsObj, path);
+          const value = this.getNestedValue(outputsObj, trimmedPath);
           if (value !== undefined) {
             return JSON.stringify(value);
           }
         }
 
-        // If value not found, keep original template
         logger.warn('Template variable not found', {
           nodeId: node.id,
           template: match,
           source,
-          path,
+          path: trimmedPath,
+        });
+        return match;
+      }
+    );
+
+    // Second pass: Replace embedded templates (no surrounding quotes)
+    resolved = resolved.replace(
+      /\{\{\s*(context|nodes)\.([^}]+)\s*\}\}/g,
+      (match, source, path) => {
+        const trimmedPath = path.trim();
+
+        if (source === 'context') {
+          const value = this.getNestedValue(context, trimmedPath);
+          if (value !== undefined) {
+            return String(value);
+          }
+        } else if (source === 'nodes') {
+          const outputsObj: Record<string, any> = {};
+          previousOutputs.forEach((value, key) => {
+            outputsObj[key] = { output: value };
+          });
+          const value = this.getNestedValue(outputsObj, trimmedPath);
+          if (value !== undefined) {
+            return String(value);
+          }
+        }
+
+        logger.warn('Template variable not found', {
+          nodeId: node.id,
+          template: match,
+          source,
+          path: trimmedPath,
         });
         return match;
       }
