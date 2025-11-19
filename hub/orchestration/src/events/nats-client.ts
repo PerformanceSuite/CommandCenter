@@ -54,6 +54,10 @@ export class NatsClient {
     })();
   }
 
+  isConnected(): boolean {
+    return this.connection !== null && !this.connection.isClosed();
+  }
+
   async close(): Promise<void> {
     if (this.connection) {
       await this.connection.drain();
