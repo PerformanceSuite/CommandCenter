@@ -11,6 +11,11 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { WorkflowNode, WorkflowEdge } from './types';
+import { AgentNode } from './nodes/AgentNode';
+
+const nodeTypes = {
+  agent: AgentNode,
+};
 
 interface WorkflowBuilderProps {
   projectId: number;
@@ -78,6 +83,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          nodeTypes={nodeTypes}
           fitView
         >
           <Background />
