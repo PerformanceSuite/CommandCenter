@@ -2,10 +2,11 @@ import { Router } from 'express';
 import prisma from '../../db/prisma';
 import { WorkflowRunner } from '../../services/workflow-runner';
 import daggerExecutor from '../../dagger/executor';
+import natsClient from '../../events/nats-client';
 import logger from '../../utils/logger';
 
 const router = Router();
-const workflowRunner = new WorkflowRunner(prisma, daggerExecutor);
+const workflowRunner = new WorkflowRunner(prisma, daggerExecutor, natsClient);
 
 // POST /api/workflows - Create new workflow
 router.post('/workflows', async (req, res) => {

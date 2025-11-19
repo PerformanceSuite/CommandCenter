@@ -18,7 +18,7 @@ async function main() {
     await daggerExecutor.connect();
 
     // Initialize event bridge and workflow runner
-    const workflowRunner = new WorkflowRunner(prisma, daggerExecutor);
+    const workflowRunner = new WorkflowRunner(prisma, daggerExecutor, natsClient);
     const eventBridge = new EventBridge(prisma, natsClient);
     eventBridge.setWorkflowRunner(workflowRunner);
 

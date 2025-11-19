@@ -11,7 +11,7 @@ router.get('/approvals', async (req, res) => {
 
     const approvals = await prisma.workflowApproval.findMany({
       where: {
-        ...(status && { status: status as string }),
+        ...(status && { status: status as any }),
         ...(workflowRunId && { workflowRunId: workflowRunId as string }),
       },
       include: {
