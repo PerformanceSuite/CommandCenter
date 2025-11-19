@@ -15,7 +15,7 @@ processors:
   resource:
     attributes:
       - key: deployment.environment
-        value: ${ENVIRONMENT:-development}
+        value: ${env:ENVIRONMENT}
         action: upsert
 
   attributes:
