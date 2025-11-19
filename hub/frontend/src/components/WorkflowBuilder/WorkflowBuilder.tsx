@@ -13,6 +13,7 @@ import 'reactflow/dist/style.css';
 import { WorkflowNode, WorkflowEdge } from './types';
 import { AgentNode } from './nodes/AgentNode';
 import { AgentPalette } from './AgentPalette';
+import { NodeConfigPanel } from './NodeConfigPanel';
 
 const nodeTypes = {
   agent: AgentNode,
@@ -29,6 +30,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WorkflowEdge>([]);
   const [workflowName, setWorkflowName] = useState('New Workflow');
+  const [selectedNode, setSelectedNode] = useState<WorkflowNode | null>(null);
 
   const onConnect = React.useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
@@ -76,6 +78,26 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
     event.dataTransfer.setData('application/json', JSON.stringify(agent));
     event.dataTransfer.effectAllowed = 'move';
   }, []);
+
+  const onNodeClick = React.useCallback(
+    (_event: React.MouseEvent, node: WorkflowNode) => {
+      setSelectedNode(node);
+    },
+    []
+  );
+
+  const onNodeUpdate = React.useCallback(
+    (nodeId: string, updates: Partial<WorkflowNode['data']>) => {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, ...updates } }
+            : node
+        )
+      );
+    },
+    [setNodes]
+  );
 
   const handleSave = () => {
     console.log('Save workflow:', { workflowName, nodes, edges });
@@ -132,6 +154,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
           >
@@ -140,6 +163,11 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
             <MiniMap />
           </ReactFlow>
         </div>
+        <NodeConfigPanel
+          node={selectedNode}
+          onUpdate={onNodeUpdate}
+          onClose={() => setSelectedNode(null)}
+        />
       </div>
     </div>
   );
