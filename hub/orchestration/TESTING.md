@@ -88,7 +88,34 @@ curl http://localhost:9002/api/agents/runs?workflowRunId=<run-id>
 }
 ```
 
-### Test Status
+### Unit Test Status
+
+**Passing Tests (19):**
+- ✅ `config.test.ts` (3 tests) - Environment configuration
+- ✅ `workflow-runner.test.ts` (10 tests) - DAG topological sort, template resolution
+- ✅ `nats-client.test.ts` (2 tests) - NATS client instantiation
+- ✅ `logger.test.ts` (1 test) - Winston logger
+- ✅ `dagger/executor.test.ts` (3 tests) - Dagger executor instantiation
+
+**Integration Tests (Require Database - 11 tests):**
+- ⏳ `event-bridge.test.ts` (6 tests) - Requires PostgreSQL
+- ⏳ `api/routes/agents.test.ts` (2 tests) - Requires PostgreSQL
+- ⏳ `api/routes/workflows.test.ts` (2 tests) - Requires PostgreSQL
+- ⏳ `api/routes/approvals.test.ts` (1 test) - Requires PostgreSQL
+
+**Run tests:**
+```bash
+npm test  # Unit tests pass, integration tests skip without database
+```
+
+### Test Infrastructure Status
+
+- ✅ `.env.test` created with test database URL
+- ✅ `vitest.config.ts` updated (timeout: 10s, env vars)
+- ⏳ Test database not running (integration tests will fail)
+- ✅ Unit tests (19/30) passing without database
+
+### Overall Test Status
 
 - ✅ Agents built and tested locally
 - ✅ Registration scripts created

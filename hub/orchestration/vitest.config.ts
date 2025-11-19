@@ -5,7 +5,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./src/test-setup.ts'],
-    // Note: DATABASE_URL must be set in environment before running tests
-    // Tests will warn if not set but won't fail immediately
+    testTimeout: 10000,
+    env: {
+      DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+      NATS_URL: 'nats://localhost:4222',
+    },
   },
 });
