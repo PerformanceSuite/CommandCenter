@@ -7,6 +7,9 @@ import {
   workflowRunCounter,
   workflowDuration,
   activeWorkflows,
+  agentRunCounter,
+  agentDuration,
+  agentErrorCounter,
 } from '../metrics/workflow-metrics';
 
 const tracer = trace.getTracer('workflow-runner');
@@ -421,46 +424,122 @@ export class WorkflowRunner {
     context: Record<string, any>,
     previousOutputs: Map<string, any>
   ): Promise<unknown> {
-    logger.info('Executing workflow node', {
-      nodeId: node.id,
-      agentName: node.agent.name,
-    });
+    return tracer.startActiveSpan('agent.execute', async (span) => {
+      const startTime = Date.now();
 
-    // ✅ Resolve inputs from template
-    const inputs = this.resolveInputs(node, context, previousOutputs);
+      try {
+        logger.info('Executing workflow node', {
+          nodeId: node.id,
+          agentName: node.agent.name,
+        });
 
-    // 🔒 APPROVAL GATE: Check if approval is required before execution
-    await this.checkApprovalIfNeeded(node, workflowRun.id);
+        // Add span attributes
+        span.setAttribute('agent.id', node.agentId);
+        span.setAttribute('agent.name', node.agent.name);
+        span.setAttribute('agent.action', node.action);
+        span.setAttribute('workflow.run.id', workflowRun.id);
+        span.setAttribute('workflow.node.id', node.id);
 
-    // Execute agent via Dagger
-    const capability = node.agent.capabilities.find(
-      (c: any) => c.name === node.action
-    );
+        // ✅ Resolve inputs from template
+        const inputs = this.resolveInputs(node, context, previousOutputs);
 
-    const result = await this.daggerExecutor.executeAgent(
-      node.agent.entryPath,
-      inputs,
-      {
-        maxMemoryMb: 512,
-        timeoutSeconds: 300,
-        outputSchema: capability.outputSchema,
+        // 🔒 APPROVAL GATE: Check if approval is required before execution
+        await this.checkApprovalIfNeeded(node, workflowRun.id);
+
+        // Execute agent via Dagger
+        const capability = node.agent.capabilities.find(
+          (c: any) => c.name === node.action
+        );
+
+        const result = await this.daggerExecutor.executeAgent(
+          node.agent.entryPath,
+          inputs,
+          {
+            maxMemoryMb: 512,
+            timeoutSeconds: 300,
+            outputSchema: capability.outputSchema,
+          }
+        );
+
+        const duration = Date.now() - startTime;
+
+        // Success
+        span.setAttribute('agent.status', result.success ? 'SUCCESS' : 'FAILED');
+        span.setAttribute('agent.duration.ms', duration);
+        span.setStatus({ code: SpanStatusCode.OK });
+
+        agentRunCounter.add(1, {
+          agent_id: node.agentId,
+          agent_name: node.agent.name,
+          action: node.action,
+          status: result.success ? 'SUCCESS' : 'FAILED',
+        });
+
+        agentDuration.record(duration, {
+          agent_id: node.agentId,
+          action: node.action,
+          status: result.success ? 'SUCCESS' : 'FAILED',
+        });
+
+        if (!result.success) {
+          agentErrorCounter.add(1, {
+            agent_id: node.agentId,
+            agent_name: node.agent.name,
+            error_type: 'execution_failed',
+          });
+        }
+
+        // Store agent run
+        await this.prisma.agentRun.create({
+          data: {
+            agentId: node.agentId,
+            workflowRunId: workflowRun.id,
+            inputJson: inputs as any,
+            outputJson: (result.output as any) || null,
+            status: result.success ? 'SUCCESS' : 'FAILED',
+            error: result.error || null,
+            durationMs: result.executionTimeMs,
+            finishedAt: new Date(),
+          },
+        });
+
+        return result.output;
+      } catch (error: any) {
+        const duration = Date.now() - startTime;
+
+        // Record error
+        span.recordException(error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error.message,
+        });
+        span.setAttribute('agent.status', 'FAILED');
+        span.setAttribute('error.type', error.constructor.name);
+        span.setAttribute('error.message', error.message);
+
+        agentRunCounter.add(1, {
+          agent_id: node.agentId,
+          agent_name: node.agent.name,
+          action: node.action,
+          status: 'FAILED',
+        });
+
+        agentErrorCounter.add(1, {
+          agent_id: node.agentId,
+          agent_name: node.agent.name,
+          error_type: error.constructor.name,
+        });
+
+        agentDuration.record(duration, {
+          agent_id: node.agentId,
+          action: node.action,
+          status: 'FAILED',
+        });
+
+        throw error;
+      } finally {
+        span.end();
       }
-    );
-
-    // Store agent run
-    await this.prisma.agentRun.create({
-      data: {
-        agentId: node.agentId,
-        workflowRunId: workflowRun.id,
-        inputJson: inputs as any,
-        outputJson: (result.output as any) || null,
-        status: result.success ? 'SUCCESS' : 'FAILED',
-        error: result.error || null,
-        durationMs: result.executionTimeMs,
-        finishedAt: new Date(),
-      },
     });
-
-    return result.output;
   }
 }
