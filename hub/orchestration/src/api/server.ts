@@ -5,6 +5,7 @@ import healthRoutes from './routes/health';
 import agentRoutes from './routes/agents';
 import workflowRoutes from './routes/workflows';
 import approvalRoutes from './routes/approvals';
+import webhookRoutes from './routes/webhooks';
 
 export function createServer() {
   const app = express();
@@ -26,6 +27,7 @@ export function createServer() {
   app.use('/api', agentRoutes);
   app.use('/api', workflowRoutes);
   app.use('/api', approvalRoutes);
+  app.use('/api/webhooks', webhookRoutes);
 
   // Error handler
   app.use(

@@ -1,0 +1,103 @@
+# AlertManager Configuration for CommandCenter Orchestration
+# Phase 10 Phase 5 - Observability Implementation
+
+global:
+  resolve_timeout: 5m
+
+# Route tree for alert routing
+route:
+  # Default receiver for all alerts
+  receiver: 'orchestration-webhook'
+
+  # Group alerts by alertname and severity
+  group_by: ['alertname', 'severity', 'component']
+
+  # Wait time before sending initial notification
+  group_wait: 30s
+
+  # Wait time before sending updates about existing alerts
+  group_interval: 5m
+
+  # Wait time before repeating notifications for resolved alerts
+  repeat_interval: 4h
+
+  # Child routes for specific alert types
+  routes:
+    # Critical alerts - send immediately via webhook
+    - match:
+        severity: critical
+      receiver: 'orchestration-webhook'
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: false
+
+    # Warning alerts - send via webhook with longer intervals
+    - match:
+        severity: warning
+      receiver: 'orchestration-webhook'
+      group_wait: 30s
+      repeat_interval: 4h
+      continue: false
+
+    # SLO alerts - send via webhook with daily summary
+    - match:
+        component: slo
+      receiver: 'orchestration-webhook'
+      group_wait: 1h
+      repeat_interval: 24h
+      continue: false
+
+# Inhibition rules to prevent alert spam
+inhibit_rules:
+  # If service is down, don't alert on high error rate
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HighErrorRate'
+    equal: ['component']
+
+  # If database connection is lost, don't alert on query metrics
+  - source_match:
+      alertname: 'DatabaseConnectionLoss'
+    target_match_re:
+      alertname: '.*Database.*'
+    equal: ['component']
+
+  # If critical alert is firing, suppress warnings
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component']
+
+# Receivers define how to send notifications
+receivers:
+  # Webhook receiver that triggers orchestration workflow
+  - name: 'orchestration-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8020/api/webhooks/alertmanager'
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+        max_alerts: 0  # No limit on alerts per notification
+
+  # Direct Slack receiver (disabled - configure SLACK_WEBHOOK_URL to enable)
+  # - name: 'slack-direct'
+  #   slack_configs:
+  #     - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+  #       channel: '#alerts'
+  #       title: 'CommandCenter Alert'
+  #       text: |
+  #         {{ range .Alerts }}
+  #         *Alert:* {{ .Labels.alertname }}
+  #         *Severity:* {{ .Labels.severity }}
+  #         *Component:* {{ .Labels.component }}
+  #         *Summary:* {{ .Annotations.summary }}
+  #         *Description:* {{ .Annotations.description }}
+  #         {{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
+  #         {{ end }}
+  #       send_resolved: true
+
+# Templates for custom notification formatting (optional)
+# templates:
+#   - '/etc/alertmanager/templates/*.tmpl'

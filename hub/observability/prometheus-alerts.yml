@@ -1,0 +1,194 @@
+# Prometheus Alert Rules for CommandCenter Orchestration
+# Phase 10 Phase 5 - Observability Implementation
+
+groups:
+  - name: critical_alerts
+    interval: 30s
+    rules:
+      # High workflow failure rate
+      - alert: WorkflowFailureRate
+        expr: |
+          (
+            sum(rate(workflow_runs_total{status="FAILED"}[5m]))
+            /
+            sum(rate(workflow_runs_total[5m]))
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: critical
+          component: orchestration
+        annotations:
+          summary: "High workflow failure rate ({{ $value | humanizePercentage }})"
+          description: "More than 10% of workflows are failing in the last 5 minutes"
+          runbook_url: "https://docs.commandcenter.io/runbooks/workflow-failure-rate"
+
+      # Orchestration service down
+      - alert: ServiceDown
+        expr: up{job="orchestration-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: orchestration
+        annotations:
+          summary: "Orchestration service is down"
+          description: "The orchestration service has been unavailable for 1 minute"
+          runbook_url: "https://docs.commandcenter.io/runbooks/service-down"
+
+      # Database connection loss
+      - alert: DatabaseConnectionLoss
+        expr: rate(db_client_operation_duration_count[1m]) == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "No database queries in the last minute"
+          description: "Database connection may be lost. Check PostgreSQL connectivity."
+          runbook_url: "https://docs.commandcenter.io/runbooks/database-connection-loss"
+
+      # High HTTP 5xx error rate
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_total{status=~"5.."}[1m])) > 50
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High 5xx error rate: {{ $value }} errors/min"
+          description: "More than 50 server errors per minute. Check application logs."
+          runbook_url: "https://docs.commandcenter.io/runbooks/high-error-rate"
+
+  - name: warning_alerts
+    interval: 1m
+    rules:
+      # High workflow duration (p95 > 5 minutes)
+      - alert: HighWorkflowDuration
+        expr: |
+          histogram_quantile(0.95,
+            rate(workflow_duration_bucket[5m])
+          ) > 300000
+        for: 10m
+        labels:
+          severity: warning
+          component: orchestration
+        annotations:
+          summary: "High workflow duration (p95: {{ $value | humanizeDuration }})"
+          description: "95th percentile workflow duration exceeds 5 minutes"
+          runbook_url: "https://docs.commandcenter.io/runbooks/high-workflow-duration"
+
+      # Agent failure spike
+      - alert: AgentFailureSpike
+        expr: sum(rate(agent_errors_total[10m])) by (agent_type) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: agents
+        annotations:
+          summary: "Agent {{ $labels.agent_type }} failing frequently"
+          description: "More than 5 failures in 10 minutes for agent {{ $labels.agent_type }}"
+          runbook_url: "https://docs.commandcenter.io/runbooks/agent-failure-spike"
+
+      # Approval backlog
+      - alert: ApprovalBacklog
+        expr: count(workflows_active{status="WAITING_APPROVAL"}) > 20
+        for: 30m
+        labels:
+          severity: warning
+          component: workflows
+        annotations:
+          summary: "Large approval backlog ({{ $value }} workflows)"
+          description: "More than 20 workflows waiting for approval for 30 minutes"
+          runbook_url: "https://docs.commandcenter.io/runbooks/approval-backlog"
+
+      # High memory usage (> 80% heap)
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_runtime_nodejs_memory_heap_bytes
+            /
+            process_runtime_nodejs_memory_heap_max_bytes
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: runtime
+        annotations:
+          summary: "High memory usage ({{ $value | humanizePercentage }})"
+          description: "Process memory usage exceeds 80% for 5 minutes"
+          runbook_url: "https://docs.commandcenter.io/runbooks/high-memory-usage"
+
+      # Event loop lag (> 100ms)
+      - alert: HighEventLoopLag
+        expr: process_runtime_nodejs_event_loop_lag_seconds > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: runtime
+        annotations:
+          summary: "High event loop lag ({{ $value }}s)"
+          description: "Node.js event loop lag exceeds 100ms for 5 minutes"
+          runbook_url: "https://docs.commandcenter.io/runbooks/event-loop-lag"
+
+      # Slow API response time (p95 > 2s)
+      - alert: SlowAPIResponse
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_server_duration_bucket[5m])
+          ) > 2000
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "Slow API responses (p95: {{ $value }}ms)"
+          description: "95th percentile API response time exceeds 2 seconds"
+          runbook_url: "https://docs.commandcenter.io/runbooks/slow-api-response"
+
+  - name: slo_alerts
+    interval: 5m
+    rules:
+      # Workflow success rate SLO violation (< 99%)
+      - alert: WorkflowSuccessRateSLO
+        expr: |
+          (
+            sum(rate(workflow_runs_total{status="SUCCESS"}[30d]))
+            /
+            sum(rate(workflow_runs_total[30d]))
+          ) < 0.99
+        for: 1h
+        labels:
+          severity: warning
+          component: slo
+        annotations:
+          summary: "Workflow success rate SLO violation ({{ $value | humanizePercentage }})"
+          description: "Workflow success rate is below 99% SLO target for 30 days"
+          runbook_url: "https://docs.commandcenter.io/runbooks/slo-workflow-success"
+
+      # Agent success rate SLO violation (< 98%)
+      - alert: AgentSuccessRateSLO
+        expr: |
+          (
+            sum(rate(agent_runs_total{status="SUCCESS"}[7d]))
+            /
+            sum(rate(agent_runs_total[7d]))
+          ) < 0.98
+        for: 1h
+        labels:
+          severity: warning
+          component: slo
+        annotations:
+          summary: "Agent success rate SLO violation ({{ $value | humanizePercentage }})"
+          description: "Agent success rate is below 98% SLO target for 7 days"
+          runbook_url: "https://docs.commandcenter.io/runbooks/slo-agent-success"
+
+      # API availability SLO violation (< 99.9%)
+      - alert: APIAvailabilitySLO
+        expr: avg_over_time(up{job="orchestration-service"}[30d]) < 0.999
+        for: 5m
+        labels:
+          severity: warning
+          component: slo
+        annotations:
+          summary: "API availability SLO violation ({{ $value | humanizePercentage }})"
+          description: "API availability is below 99.9% SLO target for 30 days"
+          runbook_url: "https://docs.commandcenter.io/runbooks/slo-api-availability"

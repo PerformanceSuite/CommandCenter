@@ -6,6 +6,16 @@ global:
     cluster: 'commandcenter-hub'
     environment: 'development'
 
+# Alert rule files
+rule_files:
+  - '/etc/prometheus/prometheus-alerts.yml'
+
+# AlertManager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 scrape_configs:
   # Orchestration service metrics (from Prometheus exporter)
   - job_name: 'orchestration-service'

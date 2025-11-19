@@ -44,9 +44,29 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus-alerts.yml:/etc/prometheus/prometheus-alerts.yml
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - alertmanager
+    networks:
+      - observability
+
+  # AlertManager (Alert Routing & Notifications)
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: hub-alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -90,6 +110,8 @@ volumes:
   tempo_data:
     driver: local
   prometheus_data:
+    driver: local
+  alertmanager_data:
     driver: local
   loki_data:
     driver: local
