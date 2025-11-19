@@ -99,6 +99,7 @@ model WorkflowNode {
 
   workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   agent       Agent    @relation(fields: [agentId], references: [id])
+  approvals   WorkflowApproval[]
 
   @@index([workflowId])
   @@map("workflow_nodes")
@@ -133,6 +134,7 @@ model WorkflowApproval {
   notes         String?
 
   workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
+  node          WorkflowNode @relation(fields: [nodeId], references: [id])
 
   @@index([workflowRunId, status])
   @@map("workflow_approvals")

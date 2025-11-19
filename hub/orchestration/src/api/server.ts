@@ -4,6 +4,7 @@ import config from '../config';
 import healthRoutes from './routes/health';
 import agentRoutes from './routes/agents';
 import workflowRoutes from './routes/workflows';
+import approvalRoutes from './routes/approvals';
 
 export function createServer() {
   const app = express();
@@ -24,6 +25,7 @@ export function createServer() {
   app.use('/api', healthRoutes);
   app.use('/api', agentRoutes);
   app.use('/api', workflowRoutes);
+  app.use('/api', approvalRoutes);
 
   // Error handler
   app.use(
