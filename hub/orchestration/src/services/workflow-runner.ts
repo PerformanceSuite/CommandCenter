@@ -1,11 +1,13 @@
 import { PrismaClient, WorkflowNode } from '@prisma/client';
 import { DaggerAgentExecutor } from '../dagger/executor';
+import { NatsClient } from '../events/nats-client';
 import logger from '../utils/logger';
 
 export class WorkflowRunner {
   constructor(
     private prisma: PrismaClient,
-    private daggerExecutor: DaggerAgentExecutor
+    private daggerExecutor: DaggerAgentExecutor,
+    private natsClient: NatsClient
   ) {}
 
   /**
@@ -98,6 +100,108 @@ export class WorkflowRunner {
     logger.info('Workflow completed', { workflowRunId });
   }
 
+  /**
+   * Check if approval is required and wait for decision
+   */
+  private async checkApprovalIfNeeded(
+    node: WorkflowNode & { agent: any },
+    workflowRunId: string
+  ): Promise<void> {
+    if (!node.approvalRequired) return;
+
+    logger.info('Approval required for node', {
+      nodeId: node.id,
+      agentName: node.agent.name,
+    });
+
+    // Create approval request
+    const approval = await this.prisma.workflowApproval.create({
+      data: {
+        workflowRunId,
+        nodeId: node.id,
+        status: 'PENDING',
+        requestedAt: new Date(),
+      },
+    });
+
+    // Update workflow status to WAITING_APPROVAL
+    await this.prisma.workflowRun.update({
+      where: { id: workflowRunId },
+      data: { status: 'WAITING_APPROVAL' },
+    });
+
+    // Publish NATS event for UI notification
+    await this.natsClient.publish('workflow.approval.requested', {
+      approvalId: approval.id,
+      workflowRunId,
+      nodeId: node.id,
+      agentName: node.agent.name,
+      action: node.action,
+      inputsPreview: JSON.stringify(node.inputsJson, null, 2),
+    });
+
+    logger.info('Approval request created', {
+      approvalId: approval.id,
+      workflowRunId,
+    });
+
+    // Wait for approval decision
+    await this.waitForApproval(approval.id);
+  }
+
+  /**
+   * Wait for approval decision with 24-hour timeout
+   */
+  private async waitForApproval(approvalId: string): Promise<void> {
+    const maxWaitMs = 24 * 60 * 60 * 1000; // 24 hours
+    const pollIntervalMs = 5000; // 5 seconds
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitMs) {
+      const approval = await this.prisma.workflowApproval.findUnique({
+        where: { id: approvalId },
+      });
+
+      if (!approval) {
+        throw new Error(`Approval ${approvalId} not found`);
+      }
+
+      if (approval.status === 'APPROVED') {
+        logger.info('Approval granted', {
+          approvalId,
+          respondedBy: approval.respondedBy,
+          respondedAt: approval.respondedAt,
+        });
+        return;
+      }
+
+      if (approval.status === 'REJECTED') {
+        logger.warn('Approval rejected', {
+          approvalId,
+          rejectedBy: approval.respondedBy,
+          notes: approval.notes,
+        });
+        throw new Error(
+          `Workflow node rejected: ${approval.notes || 'No reason provided'}`
+        );
+      }
+
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+    }
+
+    // Timeout - auto-reject
+    await this.prisma.workflowApproval.update({
+      where: { id: approvalId },
+      data: {
+        status: 'REJECTED',
+        notes: 'Approval timeout after 24 hours',
+        respondedAt: new Date(),
+      },
+    });
+
+    throw new Error(`Approval timeout after ${maxWaitMs}ms`);
+  }
+
   private async executeNode(
     node: WorkflowNode & { agent: any },
     workflowRun: any
@@ -110,7 +214,8 @@ export class WorkflowRunner {
     // TODO: Resolve inputs from template
     const inputs = node.inputsJson;
 
-    // TODO: Check approval if needed
+    // 🔒 APPROVAL GATE: Check if approval is required before execution
+    await this.checkApprovalIfNeeded(node, workflowRun.id);
 
     // Execute agent via Dagger
     const capability = node.agent.capabilities.find(
