@@ -1,8 +1,7 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
-import { WorkflowBuilder } from './components/WorkflowBuilder/WorkflowBuilder';
-import { WorkflowExecutionMonitor } from './components/WorkflowExecutionMonitor';
+import WorkflowsPage from './pages/WorkflowsPage';
 import { ApprovalQueue } from './components/ApprovalQueue/ApprovalQueue';
 import { ApprovalBadge } from './components/ApprovalBadge/ApprovalBadge';
 
@@ -81,10 +80,7 @@ function App() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/workflows" element={<WorkflowBuilder />} />
-            <Route path="/workflows/:workflowId/runs" element={
-              <WorkflowExecutionMonitor workflowId={window.location.pathname.split('/')[2]} />
-            } />
+            <Route path="/workflows" element={<WorkflowsPage />} />
             <Route path="/approvals" element={<ApprovalQueue />} />
           </Routes>
         </main>

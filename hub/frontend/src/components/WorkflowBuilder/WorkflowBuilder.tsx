@@ -82,11 +82,13 @@ const convertNodesFromBackend = (
 interface WorkflowBuilderProps {
   projectId: number;
   workflowId?: string;
+  onSave?: (workflowId: string) => void;
 }
 
 export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
   projectId,
   workflowId,
+  onSave,
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<WorkflowEdge>([]);
@@ -187,7 +189,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
         event: 'manual',
         pattern: 'manual',
       },
-      status: 'DRAFT',
+      status: 'ACTIVE',
       nodes: convertNodesToBackend(nodes as WorkflowNode[], edges),
     };
 
@@ -197,10 +199,14 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
           id: workflowId,
           workflow: workflowData,
         });
-        alert('Workflow updated successfully!');
+        if (onSave) {
+          onSave(workflowId);
+        }
       } else {
         const created = await createWorkflow.mutateAsync(workflowData);
-        alert(`Workflow created with ID: ${created.id}`);
+        if (onSave && created.id) {
+          onSave(created.id);
+        }
       }
     } catch (error: any) {
       alert(`Failed to save workflow: ${error.message}`);
