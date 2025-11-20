@@ -114,7 +114,7 @@ model WorkflowRun {
   startedAt   DateTime    @default(now())
   finishedAt  DateTime?
 
-  workflow    Workflow    @relation(fields: [workflowId], references: [id])
+  workflow    Workflow    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   agentRuns   AgentRun[]
   approvals   WorkflowApproval[]
 
@@ -133,8 +133,8 @@ model WorkflowApproval {
   respondedBy   String?
   notes         String?
 
-  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id])
-  node          WorkflowNode @relation(fields: [nodeId], references: [id])
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  node          WorkflowNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
 
   @@index([workflowRunId, status])
   @@map("workflow_approvals")
