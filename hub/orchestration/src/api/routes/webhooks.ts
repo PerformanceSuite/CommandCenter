@@ -2,12 +2,14 @@
 // Webhook endpoints for external integrations (AlertManager, Grafana, etc.)
 
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../db/prisma';
 import { WorkflowRunner } from '../../services/workflow-runner';
+import daggerExecutor from '../../dagger/executor';
+import natsClient from '../../events/nats-client';
+import logger from '../../utils/logger';
 
 const router = Router();
-const prisma = new PrismaClient();
-const workflowRunner = new WorkflowRunner(prisma);
+const workflowRunner = new WorkflowRunner(prisma, daggerExecutor, natsClient);
 
 /**
  * AlertManager Webhook - Receives alerts from Prometheus AlertManager
@@ -30,24 +32,41 @@ router.post('/alertmanager', async (req: Request, res: Response) => {
     });
 
     if (!workflow) {
+      // Find the notifier agent
+      const notifier = await prisma.agent.findFirst({
+        where: { name: 'notifier' },
+      });
+
+      if (!notifier) {
+        logger.error('Notifier agent not found - cannot create alert-notification workflow');
+        return res.status(500).json({
+          error: 'Notifier agent not registered',
+        });
+      }
+
       // Create the alert-notification workflow if it doesn't exist
       workflow = await prisma.workflow.create({
         data: {
+          projectId: 1, // Default project
           name: 'alert-notification',
           description: 'Send alert notifications via Slack/Discord',
           trigger: 'webhook',
-          riskLevel: 'AUTO',
-          steps: [
-            {
-              agentId: 'notifier',
-              inputTemplate: JSON.stringify({
-                channel: '{{ channel }}',
-                message: '{{ message }}',
-                severity: '{{ severity }}',
-              }),
-              order: 1,
-            },
-          ],
+          status: 'ACTIVE',
+          nodes: {
+            create: [
+              {
+                agentId: notifier.id,
+                action: 'notify',
+                inputsJson: {
+                  channel: '{{ context.channel }}',
+                  message: '{{ context.message }}',
+                  severity: '{{ context.severity }}',
+                },
+                dependsOn: [],
+                approvalRequired: false,
+              },
+            ],
+          },
         },
       });
     }
@@ -91,11 +110,20 @@ router.post('/alertmanager', async (req: Request, res: Response) => {
       workflowRuns.push(workflowRun);
 
       // Execute workflow asynchronously (don't await to avoid blocking)
-      workflowRunner.executeWorkflow(workflowRun.id).catch((err) => {
-        console.error(
-          `Error executing alert workflow ${workflowRun.id}:`,
-          err
-        );
+      workflowRunner.executeWorkflow(workflowRun.id).catch(async (err) => {
+        logger.error('Alert workflow execution failed', {
+          workflowRunId: workflowRun.id,
+          error: err,
+        });
+
+        // Update workflow run status to FAILED
+        await prisma.workflowRun.update({
+          where: { id: workflowRun.id },
+          data: {
+            status: 'FAILED',
+            finishedAt: new Date(),
+          },
+        });
       });
     }
 
@@ -107,7 +135,7 @@ router.post('/alertmanager', async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    console.error('Error processing AlertManager webhook:', error);
+    logger.error('Error processing AlertManager webhook:', { error });
     res.status(500).json({
       error: 'Failed to process AlertManager webhook',
       details: error instanceof Error ? error.message : 'Unknown error',
@@ -193,13 +221,25 @@ router.post('/grafana', async (req: Request, res: Response) => {
     });
 
     // Execute workflow
-    workflowRunner.executeWorkflow(workflowRun.id).catch((err) => {
-      console.error(`Error executing Grafana alert workflow:`, err);
+    workflowRunner.executeWorkflow(workflowRun.id).catch(async (err) => {
+      logger.error('Grafana alert workflow execution failed', {
+        workflowRunId: workflowRun.id,
+        error: err,
+      });
+
+      // Update workflow run status to FAILED
+      await prisma.workflowRun.update({
+        where: { id: workflowRun.id },
+        data: {
+          status: 'FAILED',
+          finishedAt: new Date(),
+        },
+      });
     });
 
     res.status(200).json({ workflowRunId: workflowRun.id });
   } catch (error) {
-    console.error('Error processing Grafana webhook:', error);
+    logger.error('Error processing Grafana webhook:', { error });
     res.status(500).json({
       error: 'Failed to process Grafana webhook',
       details: error instanceof Error ? error.message : 'Unknown error',
