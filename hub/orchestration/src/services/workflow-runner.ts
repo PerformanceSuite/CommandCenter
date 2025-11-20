@@ -473,7 +473,7 @@ export class WorkflowRunner {
           {
             maxMemoryMb: 512,
             timeoutSeconds: 300,
-            outputSchema: capability.outputSchema,
+            outputSchema: capability?.outputSchema, // Optional chaining - capability may not exist
           }
         );
 
