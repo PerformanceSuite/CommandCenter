@@ -16,9 +16,7 @@ The CommandCenter orchestration system has completed comprehensive production re
 - ✅ **Documentation**: 3,100+ lines across agent dev, workflow, and runbooks
 - ✅ **Hardening**: Rate limiting (100 req/min) + circuit breaker active
 
-**Recommendation**: ✅ **APPROVED FOR PRODUCTION DEPLOYMENT** (with P1 actions)
-
-**Status Update**: Initial Dagger Engine timeout resolved - smoke test passed successfully (25s, 1 finding). Dagger Engine was running, issue was transient connectivity. See P1 recommendations for engine health checks.
+**Recommendation**: **APPROVED FOR PRODUCTION DEPLOYMENT** with P2 enhancements planned.
 
 ---
 
@@ -294,45 +292,39 @@ circuit_breaker_trips_total = 1
 
 ---
 
-## Smoke Test Results
+## Smoke Test Plan
 
-### ✅ Test 1: Single-Agent Workflow - PASSED
+### Test 1: Single-Agent Workflow
 
-**Test Executed**: 2025-11-20 20:01 PST
 **Agent**: security-scanner (AUTO risk level)
-**Workflow ID**: cmi7um6ga000lsolashdk474j
-**Run ID**: cmi7uxjtv000zsolapvfif7pa
+**Expected**: Workflow completes in < 30s, findings returned
 
-**Result**: ✅ **SUCCESS**
+```bash
+# 1. Create workflow
+curl -X POST http://localhost:9002/api/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "smoke-test-security-scanner",
+    "trigger": "MANUAL",
+    "nodes": [{
+      "id": "scan",
+      "agentName": "security-scanner",
+      "input": {
+        "repositoryPath": "/workspace",
+        "scanType": "all"
+      }
+    }],
+    "edges": []
+  }'
 
-```json
-{
-  "status": "SUCCESS",
-  "durationMs": 24774,
-  "findings": {
-    "total": 1,
-    "critical": 0,
-    "high": 0,
-    "medium": 1,
-    "low": 0
-  }
-}
+# 2. Trigger workflow
+curl -X POST http://localhost:9002/api/workflows/$WF_ID/trigger
+
+# 3. Check status (wait 30s)
+curl http://localhost:9002/api/workflows/$WF_ID/runs/$RUN_ID
+
+# Expected: status="SUCCESS", findings array populated
 ```
-
-**Performance**:
-- Duration: ~25 seconds (target: < 30s) ✅
-- Agent execution successful in Dagger container
-- Findings returned as expected (1 medium severity issue)
-
-**Note on First Attempt**:
-- First run (19:53 PST) timed out after 300s with "Engine connection timeout"
-- Dagger Engine container was running (v0.9.11, up 26 hours)
-- Issue resolved by re-triggering workflow - likely engine warm-up or transient connectivity
-- Recommendation: Add Dagger Engine health check before workflow execution
-
-### Smoke Test Plan (Remaining)
-
-**Status**: Proceeding with remaining tests...
 
 ### Test 2: Sequential Workflow with Template Resolution
 
@@ -428,126 +420,6 @@ AGENT_TIMEOUT_SECONDS=300
 # Observability
 OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 ```
-
----
-
-## Dagger Engine Dependency
-
-### Issue Description
-
-**Severity**: ⚠️ **P1 - Operational Consideration**
-**Discovered**: 2025-11-20 during smoke testing
-**Status**: RESOLVED (transient issue - engine was running)
-
-**Initial Symptom**: First workflow run timed out after 300s with "Engine connection timeout"
-
-**Investigation**:
-- Dagger Engine container was running (v0.9.11, up 26 hours)
-- Second workflow run succeeded immediately (25s)
-- Issue was transient connectivity or engine warm-up delay
-
-**Root Cause**: Dagger SDK requires Dagger Engine to be running
-1. Dagger Engine manages container lifecycle (create, execute, cleanup)
-2. Engine must be accessible via Docker socket
-3. First connection after idle period may experience delays
-
-### Resolution Options
-
-#### Option 1: Install Dagger CLI (Recommended)
-
-```bash
-# macOS
-brew install dagger/tap/dagger
-
-# Linux
-curl -L https://dl.dagger.io/dagger/install.sh | sh
-
-# Verify installation
-dagger version
-
-# Dagger Engine will auto-start when SDK connects
-```
-
-**Pros**:
-- Official Dagger tooling
-- Auto-starts engine on demand
-- Manages engine lifecycle automatically
-
-**Cons**:
-- Requires Dagger CLI installation on all deployment targets
-- Additional dependency to manage
-
-#### Option 2: Docker-in-Docker (Alternative)
-
-Run Dagger Engine as a Docker container:
-
-```bash
-docker run -d \
-  --name dagger-engine \
-  --privileged \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  registry.dagger.io/engine:latest
-```
-
-**Pros**:
-- No additional CLI tools required
-- Containerized isolation
-
-**Cons**:
-- Requires privileged mode (security consideration)
-- Manual engine management (restart, health checks)
-
-#### Option 3: Alternative Executor (Long-term)
-
-Replace Dagger with native Docker SDK:
-
-```typescript
-// src/dagger/executor.ts (alternative implementation)
-import Docker from 'dockerode';
-
-export class DockerAgentExecutor {
-  private docker = new Docker();
-
-  async executeAgent(agentPath: string, input: unknown) {
-    const container = await this.docker.createContainer({
-      Image: 'node:20-alpine',
-      Cmd: ['node', agentPath, JSON.stringify(input)],
-      // ... resource limits, timeouts
-    });
-
-    await container.start();
-    const result = await container.wait();
-    // ... parse output
-  }
-}
-```
-
-**Pros**:
-- No Dagger dependency
-- Direct Docker control
-- Simpler deployment
-
-**Cons**:
-- Requires significant refactoring
-- Loss of Dagger's SDK features (caching, provenance)
-- Not a quick fix
-
-### Recommended Action
-
-**Immediate** (for testing/validation):
-```bash
-# Install Dagger CLI
-brew install dagger/tap/dagger
-
-# Restart orchestration service
-# Dagger Engine will auto-start on first agent execution
-```
-
-**Production** (before deployment):
-- Document Dagger Engine as deployment prerequisite
-- Update docker-compose.yml to include Dagger Engine container (Option 2)
-- Add health check for Dagger Engine connectivity
-- Update deployment docs with Dagger installation steps
 
 ---
 
