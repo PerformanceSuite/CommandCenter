@@ -1,3 +1,6 @@
+// Load environment variables first
+import 'dotenv/config';
+
 import './instrumentation'; // MUST be first import for auto-instrumentation
 
 import { startServer } from './api/server';
