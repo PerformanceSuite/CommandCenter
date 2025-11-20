@@ -1,0 +1,14 @@
+{
+  "name": "@commandcenter/load-tests",
+  "version": "1.0.0",
+  "description": "Load testing suite for orchestration service",
+  "scripts": {
+    "test:single": "k6 run single-workflow.js",
+    "test:concurrent": "k6 run concurrent-workflows.js",
+    "test:approval": "k6 run approval-latency.js",
+    "test:all": "npm run test:single && npm run test:concurrent && npm run test:approval"
+  },
+  "devDependencies": {
+    "k6": "^0.0.0"
+  }
+}
