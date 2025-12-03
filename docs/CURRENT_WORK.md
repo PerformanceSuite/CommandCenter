@@ -1,8 +1,44 @@
-# Current Work: Phase 10 Phase 6 - Production Readiness
+# Current Work: Comprehensive Audit & Reorganization
+
+**Status**: 🔄 **PLANNED** - Ready for execution
+**Date Created**: 2025-12-02
+**Latest Update**: 2025-12-02 - Brainstorming complete, plan documented
+
+---
+
+## Next Session: Start Here
+
+**Plan Location**: `docs/plans/2025-12-02-comprehensive-audit-reorganization-plan.md`
+
+### Immediate Next Steps
+
+1. **Phase 0**: E2B Setup (30 min)
+   - Verify credentials in `.env`
+   - Test sandbox creation: `cd tools/agent-sandboxes/apps/sandbox_fundamentals && uv run python 01_basic_sandbox.py`
+
+2. **Phase 1 Fork 1**: GitDiagram Generation
+   - Run GitDiagram on CommandCenter repo
+   - Generate visual architecture diagrams
+
+### Context for Next Session
+
+- **Goal**: Full audit (understand, reorganize, integrate CommandCenter + VERIA)
+- **Approach**: Hybrid B+C (Document First + Incremental Hub Restructure)
+- **Constraint**: Keep momentum - don't over-engineer
+- **E2B**: Use for parallel exploration, safe experimentation, diagram generation
+- **VERIA**: Separate project with clear API boundaries (not monorepo merge)
+
+### New Documents Created This Session
+
+1. `hub/vislzr/docs/ENHANCEMENT_ANALYSIS.md` - GitDiagram + Claude methodology analysis
+2. `docs/plans/2025-12-02-comprehensive-audit-reorganization-plan.md` - Full 5-phase plan
+
+---
+
+## Previous Work: Phase 10 Phase 6 - Production Readiness
 
 **Status**: ✅ **COMPLETE** (100% - All 16 tasks done)
 **Date Completed**: 2025-11-20
-**Latest Update**: 2025-11-21 - Comprehensive project documentation created
 
 ---
 
