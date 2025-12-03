@@ -1,0 +1,43 @@
+%%{init: {'theme': 'base'}}%%
+sequenceDiagram
+    participant User
+    participant UI as Frontend UI
+    participant Orch as Orchestration Service
+    participant Dagger as Dagger Executor
+    participant Agent as Agent Container
+    participant NATS as NATS JetStream
+    participant Backend as Hub Backend
+    participant DB as PostgreSQL
+
+    Note over User,DB: Workflow Execution Flow
+
+    User->>UI: Trigger Workflow
+    UI->>Orch: POST /workflows/{id}/trigger
+    Orch->>DB: Create WorkflowRun record
+    Orch->>NATS: Publish workflow.started
+
+    loop For each Agent in DAG
+        Orch->>Dagger: Execute agent container
+        Dagger->>Agent: Run with inputs
+        Agent->>Agent: Process task
+        Agent-->>Dagger: Return output
+        Dagger-->>Orch: Agent result
+
+        alt Agent requires approval
+            Orch->>DB: Create approval request
+            Orch->>NATS: Publish approval.required
+            NATS-->>UI: Real-time notification
+            User->>UI: Approve/Reject
+            UI->>Orch: POST /approvals/{id}/respond
+        end
+
+        Orch->>DB: Update AgentRun status
+        Orch->>NATS: Publish agent.completed
+    end
+
+    Orch->>DB: Update WorkflowRun status
+    Orch->>NATS: Publish workflow.completed
+    NATS-->>Backend: Event subscription
+    Backend->>Backend: Process event hooks
+    NATS-->>UI: Real-time status update
+    UI-->>User: Show completion
