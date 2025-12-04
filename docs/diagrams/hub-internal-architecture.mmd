@@ -1,0 +1,174 @@
+graph TB
+    subgraph "Hub Frontend - React Application"
+        subgraph "Pages & Routes"
+            Dashboard[Dashboard<br/>Project Overview]
+            ProjectDetail[Project Detail<br/>Instance Management]
+            CreateProject[Create Project<br/>Setup Wizard]
+            Monitoring[Monitoring<br/>Health & Metrics]
+        end
+
+        subgraph "Components"
+            ProjectCard[ProjectCard<br/>Start/Stop/Status]
+            TaskMonitor[Task Monitor<br/>Celery Jobs]
+            LogViewer[Log Viewer<br/>Real-time Logs]
+            EventStream[Event Stream<br/>NATS WebSocket]
+        end
+
+        Dashboard --> ProjectCard
+        ProjectDetail --> TaskMonitor
+        ProjectDetail --> LogViewer
+        Monitoring --> EventStream
+    end
+
+    subgraph "Hub Backend - FastAPI Application"
+        subgraph "API Routers"
+            ProjectsRouter[/api/projects<br/>CRUD Operations]
+            OrchRouter[/api/orchestration<br/>Start/Stop/Status]
+            EventsRouter[/api/events<br/>Query & Stream]
+            HealthRouter[/api/health<br/>NATS & Services]
+            TasksRouter[/api/tasks<br/>Background Jobs]
+            LogsRouter[/api/logs<br/>Container Logs]
+            FilesystemRouter[/api/filesystem<br/>Directory Browser]
+        end
+
+        subgraph "Core Services"
+            ProjectService[ProjectService<br/>Project Management]
+            OrchService[OrchestrationService<br/>Dagger Integration]
+            EventService[EventService<br/>NATS Publisher/Subscriber]
+            TaskService[TaskService<br/>Celery Job Management]
+            HealthService[HealthService<br/>Service Discovery]
+        end
+
+        subgraph "Background Workers"
+            CeleryWorker[Celery Worker<br/>Async Operations]
+            CeleryBeat[Celery Beat<br/>Health Checks]
+            FlowerUI[Flower<br/>Task Dashboard]
+        end
+
+        ProjectsRouter --> ProjectService
+        OrchRouter --> OrchService
+        EventsRouter --> EventService
+        TasksRouter --> TaskService
+        HealthRouter --> HealthService
+
+        ProjectService --> OrchService
+        OrchService --> CeleryWorker
+        EventService --> CeleryWorker
+    end
+
+    subgraph "Hub Orchestration - Node.js Service"
+        subgraph "Workflow Engine"
+            WorkflowRunner[WorkflowRunner<br/>Execute Workflows]
+            WorkflowAPI[Workflow API<br/>REST Endpoints]
+            WorkflowDB[(Workflow DB<br/>Prisma + PostgreSQL)]
+        end
+
+        subgraph "Template System"
+            TemplateResolver[TemplateResolver<br/>Mustache Templates]
+            TemplateStore[Template Store<br/>Workflow Definitions]
+        end
+
+        subgraph "Agent Integration"
+            DaggerClient[Dagger Client<br/>Container Orchestration]
+            AgentExecutor[Agent Executor<br/>Sandbox Management]
+        end
+
+        WorkflowAPI --> WorkflowRunner
+        WorkflowRunner --> TemplateResolver
+        WorkflowRunner --> AgentExecutor
+        WorkflowRunner --> WorkflowDB
+        AgentExecutor --> DaggerClient
+        TemplateResolver --> TemplateStore
+    end
+
+    subgraph "Hub Modules"
+        subgraph "MRKTZR - Marketing Intelligence"
+            MRKTZRFrontend[MRKTZR UI<br/>Port 3003]
+            MRKTZRBackend[MRKTZR API<br/>Genkit + Gemini]
+            MRKTZRService[Content Generator<br/>AI Social Posts]
+
+            MRKTZRFrontend --> MRKTZRBackend
+            MRKTZRBackend --> MRKTZRService
+        end
+
+        subgraph "VISLZR - Visualization (Planned)"
+            VISLZRNext[Next.js App<br/>Graph Visualization]
+            VISLZRService[Graph Service<br/>Code Analysis]
+        end
+
+        subgraph "Observability Module"
+            ObsPrometheus[Prometheus Config<br/>Metrics Collection]
+            ObsGrafana[Grafana Dashboards<br/>5 Dashboards]
+            ObsAlerts[AlertManager Rules<br/>5 Alert Rules]
+            ObsOTel[OTel Collector<br/>Trace Collection]
+
+            ObsPrometheus --> ObsGrafana
+            ObsPrometheus --> ObsAlerts
+        end
+    end
+
+    subgraph "Hub Core Libraries"
+        CoreTypes[Core Types<br/>Shared Interfaces]
+        CoreUtils[Core Utils<br/>Helper Functions]
+        CoreEvents[Core Events<br/>Event Definitions]
+    end
+
+    subgraph "Data Storage"
+        HubDB[(Hub Database<br/>SQLite/PostgreSQL<br/>Projects Registry)]
+        OrchDB[(Orchestration DB<br/>PostgreSQL<br/>Workflows & Agents)]
+        RedisHub[(Redis<br/>Celery Broker<br/>Cache)]
+        NATSHub[NATS JetStream<br/>Event Bus<br/>Pub/Sub]
+    end
+
+    subgraph "External Integrations"
+        DockerEngine[Docker Engine<br/>Container Runtime]
+        E2BSandboxes[E2B Sandboxes<br/>Agent Execution]
+        GeminiAPI[Gemini API<br/>AI Generation]
+    end
+
+    Dashboard -->|HTTP| ProjectsRouter
+    ProjectCard -->|HTTP| OrchRouter
+    EventStream -->|WebSocket| EventsRouter
+
+    ProjectService --> HubDB
+    OrchService --> OrchDB
+    TaskService --> RedisHub
+    EventService --> NATSHub
+
+    OrchService --> WorkflowAPI
+    WorkflowRunner --> NATSHub
+
+    MRKTZRBackend --> NATSHub
+    MRKTZRBackend --> GeminiAPI
+
+    DaggerClient --> DockerEngine
+    AgentExecutor --> E2BSandboxes
+
+    CeleryWorker --> RedisHub
+    CeleryBeat --> RedisHub
+
+    ObsPrometheus -.->|Scrape| WorkflowAPI
+    ObsPrometheus -.->|Scrape| ProjectsRouter
+    ObsOTel -.->|Collect| OrchService
+
+    CoreTypes -.->|Import| ProjectService
+    CoreTypes -.->|Import| WorkflowRunner
+    CoreEvents -.->|Import| EventService
+
+    style Dashboard fill:#e3f2fd
+    style ProjectCard fill:#e3f2fd
+    style ProjectsRouter fill:#fff3e0
+    style OrchRouter fill:#fff3e0
+    style EventsRouter fill:#fff3e0
+    style ProjectService fill:#e8f5e9
+    style OrchService fill:#e8f5e9
+    style EventService fill:#e8f5e9
+    style WorkflowRunner fill:#f3e5f5
+    style DaggerClient fill:#f3e5f5
+    style MRKTZRService fill:#fce4ec
+    style HubDB fill:#e0f2f1
+    style OrchDB fill:#e0f2f1
+    style RedisHub fill:#e0f2f1
+    style NATSHub fill:#ffebee
+    style DockerEngine fill:#eceff1
+    style ObsGrafana fill:#fff9c4

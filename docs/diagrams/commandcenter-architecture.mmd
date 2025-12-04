@@ -1,103 +1,131 @@
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1d4ed8', 'lineColor': '#64748b', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0'}}}%%
 graph TB
-    subgraph External["External Services"]
-        GH[GitHub API]
-        NATS[NATS JetStream]
-        PG[(PostgreSQL)]
-        Redis[(Redis)]
+    subgraph External["External Systems"]
+        GitHub[GitHub API<br/>Repository Syncing]
+        AI_APIs[AI APIs<br/>Anthropic, OpenAI]
+        WebSources[Web Sources<br/>RSS, ArXiv, HN]
     end
 
-    subgraph Hub["Hub Application"]
-        subgraph Frontend["Frontend (React + TypeScript)"]
-            UI[VISLZR UI]
-            WF[Workflow Builder]
-            EM[Execution Monitor]
+    subgraph Hub["CommandCenter Hub - Multi-Project Orchestration"]
+        HubFE[Hub Frontend<br/>React + TypeScript<br/>Port 9000]
+        HubAPI[Hub Backend<br/>FastAPI + Python 3.11<br/>Port 9001]
+        HubOrch[Orchestration Service<br/>Node.js + Dagger SDK<br/>Port 9002]
+        HubDB[(Hub Database<br/>SQLite/PostgreSQL)]
+
+        HubFE -->|REST API| HubAPI
+        HubAPI -->|Project Management| HubDB
+        HubAPI -->|Container Orchestration| HubOrch
+        HubOrch -->|Dagger SDK| Docker
+    end
+
+    subgraph MsgBus["Message Bus & Events"]
+        NATS[NATS JetStream<br/>Port 4222<br/>Event Streaming]
+        NATSMon[NATS Monitor<br/>Port 8222<br/>HTTP Monitoring]
+
+        NATS -.->|Monitoring| NATSMon
+    end
+
+    subgraph Instance["CommandCenter Instance - Single Project"]
+        FE[Frontend<br/>React + Vite<br/>Port 3000]
+        BE[Backend<br/>FastAPI<br/>Port 8000]
+
+        subgraph Workers["Background Workers"]
+            Celery[Celery Worker<br/>Background Tasks]
+            Beat[Celery Beat<br/>Scheduled Jobs]
+            Flower[Flower<br/>Task Monitor<br/>Port 5555]
         end
 
-        subgraph Orchestration["Orchestration Service (TypeScript)"]
-            AgentReg[Agent Registry]
-            WFEngine[Workflow Engine]
-            DaggerExec[Dagger Executor]
-            ApprovalSys[Approval System]
+        subgraph DataLayer["Data Layer"]
+            PG[(PostgreSQL 16<br/>+ pgvector<br/>Port 5432)]
+            Redis[(Redis 7<br/>Cache & Queue<br/>Port 6379)]
+            RAGStorage[/RAG Storage<br/>Vector Embeddings/]
         end
 
-        subgraph Backend["Backend (FastAPI)"]
-            EventSvc[Event Service]
-            GraphSvc[Graph Service]
-            RAGSvc[RAG Service]
-            FedSvc[Federation Service]
-        end
+        FE -->|API Requests| BE
+        BE -->|Database| PG
+        BE -->|Cache| Redis
+        BE -->|Pub/Sub| NATS
+        BE -->|Queue Jobs| Celery
+        Celery -->|Redis Broker| Redis
+        Celery -->|Results| Redis
+        Beat -->|Schedule Tasks| Redis
+        Celery -->|RAG Processing| RAGStorage
+        BE -->|Vector Search| RAGStorage
+        Flower -->|Monitor| Redis
+    end
 
-        subgraph Agents["Agent Pool"]
-            SecScanner[Security Scanner]
-            Notifier[Notifier]
-            Compliance[Compliance Checker]
-            Patcher[Patcher]
-            CodeReview[Code Reviewer]
-        end
+    subgraph Knowledge["Knowledge Layer - KnowledgeBeast v3.0"]
+        KB[KnowledgeBeast<br/>libs/knowledgebeast]
+        Embeddings[Sentence Transformers<br/>Local Embeddings]
+        Docling[Docling Service<br/>Document Processing]
+
+        BE -->|RAG Service| KB
+        KB -->|Embeddings| Embeddings
+        KB -->|Process Docs| Docling
+        KB -->|Store Vectors| PG
+    end
+
+    subgraph Federation["Federation Service - Cross-Project"]
+        FedAPI[Federation API<br/>FastAPI<br/>Multi-Project Catalog]
+        FedDB[(Federation DB<br/>PostgreSQL)]
+        FedWorkers[Federation Workers<br/>Cross-Project Sync]
+
+        FedAPI -->|Catalog| FedDB
+        FedAPI -->|NATS Events| NATS
+        FedWorkers -->|Subscribe| NATS
     end
 
     subgraph Observability["Observability Stack"]
-        Grafana[Grafana]
-        Prometheus[Prometheus]
-        Loki[Loki]
-        Tempo[Tempo]
+        Prometheus[Prometheus<br/>Metrics Collection]
+        Grafana[Grafana<br/>5 Dashboards<br/>Port 3001]
+        AlertMgr[AlertManager<br/>5 Alert Rules]
+        OTel[OpenTelemetry Collector<br/>Traces]
+        Tempo[Tempo<br/>Trace Storage]
+
+        Prometheus -->|Query| Grafana
+        Prometheus -->|Alerts| AlertMgr
+        OTel -->|Export| Tempo
+        BE -.->|Metrics| Prometheus
+        HubOrch -.->|Traces| OTel
     end
 
-    subgraph Legacy["Legacy Components"]
-        LegacyBE[Legacy Backend]
-        LegacyFE[Legacy Frontend]
+    subgraph Modules["Hub Modules"]
+        MRKTZR[MRKTZR<br/>AI Marketing<br/>Port 3003]
+        VISLZR[VISLZR<br/>Code Visualization<br/>Next.js]
     end
 
-    subgraph Libs["Shared Libraries"]
-        KB[KnowledgeBeast]
+    subgraph Tools["Development Tools"]
+        AgentSandbox[Agent Sandboxes<br/>E2B Integration]
+        GraphVis[GraphVis<br/>Code Visualization]
     end
 
-    %% Frontend connections
-    UI --> Orchestration
-    UI --> Backend
-    WF --> AgentReg
-    EM --> WFEngine
+    GitHub -->|Sync Repos| BE
+    AI_APIs -->|LLM Queries| BE
+    WebSources -->|RSS/Feeds| BE
 
-    %% Orchestration connections
-    WFEngine --> DaggerExec
-    WFEngine --> ApprovalSys
-    DaggerExec --> Agents
-    AgentReg --> PG
+    HubOrch -->|Manage Instances| BE
+    HubOrch -->|Events| NATS
 
-    %% Backend connections
-    EventSvc --> NATS
-    GraphSvc --> PG
-    RAGSvc --> KB
-    FedSvc --> NATS
+    BE -->|Publish Events| NATS
+    FedAPI -->|Cross-Project| NATS
 
-    %% External connections
-    Backend --> GH
-    Backend --> PG
-    Backend --> Redis
-    KB --> PG
+    MRKTZR -->|NATS Events| NATS
+    MRKTZR -->|Gemini API| AI_APIs
 
-    %% Observability
-    Orchestration --> Prometheus
-    Backend --> Prometheus
-    Prometheus --> Grafana
-    Loki --> Grafana
-    Tempo --> Grafana
+    Docker[Docker Engine<br/>Container Runtime]
 
-    %% Legacy migration
-    LegacyBE -.->|migrating| Backend
-    LegacyFE -.->|migrating| Frontend
+    classDef external fill:#e1f5ff,stroke:#0284c7,color:#000
+    classDef hub fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef instance fill:#d1fae5,stroke:#059669,color:#000
+    classDef data fill:#cffafe,stroke:#0891b2,color:#000
+    classDef message fill:#fecdd3,stroke:#e11d48,color:#000
+    classDef obs fill:#fef3c7,stroke:#f59e0b,color:#000
+    classDef docker fill:#e5e7eb,stroke:#6b7280,color:#000
 
-    classDef external fill:#94a3b8,stroke:#475569,color:#000
-    classDef frontend fill:#3b82f6,stroke:#1d4ed8,color:#fff
-    classDef backend fill:#10b981,stroke:#059669,color:#fff
-    classDef agent fill:#f59e0b,stroke:#d97706,color:#000
-    classDef obs fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    classDef legacy fill:#ef4444,stroke:#dc2626,color:#fff,stroke-dasharray: 5 5
-
-    class GH,NATS,PG,Redis external
-    class UI,WF,EM frontend
-    class EventSvc,GraphSvc,RAGSvc,FedSvc,AgentReg,WFEngine,DaggerExec,ApprovalSys backend
-    class SecScanner,Notifier,Compliance,Patcher,CodeReview agent
-    class Grafana,Prometheus,Loki,Tempo obs
-    class LegacyBE,LegacyFE legacy
+    class GitHub,AI_APIs,WebSources external
+    class HubFE,HubAPI,HubOrch,HubDB hub
+    class FE,BE,Celery,Beat,Flower instance
+    class PG,Redis,RAGStorage,FedDB data
+    class NATS,NATSMon message
+    class Prometheus,Grafana,AlertMgr,OTel,Tempo obs
+    class Docker docker

@@ -1,0 +1,169 @@
+{
+  "statistics": {
+    "detectionDate": "2025-12-04T21:45:44.276Z",
+    "formats": {
+      "typescript": {
+        "sources": {
+          "hub/modules/mrktzr/src/models/user.ts": {
+            "lines": 7,
+            "tokens": 52,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/models/socialMediaAccount.ts": {
+            "lines": 18,
+            "tokens": 130,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/models/scheduledPost.ts": {
+            "lines": 17,
+            "tokens": 124,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/models/content.ts": {
+            "lines": 22,
+            "tokens": 144,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/core/contentGenerator.ts": {
+            "lines": 21,
+            "tokens": 188,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/api/content.ts": {
+            "lines": 22,
+            "tokens": 209,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/api/auth.ts": {
+            "lines": 58,
+            "tokens": 539,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 14,
+            "duplicatedTokens": 146,
+            "percentage": 24.14,
+            "percentageTokens": 27.09,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "hub/modules/mrktzr/src/index.ts": {
+            "lines": 56,
+            "tokens": 490,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 221,
+          "tokens": 1876,
+          "sources": 8,
+          "clones": 1,
+          "duplicatedLines": 7,
+          "duplicatedTokens": 73,
+          "percentage": 3.17,
+          "percentageTokens": 3.89,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 221,
+      "tokens": 1876,
+      "sources": 8,
+      "clones": 1,
+      "duplicatedLines": 7,
+      "duplicatedTokens": 73,
+      "percentage": 3.17,
+      "percentageTokens": 3.89,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "typescript",
+      "lines": 8,
+      "fragment": ", async (req, res) => {\n  const { username, password } = req.body;\n\n  if (!username || !password) {\n    return res.status(400).send('Username and password are required');\n  }\n\n  const user",
+      "tokens": 0,
+      "firstFile": {
+        "name": "hub/modules/mrktzr/src/api/auth.ts",
+        "start": 37,
+        "end": 44,
+        "startLoc": {
+          "line": 37,
+          "column": 9,
+          "position": 301
+        },
+        "endLoc": {
+          "line": 44,
+          "column": 5,
+          "position": 374
+        }
+      },
+      "secondFile": {
+        "name": "hub/modules/mrktzr/src/api/auth.ts",
+        "start": 12,
+        "end": 19,
+        "startLoc": {
+          "line": 12,
+          "column": 12,
+          "position": 89
+        },
+        "endLoc": {
+          "line": 19,
+          "column": 13,
+          "position": 162
+        }
+      }
+    }
+  ]
+}

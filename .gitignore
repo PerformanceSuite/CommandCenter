@@ -79,3 +79,10 @@ libs/knowledgebeast/*.egg-info
 libs/knowledgebeast/.pytest_cache
 libs/knowledgebeast/.coverage
 libs/knowledgebeast/chroma
+
+# E2B Agent Sandboxes (runtime artifacts)
+tools/agent-sandboxes/.env
+tools/agent-sandboxes/apps/*/.venv/
+tools/agent-sandboxes/apps/*/.env
+tools/agent-sandboxes/**/__pycache__/
+tools/agent-sandboxes/**/node_modules/
