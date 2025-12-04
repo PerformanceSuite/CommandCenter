@@ -1,0 +1,68 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb'}}}%%
+graph LR
+    subgraph hub["hub/"]
+        direction TB
+
+        subgraph frontend["frontend/ (React)"]
+            pages[Pages]
+            components[Components]
+            hooks[Hooks]
+            services[API Services]
+        end
+
+        subgraph orchestration["orchestration/ (TypeScript)"]
+            agents_dir[agents/]
+            api[api/]
+            dagger[dagger/]
+            prisma[prisma/]
+        end
+
+        subgraph backend_hub["backend/ (FastAPI)"]
+            routers[routers/]
+            svc[services/]
+            models[models/]
+            dagger_mod[dagger_modules/]
+        end
+
+        subgraph vislzr["vislzr/"]
+            viz_docs[docs/]
+        end
+
+        subgraph observability["observability/"]
+            grafana_dash[grafana/]
+            prometheus_cfg[prometheus/]
+            alertmanager[alertmanager/]
+        end
+    end
+
+    subgraph federation["federation/"]
+        fed_api[api/]
+        fed_db[database/]
+        fed_workers[workers/]
+    end
+
+    subgraph libs["libs/"]
+        kb[knowledgebeast/]
+    end
+
+    subgraph tools["tools/"]
+        sandboxes[agent-sandboxes/]
+        graphvis[graphvis/]
+    end
+
+    %% Dependencies
+    frontend --> orchestration
+    frontend --> backend_hub
+    orchestration --> dagger
+    backend_hub --> kb
+    backend_hub --> federation
+
+    classDef module fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    classDef submod fill:#60a5fa,stroke:#2563eb,color:#000
+    classDef lib fill:#10b981,stroke:#059669,color:#fff
+    classDef tool fill:#f59e0b,stroke:#d97706,color:#000
+
+    class frontend,orchestration,backend_hub,vislzr,observability,federation module
+    class pages,components,hooks,services,agents_dir,api,dagger,prisma,routers,svc,models,dagger_mod,viz_docs,grafana_dash,prometheus_cfg,alertmanager,fed_api,fed_db,fed_workers submod
+    class kb lib
+    class sandboxes,graphvis tool
