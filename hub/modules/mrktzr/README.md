@@ -60,9 +60,10 @@ npm run dev
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/content` | POST | Generate content from topic |
-| `/content/:id` | GET | Get content by ID |
-| `/auth/login` | POST | Authenticate user |
+| `/health` | GET | Health check endpoint |
+| `/api/content/generate-post` | POST | Generate social media post from topic |
+
+> **Note**: Authentication removed for prototype phase. Future versions will integrate with CommandCenter's auth system.
 
 ## Technology Stack
 
@@ -83,11 +84,13 @@ See `docs/` for comprehensive integration documentation:
 
 ## Status
 
-**Migration Status**: Initial import from standalone MRKTZR project
+**Migration Status**: Simplified prototype (auth removed, input validation added)
 
 | Feature | Status |
 |---------|--------|
 | Content Generation | Prototype |
+| Input Validation | Complete |
+| Auth System | Removed (use CommandCenter auth) |
 | Social Scheduling | Planned |
 | Analytics | Planned |
 | CommandCenter Integration | In Progress |
