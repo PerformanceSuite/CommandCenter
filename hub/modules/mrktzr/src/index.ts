@@ -1,5 +1,6 @@
 import express from 'express';
 import { createLogger, format, transports } from 'winston';
+import authRouter from './api/auth';
 import contentRouter from './api/content';
 
 // Logger configuration (CommandCenter pattern)
@@ -38,8 +39,7 @@ app.get('/health', (_req, res) => {
 });
 
 // API routes
-// Note: Auth removed - prototype runs without authentication
-// Future: Integrate with CommandCenter's auth system
+app.use('/api/auth', authRouter);
 app.use('/api/content', contentRouter);
 
 // Error handler
@@ -52,7 +52,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 app.listen(port, () => {
   logger.info(`MRKTZR service running on http://localhost:${port}`);
   logger.info('Health check available at /health');
-  logger.info('Content API available at /api/content');
 });
 
 export { app, logger };

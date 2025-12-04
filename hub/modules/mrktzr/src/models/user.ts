@@ -1,7 +1,8 @@
-// User model placeholder for future authentication
-// Currently unused - MRKTZR runs as prototype without auth
 export interface User {
-  id: string;
+  id: string; // Using string for UUIDs
   username: string;
-  email?: string;
+  email: string;
+  passwordHash: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
