@@ -46,19 +46,26 @@ export class DaggerAgentExecutor {
           `--max-old-space-size=${config.maxMemoryMb}`
         );
 
-        // 4. Execute agent with timeout
+        // 4. Install tsx for TypeScript execution (if .ts file)
+        const isTypeScript = agentPath.endsWith('.ts');
+        if (isTypeScript) {
+          container = container.withExec(['npm', 'install', '-g', 'tsx']);
+        }
+
+        // 5. Execute agent with timeout
+        const runtime = isTypeScript ? 'tsx' : 'node';
         result = await container
           .withExec([
             'timeout',
             config.timeoutSeconds.toString(),
-            'node',
+            runtime,
             agentPath,
             JSON.stringify(input),
           ])
           .stdout();
       });
 
-      // 5. Parse and validate output
+      // 6. Parse and validate output
       const output = JSON.parse(result);
       // TODO: Validate against outputSchema using Zod
 

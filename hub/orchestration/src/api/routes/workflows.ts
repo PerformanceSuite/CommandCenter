@@ -37,7 +37,7 @@ router.post('/workflows', async (req, res) => {
       });
     }
 
-    // Create workflow with nodes
+    // Create workflow with nodes (dependencies will be fixed in second pass)
     const workflow = await prisma.workflow.create({
       data: {
         projectId,
@@ -50,7 +50,7 @@ router.post('/workflows', async (req, res) => {
             agentId: node.agentId,
             action: node.action,
             inputsJson: node.inputsJson,
-            dependsOn: node.dependsOn || [],
+            dependsOn: [], // Empty initially, will be updated after all nodes created
             approvalRequired: node.approvalRequired || false,
           })),
         },
@@ -60,7 +60,43 @@ router.post('/workflows', async (req, res) => {
       },
     });
 
-    res.status(201).json(workflow);
+    // Second pass: Update dependencies with actual database IDs
+    const nodeIdMap = new Map<string, string>();
+    workflow.nodes.forEach((node, index) => {
+      // Map symbolic ID (from input) to actual database ID
+      const symbolicId = nodes[index]._symbolicId || `node-${index}`;
+      nodeIdMap.set(symbolicId, node.id);
+      nodeIdMap.set(`node-${index}`, node.id); // Also map by index for backwards compat
+    });
+
+    // Update each node's dependencies with actual IDs
+    for (let i = 0; i < nodes.length; i++) {
+      const inputNode = nodes[i];
+      const dbNode = workflow.nodes[i];
+
+      if (inputNode.dependsOn && inputNode.dependsOn.length > 0) {
+        const resolvedDeps = inputNode.dependsOn.map((dep: string) => {
+          const resolvedId = nodeIdMap.get(dep);
+          if (!resolvedId) {
+            throw new Error(`Cannot resolve dependency "${dep}" for node ${i}`);
+          }
+          return resolvedId;
+        });
+
+        await prisma.workflowNode.update({
+          where: { id: dbNode.id },
+          data: { dependsOn: resolvedDeps },
+        });
+      }
+    }
+
+    // Re-fetch workflow with updated dependencies
+    const updatedWorkflow = await prisma.workflow.findUnique({
+      where: { id: workflow.id },
+      include: { nodes: true },
+    });
+
+    res.status(201).json(updatedWorkflow);
   } catch (error: any) {
     logger.error('Failed to create workflow', { error });
     res.status(500).json({ error: 'Internal server error' });
@@ -215,10 +251,27 @@ router.post('/workflows/:id/trigger', async (req, res) => {
     });
 
     // Execute workflow asynchronously (don't await)
-    workflowRunner.executeWorkflow(workflowRun.id).catch((error) => {
+    workflowRunner.executeWorkflow(workflowRun.id).catch(async (error) => {
       logger.error('Workflow execution failed', {
         workflowRunId: workflowRun.id,
-        error,
+        errorMessage: error?.message || 'Unknown error',
+        errorStack: error?.stack,
+        errorName: error?.constructor?.name,
+        error: error,
+      });
+
+      // Update workflow run status to FAILED
+      await prisma.workflowRun.update({
+        where: { id: workflowRun.id },
+        data: {
+          status: 'FAILED',
+          finishedAt: new Date(),
+        },
+      }).catch((updateError) => {
+        logger.error('Failed to update workflow run status', {
+          workflowRunId: workflowRun.id,
+          error: updateError,
+        });
       });
     });
 
@@ -374,11 +427,25 @@ router.post('/workflows/runs/:runId/retry', async (req, res) => {
     });
 
     // Execute workflow asynchronously
-    workflowRunner.executeWorkflow(newRun.id).catch((error) => {
+    workflowRunner.executeWorkflow(newRun.id).catch(async (error) => {
       logger.error('Workflow retry execution failed', {
         workflowRunId: newRun.id,
         originalRunId: runId,
         error,
+      });
+
+      // Update workflow run status to FAILED
+      await prisma.workflowRun.update({
+        where: { id: newRun.id },
+        data: {
+          status: 'FAILED',
+          finishedAt: new Date(),
+        },
+      }).catch((updateError) => {
+        logger.error('Failed to update workflow run status', {
+          workflowRunId: newRun.id,
+          error: updateError,
+        });
       });
     });
 

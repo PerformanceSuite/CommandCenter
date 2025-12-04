@@ -13,13 +13,23 @@ async function createWorkflow(definitionPath: string) {
   // Map agent names to IDs
   const agentMap = new Map(agents.map((a: any) => [a.name, a.id]));
 
-  // Transform nodes to use agent IDs
-  const nodes = definition.nodes.map((node: any) => ({
+  // Create a map of node symbolic IDs to their index (for dependency resolution)
+  const nodeIdMap = new Map(definition.nodes.map((node: any, index: number) => [node.id, index]));
+
+  // Transform nodes to use agent IDs and resolve symbolic dependencies to node indices
+  const nodes = definition.nodes.map((node: any, index: number) => ({
     agentId: agentMap.get(node.agentName),
     action: node.action,
     inputsJson: node.inputsJson,
-    dependsOn: node.dependsOn,
+    dependsOn: node.dependsOn.map((depId: string) => {
+      const depIndex = nodeIdMap.get(depId);
+      if (depIndex === undefined) {
+        throw new Error(`Invalid dependency: node "${node.id}" depends on unknown node "${depId}"`);
+      }
+      return `node-${depIndex}`; // Temporary placeholder - will be replaced with actual IDs after creation
+    }),
     approvalRequired: node.approvalRequired,
+    _symbolicId: node.id, // Preserve for later reference
   }));
 
   const workflow = {

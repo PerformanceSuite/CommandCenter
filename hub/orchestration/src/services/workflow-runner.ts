@@ -30,6 +30,11 @@ export class WorkflowRunner {
     const remaining = new Set(nodes);
     const completed = new Set<string>();
 
+    logger.info('Starting topological sort', {
+      nodeCount: nodes.length,
+      nodes: nodes.map(n => ({ id: n.id, dependsOn: n.dependsOn }))
+    });
+
     while (remaining.size > 0) {
       // Find nodes with all dependencies satisfied
       const batch: T[] = [];
@@ -39,12 +44,23 @@ export class WorkflowRunner {
           completed.has(depId)
         );
 
+        logger.debug('Checking node dependencies', {
+          nodeId: node.id,
+          dependsOn: node.dependsOn,
+          completed: Array.from(completed),
+          allDepsCompleted
+        });
+
         if (allDepsCompleted) {
           batch.push(node);
         }
       }
 
       if (batch.length === 0) {
+        logger.error('Circular dependency detected', {
+          remaining: Array.from(remaining).map(n => ({ id: n.id, dependsOn: n.dependsOn })),
+          completed: Array.from(completed)
+        });
         throw new Error('Circular dependency detected in workflow');
       }
 
@@ -457,7 +473,7 @@ export class WorkflowRunner {
           {
             maxMemoryMb: 512,
             timeoutSeconds: 300,
-            outputSchema: capability.outputSchema,
+            outputSchema: capability?.outputSchema, // Optional chaining - capability may not exist
           }
         );
 

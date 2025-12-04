@@ -1,0 +1,103 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2563eb', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1d4ed8', 'lineColor': '#64748b', 'secondaryColor': '#f1f5f9', 'tertiaryColor': '#e2e8f0'}}}%%
+graph TB
+    subgraph External["External Services"]
+        GH[GitHub API]
+        NATS[NATS JetStream]
+        PG[(PostgreSQL)]
+        Redis[(Redis)]
+    end
+
+    subgraph Hub["Hub Application"]
+        subgraph Frontend["Frontend (React + TypeScript)"]
+            UI[VISLZR UI]
+            WF[Workflow Builder]
+            EM[Execution Monitor]
+        end
+
+        subgraph Orchestration["Orchestration Service (TypeScript)"]
+            AgentReg[Agent Registry]
+            WFEngine[Workflow Engine]
+            DaggerExec[Dagger Executor]
+            ApprovalSys[Approval System]
+        end
+
+        subgraph Backend["Backend (FastAPI)"]
+            EventSvc[Event Service]
+            GraphSvc[Graph Service]
+            RAGSvc[RAG Service]
+            FedSvc[Federation Service]
+        end
+
+        subgraph Agents["Agent Pool"]
+            SecScanner[Security Scanner]
+            Notifier[Notifier]
+            Compliance[Compliance Checker]
+            Patcher[Patcher]
+            CodeReview[Code Reviewer]
+        end
+    end
+
+    subgraph Observability["Observability Stack"]
+        Grafana[Grafana]
+        Prometheus[Prometheus]
+        Loki[Loki]
+        Tempo[Tempo]
+    end
+
+    subgraph Legacy["Legacy Components"]
+        LegacyBE[Legacy Backend]
+        LegacyFE[Legacy Frontend]
+    end
+
+    subgraph Libs["Shared Libraries"]
+        KB[KnowledgeBeast]
+    end
+
+    %% Frontend connections
+    UI --> Orchestration
+    UI --> Backend
+    WF --> AgentReg
+    EM --> WFEngine
+
+    %% Orchestration connections
+    WFEngine --> DaggerExec
+    WFEngine --> ApprovalSys
+    DaggerExec --> Agents
+    AgentReg --> PG
+
+    %% Backend connections
+    EventSvc --> NATS
+    GraphSvc --> PG
+    RAGSvc --> KB
+    FedSvc --> NATS
+
+    %% External connections
+    Backend --> GH
+    Backend --> PG
+    Backend --> Redis
+    KB --> PG
+
+    %% Observability
+    Orchestration --> Prometheus
+    Backend --> Prometheus
+    Prometheus --> Grafana
+    Loki --> Grafana
+    Tempo --> Grafana
+
+    %% Legacy migration
+    LegacyBE -.->|migrating| Backend
+    LegacyFE -.->|migrating| Frontend
+
+    classDef external fill:#94a3b8,stroke:#475569,color:#000
+    classDef frontend fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    classDef backend fill:#10b981,stroke:#059669,color:#fff
+    classDef agent fill:#f59e0b,stroke:#d97706,color:#000
+    classDef obs fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef legacy fill:#ef4444,stroke:#dc2626,color:#fff,stroke-dasharray: 5 5
+
+    class GH,NATS,PG,Redis external
+    class UI,WF,EM frontend
+    class EventSvc,GraphSvc,RAGSvc,FedSvc,AgentReg,WFEngine,DaggerExec,ApprovalSys backend
+    class SecScanner,Notifier,Compliance,Patcher,CodeReview agent
+    class Grafana,Prometheus,Loki,Tempo obs
+    class LegacyBE,LegacyFE legacy

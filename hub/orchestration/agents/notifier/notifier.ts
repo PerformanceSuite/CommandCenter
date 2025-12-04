@@ -96,10 +96,11 @@ export class Notifier {
 
   private sendConsole(input: Input, timestamp: string): Output {
     const emoji = this.getSeverityEmoji(input.severity);
-    console.log(`\n${emoji} [${input.severity.toUpperCase()}] ${input.message}`);
+    // Use stderr for console output to keep stdout pure for JSON
+    console.error(`\n${emoji} [${input.severity.toUpperCase()}] ${input.message}`);
 
     if (input.metadata) {
-      console.log('Metadata:', JSON.stringify(input.metadata, null, 2));
+      console.error('Metadata:', JSON.stringify(input.metadata, null, 2));
     }
 
     return {

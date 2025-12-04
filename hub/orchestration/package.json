@@ -4,9 +4,9 @@
   "description": "Agent orchestration service for CommandCenter",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "./start-dev.sh",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node -r dotenv/config dist/index.js",
     "test": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -26,6 +26,7 @@
     "axios": "^1.13.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
     "nats": "^2.18.0",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
