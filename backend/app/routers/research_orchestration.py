@@ -8,9 +8,11 @@ Provides endpoints for multi-agent research workflow:
 - Model selection and provider management
 """
 
+import json
 import logging
 import uuid
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
@@ -32,13 +34,109 @@ from app.schemas.research import (
 )
 from app.services.ai_router import AIProvider, ai_router
 from app.services.hackernews_service import HackerNewsService
+from app.services.redis_service import redis_service
 from app.services.research_agent_orchestrator import research_orchestrator
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
 
-# In-memory task storage (TODO: Move to Redis or database)
-research_tasks = {}
+
+class ResearchTaskStorage:
+    """
+    Redis-backed storage for research tasks.
+    Falls back to in-memory storage if Redis is unavailable.
+    """
+
+    PREFIX = "research_task:"
+    INDEX_KEY = "research_tasks:index"
+    TTL = 86400 * 7  # 7 days
+
+    # Fallback in-memory storage (used when Redis unavailable)
+    _memory_fallback: Dict[str, Any] = {}
+
+    @classmethod
+    def _serialize_task(cls, task: Dict[str, Any]) -> str:
+        """Serialize task data to JSON, handling datetime objects."""
+
+        def json_serializer(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            if hasattr(obj, "model_dump"):  # Pydantic model
+                return obj.model_dump()
+            if hasattr(obj, "__dict__"):
+                return obj.__dict__
+            raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+        return json.dumps(task, default=json_serializer)
+
+    @classmethod
+    def _deserialize_task(cls, data: str) -> Dict[str, Any]:
+        """Deserialize task data from JSON."""
+        task = json.loads(data)
+        # Convert ISO date strings back to datetime
+        for key in ["created_at", "completed_at"]:
+            if task.get(key):
+                task[key] = datetime.fromisoformat(task[key])
+        return task
+
+    @classmethod
+    async def get(cls, task_id: str) -> Optional[Dict[str, Any]]:
+        """Get task by ID."""
+        if redis_service.enabled:
+            data = await redis_service.get(f"{cls.PREFIX}{task_id}")
+            if data:
+                return cls._deserialize_task(json.dumps(data)) if isinstance(data, dict) else None
+        return cls._memory_fallback.get(task_id)
+
+    @classmethod
+    async def set(cls, task_id: str, task_data: Dict[str, Any]) -> None:
+        """Set task data."""
+        if redis_service.enabled:
+            serialized = cls._serialize_task(task_data)
+            await redis_service.redis_client.setex(f"{cls.PREFIX}{task_id}", cls.TTL, serialized)
+            # Add to index for listing
+            await redis_service.redis_client.sadd(cls.INDEX_KEY, task_id)
+        else:
+            cls._memory_fallback[task_id] = task_data
+
+    @classmethod
+    async def update(cls, task_id: str, updates: Dict[str, Any]) -> None:
+        """Update specific fields of a task."""
+        task = await cls.get(task_id)
+        if task:
+            task.update(updates)
+            await cls.set(task_id, task)
+
+    @classmethod
+    async def delete(cls, task_id: str) -> None:
+        """Delete a task."""
+        if redis_service.enabled:
+            await redis_service.delete(f"{cls.PREFIX}{task_id}")
+            await redis_service.redis_client.srem(cls.INDEX_KEY, task_id)
+        else:
+            cls._memory_fallback.pop(task_id, None)
+
+    @classmethod
+    async def get_all(cls) -> List[Dict[str, Any]]:
+        """Get all tasks."""
+        tasks = []
+        if redis_service.enabled:
+            # Get all task IDs from index
+            task_ids = await redis_service.redis_client.smembers(cls.INDEX_KEY)
+            for task_id in task_ids:
+                task = await cls.get(task_id)
+                if task:
+                    tasks.append(task)
+        else:
+            tasks = list(cls._memory_fallback.values())
+        return tasks
+
+    @classmethod
+    async def exists(cls, task_id: str) -> bool:
+        """Check if task exists."""
+        if redis_service.enabled:
+            return await redis_service.exists(f"{cls.PREFIX}{task_id}")
+        return task_id in cls._memory_fallback
 
 
 @router.post("/technology-deep-dive", response_model=ResearchOrchestrationResponse)
@@ -71,12 +169,12 @@ async def technology_deep_dive(
             "summary": None,
             "error": None,
         }
-        research_tasks[task_id] = task_record
+        await ResearchTaskStorage.set(task_id, task_record)
 
         # Launch research in background
         async def run_deep_dive():
             try:
-                research_tasks[task_id]["status"] = "running"
+                await ResearchTaskStorage.update(task_id, {"status": "running"})
 
                 # Execute research
                 report = await research_orchestrator.technology_deep_dive(
@@ -96,25 +194,27 @@ async def technology_deep_dive(
                     results.append(result)
 
                 # Update task record
-                research_tasks[task_id].update(
+                await ResearchTaskStorage.update(
+                    task_id,
                     {
                         "status": "completed",
                         "completed_at": datetime.utcnow(),
                         "results": results,
                         "summary": report.get("summary"),
-                    }
+                    },
                 )
 
                 logger.info(f"✅ Deep dive completed for {request.technology_name}: {task_id}")
 
             except Exception as e:
                 logger.error(f"❌ Deep dive failed for {request.technology_name}: {e}")
-                research_tasks[task_id].update(
+                await ResearchTaskStorage.update(
+                    task_id,
                     {
                         "status": "failed",
                         "completed_at": datetime.utcnow(),
                         "error": str(e),
-                    }
+                    },
                 )
 
         # Add to background tasks
@@ -172,12 +272,12 @@ async def launch_multi_agent_research(
             "summary": None,
             "error": None,
         }
-        research_tasks[task_id] = task_record
+        await ResearchTaskStorage.set(task_id, task_record)
 
         # Launch agents in background
         async def run_agents():
             try:
-                research_tasks[task_id]["status"] = "running"
+                await ResearchTaskStorage.update(task_id, {"status": "running"})
 
                 # Convert request to orchestrator format
                 tasks = []
@@ -211,25 +311,27 @@ async def launch_multi_agent_research(
                     results.append(result)
 
                 # Update task record
-                research_tasks[task_id].update(
+                await ResearchTaskStorage.update(
+                    task_id,
                     {
                         "status": "completed",
                         "completed_at": datetime.utcnow(),
                         "results": results,
                         "summary": f"Completed {len(results)} agent tasks",
-                    }
+                    },
                 )
 
                 logger.info(f"✅ Multi-agent research completed: {task_id}")
 
             except Exception as e:
                 logger.error(f"❌ Multi-agent research failed: {e}")
-                research_tasks[task_id].update(
+                await ResearchTaskStorage.update(
+                    task_id,
                     {
                         "status": "failed",
                         "completed_at": datetime.utcnow(),
                         "error": str(e),
-                    }
+                    },
                 )
 
         background_tasks.add_task(run_agents)
@@ -248,10 +350,11 @@ async def get_research_task_status(task_id: str):
 
     Returns task status (pending|running|completed|failed) and results when available.
     """
-    if task_id not in research_tasks:
+    task = await ResearchTaskStorage.get(task_id)
+    if not task:
         raise HTTPException(status_code=404, detail="Research task not found")
 
-    return ResearchOrchestrationResponse(**research_tasks[task_id])
+    return ResearchOrchestrationResponse(**task)
 
 
 @router.post("/technologies/{technology_id}/monitor", response_model=TechnologyMonitorResponse)
@@ -391,24 +494,36 @@ async def get_research_summary():
     Returns total tasks, completion rates, cost, and performance metrics.
     """
     try:
-        total_tasks = len(research_tasks)
-        completed_tasks = sum(
-            1 for task in research_tasks.values() if task["status"] == "completed"
-        )
-        failed_tasks = sum(1 for task in research_tasks.values() if task["status"] == "failed")
+        all_tasks = await ResearchTaskStorage.get_all()
+        total_tasks = len(all_tasks)
+        completed_tasks = sum(1 for task in all_tasks if task.get("status") == "completed")
+        failed_tasks = sum(1 for task in all_tasks if task.get("status") == "failed")
 
         # Count total agents deployed
         agents_deployed = 0
         total_execution_time = 0.0
         execution_count = 0
 
-        for task in research_tasks.values():
-            if task.get("results"):
-                agents_deployed += len(task["results"])
-                for result in task["results"]:
-                    if result.metadata and result.metadata.execution_time_seconds:
-                        total_execution_time += result.metadata.execution_time_seconds
-                        execution_count += 1
+        for task in all_tasks:
+            results = task.get("results")
+            if results:
+                agents_deployed += len(results)
+                for result in results:
+                    # Handle both dict and Pydantic model results
+                    metadata = (
+                        result.get("metadata")
+                        if isinstance(result, dict)
+                        else getattr(result, "metadata", None)
+                    )
+                    if metadata:
+                        exec_time = (
+                            metadata.get("execution_time_seconds")
+                            if isinstance(metadata, dict)
+                            else getattr(metadata, "execution_time_seconds", None)
+                        )
+                        if exec_time:
+                            total_execution_time += exec_time
+                            execution_count += 1
 
         avg_execution_time = total_execution_time / execution_count if execution_count > 0 else 0.0
 

@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.schemas.batch import (
     BatchAnalyzeRequest,
@@ -31,6 +32,7 @@ router = APIRouter(prefix="/api/v1/batch", tags=["batch"])
 async def batch_analyze(
     request: BatchAnalyzeRequest,
     db: AsyncSession = Depends(get_db),
+    project_id: int = Depends(get_current_project_id),
 ) -> BatchAnalyzeResponse:
     """
     Create a batch analysis job for multiple repositories.
@@ -61,9 +63,8 @@ async def batch_analyze(
     service = BatchService(db)
 
     try:
-        # Assume project_id = 1 for now (should come from auth in production)
         job = await service.analyze_repositories(
-            project_id=1,
+            project_id=project_id,
             repository_ids=request.repository_ids,
             priority=request.priority or 5,
             parameters=request.parameters,
@@ -98,6 +99,7 @@ async def batch_analyze(
 async def batch_export(
     request: BatchExportRequest,
     db: AsyncSession = Depends(get_db),
+    project_id: int = Depends(get_current_project_id),
 ) -> BatchExportResponse:
     """
     Create a batch export job for multiple analyses.
@@ -131,7 +133,7 @@ async def batch_export(
 
     try:
         job = await service.export_analyses(
-            project_id=1,
+            project_id=project_id,
             analysis_ids=request.analysis_ids,
             format=request.format,
             parameters=request.parameters,
