@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.models import Technology, TechnologyDomain, TechnologyStatus
 from app.schemas import (
@@ -63,9 +64,10 @@ async def get_technology(
 async def create_technology(
     technology_data: TechnologyCreate,
     service: TechnologyService = Depends(get_technology_service),
+    project_id: int = Depends(get_current_project_id),
 ) -> Technology:
     """Create a new technology"""
-    return await service.create_technology(technology_data)
+    return await service.create_technology(technology_data, project_id)
 
 
 @router.patch("/{technology_id}", response_model=TechnologyResponse)
