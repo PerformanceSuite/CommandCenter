@@ -338,3 +338,26 @@ File: `docs/CURRENT_WORK.md` has complete action plan
 ---
 
 *Last updated: 2025-11-21T13:30 PST*
+
+## Session: 2025-12-05 15:30-16:00 PST
+**Branch**: fix/ci-infrastructure-issues
+
+### Work Completed:
+- Fixed CI infrastructure failures for PR #97:
+  - Changed all test imports from `backend.tests.utils` to `tests.utils`
+  - Fixed migration `d3e92d35ba2f` to use `current_database()` instead of hardcoded `commandcenter`
+  - Resolved flake8 unused import/variable warnings
+- Deleted stale `~/Desktop/CommandCenter/` clone from previous session
+- CI running on commit `48ab1c5` - awaiting results
+
+### Key Technical Notes:
+- Test imports must use relative paths (`tests.utils`) not absolute (`backend.tests.utils`) because CI runs from within backend/
+- PostgreSQL `GRANT CONNECT ON DATABASE` requires dynamic SQL with `current_database()` for portability across environments (prod vs test)
+
+### Blockers/Issues:
+- None resolved, waiting on CI
+
+### Next Steps:
+1. Monitor CI for PR #97 - merge when green
+2. Merge PR #95 (MRKTZR) after #97
+3. Continue P1 security fixes
