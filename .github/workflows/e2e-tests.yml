@@ -32,7 +32,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        # Use pgvector image for vector similarity search support
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: commandcenter_test
           POSTGRES_USER: commandcenter
@@ -199,7 +200,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        # Use pgvector image for vector similarity search support
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: commandcenter_test
           POSTGRES_USER: commandcenter

@@ -18,6 +18,9 @@ email-validator>=2.0.0
 # HTTP client
 httpx==0.26.0
 
+# Feed parsing (RSS/Atom)
+feedparser>=6.0.0
+
 # Authentication & Encryption
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
