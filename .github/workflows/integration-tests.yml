@@ -72,7 +72,7 @@ jobs:
         run: |
           cat > .env.test <<EOF
           ENVIRONMENT=test
-          DATABASE_URL=postgresql://commandcenter:test_password@localhost:5432/commandcenter_test
+          DATABASE_URL=postgresql+asyncpg://commandcenter:test_password@localhost:5432/commandcenter_test
           REDIS_URL=redis://localhost:6379/0
           SECRET_KEY=test-secret-key-for-ci-testing-only-min-32-chars
           CELERY_BROKER_URL=redis://localhost:6379/0
@@ -83,7 +83,8 @@ jobs:
       - name: Run database migrations
         working-directory: backend
         env:
-          DATABASE_URL: postgresql://commandcenter:test_password@localhost:5432/commandcenter_test
+          # Use asyncpg driver for async SQLAlchemy compatibility
+          DATABASE_URL: postgresql+asyncpg://commandcenter:test_password@localhost:5432/commandcenter_test
         run: |
           alembic upgrade head
 
@@ -91,7 +92,8 @@ jobs:
         working-directory: backend
         timeout-minutes: 10
         env:
-          DATABASE_URL: postgresql://commandcenter:test_password@localhost:5432/commandcenter_test
+          # Use asyncpg driver for async SQLAlchemy compatibility
+          DATABASE_URL: postgresql+asyncpg://commandcenter:test_password@localhost:5432/commandcenter_test
           REDIS_URL: redis://localhost:6379/0
           CELERY_BROKER_URL: redis://localhost:6379/0
           CELERY_RESULT_BACKEND: redis://localhost:6379/1
