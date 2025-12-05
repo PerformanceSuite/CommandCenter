@@ -5,9 +5,9 @@ Integration tests for Research Tasks API endpoints
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.utils.factories import ProjectFactory, TechnologyFactory
 
 from app.models.research_task import ResearchTask
-from backend.tests.utils.factories import ProjectFactory, RepositoryFactory, TechnologyFactory
 
 
 @pytest.mark.integration

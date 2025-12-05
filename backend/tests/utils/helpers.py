@@ -7,9 +7,9 @@ from typing import Any, Dict, Tuple
 
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.utils.factories import UserFactory
 
 from app.auth.jwt import create_access_token, create_token_pair
-from backend.tests.utils.factories import UserFactory
 
 
 async def create_user_and_login(
