@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.models import Repository
 from app.schemas import (
@@ -50,9 +51,10 @@ async def get_repository(
 async def create_repository(
     repository_data: RepositoryCreate,
     service: RepositoryService = Depends(get_repository_service),
+    project_id: int = Depends(get_current_project_id),
 ) -> Repository:
     """Create a new repository"""
-    return await service.create_repository(repository_data)
+    return await service.create_repository(repository_data, project_id)
 
 
 @router.patch("/{repository_id}", response_model=RepositoryResponse)
