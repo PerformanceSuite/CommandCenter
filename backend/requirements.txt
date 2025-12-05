@@ -23,6 +23,7 @@ feedparser>=6.0.0
 
 # Article extraction
 newspaper3k>=0.2.8  # For extracting article content from URLs
+lxml_html_clean>=0.1.0  # Required by newspaper3k with newer lxml
 
 # Authentication & Encryption
 python-jose[cryptography]==3.3.0
