@@ -1,48 +1,84 @@
-# Current Session - 2025-12-05
+# Current Session - 2025-12-06
 
 ## Session Summary
 
 **Branch**: `fix/ci-infrastructure-issues`
-**Duration**: ~30 minutes
+**Duration**: ~45 minutes
 **Focus**: Fixing CI infrastructure failures for PR #97
 
 ## Work Completed
 
-### CI Infrastructure Fixes (PR #97)
-1. **Fixed test imports** - Changed all `from backend.tests.utils` to `from tests.utils` across 6 files:
-   - `tests/utils/__init__.py`
-   - `tests/utils/helpers.py`
-   - `tests/conftest.py`
-   - `tests/integration/test_knowledge_api.py`
-   - `tests/integration/test_research_api.py`
-   - `tests/security/test_auth_basic.py`
+### CI Infrastructure Fixes (PR #97) - IN PROGRESS
 
-2. **Fixed migration database name** - Changed hardcoded `commandcenter` to use `current_database()` dynamically in migration `d3e92d35ba2f` for CI compatibility with `commandcenter_test` database
+**Fixed Issues:**
+1. **Fixed Python import shadowing** - Renamed `tests/utils.py` to `tests/utils/_legacy_helpers.py` because the `tests/utils/` package was shadowing the file
+   - Exported `create_test_repository`, `create_test_technology`, `create_test_user`, etc. from `__init__.py`
 
-3. **Resolved flake8 warnings** - Fixed unused imports and variables that were blocking pre-commit hooks
+2. **Created missing factories:**
+   - `KnowledgeEntryFactory` in `tests/utils/factories.py`
+   - `ResearchTaskFactory` in `tests/utils/factories.py`
 
-### Commits Made
-- `1335b58`: fix(ci): Fix test imports and migration database name
-- `48ab1c5`: fix(ci): Fix test imports and resolve flake8 warnings
+3. **Fixed auditkind migration** - Updated `a5de4c7bd725` migration to create the `auditkind` enum if it doesn't exist (for fresh CI databases)
 
-### Other
-- Deleted stale clone at `~/Desktop/CommandCenter/` from previous session
+### Commits Made This Session
+- `6a46ef7`: fix(ci): Resolve test import errors and missing factory
+- `abcd6f1`: fix(ci): Add missing ResearchTaskFactory
 
-## CI Status
-- **Latest commit**: `48ab1c5`
-- **CI Status**: In Progress (all 5 workflows running)
-- Need to monitor and merge once CI passes
+## CI Status - STILL FAILING
+
+**New Error Discovered:**
+```
+ModuleNotFoundError: No module named 'keyring'
+```
+
+This is a **different error** from what we fixed. The `keyring` module is missing from CI dependencies.
+
+**Passing:**
+- Frontend Tests & Linting ✅
+- Frontend Tests (Docker) ✅
+- Security Scanning ✅
+- Smoke Tests ✅
+- Lint Test Code ✅
+
+**Failing:**
+- Backend Tests & Linting ❌ (keyring missing)
+- Integration Tests ❌ (keyring missing)
+- E2E Tests ❌ (likely related)
 
 ## Uncommitted Changes (Stashed from previous work)
-- `hub/orchestration/` - Workflow symbolic ID feature (unrelated to CI fixes)
-- `backend/uv.lock` - Lock file
+
+These changes are NOT related to CI fixes - they are from a previous workflow feature:
+- `hub/orchestration/package-lock.json`
+- `hub/orchestration/package.json`
+- `hub/orchestration/prisma/schema.prisma`
+- `hub/orchestration/scripts/create-workflow.ts`
+- `hub/orchestration/src/api/routes/workflows.ts`
+- `hub/orchestration/src/services/workflow-runner.ts`
+
+**Untracked:**
+- `backend/uv.lock`
+- `hub/orchestration/prisma/migrations/20251120140010_add_symbolic_id/`
+- `hub/orchestration/src/utils/template-resolver.ts`
 
 ## Next Steps (Priority Order)
-1. **Monitor CI** - Wait for PR #97 CI to pass
-2. **Merge PR #97** - Squash and merge once green
-3. **Merge PR #95** - MRKTZR module integration (already has fixes committed)
-4. **Continue P1 fixes** - If time permits
 
-## Key Decisions
-- Used `current_database()` in PostgreSQL migration instead of hardcoding database name for environment portability
-- Added `noqa: F401` for intentionally imported but not directly used `settings` in conftest.py
+1. **Fix keyring dependency** - Add `keyring` to `requirements.txt` or `requirements-dev.txt` in backend
+2. **Re-run CI** - Push fix and monitor
+3. **Merge PR #97** - Once all CI passes
+4. **Merge PR #95** - MRKTZR module (already has fixes committed)
+
+## Key Findings
+
+The import errors we fixed revealed a deeper issue:
+- `tests/utils.py` (file) was shadowed by `tests/utils/` (package)
+- Python imports the package over the file when both exist
+- Solution: Renamed file and exported from package `__init__.py`
+
+## Files Modified This Session
+
+```
+backend/tests/utils.py → backend/tests/utils/_legacy_helpers.py (renamed)
+backend/tests/utils/__init__.py (added exports)
+backend/tests/utils/factories.py (added KnowledgeEntryFactory, ResearchTaskFactory)
+backend/alembic/versions/a5de4c7bd725_*.py (fixed auditkind migration)
+```
