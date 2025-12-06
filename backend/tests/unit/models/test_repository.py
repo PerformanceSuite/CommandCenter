@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pytest
 from sqlalchemy import select
-from tests.utils import create_test_repository
+from tests.utils import create_test_project, create_test_repository
 
 from app.models.repository import Repository
 
@@ -39,7 +39,10 @@ class TestRepositoryModel:
 
     async def test_repository_default_values(self, db_session):
         """Test repository default values"""
-        repo = Repository(owner="owner", name="repo", full_name="owner/repo")
+        # First create a project (required for repository)
+        project = await create_test_project(db_session)
+
+        repo = Repository(owner="owner", name="repo", full_name="owner/repo", project_id=project.id)
         db_session.add(repo)
         await db_session.commit()
         await db_session.refresh(repo)
@@ -62,7 +65,7 @@ class TestRepositoryModel:
     async def test_repository_update(self, db_session):
         """Test updating repository"""
         repo = await create_test_repository(db_session)
-        original_updated_at = repo.updated_at
+        _original_updated_at = repo.updated_at  # noqa: F841 - kept for potential future assertion
 
         # Update repository
         repo.stars = 200
