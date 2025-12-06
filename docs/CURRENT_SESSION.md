@@ -1,75 +1,84 @@
-# Current Session
-
-**Session started** - 2025-12-04 ~4:12 PM PST
-**Session ended** - 2025-12-04 ~4:25 PM PST
+# Current Session - 2025-12-06
 
 ## Session Summary
 
-**Duration**: ~10 minutes
-**Branch**: fix/p0-output-schema-validation (created from feature/mrktzr-module)
-**Focus**: P0 Audit Fixes Implementation
+**Branch**: `fix/ci-infrastructure-issues`
+**Duration**: ~45 minutes
+**Focus**: Fixing CI infrastructure failures for PR #97
 
-### Work Completed
+## Work Completed
 
-✅ **P0-1: Output Schema Validation** (`hub/orchestration/src/dagger/executor.ts`)
-- Implemented `jsonSchemaToZod()` converter for JSON Schema → Zod transformation
-- Supports object, array, string, number, boolean, null types
-- Agent outputs now validated against configured outputSchema
-- Added `AgentOutputValidationError` class for detailed error reporting
+### CI Infrastructure Fixes (PR #97) - IN PROGRESS
 
-✅ **P0-2: Redis Task Persistence** (`backend/app/routers/research_orchestration.py`)
-- Added `ResearchTaskStorage` class with Redis-backed storage
-- Falls back to in-memory storage when Redis unavailable
-- Tasks persist across server restarts with 7-day TTL
-- Proper serialization for datetime and Pydantic model objects
+**Fixed Issues:**
+1. **Fixed Python import shadowing** - Renamed `tests/utils.py` to `tests/utils/_legacy_helpers.py` because the `tests/utils/` package was shadowing the file
+   - Exported `create_test_repository`, `create_test_technology`, `create_test_user`, etc. from `__init__.py`
 
-✅ **P0-3: Multi-Tenant Isolation** (`backend/app/routers/batch.py`)
-- Removed hardcoded `project_id=1` from batch endpoints
-- Added `get_current_project_id` dependency injection
-- Project ID now properly flows from auth context
+2. **Created missing factories:**
+   - `KnowledgeEntryFactory` in `tests/utils/factories.py`
+   - `ResearchTaskFactory` in `tests/utils/factories.py`
 
-✅ **E2B MCP Config Fixed**
-- Copied `.mcp.json.sandbox` to working directory
-- E2B sandboxes initialized but got stuck (abandoned for local implementation)
+3. **Fixed auditkind migration** - Updated `a5de4c7bd725` migration to create the `auditkind` enum if it doesn't exist (for fresh CI databases)
 
-✅ **PR #96 Created**
-- URL: https://github.com/PerformanceSuite/CommandCenter/pull/96
-- Contains all 3 P0 fixes
-- Ready for review
+### Commits Made This Session
+- `6a46ef7`: fix(ci): Resolve test import errors and missing factory
+- `abcd6f1`: fix(ci): Add missing ResearchTaskFactory
 
-### Commits This Session
+## CI Status - STILL FAILING
 
-| SHA | Message |
-|-----|---------|
-| `48c9fe5` | fix(security): Implement P0 audit fixes |
+**New Error Discovered:**
+```
+ModuleNotFoundError: No module named 'keyring'
+```
 
-### PR Status
+This is a **different error** from what we fixed. The `keyring` module is missing from CI dependencies.
 
-| PR | Title | Status |
-|----|-------|--------|
-| #95 | feat(modules): Add MRKTZR as CommandCenter module | Open |
-| #96 | fix(security): Implement P0 audit fixes | Open - NEW |
+**Passing:**
+- Frontend Tests & Linting ✅
+- Frontend Tests (Docker) ✅
+- Security Scanning ✅
+- Smoke Tests ✅
+- Lint Test Code ✅
 
-### Files Modified
+**Failing:**
+- Backend Tests & Linting ❌ (keyring missing)
+- Integration Tests ❌ (keyring missing)
+- E2E Tests ❌ (likely related)
 
-- `hub/orchestration/src/dagger/executor.ts` (+121 lines)
-- `backend/app/routers/research_orchestration.py` (+171 lines)
-- `backend/app/routers/batch.py` (+8 lines)
+## Uncommitted Changes (Stashed from previous work)
 
-### Next Steps
+These changes are NOT related to CI fixes - they are from a previous workflow feature:
+- `hub/orchestration/package-lock.json`
+- `hub/orchestration/package.json`
+- `hub/orchestration/prisma/schema.prisma`
+- `hub/orchestration/scripts/create-workflow.ts`
+- `hub/orchestration/src/api/routes/workflows.ts`
+- `hub/orchestration/src/services/workflow-runner.ts`
 
-1. **Review PR #96** - P0 fixes ready for code review
-2. **Merge PR #96** - After approval
-3. **Continue with P1 fixes** - TypeScript strict mode, GitHub circuit breaker
-4. **Review PR #95** - MRKTZR module
+**Untracked:**
+- `backend/uv.lock`
+- `hub/orchestration/prisma/migrations/20251120140010_add_symbolic_id/`
+- `hub/orchestration/src/utils/template-resolver.ts`
 
-### Key Documents
+## Next Steps (Priority Order)
 
-| Document | Purpose |
-|----------|---------|
-| `docs/plans/2025-12-04-audit-implementation-plan.md` | Full implementation plan |
-| `docs/audits/CODE_HEALTH_AUDIT_2025-12-04.md` | Code health findings |
+1. **Fix keyring dependency** - Add `keyring` to `requirements.txt` or `requirements-dev.txt` in backend
+2. **Re-run CI** - Push fix and monitor
+3. **Merge PR #97** - Once all CI passes
+4. **Merge PR #95** - MRKTZR module (already has fixes committed)
 
----
+## Key Findings
 
-*Last updated: 2025-12-04 4:20 PM PST*
+The import errors we fixed revealed a deeper issue:
+- `tests/utils.py` (file) was shadowed by `tests/utils/` (package)
+- Python imports the package over the file when both exist
+- Solution: Renamed file and exported from package `__init__.py`
+
+## Files Modified This Session
+
+```
+backend/tests/utils.py → backend/tests/utils/_legacy_helpers.py (renamed)
+backend/tests/utils/__init__.py (added exports)
+backend/tests/utils/factories.py (added KnowledgeEntryFactory, ResearchTaskFactory)
+backend/alembic/versions/a5de4c7bd725_*.py (fixed auditkind migration)
+```

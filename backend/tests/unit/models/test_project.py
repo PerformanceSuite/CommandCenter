@@ -5,7 +5,6 @@ Unit tests for Project model
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
 from tests.utils import create_test_project
 
 from app.models.project import Project
@@ -71,15 +70,38 @@ class TestProjectModel:
 
     async def test_project_relationships_initialization(self, db_session):
         """Project should initialize with empty relationships"""
+        from sqlalchemy.orm import selectinload
+
         project = await create_test_project(db_session)
 
-        assert project.technologies == []
-        assert project.repositories == []
-        assert project.research_tasks == []
-        assert project.knowledge_entries == []
-        assert project.webhook_configs == []
-        assert project.webhook_events == []
-        assert project.webhook_deliveries == []
+        # Re-query with eager loading to avoid lazy-load in async context
+        from sqlalchemy import select
+
+        from app.models.project import Project
+
+        stmt = (
+            select(Project)
+            .where(Project.id == project.id)
+            .options(
+                selectinload(Project.technologies),
+                selectinload(Project.repositories),
+                selectinload(Project.research_tasks),
+                selectinload(Project.knowledge_entries),
+                selectinload(Project.webhook_configs),
+                selectinload(Project.webhook_events),
+                selectinload(Project.webhook_deliveries),
+            )
+        )
+        result = await db_session.execute(stmt)
+        loaded_project = result.scalar_one()
+
+        assert loaded_project.technologies == []
+        assert loaded_project.repositories == []
+        assert loaded_project.research_tasks == []
+        assert loaded_project.knowledge_entries == []
+        assert loaded_project.webhook_configs == []
+        assert loaded_project.webhook_events == []
+        assert loaded_project.webhook_deliveries == []
 
     async def test_project_with_full_details(self, db_session):
         """Test project with all fields populated"""
