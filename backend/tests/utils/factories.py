@@ -2,12 +2,12 @@
 Factory classes for creating test data
 """
 
-from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.jwt import get_password_hash
+from app.models.knowledge_entry import KnowledgeEntry
 from app.models.project import Project
 from app.models.repository import Repository
 from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
@@ -163,3 +163,47 @@ class RepositoryFactory:
         await db.commit()
         await db.refresh(repository)
         return repository
+
+
+class KnowledgeEntryFactory:
+    """Factory for creating test knowledge entries"""
+
+    @staticmethod
+    async def create(
+        db: AsyncSession,
+        project_id: int,
+        title: str = "Test Knowledge Entry",
+        content: str = "Test content for the knowledge entry",
+        category: str = "documentation",
+        technology_id: Optional[int] = None,
+        source_file: Optional[str] = None,
+        source_url: Optional[str] = None,
+        source_type: Optional[str] = None,
+        vector_db_id: Optional[str] = None,
+        embedding_model: Optional[str] = None,
+        page_number: Optional[int] = None,
+        chunk_index: Optional[int] = None,
+        confidence_score: Optional[float] = None,
+        relevance_score: Optional[float] = None,
+    ) -> KnowledgeEntry:
+        """Create a test knowledge entry"""
+        entry = KnowledgeEntry(
+            project_id=project_id,
+            title=title,
+            content=content,
+            category=category,
+            technology_id=technology_id,
+            source_file=source_file,
+            source_url=source_url,
+            source_type=source_type,
+            vector_db_id=vector_db_id,
+            embedding_model=embedding_model,
+            page_number=page_number,
+            chunk_index=chunk_index,
+            confidence_score=confidence_score,
+            relevance_score=relevance_score,
+        )
+        db.add(entry)
+        await db.commit()
+        await db.refresh(entry)
+        return entry
