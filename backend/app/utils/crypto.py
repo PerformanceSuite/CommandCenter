@@ -93,3 +93,14 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
     return pwd_context.verify(plain_password, hashed_password)
+
+
+# Aliases for generic value encryption (used by integrations)
+def encrypt_value(value: str) -> str:
+    """Encrypt a generic value (alias for encrypt_token)."""
+    return encrypt_token(value)
+
+
+def decrypt_value(encrypted_value: str) -> str:
+    """Decrypt a generic value (alias for decrypt_token)."""
+    return decrypt_token(encrypted_value)
