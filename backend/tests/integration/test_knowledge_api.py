@@ -2,13 +2,12 @@
 Integration tests for Knowledge/RAG API endpoints
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend.tests.utils.factories import ProjectFactory, RepositoryFactory
+from tests.utils.factories import ProjectFactory, RepositoryFactory
 
 
 @pytest.mark.integration
@@ -158,7 +157,6 @@ class TestKnowledgeAPI:
             response = await async_client.post(f"/knowledge/index/{repo.id}")
 
             assert response.status_code in [200, 202]  # Success or Accepted
-            data = response.json()
             # Response format may vary, just check it's successful
 
     async def test_query_with_custom_k_parameter(

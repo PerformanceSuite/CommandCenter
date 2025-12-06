@@ -5,9 +5,9 @@ Integration tests for Technologies API endpoints
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.utils.factories import ProjectFactory, TechnologyFactory
 
 from app.models.technology import TechnologyDomain, TechnologyStatus
-from backend.tests.utils.factories import ProjectFactory, TechnologyFactory
 
 
 @pytest.mark.integration
