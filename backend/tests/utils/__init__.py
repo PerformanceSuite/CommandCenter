@@ -17,6 +17,7 @@ from tests.utils.factories import (
     KnowledgeEntryFactory,
     ProjectFactory,
     RepositoryFactory,
+    ResearchTaskFactory,
     TechnologyFactory,
     UserFactory,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "TechnologyFactory",
     "RepositoryFactory",
     "KnowledgeEntryFactory",
+    "ResearchTaskFactory",
     "create_user_and_login",
     "create_test_token",
     "generate_mock_github_data",

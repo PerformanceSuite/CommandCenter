@@ -10,6 +10,7 @@ from app.auth.jwt import get_password_hash
 from app.models.knowledge_entry import KnowledgeEntry
 from app.models.project import Project
 from app.models.repository import Repository
+from app.models.research_task import ResearchTask, TaskStatus
 from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
 from app.models.user import User
 
@@ -207,3 +208,39 @@ class KnowledgeEntryFactory:
         await db.commit()
         await db.refresh(entry)
         return entry
+
+
+class ResearchTaskFactory:
+    """Factory for creating test research tasks"""
+
+    @staticmethod
+    async def create(
+        db: AsyncSession,
+        project_id: int,
+        title: str = "Test Research Task",
+        description: Optional[str] = "A test research task",
+        status: TaskStatus = TaskStatus.PENDING,
+        technology_id: Optional[int] = None,
+        repository_id: Optional[int] = None,
+        assigned_to: Optional[str] = None,
+        progress_percentage: int = 0,
+        estimated_hours: Optional[int] = None,
+        actual_hours: Optional[int] = None,
+    ) -> ResearchTask:
+        """Create a test research task"""
+        task = ResearchTask(
+            project_id=project_id,
+            title=title,
+            description=description,
+            status=status,
+            technology_id=technology_id,
+            repository_id=repository_id,
+            assigned_to=assigned_to,
+            progress_percentage=progress_percentage,
+            estimated_hours=estimated_hours,
+            actual_hours=actual_hours,
+        )
+        db.add(task)
+        await db.commit()
+        await db.refresh(task)
+        return task
