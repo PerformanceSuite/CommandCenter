@@ -11,7 +11,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from app.config import settings
+from app.config import settings  # noqa: F401
 from app.database import Base, get_db
 from app.main import app
 
@@ -184,7 +184,7 @@ def mock_rag_service(mocker):
 @pytest.fixture
 async def test_project(db_session: AsyncSession):
     """Create a test project"""
-    from backend.tests.utils.factories import ProjectFactory
+    from tests.utils.factories import ProjectFactory
 
     project = await ProjectFactory.create(db=db_session, name="Test Project", owner="testowner")
     return project
@@ -194,7 +194,7 @@ async def test_project(db_session: AsyncSession):
 @pytest.fixture
 async def test_user(db_session: AsyncSession):
     """Create a test user"""
-    from backend.tests.utils.factories import UserFactory
+    from tests.utils.factories import UserFactory
 
     user = await UserFactory.create(
         db=db_session, email="test@example.com", password="testpassword123"

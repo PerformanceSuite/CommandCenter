@@ -18,9 +18,24 @@ email-validator>=2.0.0
 # HTTP client
 httpx==0.26.0
 
+# Feed parsing (RSS/Atom)
+feedparser>=6.0.0
+
+# Article extraction
+newspaper3k>=0.2.8  # For extracting article content from URLs
+lxml_html_clean>=0.1.0  # Required by newspaper3k with newer lxml
+
+# Document parsing
+PyPDF2>=3.0.0  # PDF text extraction
+python-docx>=1.0.0  # DOCX file parsing
+
+# Async rate limiting
+aiolimiter>=1.1.0  # Async rate limiter for MCP auth
+
 # Authentication & Encryption
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt>=4.0.0,<5.0.0  # Pin bcrypt <5.0 for passlib compatibility
 python-multipart==0.0.6
 cryptography==42.0.0
 
@@ -45,6 +60,9 @@ PyGithub==2.3.0
 # Redis for caching
 redis==5.0.1
 hiredis==2.3.2
+
+# Message queue (NATS)
+nats-py==2.9.0
 
 # Monitoring and metrics
 prometheus-client==0.19.0
@@ -72,6 +90,7 @@ click>=8.1.0
 rich>=13.0.0
 watchdog>=3.0.0  # For --watch mode
 textual>=0.47.0  # TUI (Text User Interface) framework
+keyring>=24.0.0  # Secure credential storage for CLI
 
 # Task Queue (Phase 2)
 celery==5.3.4

@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from tests.utils.factories import UserFactory
+from tests.utils.helpers import create_test_token
 
 from app.auth.jwt import create_access_token, decode_token, get_password_hash, verify_password
-from backend.tests.utils.factories import UserFactory
-from backend.tests.utils.helpers import create_test_token
 
 
 @pytest.mark.security
@@ -114,7 +114,7 @@ class TestAuthBasic:
     ):
         """Test that invalid credentials are rejected"""
         # Create a user
-        user = await UserFactory.create(
+        _ = await UserFactory.create(
             db=db_session, email="test@example.com", password="correctPassword123"
         )
 

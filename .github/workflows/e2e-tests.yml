@@ -32,7 +32,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        # Use pgvector image for vector similarity search support
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: commandcenter_test
           POSTGRES_USER: commandcenter
@@ -115,7 +116,7 @@ jobs:
       - name: Setup environment variables
         run: |
           cat > .env << EOF
-          DATABASE_URL=postgresql://commandcenter:testpassword@localhost:5432/commandcenter_test
+          DATABASE_URL=postgresql+asyncpg://commandcenter:testpassword@localhost:5432/commandcenter_test
           REDIS_URL=redis://localhost:6379
           CELERY_BROKER_URL=redis://localhost:6379/0
           CELERY_RESULT_BACKEND=redis://localhost:6379/0
@@ -127,14 +128,14 @@ jobs:
       - name: Run database migrations
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://commandcenter:testpassword@localhost:5432/commandcenter_test
+          DATABASE_URL: postgresql+asyncpg://commandcenter:testpassword@localhost:5432/commandcenter_test
         run: |
           alembic upgrade head
 
       - name: Start backend server
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://commandcenter:testpassword@localhost:5432/commandcenter_test
+          DATABASE_URL: postgresql+asyncpg://commandcenter:testpassword@localhost:5432/commandcenter_test
           REDIS_URL: redis://localhost:6379
         run: |
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
@@ -144,7 +145,7 @@ jobs:
       - name: Start Celery worker
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://commandcenter:testpassword@localhost:5432/commandcenter_test
+          DATABASE_URL: postgresql+asyncpg://commandcenter:testpassword@localhost:5432/commandcenter_test
           REDIS_URL: redis://localhost:6379
         run: |
           celery -A app.tasks worker --loglevel=info --concurrency=2 &
@@ -199,7 +200,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        # Use pgvector image for vector similarity search support
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: commandcenter_test
           POSTGRES_USER: commandcenter
@@ -251,7 +253,7 @@ jobs:
       - name: Setup test environment
         run: |
           cat > .env << EOF
-          DATABASE_URL=postgresql://commandcenter:testpassword@localhost:5432/commandcenter_test
+          DATABASE_URL=postgresql+asyncpg://commandcenter:testpassword@localhost:5432/commandcenter_test
           REDIS_URL=redis://localhost:6379
           SECRET_KEY=test-secret-key
           EOF

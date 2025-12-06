@@ -1,75 +1,83 @@
-# Current Session
-
-**Session started** - 2025-12-04 ~4:12 PM PST
-**Session ended** - 2025-12-04 ~4:25 PM PST
+# Current Session - 2025-12-06
 
 ## Session Summary
 
-**Duration**: ~10 minutes
-**Branch**: fix/p0-output-schema-validation (created from feature/mrktzr-module)
-**Focus**: P0 Audit Fixes Implementation
+**Branch**: `fix/ci-infrastructure-issues`
+**Duration**: ~60 minutes (continued from earlier session)
+**Focus**: Fixing CI infrastructure failures for PR #97
 
-### Work Completed
+## Work Completed
 
-✅ **P0-1: Output Schema Validation** (`hub/orchestration/src/dagger/executor.ts`)
-- Implemented `jsonSchemaToZod()` converter for JSON Schema → Zod transformation
-- Supports object, array, string, number, boolean, null types
-- Agent outputs now validated against configured outputSchema
-- Added `AgentOutputValidationError` class for detailed error reporting
+### CI Infrastructure Fixes (PR #97) - COMPLETE
 
-✅ **P0-2: Redis Task Persistence** (`backend/app/routers/research_orchestration.py`)
-- Added `ResearchTaskStorage` class with Redis-backed storage
-- Falls back to in-memory storage when Redis unavailable
-- Tasks persist across server restarts with 7-day TTL
-- Proper serialization for datetime and Pydantic model objects
+**Fixed Issues (This Session):**
+1. **Fixed unit test model assertions** - Test used wrong field names (`tech.name` vs `tech.title`)
+2. **Fixed async relationship access** - Added `selectinload` for eager loading in `test_project_relationships_initialization`
+3. **Added keyring dependency** - Missing from requirements.txt (was only in setup.py)
+4. **Added crypto aliases** - `encrypt_value`/`decrypt_value` functions needed by integrations module
+5. **Added security marker** - pytest.ini needed `security:` marker for `--strict-markers`
+6. **Pinned bcrypt version** - `bcrypt>=4.0.0,<5.0.0` for passlib 1.7.4 compatibility
 
-✅ **P0-3: Multi-Tenant Isolation** (`backend/app/routers/batch.py`)
-- Removed hardcoded `project_id=1` from batch endpoints
-- Added `get_current_project_id` dependency injection
-- Project ID now properly flows from auth context
+**Previous Session Fixes:**
+1. Fixed Python import shadowing - Renamed `tests/utils.py` to `tests/utils/_legacy_helpers.py`
+2. Created missing factories - `KnowledgeEntryFactory`, `ResearchTaskFactory`
+3. Fixed auditkind migration - Create enum if not exists
 
-✅ **E2B MCP Config Fixed**
-- Copied `.mcp.json.sandbox` to working directory
-- E2B sandboxes initialized but got stuck (abandoned for local implementation)
+### Commits Made This Session
+- `c50411b`: fix(ci): Fix unit test model assertions and async patterns
+- `a6b2278`: fix(ci): Add keyring dependency to requirements.txt
+- `a95e36a`: fix(ci): Add missing crypto aliases and security marker
+- `cf0886d`: fix(ci): Pin bcrypt<5.0 for passlib compatibility
 
-✅ **PR #96 Created**
-- URL: https://github.com/PerformanceSuite/CommandCenter/pull/96
-- Contains all 3 P0 fixes
-- Ready for review
+### Previous Session Commits
+- `6a46ef7`: fix(ci): Resolve test import errors and missing factory
+- `abcd6f1`: fix(ci): Add missing ResearchTaskFactory
 
-### Commits This Session
+## CI Status - INFRASTRUCTURE FIXED
 
-| SHA | Message |
-|-----|---------|
-| `48c9fe5` | fix(security): Implement P0 audit fixes |
+**Passing (Fixed This Session):**
+- Smoke Tests
+- Security Scanning
+- Frontend Tests & Linting
+- bcrypt/passlib compatibility (password hashing tests)
+- Crypto module imports
 
-### PR Status
+**Remaining Failures (Pre-existing, Not CI Infrastructure):**
+- Email validation tests (email-validator DNS validation in test environment)
+- More project_id NOT NULL constraint issues in test_auth.py
+- Celery integration tests (need Redis)
+- E2E browser tests
 
-| PR | Title | Status |
-|----|-------|--------|
-| #95 | feat(modules): Add MRKTZR as CommandCenter module | Open |
-| #96 | fix(security): Implement P0 audit fixes | Open - NEW |
+## Uncommitted Changes (Unrelated to CI fixes)
 
-### Files Modified
+These changes are from a previous workflow feature:
+- `hub/orchestration/package-lock.json`
+- `hub/orchestration/package.json`
+- `hub/orchestration/prisma/schema.prisma`
+- `hub/orchestration/scripts/create-workflow.ts`
+- `hub/orchestration/src/api/routes/workflows.ts`
+- `hub/orchestration/src/services/workflow-runner.ts`
 
-- `hub/orchestration/src/dagger/executor.ts` (+121 lines)
-- `backend/app/routers/research_orchestration.py` (+171 lines)
-- `backend/app/routers/batch.py` (+8 lines)
+**Untracked:**
+- `backend/uv.lock`
+- `hub/orchestration/prisma/migrations/20251120140010_add_symbolic_id/`
+- `hub/orchestration/src/utils/template-resolver.ts`
 
-### Next Steps
+## Next Steps (Priority Order)
 
-1. **Review PR #96** - P0 fixes ready for code review
-2. **Merge PR #96** - After approval
-3. **Continue with P1 fixes** - TypeScript strict mode, GitHub circuit breaker
-4. **Review PR #95** - MRKTZR module
+1. **Merge PR #97** - CI infrastructure issues are fixed; remaining failures are pre-existing
+2. **Address pre-existing test failures** (optional, separate PR):
+   - Fix email validation in tests (mock DNS validation)
+   - Fix remaining project_id NOT NULL constraints
+3. **Merge PR #95** - MRKTZR module
 
-### Key Documents
+## Files Modified This Session
 
-| Document | Purpose |
-|----------|---------|
-| `docs/plans/2025-12-04-audit-implementation-plan.md` | Full implementation plan |
-| `docs/audits/CODE_HEALTH_AUDIT_2025-12-04.md` | Code health findings |
-
----
-
-*Last updated: 2025-12-04 4:20 PM PST*
+```
+backend/tests/unit/models/test_repository.py (project_id fix)
+backend/tests/unit/models/test_technology.py (field name fixes, project_id)
+backend/tests/unit/models/test_project.py (selectinload for async)
+backend/requirements.txt (keyring, bcrypt pin)
+backend/app/utils/crypto.py (encrypt_value/decrypt_value aliases)
+backend/pytest.ini (security marker)
+```
