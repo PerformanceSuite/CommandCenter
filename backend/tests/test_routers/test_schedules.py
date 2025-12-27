@@ -14,7 +14,7 @@ from app.models import Project, Schedule, ScheduleFrequency
 @pytest.fixture
 async def test_project(db_session: AsyncSession):
     """Create test project."""
-    project = Project(name="Test Project", description="Test")
+    project = Project(name="Test Project", owner="testowner", description="Test")
     db_session.add(project)
     await db_session.commit()
     await db_session.refresh(project)
