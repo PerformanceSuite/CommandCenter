@@ -2,17 +2,13 @@
 Integration test fixtures and configuration.
 """
 
-import asyncio
-import json
-import os
-from typing import Any, AsyncGenerator, Dict
+from typing import Any, Dict
 
 import pytest
-from fastapi import WebSocket
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import Base, get_db
+from app.database import get_db
 from app.main import app
 from app.models import Job, JobStatus, Project, Repository, Technology
 from app.services.job_service import JobService
@@ -26,6 +22,7 @@ async def test_project(db_session: AsyncSession) -> Project:
     """Create a test project."""
     project = Project(
         name="Test Project",
+        owner="testowner",
         description="A test project for integration tests",
     )
     db_session.add(project)
@@ -175,8 +172,6 @@ def celery_config() -> Dict[str, Any]:
 @pytest.fixture(scope="function")
 def mock_celery_task(mocker: Any):
     """Mock Celery task execution for testing."""
-    from unittest.mock import MagicMock
-
     mock_task = mocker.MagicMock()
     mock_task.delay.return_value.id = "test-task-id-123"
     mock_task.delay.return_value.state = "PENDING"
