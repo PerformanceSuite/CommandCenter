@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Project, Schedule, ScheduleFrequency, User
+from app.models import Project, ScheduleFrequency, User
 from app.services.schedule_service import ScheduleService
 
 
@@ -20,7 +20,7 @@ async def schedule_service(db_session: AsyncSession):
 @pytest.fixture
 async def test_project(db_session: AsyncSession):
     """Create test project."""
-    project = Project(name="Test Project", description="Test")
+    project = Project(name="Test Project", owner="testowner", description="Test")
     db_session.add(project)
     await db_session.commit()
     await db_session.refresh(project)
