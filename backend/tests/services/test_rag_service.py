@@ -5,7 +5,6 @@ Tests the RAG service using mocked PostgresBackend to avoid requiring
 a real database connection during unit tests.
 """
 
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -49,21 +48,32 @@ def mock_postgres_backend():
         yield backend
 
 
-@pytest.fixture
-def mock_embed_text():
-    """Mock embed_text function"""
-    with patch("app.services.rag_service.embed_text") as mock:
-        mock.return_value = [0.1] * 384  # Mock 384-dim embedding
-        yield mock
+class MockNumpyArray:
+    """Mock numpy array that supports tolist()"""
+
+    def __init__(self, data):
+        self._data = data
+
+    def tolist(self):
+        return self._data
 
 
 @pytest.fixture
-def mock_embed_texts():
-    """Mock embed_texts function"""
-    with patch("app.services.rag_service.embed_texts") as mock:
-        # Return list of embeddings (one per text)
-        mock.return_value = [[0.1] * 384, [0.2] * 384]
-        yield mock
+def mock_sentence_transformer():
+    """Mock SentenceTransformer for embedding generation"""
+    with patch("app.services.rag_service.SentenceTransformer") as mock_class:
+        mock_model = Mock()
+
+        # encode() returns mock array with tolist() method
+        def mock_encode(x, **kwargs):
+            if isinstance(x, str):
+                return MockNumpyArray([0.1] * 384)
+            else:
+                return MockNumpyArray([[0.1] * 384 for _ in x])
+
+        mock_model.encode = Mock(side_effect=mock_encode)
+        mock_class.return_value = mock_model
+        yield mock_model
 
 
 @pytest.fixture
@@ -80,7 +90,7 @@ def mock_settings():
 
 
 @pytest.fixture
-def rag_service(mock_postgres_backend, mock_settings):
+def rag_service(mock_postgres_backend, mock_settings, mock_sentence_transformer):
     """Create RAGService with mocked dependencies"""
     service = RAGService(repository_id=1)
     return service
@@ -137,7 +147,7 @@ class TestQuery:
     """Test query method"""
 
     @pytest.mark.asyncio
-    async def test_query_basic(self, rag_service, mock_postgres_backend, mock_embed_text):
+    async def test_query_basic(self, rag_service, mock_postgres_backend, mock_sentence_transformer):
         """Test basic query"""
         results = await rag_service.query(question="What is machine learning?", k=5)
 
@@ -147,20 +157,18 @@ class TestQuery:
         assert results[0]["source"] == "readme.md"
         assert results[0]["score"] == 0.95
 
-        # Verify embed_text was called
-        mock_embed_text.assert_called_once_with(
-            "What is machine learning?", model_name="all-MiniLM-L6-v2"
-        )
+        # Verify encode was called on the embedding model
+        mock_sentence_transformer.encode.assert_called()
 
         # Verify hybrid search was called
         mock_postgres_backend.query_hybrid.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_query_with_category_filter(
-        self, rag_service, mock_postgres_backend, mock_embed_text
+        self, rag_service, mock_postgres_backend, mock_sentence_transformer
     ):
         """Test query with category filter"""
-        results = await rag_service.query(question="Python tutorials", category="tutorials", k=10)
+        await rag_service.query(question="Python tutorials", category="tutorials", k=10)
 
         # Verify filter was passed to backend
         call_args = mock_postgres_backend.query_hybrid.call_args
@@ -168,7 +176,9 @@ class TestQuery:
         assert call_args[1]["top_k"] == 10
 
     @pytest.mark.asyncio
-    async def test_query_initializes_if_needed(self, rag_service, mock_postgres_backend):
+    async def test_query_initializes_if_needed(
+        self, rag_service, mock_postgres_backend, mock_sentence_transformer
+    ):
         """Test that query initializes backend if not already initialized"""
         assert rag_service._initialized is False
 
@@ -182,7 +192,9 @@ class TestAddDocument:
     """Test add_document method"""
 
     @pytest.mark.asyncio
-    async def test_add_document_basic(self, rag_service, mock_postgres_backend, mock_embed_texts):
+    async def test_add_document_basic(
+        self, rag_service, mock_postgres_backend, mock_sentence_transformer
+    ):
         """Test adding a document"""
         content = "This is a test document about machine learning."
         metadata = {"category": "docs", "source": "test.md"}
@@ -193,23 +205,20 @@ class TestAddDocument:
 
         assert chunks_added > 0
 
-        # Verify embeddings were generated
-        mock_embed_texts.assert_called_once()
+        # Verify embeddings were generated via encode
+        mock_sentence_transformer.encode.assert_called()
 
         # Verify backend add_documents was called
         mock_postgres_backend.add_documents.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_add_document_chunking(
-        self, rag_service, mock_postgres_backend, mock_embed_texts
+        self, rag_service, mock_postgres_backend, mock_sentence_transformer
     ):
         """Test document chunking"""
         # Create long content that will be chunked
         content = " ".join(["word"] * 500)  # ~2500 chars
         metadata = {"category": "docs", "source": "long.md"}
-
-        # Mock embed_texts to return embeddings for each chunk
-        mock_embed_texts.return_value = [[0.1] * 384, [0.2] * 384, [0.3] * 384]
 
         chunks_added = await rag_service.add_document(
             content=content, metadata=metadata, chunk_size=1000
@@ -220,7 +229,7 @@ class TestAddDocument:
 
     @pytest.mark.asyncio
     async def test_add_document_metadata_preservation(
-        self, rag_service, mock_postgres_backend, mock_embed_texts
+        self, rag_service, mock_postgres_backend, mock_sentence_transformer
     ):
         """Test that metadata is preserved for each chunk"""
         content = "Test content"

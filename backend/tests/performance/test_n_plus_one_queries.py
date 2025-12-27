@@ -144,7 +144,11 @@ async def test_knowledge_base_query_no_n_plus_one(
     # Create knowledge entries
     for i in range(10):
         await KnowledgeEntryFactory.create(
-            db_session, source=f"doc-{i}.pdf", category="research", project_id=user_a.project_id
+            db_session,
+            project_id=user_a.project_id,
+            title=f"Knowledge Entry {i}",
+            source_file=f"doc-{i}.pdf",
+            category="research",
         )
     await db_session.commit()
 
