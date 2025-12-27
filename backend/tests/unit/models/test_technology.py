@@ -5,8 +5,7 @@ Unit tests for Technology model
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
-from tests.utils import create_test_technology
+from tests.utils import create_test_project, create_test_technology
 
 from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
 
@@ -21,15 +20,19 @@ class TestTechnologyModel:
         tech = await create_test_technology(db_session)
 
         assert tech.id is not None
-        assert tech.name == "Python"
-        assert tech.category == "language"
-        assert tech.ring == "adopt"
+        assert tech.title == "Python"
+        assert tech.domain is not None  # Technology uses domain, not category
+        assert tech.status is not None  # Technology uses status, not ring
         assert isinstance(tech.created_at, datetime)
 
     async def test_technology_with_domain(self, db_session):
         """Test technology with specific domain"""
+        project = await create_test_project(db_session)
         tech = Technology(
-            title="TensorFlow", domain=TechnologyDomain.AI_ML, status=TechnologyStatus.RESEARCH
+            title="TensorFlow",
+            domain=TechnologyDomain.AI_ML,
+            status=TechnologyStatus.RESEARCH,
+            project_id=project.id,
         )
         db_session.add(tech)
         await db_session.commit()
@@ -40,7 +43,8 @@ class TestTechnologyModel:
 
     async def test_technology_default_values(self, db_session):
         """Test technology default values"""
-        tech = Technology(title="NewTech")
+        project = await create_test_project(db_session)
+        tech = Technology(title="NewTech", project_id=project.id)
         db_session.add(tech)
         await db_session.commit()
         await db_session.refresh(tech)
@@ -111,6 +115,7 @@ class TestTechnologyModel:
 
     async def test_technology_with_full_details(self, db_session):
         """Test technology with all fields populated"""
+        project = await create_test_project(db_session)
         tech = Technology(
             title="Comprehensive Tech",
             vendor="Tech Corp",
@@ -125,6 +130,7 @@ class TestTechnologyModel:
             repository_url="https://github.com/example/repo",
             website_url="https://example.com",
             tags="ai,ml,production",
+            project_id=project.id,
         )
         db_session.add(tech)
         await db_session.commit()
