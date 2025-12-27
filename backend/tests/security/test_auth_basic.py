@@ -113,8 +113,8 @@ class TestAuthBasic:
         self, async_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that invalid credentials are rejected"""
-        # Create a user (need to create to have valid email in system)
-        await UserFactory.create(
+        # Create a user
+        _ = await UserFactory.create(
             db=db_session, email="test@example.com", password="correctPassword123"
         )
 

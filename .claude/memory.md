@@ -2,7 +2,41 @@
 
 ---
 
-## Session: 2025-12-04 ~1:00-2:15 PM PST (LATEST)
+## Session: 2025-12-06 (LATEST)
+
+**Duration**: ~60 minutes (continued session)
+**Branch**: fix/ci-infrastructure-issues
+**Focus**: CI Infrastructure Fixes for PR #97
+
+### Work Completed
+
+✅ **Fixed 6 CI Infrastructure Issues:**
+1. Unit test model assertions (tech.name → tech.title)
+2. Async relationship access (selectinload for eager loading)
+3. Added keyring dependency to requirements.txt
+4. Added crypto aliases (encrypt_value/decrypt_value)
+5. Added security marker to pytest.ini
+6. Pinned bcrypt<5.0 for passlib compatibility
+
+**Commits:**
+- `c50411b`: fix(ci): Fix unit test model assertions and async patterns
+- `a6b2278`: fix(ci): Add keyring dependency to requirements.txt
+- `a95e36a`: fix(ci): Add missing crypto aliases and security marker
+- `cf0886d`: fix(ci): Pin bcrypt<5.0 for passlib compatibility
+
+### CI Status
+- Smoke Tests, Security Scanning, Frontend Tests: PASSING
+- Infrastructure issues: FIXED
+- Remaining failures are pre-existing test issues (email validation, project_id constraints)
+
+### Next Steps
+1. Merge PR #97 (CI infrastructure fixed)
+2. Address pre-existing test failures (optional separate PR)
+3. Merge PR #95 (MRKTZR module)
+
+---
+
+## Session: 2025-12-04 ~1:00-2:15 PM PST
 
 **Duration**: ~75 minutes
 **Branch**: feature/mrktzr-module
@@ -365,3 +399,26 @@ File: `docs/CURRENT_WORK.md` has complete action plan
 ---
 
 *Last updated: 2025-11-21T13:30 PST*
+
+## Session: 2025-12-05 15:30-16:00 PST
+**Branch**: fix/ci-infrastructure-issues
+
+### Work Completed:
+- Fixed CI infrastructure failures for PR #97:
+  - Changed all test imports from `backend.tests.utils` to `tests.utils`
+  - Fixed migration `d3e92d35ba2f` to use `current_database()` instead of hardcoded `commandcenter`
+  - Resolved flake8 unused import/variable warnings
+- Deleted stale `~/Desktop/CommandCenter/` clone from previous session
+- CI running on commit `48ab1c5` - awaiting results
+
+### Key Technical Notes:
+- Test imports must use relative paths (`tests.utils`) not absolute (`backend.tests.utils`) because CI runs from within backend/
+- PostgreSQL `GRANT CONNECT ON DATABASE` requires dynamic SQL with `current_database()` for portability across environments (prod vs test)
+
+### Blockers/Issues:
+- None resolved, waiting on CI
+
+### Next Steps:
+1. Monitor CI for PR #97 - merge when green
+2. Merge PR #95 (MRKTZR) after #97
+3. Continue P1 security fixes

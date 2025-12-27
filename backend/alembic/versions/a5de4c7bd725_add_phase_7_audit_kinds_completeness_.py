@@ -18,14 +18,36 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add Phase 7 audit kinds to auditkind enum"""
-    # Add new enum values to auditkind type
-    # Both lowercase and uppercase versions for compatibility
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'completeness'")
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'consistency'")
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'drift'")
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'COMPLETENESS'")
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'CONSISTENCY'")
-    op.execute("ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'DRIFT'")
+    # First, check if the auditkind enum exists. If not, create it with all values.
+    # This handles both fresh databases and existing databases.
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'auditkind') THEN
+                CREATE TYPE auditkind AS ENUM (
+                    'codeReview', 'security', 'license', 'compliance',
+                    'performance', 'testCoverage', 'completeness', 'consistency', 'drift'
+                );
+            ELSE
+                -- Add new enum values if they don't exist
+                BEGIN
+                    ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'completeness';
+                EXCEPTION WHEN duplicate_object THEN NULL;
+                END;
+                BEGIN
+                    ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'consistency';
+                EXCEPTION WHEN duplicate_object THEN NULL;
+                END;
+                BEGIN
+                    ALTER TYPE auditkind ADD VALUE IF NOT EXISTS 'drift';
+                EXCEPTION WHEN duplicate_object THEN NULL;
+                END;
+            END IF;
+        END
+        $$;
+    """
+    )
 
 
 def downgrade() -> None:

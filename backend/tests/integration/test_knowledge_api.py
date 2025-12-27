@@ -157,6 +157,7 @@ class TestKnowledgeAPI:
             response = await async_client.post(f"/knowledge/index/{repo.id}")
 
             assert response.status_code in [200, 202]  # Success or Accepted
+            _ = response.json()  # Verify JSON parseable
             # Response format may vary, just check it's successful
 
     async def test_query_with_custom_k_parameter(

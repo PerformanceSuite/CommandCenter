@@ -7,7 +7,6 @@ Create Date: 2025-11-02 09:00:07.653730
 """
 from typing import Sequence, Union
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -27,6 +26,7 @@ def upgrade() -> None:
     Password should be set via environment variable EXPORTER_PASSWORD.
     """
     # Note: Password will be set from environment in docker-compose
+    # Use DO block for dynamic SQL to handle different database names (prod vs test)
     op.execute(
         """
         DO $$
@@ -35,13 +35,12 @@ def upgrade() -> None:
             IF NOT EXISTS (SELECT FROM pg_user WHERE usename = 'exporter_user') THEN
                 CREATE USER exporter_user WITH PASSWORD 'changeme';
             END IF;
+            -- Grant connection privilege using dynamic SQL for current database
+            EXECUTE format('GRANT CONNECT ON DATABASE %I TO exporter_user', current_database());
         END
         $$;
     """
     )
-
-    # Grant connection privilege
-    op.execute("GRANT CONNECT ON DATABASE commandcenter TO exporter_user;")
 
     # Grant pg_monitor role for access to monitoring views
     op.execute("GRANT pg_monitor TO exporter_user;")
@@ -51,7 +50,15 @@ def downgrade() -> None:
     """Remove exporter_user role."""
     # Revoke privileges
     op.execute("REVOKE pg_monitor FROM exporter_user;")
-    op.execute("REVOKE CONNECT ON DATABASE commandcenter FROM exporter_user;")
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            EXECUTE format('REVOKE CONNECT ON DATABASE %I FROM exporter_user', current_database());
+        END
+        $$;
+    """
+    )
 
     # Drop user
     op.execute("DROP USER IF EXISTS exporter_user;")
