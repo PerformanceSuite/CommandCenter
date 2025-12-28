@@ -2,6 +2,7 @@
 User model for authentication and authorization
 """
 
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -38,17 +39,23 @@ class User(Base):
     )
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
-    # Relationships
-    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")
-    schedules: Mapped[list["Schedule"]] = relationship("Schedule", back_populates="user")
-    integrations: Mapped[list["Integration"]] = relationship("Integration", back_populates="user")
+    # Relationships (forward references for SQLAlchemy)
+    jobs: Mapped[list["Job"]] = relationship("Job", back_populates="user")  # noqa: F821
+    schedules: Mapped[list["Schedule"]] = relationship(  # noqa: F821
+        "Schedule", back_populates="user"
+    )
+    integrations: Mapped[list["Integration"]] = relationship(  # noqa: F821
+        "Integration", back_populates="user"
+    )
 
     @validates("email")
     def validate_email_format(self, key: str, email: str) -> str:
         """Validate email format."""
         try:
+            # Allow test domains (example.com, test.com) in test environment
+            is_test_env = os.getenv("ENVIRONMENT") == "test"
             # Validate and normalize the email
-            validated = validate_email(email)
+            validated = validate_email(email, test_environment=is_test_env)
             return validated.normalized
         except EmailNotValidError as e:
             raise ValueError(f"Invalid email address: {e}")

@@ -115,14 +115,14 @@ async def create_test_research_task(db: AsyncSession, project_id: int, **kwargs)
 
 
 async def create_test_knowledge_entry(
-    db: AsyncSession, repository_id: int, **kwargs
+    db: AsyncSession, project_id: int, **kwargs
 ) -> KnowledgeEntry:
     """
     Create a test knowledge entry in the database
 
     Args:
         db: Database session
-        repository_id: ID of associated repository
+        project_id: ID of associated project
         **kwargs: Knowledge entry attributes to override
 
     Returns:
@@ -132,8 +132,8 @@ async def create_test_knowledge_entry(
         "title": "Test Knowledge Entry",
         "content": "Test content for knowledge entry",
         "category": "documentation",
-        "repository_id": repository_id,
-        "file_path": "/test/path/file.md",
+        "project_id": project_id,
+        "source_file": "/test/path/file.md",
     }
     defaults.update(kwargs)
 

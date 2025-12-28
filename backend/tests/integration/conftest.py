@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.main import app
 from app.models import Job, JobStatus, Project, Repository, Technology
+from app.models.technology import TechnologyDomain, TechnologyStatus
 from app.services.job_service import JobService
 
 # Mark all tests in this directory as integration tests
@@ -57,11 +58,12 @@ async def test_technology(db_session: AsyncSession, test_project: Project) -> Te
     """Create a test technology."""
     technology = Technology(
         project_id=test_project.id,
-        name="Python",
-        category="languages",
-        ring="adopt",
+        title="Python",
+        domain=TechnologyDomain.OTHER,
+        status=TechnologyStatus.RESEARCH,
         description="Python programming language",
-        moved=0,
+        relevance_score=80,
+        priority=4,
     )
     db_session.add(technology)
     await db_session.commit()
@@ -102,19 +104,21 @@ async def test_analysis_data(
     # Add more technologies for comprehensive testing
     tech2 = Technology(
         project_id=test_project.id,
-        name="FastAPI",
-        category="frameworks",
-        ring="adopt",
+        title="FastAPI",
+        domain=TechnologyDomain.INFRASTRUCTURE,
+        status=TechnologyStatus.INTEGRATED,
         description="FastAPI web framework",
-        moved=0,
+        relevance_score=90,
+        priority=5,
     )
     tech3 = Technology(
         project_id=test_project.id,
-        name="PostgreSQL",
-        category="databases",
-        ring="adopt",
+        title="PostgreSQL",
+        domain=TechnologyDomain.INFRASTRUCTURE,
+        status=TechnologyStatus.INTEGRATED,
         description="PostgreSQL database",
-        moved=0,
+        relevance_score=85,
+        priority=4,
     )
     db_session.add(tech2)
     db_session.add(tech3)

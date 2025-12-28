@@ -35,7 +35,12 @@ from app.models.project_analysis import ProjectAnalysis
 from app.models.repository import Repository
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.schedule import Schedule, ScheduleFrequency
-from app.models.technology import Technology, TechnologyDomain, TechnologyStatus
+from app.models.technology import (
+    Technology,
+    TechnologyDomain,
+    TechnologyStatus,
+    technology_repositories,
+)
 from app.models.user import User
 from app.models.webhook import GitHubRateLimit, WebhookConfig, WebhookDelivery, WebhookEvent
 
@@ -46,6 +51,7 @@ __all__ = [
     "Technology",
     "TechnologyDomain",
     "TechnologyStatus",
+    "technology_repositories",
     "ResearchTask",
     "TaskStatus",
     "KnowledgeEntry",
