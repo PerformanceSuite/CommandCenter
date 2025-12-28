@@ -29,8 +29,8 @@ def upgrade():
         sa.Column("analysis_version", sa.String(length=50), nullable=False, server_default="1.0.0"),
         sa.Column("analysis_duration_ms", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("analyzed_at", sa.DateTime(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),
     )
 

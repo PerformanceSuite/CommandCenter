@@ -8,16 +8,34 @@ from app.auth.jwt import create_access_token
 
 
 @pytest.fixture
-async def user_a(db_session):
+async def project_a(db_session):
+    """Create project A for isolation testing."""
+    return await ProjectFactory.create(db_session, name="Project A", owner="user_a")
+
+
+@pytest.fixture
+async def project_b(db_session):
+    """Create project B for isolation testing."""
+    return await ProjectFactory.create(db_session, name="Project B", owner="user_b")
+
+
+@pytest.fixture
+async def user_a(db_session, project_a):
     """Create isolated user A with project-a."""
-    user = await UserFactory.create(db_session, email="user_a@test.com", project_id="project-a")
+    user = await UserFactory.create(db_session, email="user_a@test.com")
+    # Attach project reference for tests that need it
+    user.project = project_a
+    user.project_id = project_a.id
     return user
 
 
 @pytest.fixture
-async def user_b(db_session):
+async def user_b(db_session, project_b):
     """Create isolated user B with project-b."""
-    user = await UserFactory.create(db_session, email="user_b@test.com", project_id="project-b")
+    user = await UserFactory.create(db_session, email="user_b@test.com")
+    # Attach project reference for tests that need it
+    user.project = project_b
+    user.project_id = project_b.id
     return user
 
 

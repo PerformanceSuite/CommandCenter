@@ -40,8 +40,8 @@ def upgrade() -> None:
         sa.Column("last_error", sa.Text(), nullable=True),
         sa.Column("documents_ingested", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("error_count", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )

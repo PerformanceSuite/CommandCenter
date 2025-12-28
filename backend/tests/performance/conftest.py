@@ -2,11 +2,19 @@
 import pytest
 from sqlalchemy import event
 from tests.utils.factories import (
-    KnowledgeEntryFactory,
+    ProjectFactory,
     RepositoryFactory,
     ResearchTaskFactory,
     TechnologyFactory,
 )
+
+
+@pytest.fixture
+async def test_project(db_session):
+    """Create a test project for performance tests."""
+    return await ProjectFactory.create(
+        db_session, name="Performance Test Project", owner="perftest"
+    )
 
 
 @pytest.fixture
@@ -31,17 +39,20 @@ def query_counter(db_session):
                 {"statement": statement, "parameters": parameters, "executemany": executemany}
             )
 
+    # For async engines, use sync_engine to attach event listeners
+    sync_engine = db_session.bind.sync_engine
+
     # Attach listener
-    event.listen(db_session.bind, "after_cursor_execute", receive_after_cursor_execute)
+    event.listen(sync_engine, "after_cursor_execute", receive_after_cursor_execute)
 
     yield queries
 
     # Detach listener
-    event.remove(db_session.bind, "after_cursor_execute", receive_after_cursor_execute)
+    event.remove(sync_engine, "after_cursor_execute", receive_after_cursor_execute)
 
 
 @pytest.fixture
-async def large_dataset(db_session):
+async def large_dataset(db_session, test_project):
     """Create dataset large enough to expose N+1 queries.
 
     Creates 20 technologies, each with 3 repositories and 2 research tasks.
@@ -51,20 +62,29 @@ async def large_dataset(db_session):
 
     for i in range(20):
         tech = await TechnologyFactory.create(
-            db_session, title=f"Technology {i}", domain="test", vendor=f"Vendor {i}", status="adopt"
+            db_session,
+            project_id=test_project.id,
+            title=f"Technology {i}",
+            vendor=f"Vendor {i}",
         )
 
         # Add repositories for this technology
         for j in range(3):
             repo = await RepositoryFactory.create(
-                db_session, owner=f"test-owner-{i}", name=f"repo-{i}-{j}"
+                db_session,
+                project_id=test_project.id,
+                owner=f"test-owner-{i}",
+                name=f"repo-{i}-{j}",
             )
             tech.repositories.append(repo)
 
         # Add research tasks for this technology
         for k in range(2):
-            research = await ResearchTaskFactory.create(
-                db_session, title=f"Research {i}-{k}", technology_id=tech.id
+            await ResearchTaskFactory.create(
+                db_session,
+                project_id=test_project.id,
+                title=f"Research {i}-{k}",
+                technology_id=tech.id,
             )
 
         technologies.append(tech)
@@ -95,7 +115,7 @@ def performance_threshold():
 
 
 @pytest.fixture
-async def performance_dataset(db_session):
+async def performance_dataset(db_session, test_project):
     """Create large dataset for stress testing (1000 records).
 
     Used for testing query performance under load.
@@ -105,10 +125,9 @@ async def performance_dataset(db_session):
     for i in range(1000):
         tech = await TechnologyFactory.create(
             db_session,
+            project_id=test_project.id,
             title=f"Performance Tech {i}",
-            domain="performance-test",
             vendor=f"Vendor {i % 100}",  # Create some duplicates
-            status="assess" if i % 2 == 0 else "trial",
         )
         technologies.append(tech)
 

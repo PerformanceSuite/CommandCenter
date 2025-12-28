@@ -2,12 +2,21 @@
 Unit tests for RAG service
 """
 
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.services.rag_service import RAGService
+
+
+class MockNumpyArray:
+    """Mock numpy array that supports tolist()"""
+
+    def __init__(self, data):
+        self._data = data
+
+    def tolist(self):
+        return self._data
 
 
 @pytest.mark.unit
@@ -16,9 +25,16 @@ class TestRAGService:
 
     @pytest.fixture
     def mock_embedding_model(self):
-        """Mock SentenceTransformer"""
+        """Mock SentenceTransformer with proper tolist() support"""
         mock = MagicMock()
-        mock.encode.return_value = [0.1] * 384  # Mock embedding vector
+
+        def mock_encode(x, **kwargs):
+            if isinstance(x, str):
+                return MockNumpyArray([0.1] * 384)
+            else:
+                return MockNumpyArray([[0.1] * 384 for _ in x])
+
+        mock.encode.side_effect = mock_encode
         return mock
 
     @pytest.fixture
@@ -26,18 +42,21 @@ class TestRAGService:
         """Mock PostgresBackend"""
         mock = MagicMock()
         mock.initialize = AsyncMock()
-        mock.query = AsyncMock(
+        # query_hybrid returns tuples: (doc_id, score, metadata, document)
+        mock.query_hybrid = AsyncMock(
             return_value=[
-                {
-                    "content": "FastAPI is a modern web framework",
-                    "metadata": {"file_path": "docs/fastapi.md", "line_number": 10},
-                    "score": 0.95,
-                },
-                {
-                    "content": "FastAPI supports async/await",
-                    "metadata": {"file_path": "docs/async.md", "line_number": 5},
-                    "score": 0.87,
-                },
+                (
+                    "doc1",
+                    0.95,
+                    {"file_path": "docs/fastapi.md", "line_number": 10},
+                    "FastAPI is a modern web framework",
+                ),
+                (
+                    "doc2",
+                    0.87,
+                    {"file_path": "docs/async.md", "line_number": 5},
+                    "FastAPI supports async/await",
+                ),
             ]
         )
         mock.add_documents = AsyncMock()
@@ -86,7 +105,7 @@ class TestRAGService:
                     assert results[0]["content"] == "FastAPI is a modern web framework"
                     assert results[0]["score"] == 0.95
                     assert "file_path" in results[0]["metadata"]
-                    mock_postgres_backend.query.assert_called_once()
+                    mock_postgres_backend.query_hybrid.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_rag_service_query_with_category_filter(
@@ -105,11 +124,11 @@ class TestRAGService:
                     await service.initialize()
 
                     # Query with category
-                    results = await service.query("async patterns", category="documentation", k=3)
+                    await service.query("async patterns", category="documentation", k=3)
 
                     # Verify backend was called with category filter
-                    mock_postgres_backend.query.assert_called_once()
-                    call_args = mock_postgres_backend.query.call_args
+                    mock_postgres_backend.query_hybrid.assert_called_once()
+                    call_args = mock_postgres_backend.query_hybrid.call_args
 
                     # Check that category was passed
                     assert call_args is not None
@@ -196,7 +215,7 @@ class TestRAGService:
         """Test RAG service handles empty query results"""
         mock_backend = MagicMock()
         mock_backend.initialize = AsyncMock()
-        mock_backend.query = AsyncMock(return_value=[])  # Empty results
+        mock_backend.query_hybrid = AsyncMock(return_value=[])  # Empty results
 
         with patch("app.services.rag_service.RAG_AVAILABLE", True):
             with patch("app.services.rag_service.PostgresBackend", return_value=mock_backend):
