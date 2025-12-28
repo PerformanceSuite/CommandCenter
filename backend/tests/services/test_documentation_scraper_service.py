@@ -1,7 +1,7 @@
 """
 Unit tests for DocumentationScraperService
 """
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -14,10 +14,13 @@ from app.services.documentation_scraper_service import (
 @pytest.fixture
 def doc_scraper():
     """Create DocumentationScraperService instance"""
-    return DocumentationScraperService()
+    service = DocumentationScraperService()
+    # Replace the async client with a mock
+    service.client = AsyncMock()
+    return service
 
 
-def test_fetch_sitemap(doc_scraper):
+async def test_fetch_sitemap(doc_scraper):
     """Test fetching and parsing sitemap.xml"""
     mock_sitemap = """<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -35,9 +38,9 @@ def test_fetch_sitemap(doc_scraper):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.text = mock_sitemap
-    doc_scraper.session.get = Mock(return_value=mock_response)
+    doc_scraper.client.get = AsyncMock(return_value=mock_response)
 
-    urls = doc_scraper.fetch_sitemap("https://example.com/sitemap.xml")
+    urls = await doc_scraper.fetch_sitemap("https://example.com/sitemap.xml")
 
     assert len(urls) == 2
     assert "https://example.com/docs/intro" in urls
@@ -46,14 +49,8 @@ def test_fetch_sitemap(doc_scraper):
 
 def test_check_robots_txt(doc_scraper):
     """Test checking robots.txt for allowed URLs"""
-    mock_robots = """User-agent: *
-Disallow: /admin/
-Disallow: /private/
-Allow: /docs/
-"""
-
     # Mock the robots.txt fetch
-    with patch("urllib.robotparser.RobotFileParser.read") as mock_read:
+    with patch("urllib.robotparser.RobotFileParser.read"):
         with patch("urllib.robotparser.RobotFileParser.can_fetch") as mock_can_fetch:
             # Set up the mock to allow /docs/ and disallow /admin/
             def can_fetch_side_effect(user_agent, url):
@@ -66,13 +63,13 @@ Allow: /docs/
             mock_can_fetch.side_effect = can_fetch_side_effect
 
             # Should be allowed
-            assert doc_scraper.is_allowed("https://example.com/docs/guide") == True
+            assert doc_scraper.is_allowed("https://example.com/docs/guide") is True
 
             # Should be disallowed
-            assert doc_scraper.is_allowed("https://example.com/admin/") == False
+            assert doc_scraper.is_allowed("https://example.com/admin/") is False
 
 
-def test_scrape_page(doc_scraper):
+async def test_scrape_page(doc_scraper):
     """Test scraping a single documentation page"""
     mock_html = """
     <html>
@@ -90,10 +87,10 @@ def test_scrape_page(doc_scraper):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.text = mock_html
-    doc_scraper.session.get = Mock(return_value=mock_response)
+    doc_scraper.client.get = AsyncMock(return_value=mock_response)
 
-    with patch("time.sleep"):  # Skip rate limiting delay
-        page = doc_scraper.scrape_page("https://example.com/docs/intro")
+    with patch("asyncio.sleep"):  # Skip rate limiting delay
+        page = await doc_scraper.scrape_page("https://example.com/docs/intro")
 
     assert page.title == "Introduction | Docs"
     assert "Introduction" in page.content
@@ -101,7 +98,7 @@ def test_scrape_page(doc_scraper):
     assert page.url == "https://example.com/docs/intro"
 
 
-def test_extract_links(doc_scraper):
+async def test_extract_links(doc_scraper):
     """Test extracting internal links from page"""
     mock_html = """
     <html>
@@ -116,9 +113,9 @@ def test_extract_links(doc_scraper):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.text = mock_html
-    doc_scraper.session.get = Mock(return_value=mock_response)
+    doc_scraper.client.get = AsyncMock(return_value=mock_response)
 
-    links = doc_scraper.extract_links(
+    links = await doc_scraper.extract_links(
         "https://example.com/docs/intro", base_url="https://example.com"
     )
 
@@ -128,28 +125,28 @@ def test_extract_links(doc_scraper):
     assert "https://external.com/link" not in links
 
 
-def test_scrape_with_max_depth(doc_scraper):
+async def test_scrape_with_max_depth(doc_scraper):
     """Test scraping with depth limit"""
-    with patch.object(doc_scraper, "scrape_page") as mock_scrape:
-        with patch.object(doc_scraper, "extract_links", return_value=[]):
+    with patch.object(doc_scraper, "scrape_page", new_callable=AsyncMock) as mock_scrape:
+        with patch.object(doc_scraper, "extract_links", new_callable=AsyncMock, return_value=[]):
             mock_scrape.return_value = DocumentationPage(
                 url="https://example.com/docs", title="Docs", content="Content", headings=["H1"]
             )
 
-            pages = doc_scraper.scrape_documentation("https://example.com/docs", max_depth=0)
+            pages = await doc_scraper.scrape_documentation("https://example.com/docs", max_depth=0)
 
     assert len(pages) == 1
     mock_scrape.assert_called_once()
 
 
-def test_handle_404_error(doc_scraper):
+async def test_handle_404_error(doc_scraper):
     """Test handling 404 errors gracefully"""
     mock_response = Mock()
     mock_response.status_code = 404
-    doc_scraper.session.get = Mock(return_value=mock_response)
+    doc_scraper.client.get = AsyncMock(return_value=mock_response)
 
-    with patch("time.sleep"):  # Skip rate limiting delay
-        page = doc_scraper.scrape_page("https://example.com/not-found")
+    with patch("asyncio.sleep"):  # Skip rate limiting delay
+        page = await doc_scraper.scrape_page("https://example.com/not-found")
 
     assert page is None
 
@@ -211,24 +208,24 @@ def test_ssrf_protection_invalid_scheme(doc_scraper):
 def test_ssrf_protection_valid_url(doc_scraper):
     """Test SSRF protection allows valid public URLs"""
     # Should not raise any exception
-    assert doc_scraper._is_safe_url("https://example.com/docs") == True
-    assert doc_scraper._is_safe_url("http://docs.python.org/api") == True
+    assert doc_scraper._is_safe_url("https://example.com/docs") is True
+    assert doc_scraper._is_safe_url("http://docs.python.org/api") is True
 
 
-def test_scrape_page_ssrf_protection(doc_scraper):
+async def test_scrape_page_ssrf_protection(doc_scraper):
     """Test that scrape_page validates URLs for SSRF"""
     with pytest.raises(ValueError, match="Access to localhost is not allowed"):
-        with patch("time.sleep"):
-            doc_scraper.scrape_page("http://localhost:8080/admin")
+        with patch("asyncio.sleep"):
+            await doc_scraper.scrape_page("http://localhost:8080/admin")
 
 
-def test_fetch_sitemap_ssrf_protection(doc_scraper):
+async def test_fetch_sitemap_ssrf_protection(doc_scraper):
     """Test that fetch_sitemap validates URLs for SSRF"""
     with pytest.raises(ValueError, match="Access to private IP address"):
-        doc_scraper.fetch_sitemap("http://192.168.1.1/sitemap.xml")
+        await doc_scraper.fetch_sitemap("http://192.168.1.1/sitemap.xml")
 
 
-def test_scrape_documentation_ssrf_protection(doc_scraper):
+async def test_scrape_documentation_ssrf_protection(doc_scraper):
     """Test that scrape_documentation validates start URL for SSRF"""
     with pytest.raises(ValueError, match="Access to loopback address"):
-        doc_scraper.scrape_documentation("http://127.0.0.1:8000/docs")
+        await doc_scraper.scrape_documentation("http://127.0.0.1:8000/docs")

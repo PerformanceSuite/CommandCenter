@@ -2,7 +2,7 @@
 Unit tests for FeedScraperService
 """
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -15,7 +15,7 @@ def feed_scraper():
     return FeedScraperService()
 
 
-def test_parse_rss_feed(feed_scraper):
+async def test_parse_rss_feed(feed_scraper):
     """Test parsing RSS 2.0 feed"""
     mock_feed_data = {
         "entries": [
@@ -33,7 +33,7 @@ def test_parse_rss_feed(feed_scraper):
     }
 
     with patch("feedparser.parse", return_value=mock_feed_data):
-        entries = feed_scraper.parse_feed("https://example.com/feed.xml")
+        entries = await feed_scraper.parse_feed("https://example.com/feed.xml")
 
     assert len(entries) == 1
     assert entries[0].title == "Test Article"
@@ -42,7 +42,7 @@ def test_parse_rss_feed(feed_scraper):
     assert entries[0].tags == ["python", "testing"]
 
 
-def test_parse_atom_feed(feed_scraper):
+async def test_parse_atom_feed(feed_scraper):
     """Test parsing Atom feed"""
     mock_feed_data = {
         "entries": [
@@ -59,13 +59,13 @@ def test_parse_atom_feed(feed_scraper):
     }
 
     with patch("feedparser.parse", return_value=mock_feed_data):
-        entries = feed_scraper.parse_feed("https://example.com/atom.xml")
+        entries = await feed_scraper.parse_feed("https://example.com/atom.xml")
 
     assert len(entries) == 1
     assert entries[0].title == "Atom Article"
 
 
-def test_extract_full_content(feed_scraper):
+async def test_extract_full_content(feed_scraper):
     """Test extracting full article content"""
     mock_article = Mock()
     mock_article.text = "This is the full article content with multiple paragraphs."
@@ -73,19 +73,19 @@ def test_extract_full_content(feed_scraper):
     mock_article.parse.return_value = None
 
     with patch("app.services.feed_scraper_service.Article", return_value=mock_article):
-        content = feed_scraper.extract_full_content("https://example.com/article")
+        content = await feed_scraper.extract_full_content("https://example.com/article")
 
     assert content == "This is the full article content with multiple paragraphs."
     mock_article.download.assert_called_once()
     mock_article.parse.assert_called_once()
 
 
-def test_extract_full_content_fallback(feed_scraper):
+async def test_extract_full_content_fallback(feed_scraper):
     """Test fallback when content extraction fails"""
     with patch(
         "app.services.feed_scraper_service.Article", side_effect=Exception("Download failed")
     ):
-        content = feed_scraper.extract_full_content(
+        content = await feed_scraper.extract_full_content(
             "https://example.com/article", summary_fallback="Summary content"
         )
 
@@ -124,7 +124,7 @@ def test_deduplicate_entries(feed_scraper):
     assert deduped[0].published == datetime(2024, 1, 16)
 
 
-def test_parse_feed_with_authentication(feed_scraper):
+async def test_parse_feed_with_authentication(feed_scraper):
     """Test parsing feed with HTTP Basic auth"""
     mock_feed_data = {
         "entries": [{"title": "Authenticated Article", "link": "https://example.com/auth"}],
@@ -133,7 +133,7 @@ def test_parse_feed_with_authentication(feed_scraper):
     }
 
     with patch("feedparser.parse", return_value=mock_feed_data) as mock_parse:
-        entries = feed_scraper.parse_feed(
+        entries = await feed_scraper.parse_feed(
             "https://example.com/feed.xml", auth=("username", "password")
         )
 
@@ -143,10 +143,10 @@ def test_parse_feed_with_authentication(feed_scraper):
     assert "username" in str(call_args)
 
 
-def test_handle_malformed_feed(feed_scraper):
+async def test_handle_malformed_feed(feed_scraper):
     """Test handling malformed/invalid feed"""
     mock_feed_data = {"entries": [], "bozo": True, "bozo_exception": Exception("Feed is malformed")}
 
     with patch("feedparser.parse", return_value=mock_feed_data):
         with pytest.raises(ValueError, match="Feed is malformed or invalid"):
-            feed_scraper.parse_feed("https://example.com/bad-feed.xml")
+            await feed_scraper.parse_feed("https://example.com/bad-feed.xml")
