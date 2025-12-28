@@ -39,7 +39,7 @@ def upgrade() -> None:
         sa.Column(
             "tags", postgresql.JSON(astext_type=sa.Text()), nullable=True, server_default="{}"
         ),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("started_at", sa.DateTime(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),

@@ -7,7 +7,6 @@ Create Date: 2025-10-05
 """
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "001_add_security"
@@ -26,8 +25,8 @@ def upgrade() -> None:
         sa.Column("full_name", sa.String(length=255), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("is_superuser", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("now()")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("last_login", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
