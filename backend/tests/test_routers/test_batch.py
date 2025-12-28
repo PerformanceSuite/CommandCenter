@@ -2,7 +2,7 @@
 Tests for batch operations API endpoints.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import status
@@ -47,7 +47,7 @@ class TestBatchAnalyze:
         """Test successful batch analysis creation."""
         mock_batch_service.analyze_repositories = AsyncMock(return_value=sample_job)
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/analyze",
             json={
                 "repository_ids": [1, 2, 3],
@@ -69,7 +69,7 @@ class TestBatchAnalyze:
 
     async def test_batch_analyze_empty_list(self, client):
         """Test batch analysis with empty repository list."""
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/analyze",
             json={"repository_ids": []},
         )
@@ -82,7 +82,7 @@ class TestBatchAnalyze:
             side_effect=ValueError("Repositories not found: {99}")
         )
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/analyze",
             json={"repository_ids": [99]},
         )
@@ -94,7 +94,7 @@ class TestBatchAnalyze:
         """Test batch analysis with default parameters."""
         mock_batch_service.analyze_repositories = AsyncMock(return_value=sample_job)
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/analyze",
             json={"repository_ids": [1, 2, 3]},
         )
@@ -112,7 +112,7 @@ class TestBatchAnalyze:
             side_effect=Exception("Database connection failed")
         )
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/analyze",
             json={"repository_ids": [1, 2, 3]},
         )
@@ -137,7 +137,7 @@ class TestBatchExport:
         )
         mock_batch_service.export_analyses = AsyncMock(return_value=job)
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/export",
             json={
                 "analysis_ids": [10, 11, 12],
@@ -169,7 +169,7 @@ class TestBatchExport:
             )
             mock_batch_service.export_analyses = AsyncMock(return_value=job)
 
-            response = client.post(
+            response = await client.post(
                 "/api/v1/batch/export",
                 json={"analysis_ids": [10], "format": fmt},
             )
@@ -183,7 +183,7 @@ class TestBatchExport:
             side_effect=ValueError("Invalid export format 'invalid'")
         )
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/export",
             json={"analysis_ids": [10], "format": "invalid"},
         )
@@ -214,7 +214,7 @@ class TestBatchImport:
         )
         mock_batch_service.import_technologies = AsyncMock(return_value=job)
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/import",
             json={
                 "project_id": 1,
@@ -252,7 +252,7 @@ class TestBatchImport:
             )
             mock_batch_service.import_technologies = AsyncMock(return_value=job)
 
-            response = client.post(
+            response = await client.post(
                 "/api/v1/batch/import",
                 json={
                     "project_id": 1,
@@ -269,7 +269,7 @@ class TestBatchImport:
             side_effect=ValueError("Invalid merge strategy 'invalid'")
         )
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/import",
             json={
                 "project_id": 1,
@@ -286,7 +286,7 @@ class TestBatchImport:
             side_effect=ValueError("Technology at index 0 missing required fields: {'title'}")
         )
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/import",
             json={
                 "project_id": 1,
@@ -323,7 +323,7 @@ class TestBatchStatistics:
             }
         )
 
-        response = client.get("/api/v1/batch/statistics")
+        response = await client.get("/api/v1/batch/statistics")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -347,7 +347,7 @@ class TestBatchStatistics:
             }
         )
 
-        response = client.get("/api/v1/batch/statistics?project_id=1")
+        response = await client.get("/api/v1/batch/statistics?project_id=1")
 
         assert response.status_code == status.HTTP_200_OK
         mock_batch_service.get_batch_statistics.assert_called_once_with(project_id=1)
@@ -365,7 +365,7 @@ class TestBatchStatistics:
             }
         )
 
-        response = client.get("/api/v1/batch/statistics")
+        response = await client.get("/api/v1/batch/statistics")
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -391,7 +391,7 @@ class TestGetBatchJob:
             mock_service = mock_service_class.return_value
             mock_service.get_job = AsyncMock(return_value=job)
 
-            response = client.get("/api/v1/batch/jobs/1")
+            response = await client.get("/api/v1/batch/jobs/1")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -406,7 +406,7 @@ class TestGetBatchJob:
             mock_service = mock_service_class.return_value
             mock_service.get_job = AsyncMock(return_value=None)
 
-            response = client.get("/api/v1/batch/jobs/999")
+            response = await client.get("/api/v1/batch/jobs/999")
 
             assert response.status_code == status.HTTP_404_NOT_FOUND
             assert "not found" in response.json()["detail"]
@@ -420,7 +420,7 @@ class TestIntegration:
         # 1. Create batch analysis
         mock_batch_service.analyze_repositories = AsyncMock(return_value=sample_job)
 
-        create_response = client.post(
+        create_response = await client.post(
             "/api/v1/batch/analyze",
             json={"repository_ids": [1, 2, 3], "priority": 8},
         )
@@ -442,7 +442,7 @@ class TestIntegration:
             mock_service = mock_service_class.return_value
             mock_service.get_job = AsyncMock(return_value=running_job)
 
-            status_response = client.get(f"/api/v1/batch/jobs/{job_id}")
+            status_response = await client.get(f"/api/v1/batch/jobs/{job_id}")
             assert status_response.status_code == status.HTTP_200_OK
             assert status_response.json()["progress"] == 66
 
@@ -459,7 +459,7 @@ class TestIntegration:
         )
         mock_batch_service.export_analyses = AsyncMock(return_value=job)
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/batch/export",
             json={"analysis_ids": [1, 2], "format": "sarif"},
         )
