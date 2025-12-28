@@ -6,12 +6,30 @@ import enum
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, DateTime
+from sqlalchemy import JSON, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Float, ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+# Association table for many-to-many Technology <-> Repository relationship
+technology_repositories = Table(
+    "technology_repositories",
+    Base.metadata,
+    Column(
+        "technology_id",
+        Integer,
+        ForeignKey("technologies.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "repository_id",
+        Integer,
+        ForeignKey("repositories.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
 
 
 class TechnologyDomain(str, enum.Enum):
@@ -152,13 +170,21 @@ class Technology(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="technologies")
-    research_tasks: Mapped[list["ResearchTask"]] = relationship(
+    # Relationships (forward references for SQLAlchemy)
+    project: Mapped["Project"] = relationship(  # noqa: F821
+        "Project", back_populates="technologies"
+    )
+    research_tasks: Mapped[list["ResearchTask"]] = relationship(  # noqa: F821
         "ResearchTask", back_populates="technology", cascade="all, delete-orphan"
     )
-    knowledge_entries: Mapped[list["KnowledgeEntry"]] = relationship(
+    knowledge_entries: Mapped[list["KnowledgeEntry"]] = relationship(  # noqa: F821
         "KnowledgeEntry", back_populates="technology", cascade="all, delete-orphan"
+    )
+    repositories: Mapped[list["Repository"]] = relationship(  # noqa: F821
+        "Repository",
+        secondary=technology_repositories,
+        back_populates="technologies",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:

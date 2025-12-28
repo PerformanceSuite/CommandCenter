@@ -88,13 +88,21 @@ class Repository(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # Relationships
-    project: Mapped["Project"] = relationship("Project", back_populates="repositories")
-    research_tasks: Mapped[list["ResearchTask"]] = relationship(
+    # Relationships (forward references for SQLAlchemy)
+    project: Mapped["Project"] = relationship(  # noqa: F821
+        "Project", back_populates="repositories"
+    )
+    research_tasks: Mapped[list["ResearchTask"]] = relationship(  # noqa: F821
         "ResearchTask", back_populates="repository", cascade="all, delete-orphan"
     )
-    webhook_configs: Mapped[list["WebhookConfig"]] = relationship(
+    webhook_configs: Mapped[list["WebhookConfig"]] = relationship(  # noqa: F821
         "WebhookConfig", back_populates="repository", cascade="all, delete-orphan"
+    )
+    technologies: Mapped[list["Technology"]] = relationship(  # noqa: F821
+        "Technology",
+        secondary="technology_repositories",
+        back_populates="repositories",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
