@@ -134,11 +134,12 @@ def test_repository_data() -> dict:
 def test_technology_data() -> dict:
     """Test technology data"""
     return {
-        "name": "Python",
-        "category": "language",
-        "ring": "adopt",
+        "title": "Python",
+        "domain": "other",
+        "status": "research",
         "description": "A high-level programming language",
-        "moved": 0,
+        "relevance_score": 80,
+        "priority": 4,
     }
 
 

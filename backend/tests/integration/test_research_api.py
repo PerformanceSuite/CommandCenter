@@ -23,7 +23,6 @@ class TestResearchAPI:
             "title": "Research FastAPI best practices",
             "description": "Investigate patterns for building scalable FastAPI applications",
             "status": "pending",
-            "priority": "high",
             "technology_id": tech.id,
         }
 
@@ -35,7 +34,6 @@ class TestResearchAPI:
         data = response.json()
         assert data["title"] == "Research FastAPI best practices"
         assert data["status"] == "pending"
-        assert data["priority"] == "high"
         assert data["technology_id"] == tech.id
         assert "id" in data
 
@@ -49,14 +47,12 @@ class TestResearchAPI:
             title="Task 1",
             description="Description 1",
             status="pending",
-            priority="high",
         )
         task2 = ResearchTask(
             project_id=project.id,
             title="Task 2",
             description="Description 2",
             status="in_progress",
-            priority="medium",
         )
         db_session.add(task1)
         db_session.add(task2)
@@ -81,7 +77,6 @@ class TestResearchAPI:
             title="Specific Task",
             description="Task description",
             status="pending",
-            priority="high",
         )
         db_session.add(task)
         await db_session.commit()
@@ -107,7 +102,6 @@ class TestResearchAPI:
             title="Task to Update",
             description="Description",
             status="pending",
-            priority="medium",
         )
         db_session.add(task)
         await db_session.commit()
@@ -132,7 +126,6 @@ class TestResearchAPI:
             title="Task to Delete",
             description="Will be deleted",
             status="pending",
-            priority="low",
         )
         db_session.add(task)
         await db_session.commit()
@@ -159,21 +152,18 @@ class TestResearchAPI:
             title="Pending Task 1",
             description="Desc",
             status="pending",
-            priority="high",
         )
         task2 = ResearchTask(
             project_id=project.id,
             title="Pending Task 2",
             description="Desc",
             status="pending",
-            priority="high",
         )
         task3 = ResearchTask(
             project_id=project.id,
             title="Completed Task",
             description="Desc",
             status="completed",
-            priority="medium",
         )
         db_session.add_all([task1, task2, task3])
         await db_session.commit()
@@ -187,36 +177,38 @@ class TestResearchAPI:
         data = response.json()
         assert len([t for t in data if t["status"] == "pending"]) >= 2
 
-    async def test_filter_research_tasks_by_priority(
+    async def test_filter_research_tasks_by_technology(
         self, async_client: AsyncClient, db_session: AsyncSession
     ):
-        """Test filtering research tasks by priority"""
+        """Test filtering research tasks by technology"""
         project = await ProjectFactory.create(db_session)
+        tech = await TechnologyFactory.create(db=db_session, project_id=project.id)
 
-        # Create tasks with different priorities
-        high_task = ResearchTask(
+        # Create tasks with and without technology
+        task_with_tech = ResearchTask(
             project_id=project.id,
-            title="High Priority",
-            description="Urgent task",
+            title="Task with Technology",
+            description="Has technology assigned",
             status="pending",
-            priority="high",
+            technology_id=tech.id,
         )
-        low_task = ResearchTask(
+        task_without_tech = ResearchTask(
             project_id=project.id,
-            title="Low Priority",
-            description="Can wait",
+            title="Task without Technology",
+            description="No technology assigned",
             status="pending",
-            priority="low",
         )
-        db_session.add_all([high_task, low_task])
+        db_session.add_all([task_with_tech, task_without_tech])
         await db_session.commit()
 
-        # Filter by high priority
-        response = await async_client.get(f"/research-tasks/?project_id={project.id}&priority=high")
+        # Filter by technology
+        response = await async_client.get(
+            f"/research-tasks/?project_id={project.id}&technology_id={tech.id}"
+        )
 
         assert response.status_code == 200
         data = response.json()
-        assert len([t for t in data if t["priority"] == "high"]) >= 1
+        assert len([t for t in data if t.get("technology_id") == tech.id]) >= 1
 
     async def test_create_research_task_validation(
         self, async_client: AsyncClient, db_session: AsyncSession
