@@ -15,7 +15,7 @@ class TestKnowledgeAPI:
     """Test Knowledge/RAG query endpoint"""
 
     async def test_query_knowledge_base_success(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test querying the knowledge base"""
         project = await ProjectFactory.create(db_session)
@@ -48,7 +48,7 @@ class TestKnowledgeAPI:
                 "k": 5,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()
@@ -58,7 +58,7 @@ class TestKnowledgeAPI:
             assert data["results"][0]["score"] == 0.95
 
     async def test_query_knowledge_base_with_category_filter(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test querying knowledge base with category filter"""
         project = await ProjectFactory.create(db_session)
@@ -85,7 +85,7 @@ class TestKnowledgeAPI:
                 "k": 3,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()
@@ -93,7 +93,7 @@ class TestKnowledgeAPI:
             assert "category" in data["results"][0]["metadata"]
 
     async def test_query_knowledge_base_empty_results(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test querying with no matching results"""
         project = await ProjectFactory.create(db_session)
@@ -111,13 +111,13 @@ class TestKnowledgeAPI:
                 "k": 5,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()
             assert data["results"] == []
 
-    async def test_query_knowledge_base_validation_error(self, async_client: AsyncClient):
+    async def test_query_knowledge_base_validation_error(self, api_client: AsyncClient):
         """Test query validation errors"""
         # Missing required fields
         invalid_data = {
@@ -125,11 +125,11 @@ class TestKnowledgeAPI:
             # Missing query field
         }
 
-        response = await async_client.post("/knowledge/query", json=invalid_data)
+        response = await api_client.post("/knowledge/query", json=invalid_data)
 
         assert response.status_code == 422  # Validation error
 
-    async def test_query_knowledge_base_nonexistent_repository(self, async_client: AsyncClient):
+    async def test_query_knowledge_base_nonexistent_repository(self, api_client: AsyncClient):
         """Test querying with nonexistent repository"""
         query_data = {
             "query": "test query",
@@ -137,12 +137,12 @@ class TestKnowledgeAPI:
             "k": 5,
         }
 
-        response = await async_client.post("/knowledge/query", json=query_data)
+        response = await api_client.post("/knowledge/query", json=query_data)
 
         # Should return 404 or appropriate error
         assert response.status_code in [404, 400]
 
-    async def test_index_repository(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_index_repository(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test indexing a repository for knowledge base"""
         project = await ProjectFactory.create(db_session)
         repo = await RepositoryFactory.create(db=db_session, project_id=project.id)
@@ -154,14 +154,14 @@ class TestKnowledgeAPI:
             mock_rag_class.return_value = mock_rag
 
             # Index repository
-            response = await async_client.post(f"/knowledge/index/{repo.id}")
+            response = await api_client.post(f"/knowledge/index/{repo.id}")
 
             assert response.status_code in [200, 202]  # Success or Accepted
             _ = response.json()  # Verify JSON parseable
             # Response format may vary, just check it's successful
 
     async def test_query_with_custom_k_parameter(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test querying with custom number of results"""
         project = await ProjectFactory.create(db_session)
@@ -183,14 +183,14 @@ class TestKnowledgeAPI:
                 "k": 3,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()
             assert len(data["results"]) == 3
 
     async def test_query_knowledge_base_metadata_included(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that query results include metadata"""
         project = await ProjectFactory.create(db_session)
@@ -219,7 +219,7 @@ class TestKnowledgeAPI:
                 "repository_id": repo.id,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()
@@ -228,7 +228,7 @@ class TestKnowledgeAPI:
             assert data["results"][0]["metadata"]["line_number"] == 42
 
     async def test_query_knowledge_base_score_ordering(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that results are ordered by relevance score"""
         project = await ProjectFactory.create(db_session)
@@ -251,7 +251,7 @@ class TestKnowledgeAPI:
                 "repository_id": repo.id,
             }
 
-            response = await async_client.post("/knowledge/query", json=query_data)
+            response = await api_client.post("/knowledge/query", json=query_data)
 
             assert response.status_code == 200
             data = response.json()

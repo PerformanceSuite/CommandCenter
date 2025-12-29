@@ -14,7 +14,7 @@ from app.models.technology import TechnologyDomain, TechnologyStatus
 class TestTechnologiesAPI:
     """Test Technology API CRUD operations"""
 
-    async def test_create_technology(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_create_technology(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test creating a technology via API"""
         # Create project first
         project = await ProjectFactory.create(db_session)
@@ -30,7 +30,7 @@ class TestTechnologiesAPI:
             "repository_url": "https://github.com/tiangolo/fastapi",
         }
 
-        response = await async_client.post(
+        response = await api_client.post(
             f"/technologies/?project_id={project.id}", json=technology_data
         )
 
@@ -44,7 +44,7 @@ class TestTechnologiesAPI:
         assert "id" in data
         assert "created_at" in data
 
-    async def test_list_technologies(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_list_technologies(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test listing technologies"""
         # Create project and technologies
         project = await ProjectFactory.create(db_session)
@@ -54,7 +54,7 @@ class TestTechnologiesAPI:
         await TechnologyFactory.create(db=db_session, project_id=project.id, title="PostgreSQL")
 
         # List technologies
-        response = await async_client.get(f"/technologies/?project_id={project.id}")
+        response = await api_client.get(f"/technologies/?project_id={project.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -63,7 +63,7 @@ class TestTechnologiesAPI:
         assert "total" in data
         assert data["total"] == 3
 
-    async def test_get_technology_by_id(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_get_technology_by_id(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test getting a specific technology"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(
@@ -75,7 +75,7 @@ class TestTechnologiesAPI:
         )
 
         # Get technology
-        response = await async_client.get(f"/technologies/{tech.id}")
+        response = await api_client.get(f"/technologies/{tech.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -84,7 +84,7 @@ class TestTechnologiesAPI:
         assert data["domain"] == "infrastructure"
         assert data["status"] == "implementation"
 
-    async def test_update_technology(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_update_technology(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test updating a technology"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(
@@ -102,7 +102,7 @@ class TestTechnologiesAPI:
             "notes": "Started implementation in Q1",
         }
 
-        response = await async_client.patch(f"/technologies/{tech.id}", json=update_data)
+        response = await api_client.patch(f"/technologies/{tech.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
@@ -112,22 +112,22 @@ class TestTechnologiesAPI:
         assert data["notes"] == "Started implementation in Q1"
         assert data["title"] == "Kubernetes"  # Unchanged
 
-    async def test_delete_technology(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_delete_technology(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test deleting a technology"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(db=db_session, project_id=project.id, title="OldTech")
 
         # Delete technology
-        response = await async_client.delete(f"/technologies/{tech.id}")
+        response = await api_client.delete(f"/technologies/{tech.id}")
 
         assert response.status_code == 204
 
         # Verify deletion
-        response = await async_client.get(f"/technologies/{tech.id}")
+        response = await api_client.get(f"/technologies/{tech.id}")
         assert response.status_code == 404
 
     async def test_filter_technologies_by_domain(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test filtering technologies by domain"""
         project = await ProjectFactory.create(db_session)
@@ -153,7 +153,7 @@ class TestTechnologiesAPI:
         )
 
         # Filter by AI_ML domain
-        response = await async_client.get(f"/technologies/?project_id={project.id}&domain=ai-ml")
+        response = await api_client.get(f"/technologies/?project_id={project.id}&domain=ai-ml")
 
         assert response.status_code == 200
         data = response.json()
@@ -161,7 +161,7 @@ class TestTechnologiesAPI:
         assert all(item["domain"] == "ai-ml" for item in data["items"])
 
     async def test_filter_technologies_by_status(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test filtering technologies by status"""
         project = await ProjectFactory.create(db_session)
@@ -187,7 +187,7 @@ class TestTechnologiesAPI:
         )
 
         # Filter by IMPLEMENTATION status
-        response = await async_client.get(
+        response = await api_client.get(
             f"/technologies/?project_id={project.id}&status=implementation"
         )
 
@@ -197,7 +197,7 @@ class TestTechnologiesAPI:
         assert all(item["status"] == "implementation" for item in data["items"])
 
     async def test_create_technology_validation_error(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test technology creation with invalid data"""
         project = await ProjectFactory.create(db_session)
@@ -208,14 +208,14 @@ class TestTechnologiesAPI:
             "relevance_score": 150,  # Invalid: must be <= 100
         }
 
-        response = await async_client.post(
+        response = await api_client.post(
             f"/technologies/?project_id={project.id}", json=invalid_data
         )
 
         assert response.status_code == 422  # Validation error
 
-    async def test_get_nonexistent_technology(self, async_client: AsyncClient):
+    async def test_get_nonexistent_technology(self, api_client: AsyncClient):
         """Test getting a technology that doesn't exist"""
-        response = await async_client.get("/technologies/99999")
+        response = await api_client.get("/technologies/99999")
 
         assert response.status_code == 404

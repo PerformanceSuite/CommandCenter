@@ -4,6 +4,7 @@ Pytest configuration and shared fixtures
 
 import asyncio
 import os
+from datetime import timedelta
 from typing import AsyncGenerator, Generator
 
 import pytest
@@ -11,6 +12,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from app.auth.jwt import create_access_token
 from app.config import settings  # noqa: F401
 from app.database import Base, get_db
 from app.main import app
@@ -94,6 +96,25 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
 async def client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
     """Alias for async_client for compatibility"""
     yield async_client
+
+
+# API client with /api/v1 prefix for integration tests
+@pytest.fixture(scope="function")
+async def api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Async client with /api/v1 prefix for testing API endpoints"""
+    from httpx import ASGITransport
+
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test/api/v1"
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 # Authentication fixtures
@@ -225,3 +246,62 @@ async def sample_project(db_session: AsyncSession):
     await db_session.commit()
     await db_session.refresh(project)
     return project
+
+
+# Shared authentication fixtures
+@pytest.fixture
+def jwt_token_factory():
+    """Factory for creating test JWT tokens.
+
+    Args:
+        user_id: User ID to encode in token
+        expires_delta: Token expiration time (default: 30 minutes)
+        tampered: Whether to tamper with token
+        tamper_type: Type of tampering ("signature" or "payload")
+
+    Returns:
+        JWT token string
+    """
+
+    def _create_token(
+        user_id: str,
+        expires_delta: timedelta = None,
+        tampered: bool = False,
+        tamper_type: str = "signature",
+    ):
+        if expires_delta is None:
+            expires_delta = timedelta(minutes=30)
+
+        token = create_access_token(data={"sub": user_id}, expires_delta=expires_delta)
+
+        if tampered:
+            parts = token.split(".")
+            if tamper_type == "signature":
+                # Modify signature (last part)
+                parts[2] = parts[2][:-5] + "XXXXX"
+            elif tamper_type == "payload":
+                # Modify payload (middle part)
+                parts[1] = parts[1][:-5] + "XXXXX"
+            token = ".".join(parts)
+
+        return token
+
+    return _create_token
+
+
+@pytest.fixture
+def auth_headers_factory(jwt_token_factory):
+    """Create authorization headers for user.
+
+    Args:
+        user: User object to create token for
+
+    Returns:
+        Dictionary with Authorization header
+    """
+
+    def _create_headers(user):
+        token = jwt_token_factory(user_id=str(user.id))
+        return {"Authorization": f"Bearer {token}"}
+
+    return _create_headers

@@ -4,14 +4,12 @@ Integration tests for KnowledgeBeast-enabled knowledge router
 Tests the full API integration with KnowledgeBeast when feature flag is enabled.
 """
 
-from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from httpx import AsyncClient
 
 from app.config import settings
-from app.main import app
 
 
 @pytest.fixture
@@ -92,11 +90,11 @@ class TestKnowledgeQueryWithKB:
     """Test /api/v1/knowledge/query endpoint with KnowledgeBeast"""
 
     async def test_query_hybrid_mode(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test hybrid search mode"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "What is machine learning?", "limit": 5},
                 params={"mode": "hybrid", "alpha": 0.7},
@@ -111,11 +109,11 @@ class TestKnowledgeQueryWithKB:
         assert results[0]["category"] == "ai"
 
     async def test_query_vector_mode(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test vector search mode"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "machine learning", "limit": 10},
                 params={"mode": "vector", "alpha": 1.0},
@@ -126,11 +124,11 @@ class TestKnowledgeQueryWithKB:
         assert len(results) > 0
 
     async def test_query_keyword_mode(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test keyword search mode"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "machine learning", "limit": 5},
                 params={"mode": "keyword", "alpha": 0.0},
@@ -141,11 +139,11 @@ class TestKnowledgeQueryWithKB:
         assert isinstance(results, list)
 
     async def test_query_with_category_filter(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test query with category filter"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "AI concepts", "category": "ai", "limit": 5},
                 params={"mode": "hybrid"},
@@ -154,11 +152,11 @@ class TestKnowledgeQueryWithKB:
         assert response.status_code == 200
 
     async def test_query_with_project_id(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test query with explicit project_id"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "test query", "limit": 5},
                 params={"project_id": 42, "mode": "hybrid"},
@@ -172,11 +170,11 @@ class TestKnowledgeStatisticsWithKB:
     """Test /api/v1/knowledge/statistics with KnowledgeBeast"""
 
     async def test_get_statistics(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test getting KB statistics"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.get("/api/v1/knowledge/statistics")
+            response = await api_client.get("/api/v1/knowledge/statistics")
 
         assert response.status_code == 200
         stats = response.json()
@@ -190,21 +188,21 @@ class TestFeatureFlagToggle:
     """Test feature flag behavior"""
 
     async def test_uses_kb_when_enabled(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test that KnowledgeBeast is used when flag is enabled"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
             with patch("app.routers.knowledge.KnowledgeBeastService") as kb_mock:
                 kb_mock.return_value = mock_kb_service
 
-                response = await async_client.post(
+                response = await api_client.post(
                     "/api/v1/knowledge/query", json={"query": "test", "limit": 5}
                 )
 
                 # KnowledgeBeastService should have been instantiated
                 assert kb_mock.called or response.status_code == 200
 
-    async def test_uses_rag_when_disabled(self, async_client: AsyncClient, mock_kb_service):
+    async def test_uses_rag_when_disabled(self, api_client: AsyncClient, mock_kb_service):
         """Test that legacy RAG is used when flag is disabled"""
         # Feature flag is disabled by default
         settings.use_knowledgebeast = False
@@ -219,7 +217,7 @@ class TestFeatureFlagToggle:
             rag_service.query = mock_rag_query
             rag_mock.return_value = rag_service
 
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query", json={"query": "test", "limit": 5}
             )
 
@@ -232,11 +230,11 @@ class TestBackwardCompatibility:
     """Test backward compatibility with legacy API"""
 
     async def test_query_without_new_params(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test query without mode/alpha parameters (backward compat)"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query", json={"query": "test", "limit": 5}
             )
 
@@ -244,11 +242,11 @@ class TestBackwardCompatibility:
         assert response.status_code == 200
 
     async def test_legacy_collection_param(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test legacy collection parameter still works"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "test", "limit": 5},
                 params={"collection": "default"},
@@ -261,13 +259,11 @@ class TestBackwardCompatibility:
 class TestErrorHandling:
     """Test error handling with KnowledgeBeast"""
 
-    async def test_kb_not_available_fallback(
-        self, async_client: AsyncClient, enable_knowledgebeast
-    ):
+    async def test_kb_not_available_fallback(self, api_client: AsyncClient, enable_knowledgebeast):
         """Test graceful fallback when KB not available"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", False):
             # Should fall back to RAG service
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query", json={"query": "test", "limit": 5}
             )
 
@@ -275,7 +271,7 @@ class TestErrorHandling:
             assert response.status_code in [200, 500]
 
     async def test_invalid_mode_parameter(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test handling of invalid mode parameter"""
 
@@ -288,7 +284,7 @@ class TestErrorHandling:
         mock_kb_service.query = mock_query_error
 
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
-            response = await async_client.post(
+            response = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "test", "limit": 5},
                 params={"mode": "invalid_mode"},
@@ -303,19 +299,19 @@ class TestCaching:
     """Test caching behavior with KnowledgeBeast"""
 
     async def test_cache_key_includes_mode_and_alpha(
-        self, async_client: AsyncClient, enable_knowledgebeast, mock_kb_service
+        self, api_client: AsyncClient, enable_knowledgebeast, mock_kb_service
     ):
         """Test that cache key includes mode and alpha parameters"""
         with patch("app.services.knowledgebeast_service.KNOWLEDGEBEAST_AVAILABLE", True):
             # First request
-            response1 = await async_client.post(
+            response1 = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "test", "limit": 5},
                 params={"mode": "hybrid", "alpha": 0.7},
             )
 
             # Same query, different mode (should not use same cache)
-            response2 = await async_client.post(
+            response2 = await api_client.post(
                 "/api/v1/knowledge/query",
                 json={"query": "test", "limit": 5},
                 params={"mode": "vector", "alpha": 1.0},

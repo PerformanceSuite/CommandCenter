@@ -18,7 +18,7 @@ class TestQueryComments:
 
     @pytest.mark.asyncio
     async def test_query_comments_include_request_id(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """
         Test that API requests result in SQL queries with request_id comments.
@@ -33,7 +33,7 @@ class TestQueryComments:
         request_id = f"test-query-comment-{uuid.uuid4()}"
 
         # Make API request that triggers database query
-        response = await async_client.get(
+        response = await api_client.get(
             "/api/v1/repositories", headers={"X-Request-ID": request_id}
         )
         assert response.status_code == 200
@@ -48,15 +48,15 @@ class TestQueryComments:
 
         # Verify at least one query has our comment
         assert len(queries) > 0, (
-            f"No queries found with request_id comment. "
-            f"Check that pg_stat_statements is enabled and "
-            f"query comment injection is working."
+            "No queries found with request_id comment. "
+            "Check that pg_stat_statements is enabled and "
+            "query comment injection is working."
         )
         assert request_id in queries[0][0], "Query comment does not contain expected request_id"
 
     @pytest.mark.asyncio
     async def test_query_comments_without_request_id(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """
         Test that queries without X-Request-ID header still work.
@@ -65,7 +65,7 @@ class TestQueryComments:
         even when no request_id is provided.
         """
         # Make request without X-Request-ID header
-        response = await async_client.get("/api/v1/repositories")
+        response = await api_client.get("/api/v1/repositories")
         assert response.status_code == 200
 
         # Query should execute successfully even without comment
@@ -73,9 +73,7 @@ class TestQueryComments:
         assert result.fetchone()[0] == 1
 
     @pytest.mark.asyncio
-    async def test_query_comment_overhead(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_query_comment_overhead(self, api_client: AsyncClient, db_session: AsyncSession):
         """
         Test that query comment injection has minimal performance overhead.
 
@@ -86,15 +84,13 @@ class TestQueryComments:
         # Baseline: 100 queries without request_id
         start = time.perf_counter()
         for _ in range(100):
-            await async_client.get("/api/v1/repositories")
+            await api_client.get("/api/v1/repositories")
         baseline_duration = time.perf_counter() - start
 
         # With comments: 100 queries with request_id
         start = time.perf_counter()
         for i in range(100):
-            await async_client.get(
-                "/api/v1/repositories", headers={"X-Request-ID": f"perf-test-{i}"}
-            )
+            await api_client.get("/api/v1/repositories", headers={"X-Request-ID": f"perf-test-{i}"})
         comment_duration = time.perf_counter() - start
 
         # Calculate overhead percentage
@@ -105,7 +101,7 @@ class TestQueryComments:
 
     @pytest.mark.asyncio
     async def test_query_comments_in_transactions(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """
         Test that query comments work correctly in multi-query transactions.
@@ -116,7 +112,7 @@ class TestQueryComments:
 
         # Make request that triggers multiple queries in a transaction
         # (e.g., creating a repository which may insert multiple rows)
-        response = await async_client.post(
+        response = await api_client.post(
             "/api/v1/repositories",
             headers={"X-Request-ID": request_id},
             json={"url": "https://github.com/test/repo", "access_token": "test_token_123"},
@@ -137,7 +133,7 @@ class TestQueryComments:
 
     @pytest.mark.asyncio
     async def test_query_comments_sql_injection_safety(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """
         Test that malicious request_ids cannot inject SQL.
@@ -148,7 +144,7 @@ class TestQueryComments:
         malicious_request_id = "test'); DROP TABLE repositories; --"
 
         # Make request with malicious header
-        response = await async_client.get(
+        response = await api_client.get(
             "/api/v1/repositories", headers={"X-Request-ID": malicious_request_id}
         )
         assert response.status_code == 200
@@ -162,7 +158,7 @@ class TestQueryComments:
 
     @pytest.mark.asyncio
     async def test_query_comments_unicode_safety(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """
         Test that unicode characters in request_ids are handled safely.
@@ -173,7 +169,7 @@ class TestQueryComments:
         unicode_request_id = f"test-unicode-{uuid.uuid4()}-émoji-🚀-中文"
 
         # Make request with unicode request_id
-        response = await async_client.get(
+        response = await api_client.get(
             "/api/v1/repositories", headers={"X-Request-ID": unicode_request_id}
         )
         assert response.status_code == 200

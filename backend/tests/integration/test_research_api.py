@@ -14,7 +14,7 @@ from app.models.research_task import ResearchTask
 class TestResearchAPI:
     """Test Research Task API endpoints"""
 
-    async def test_create_research_task(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_create_research_task(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test creating a research task"""
         project = await ProjectFactory.create(db_session)
         tech = await TechnologyFactory.create(db=db_session, project_id=project.id)
@@ -26,7 +26,7 @@ class TestResearchAPI:
             "technology_id": tech.id,
         }
 
-        response = await async_client.post(
+        response = await api_client.post(
             f"/research-tasks/?project_id={project.id}", json=task_data
         )
 
@@ -37,7 +37,7 @@ class TestResearchAPI:
         assert data["technology_id"] == tech.id
         assert "id" in data
 
-    async def test_list_research_tasks(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_list_research_tasks(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test listing research tasks"""
         project = await ProjectFactory.create(db_session)
 
@@ -59,16 +59,14 @@ class TestResearchAPI:
         await db_session.commit()
 
         # List tasks
-        response = await async_client.get(f"/research-tasks/?project_id={project.id}")
+        response = await api_client.get(f"/research-tasks/?project_id={project.id}")
 
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
         assert len(data) >= 2
 
-    async def test_get_research_task_by_id(
-        self, async_client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_get_research_task_by_id(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test getting a specific research task"""
         project = await ProjectFactory.create(db_session)
 
@@ -83,7 +81,7 @@ class TestResearchAPI:
         await db_session.refresh(task)
 
         # Get task
-        response = await async_client.get(f"/research-tasks/{task.id}")
+        response = await api_client.get(f"/research-tasks/{task.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -92,7 +90,7 @@ class TestResearchAPI:
         assert data["status"] == "pending"
 
     async def test_update_research_task_status(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test updating research task status"""
         project = await ProjectFactory.create(db_session)
@@ -110,14 +108,14 @@ class TestResearchAPI:
         # Update status
         update_data = {"status": "completed"}
 
-        response = await async_client.patch(f"/research-tasks/{task.id}", json=update_data)
+        response = await api_client.patch(f"/research-tasks/{task.id}", json=update_data)
 
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "completed"
         assert data["title"] == "Task to Update"  # Unchanged
 
-    async def test_delete_research_task(self, async_client: AsyncClient, db_session: AsyncSession):
+    async def test_delete_research_task(self, api_client: AsyncClient, db_session: AsyncSession):
         """Test deleting a research task"""
         project = await ProjectFactory.create(db_session)
 
@@ -132,16 +130,16 @@ class TestResearchAPI:
         await db_session.refresh(task)
 
         # Delete task
-        response = await async_client.delete(f"/research-tasks/{task.id}")
+        response = await api_client.delete(f"/research-tasks/{task.id}")
 
         assert response.status_code == 204
 
         # Verify deletion
-        response = await async_client.get(f"/research-tasks/{task.id}")
+        response = await api_client.get(f"/research-tasks/{task.id}")
         assert response.status_code == 404
 
     async def test_filter_research_tasks_by_status(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test filtering research tasks by status"""
         project = await ProjectFactory.create(db_session)
@@ -169,16 +167,14 @@ class TestResearchAPI:
         await db_session.commit()
 
         # Filter by pending status
-        response = await async_client.get(
-            f"/research-tasks/?project_id={project.id}&status=pending"
-        )
+        response = await api_client.get(f"/research-tasks/?project_id={project.id}&status=pending")
 
         assert response.status_code == 200
         data = response.json()
         assert len([t for t in data if t["status"] == "pending"]) >= 2
 
     async def test_filter_research_tasks_by_technology(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test filtering research tasks by technology"""
         project = await ProjectFactory.create(db_session)
@@ -202,7 +198,7 @@ class TestResearchAPI:
         await db_session.commit()
 
         # Filter by technology
-        response = await async_client.get(
+        response = await api_client.get(
             f"/research-tasks/?project_id={project.id}&technology_id={tech.id}"
         )
 
@@ -211,7 +207,7 @@ class TestResearchAPI:
         assert len([t for t in data if t.get("technology_id") == tech.id]) >= 1
 
     async def test_create_research_task_validation(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test research task creation validation"""
         project = await ProjectFactory.create(db_session)
@@ -221,14 +217,14 @@ class TestResearchAPI:
             "description": "Missing title",
         }
 
-        response = await async_client.post(
+        response = await api_client.post(
             f"/research-tasks/?project_id={project.id}", json=invalid_data
         )
 
         assert response.status_code == 422  # Validation error
 
-    async def test_get_nonexistent_research_task(self, async_client: AsyncClient):
+    async def test_get_nonexistent_research_task(self, api_client: AsyncClient):
         """Test getting a task that doesn't exist"""
-        response = await async_client.get("/research-tasks/99999")
+        response = await api_client.get("/research-tasks/99999")
 
         assert response.status_code == 404
