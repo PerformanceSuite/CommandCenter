@@ -6,19 +6,24 @@ multiple AI models (Claude, Gemini, GPT) in structured debates.
 
 Example:
     from libs.llm_gateway import LLMGateway
-    from libs.ai_arena import AgentRegistry, AnalystAgent
+    from libs.ai_arena import AgentRegistry, DebateOrchestrator
 
     gateway = LLMGateway()
     registry = AgentRegistry(gateway)
 
     # Create default debate team
-    registry.create_default_team()
+    agents = registry.create_default_team()
 
-    # Or create individual agents
-    analyst = AnalystAgent(gateway)
-    response = await analyst.respond("What is the market size for X?")
-    print(response.answer)
-    print(f"Confidence: {response.confidence}%")
+    # Run a debate
+    orchestrator = DebateOrchestrator(agents)
+    result = await orchestrator.debate(
+        question="Should we expand into Europe?",
+        context="Current revenue is $10M from US customers.",
+    )
+
+    print(f"Answer: {result.final_answer}")
+    print(f"Consensus: {result.consensus_level.value}")
+    print(f"Confidence: {result.final_confidence}%")
 """
 
 from .agents import (
@@ -29,6 +34,19 @@ from .agents import (
     CriticAgent,
     ResearcherAgent,
     StrategistAgent,
+)
+from .debate import (
+    ConsensusDetector,
+    ConsensusLevel,
+    ConsensusResult,
+    DebateConfig,
+    DebateError,
+    DebateOrchestrator,
+    DebateResult,
+    DebateRound,
+    DebateStatus,
+    DebateTimeoutError,
+    run_quick_debate,
 )
 from .registry import AGENT_TYPES, AgentRegistry
 
@@ -45,4 +63,16 @@ __all__ = [
     "ResearcherAgent",
     "StrategistAgent",
     "CriticAgent",
+    # Debate orchestration
+    "DebateOrchestrator",
+    "DebateConfig",
+    "DebateResult",
+    "DebateRound",
+    "DebateStatus",
+    "ConsensusLevel",
+    "ConsensusDetector",
+    "ConsensusResult",
+    "DebateError",
+    "DebateTimeoutError",
+    "run_quick_debate",
 ]
