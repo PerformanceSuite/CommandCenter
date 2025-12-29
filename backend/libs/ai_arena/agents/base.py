@@ -239,14 +239,7 @@ class BaseAgent(ABC):
 
     def _parse_response(self, content: str) -> AgentResponse:
         """Parse LLM response into structured AgentResponse."""
-        # Try to extract JSON from the response
-        json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", content)
-        if json_match:
-            json_str = json_match.group(1).strip()
-        else:
-            # Try to parse the entire content as JSON
-            json_str = content.strip()
-
+        json_str = self._extract_json(content)
         data = json.loads(json_str)
 
         # Validate confidence is in range
@@ -261,6 +254,52 @@ class BaseAgent(ABC):
             agent_name="",  # Will be set by caller
             model="",  # Will be set by caller
         )
+
+    def _extract_json(self, content: str) -> str:
+        """
+        Extract JSON from LLM response, handling various formats.
+
+        Handles:
+        - JSON wrapped in ```json ... ``` code blocks
+        - JSON wrapped in ``` ... ``` code blocks (no language tag)
+        - JSON with opening backticks but no closing (truncated responses)
+        - Plain JSON without code blocks
+        """
+        content = content.strip()
+
+        # Pattern 1: Complete markdown code block with closing backticks
+        json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", content)
+        if json_match:
+            return json_match.group(1).strip()
+
+        # Pattern 2: Opening code fence without closing (truncated response)
+        # Match ```json or ``` followed by content
+        fence_match = re.search(r"```(?:json)?\s*([\s\S]*)", content)
+        if fence_match:
+            json_content = fence_match.group(1).strip()
+            # Find where JSON object/array starts
+            brace_start = json_content.find("{")
+            bracket_start = json_content.find("[")
+            if brace_start >= 0 or bracket_start >= 0:
+                # Take the earlier one if both exist
+                if brace_start >= 0 and bracket_start >= 0:
+                    start = min(brace_start, bracket_start)
+                else:
+                    start = brace_start if brace_start >= 0 else bracket_start
+                return json_content[start:]
+
+        # Pattern 3: No code fences - try to find JSON object/array directly
+        brace_start = content.find("{")
+        bracket_start = content.find("[")
+        if brace_start >= 0 or bracket_start >= 0:
+            if brace_start >= 0 and bracket_start >= 0:
+                start = min(brace_start, bracket_start)
+            else:
+                start = brace_start if brace_start >= 0 else bracket_start
+            return content[start:]
+
+        # Fallback: return entire content and let json.loads fail with clear error
+        return content
 
     def get_config(self) -> AgentConfig:
         """Get the current configuration of this agent."""
