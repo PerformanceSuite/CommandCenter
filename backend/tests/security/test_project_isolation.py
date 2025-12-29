@@ -15,7 +15,7 @@ async def test_user_cannot_read_other_user_technologies(
     """User A cannot see User B's technologies."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session, title="Secret Tech B", domain="ai", project_id=user_b.project_id
+        db_session, title="Secret Tech B", domain="ai-ml", project_id=user_b.project_id
     )
     await db_session.commit()
 
@@ -36,7 +36,7 @@ async def test_user_cannot_modify_other_user_technologies(
     """User A cannot update User B's technology."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session, title="Tech B", domain="cloud", project_id=user_b.project_id
+        db_session, title="Tech B", domain="infrastructure", project_id=user_b.project_id
     )
     await db_session.commit()
 
@@ -60,7 +60,7 @@ async def test_user_cannot_delete_other_user_technologies(
     """User A cannot delete User B's technology."""
     # Create technology for User B
     tech_b = await TechnologyFactory.create(
-        db_session, title="Tech B Delete", domain="audio", project_id=user_b.project_id
+        db_session, title="Tech B Delete", domain="audio-dsp", project_id=user_b.project_id
     )
     await db_session.commit()
 
@@ -127,7 +127,10 @@ async def test_user_cannot_read_other_user_knowledge_entries(
     """User A cannot see User B's knowledge entries."""
     # Create knowledge entry for User B
     knowledge_b = await KnowledgeEntryFactory.create(
-        db_session, source="confidential.pdf", category="research", project_id=user_b.project_id
+        db_session,
+        source_file="confidential.pdf",
+        category="research",
+        project_id=user_b.project_id,
     )
     await db_session.commit()
 
