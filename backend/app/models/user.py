@@ -54,9 +54,9 @@ class User(Base):
         try:
             # Allow test domains (example.com, test.com) in test environment
             is_test_env = os.getenv("ENVIRONMENT") == "test"
-            # Validate and normalize the email
+            # Validate and normalize the email (lowercase for consistency)
             validated = validate_email(email, test_environment=is_test_env)
-            return validated.normalized
+            return validated.normalized.lower()
         except EmailNotValidError as e:
             raise ValueError(f"Invalid email address: {e}")
 
