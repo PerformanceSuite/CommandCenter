@@ -19,6 +19,54 @@ from pydantic import BaseModel, ConfigDict, Field
 # Request Schemas
 
 
+class HypothesisCreateRequest(BaseModel):
+    """Request to create a new hypothesis."""
+
+    statement: str = Field(
+        ...,
+        min_length=10,
+        description="The hypothesis statement",
+    )
+    category: HypothesisCategory
+    impact: ImpactLevel
+    risk: RiskLevel
+    testability: TestabilityLevel
+    success_criteria: str = Field(
+        ...,
+        min_length=5,
+        description="What would validate this hypothesis",
+    )
+    context: str | None = Field(default=None, description="Additional context")
+    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class HypothesisUpdateRequest(BaseModel):
+    """Request to update an existing hypothesis."""
+
+    statement: str | None = None
+    category: HypothesisCategory | None = None
+    impact: ImpactLevel | None = None
+    risk: RiskLevel | None = None
+    testability: TestabilityLevel | None = None
+    status: HypothesisStatus | None = None
+    success_criteria: str | None = None
+    context: str | None = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class EvidenceCreateRequest(BaseModel):
+    """Request to add evidence to a hypothesis."""
+
+    source: str = Field(..., description="Source of evidence (URL, interview, etc.)")
+    content: str = Field(..., description="Summary of the evidence")
+    supports: bool = Field(..., description="True if supports hypothesis")
+    confidence: int = Field(default=70, ge=0, le=100, description="Confidence 0-100")
+    collected_by: str = Field(default="api", description="Who collected this evidence")
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class HypothesisValidateRequest(BaseModel):
     """Request to validate a hypothesis via AI debate."""
 
@@ -231,3 +279,35 @@ class EvidenceStatsResponse(BaseModel):
     average_confidence: float
     by_source_type: dict[str, int]
     by_collector: dict[str, int]
+
+
+# Cost Tracking Schemas
+
+
+class ProviderTokensResponse(BaseModel):
+    """Token usage for a provider."""
+
+    input: int
+    output: int
+    total: int
+
+
+class ProviderRequestsResponse(BaseModel):
+    """Request counts for a provider."""
+
+    success: int
+    error: int
+    total: int
+
+
+class CostStatsResponse(BaseModel):
+    """LLM cost and usage statistics."""
+
+    total_cost: float = Field(description="Total cost in USD")
+    total_input_tokens: int
+    total_output_tokens: int
+    total_tokens: int
+    total_requests: int
+    cost_by_provider: dict[str, float]
+    tokens_by_provider: dict[str, ProviderTokensResponse]
+    requests_by_provider: dict[str, ProviderRequestsResponse]

@@ -7,7 +7,14 @@ Provides REST API for the AI Arena hypothesis validation system.
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
-from libs.ai_arena.hypothesis.schema import Hypothesis, HypothesisCategory, HypothesisStatus
+from libs.ai_arena.hypothesis.schema import (
+    Hypothesis,
+    HypothesisCategory,
+    HypothesisCreate,
+    HypothesisEvidence,
+    HypothesisStatus,
+    HypothesisUpdate,
+)
 from libs.llm_gateway.metrics import get_cost_statistics
 
 from app.schemas.hypothesis import (
@@ -15,14 +22,17 @@ from app.schemas.hypothesis import (
     CostStatsResponse,
     DebateResultResponse,
     DebateRoundSchema,
+    EvidenceCreateRequest,
     EvidenceItemResponse,
     EvidenceListResponse,
     EvidenceStatsResponse,
+    HypothesisCreateRequest,
     HypothesisDetailResponse,
     HypothesisEvidenceResponse,
     HypothesisListResponse,
     HypothesisStatsResponse,
     HypothesisSummaryResponse,
+    HypothesisUpdateRequest,
     HypothesisValidateRequest,
     ValidationStatusResponse,
     ValidationTaskResponse,
@@ -112,6 +122,24 @@ async def list_hypotheses(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("/", response_model=HypothesisDetailResponse, status_code=status.HTTP_201_CREATED)
+async def create_hypothesis(request: HypothesisCreateRequest) -> HypothesisDetailResponse:
+    """Create a new hypothesis."""
+    create_data = HypothesisCreate(
+        statement=request.statement,
+        category=request.category,
+        impact=request.impact,
+        risk=request.risk,
+        testability=request.testability,
+        success_criteria=request.success_criteria,
+        context=request.context,
+        tags=request.tags,
+        metadata=request.metadata,
+    )
+    hypothesis = await hypothesis_service.create_hypothesis(create_data)
+    return _to_detail_response(hypothesis)
 
 
 @router.get("/stats", response_model=HypothesisStatsResponse)
@@ -299,6 +327,58 @@ async def get_debate_result(task_id: str) -> DebateResultResponse:
 async def get_hypothesis(hypothesis_id: str) -> HypothesisDetailResponse:
     """Get detailed hypothesis information including evidence."""
     hypothesis = await hypothesis_service.get_hypothesis(hypothesis_id)
+    if not hypothesis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hypothesis not found: {hypothesis_id}",
+        )
+    return _to_detail_response(hypothesis)
+
+
+@router.patch("/{hypothesis_id}", response_model=HypothesisDetailResponse)
+async def update_hypothesis(
+    hypothesis_id: str, request: HypothesisUpdateRequest
+) -> HypothesisDetailResponse:
+    """Update an existing hypothesis."""
+    update_data = HypothesisUpdate(**request.model_dump(exclude_unset=True))
+    hypothesis = await hypothesis_service.update_hypothesis(hypothesis_id, update_data)
+    if not hypothesis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hypothesis not found: {hypothesis_id}",
+        )
+    return _to_detail_response(hypothesis)
+
+
+@router.delete("/{hypothesis_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_hypothesis(hypothesis_id: str) -> None:
+    """Delete a hypothesis."""
+    deleted = await hypothesis_service.delete_hypothesis(hypothesis_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hypothesis not found: {hypothesis_id}",
+        )
+
+
+@router.post(
+    "/{hypothesis_id}/evidence",
+    response_model=HypothesisDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_evidence(
+    hypothesis_id: str, request: EvidenceCreateRequest
+) -> HypothesisDetailResponse:
+    """Add evidence to a hypothesis."""
+    evidence = HypothesisEvidence(
+        source=request.source,
+        content=request.content,
+        supports=request.supports,
+        confidence=request.confidence,
+        collected_by=request.collected_by,
+        metadata=request.metadata,
+    )
+    hypothesis = await hypothesis_service.add_evidence(hypothesis_id, evidence)
     if not hypothesis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

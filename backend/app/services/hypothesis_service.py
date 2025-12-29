@@ -12,7 +12,14 @@ from typing import Any
 
 import structlog
 from libs.ai_arena.hypothesis.registry import HypothesisRegistry
-from libs.ai_arena.hypothesis.schema import Hypothesis, HypothesisCategory, HypothesisStatus
+from libs.ai_arena.hypothesis.schema import (
+    Hypothesis,
+    HypothesisCategory,
+    HypothesisCreate,
+    HypothesisEvidence,
+    HypothesisStatus,
+    HypothesisUpdate,
+)
 
 from app.services.redis_service import redis_service
 
@@ -113,6 +120,26 @@ class HypothesisService:
     async def get_hypothesis(self, hypothesis_id: str) -> Hypothesis | None:
         """Get a single hypothesis by ID."""
         return self.registry.get(hypothesis_id)
+
+    async def create_hypothesis(self, data: HypothesisCreate) -> Hypothesis:
+        """Create a new hypothesis."""
+        return self.registry.create(data)
+
+    async def update_hypothesis(
+        self, hypothesis_id: str, data: HypothesisUpdate
+    ) -> Hypothesis | None:
+        """Update an existing hypothesis."""
+        return self.registry.update(hypothesis_id, data)
+
+    async def delete_hypothesis(self, hypothesis_id: str) -> bool:
+        """Delete a hypothesis."""
+        return self.registry.delete(hypothesis_id)
+
+    async def add_evidence(
+        self, hypothesis_id: str, evidence: HypothesisEvidence
+    ) -> Hypothesis | None:
+        """Add evidence to a hypothesis."""
+        return self.registry.add_evidence(hypothesis_id, evidence)
 
     async def get_statistics(self) -> dict[str, Any]:
         """Get dashboard statistics."""
