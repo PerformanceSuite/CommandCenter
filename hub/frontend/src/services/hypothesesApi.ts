@@ -1,6 +1,10 @@
 // Hypothesis Dashboard API Client
 
 import type {
+  DebateResult,
+  EvidenceFilters,
+  EvidenceListResponse,
+  EvidenceStats,
   HypothesisDetail,
   HypothesisFilters,
   HypothesisListResponse,
@@ -86,6 +90,38 @@ export const hypothesesApi = {
    */
   getValidationTask: (taskId: string): Promise<ValidationStatus> =>
     fetchJSON(`${API_BASE}/hypotheses/validation/${taskId}`),
+
+  /**
+   * Get full debate result for a completed validation task
+   */
+  getDebateResult: (taskId: string): Promise<DebateResult> =>
+    fetchJSON(`${API_BASE}/hypotheses/validation/${taskId}/debate`),
+
+  // Evidence Explorer endpoints
+
+  /**
+   * List all evidence across hypotheses with optional filtering
+   */
+  listEvidence: (
+    filters?: EvidenceFilters,
+    limit = 50,
+    offset = 0
+  ): Promise<EvidenceListResponse> => {
+    const params = new URLSearchParams();
+    if (filters?.supports !== undefined) params.set('supports', String(filters.supports));
+    if (filters?.source) params.set('source', filters.source);
+    if (filters?.min_confidence !== undefined) params.set('min_confidence', String(filters.min_confidence));
+    params.set('limit', limit.toString());
+    params.set('offset', offset.toString());
+
+    return fetchJSON(`${API_BASE}/hypotheses/evidence/list?${params}`);
+  },
+
+  /**
+   * Get evidence statistics
+   */
+  getEvidenceStats: (): Promise<EvidenceStats> =>
+    fetchJSON(`${API_BASE}/hypotheses/evidence/stats`),
 };
 
 export default hypothesesApi;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { ValidationStatus, HypothesisSummary } from '../../types/hypothesis';
+import type { ValidationStatus, HypothesisSummary, DebateResult } from '../../types/hypothesis';
 import hypothesesApi from '../../services/hypothesesApi';
+import { DebateViewer } from '../DebateViewer';
 
 interface ValidationModalProps {
   hypothesis: HypothesisSummary;
@@ -30,6 +31,8 @@ export function ValidationModal({
   const [taskId, setTaskId] = useState<string | null>(null);
   const [status, setStatus] = useState<ValidationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [debateResult, setDebateResult] = useState<DebateResult | null>(null);
+  const [loadingDebate, setLoadingDebate] = useState(false);
 
   // Poll for status updates
   useEffect(() => {
@@ -43,6 +46,8 @@ export function ValidationModal({
         if (newStatus.status === 'completed') {
           setState('complete');
           clearInterval(pollInterval);
+          // Fetch the debate result
+          fetchDebateResult(taskId);
         } else if (newStatus.status === 'failed') {
           setError(newStatus.error || 'Validation failed');
           setState('error');
@@ -56,6 +61,20 @@ export function ValidationModal({
     return () => clearInterval(pollInterval);
   }, [taskId, state]);
 
+  // Fetch debate result
+  const fetchDebateResult = async (tid: string) => {
+    setLoadingDebate(true);
+    try {
+      const result = await hypothesesApi.getDebateResult(tid);
+      setDebateResult(result);
+    } catch (err) {
+      console.error('Failed to fetch debate result:', err);
+      // Not critical - modal still shows success
+    } finally {
+      setLoadingDebate(false);
+    }
+  };
+
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +82,8 @@ export function ValidationModal({
       setTaskId(null);
       setStatus(null);
       setError(null);
+      setDebateResult(null);
+      setLoadingDebate(false);
     }
   }, [isOpen]);
 
@@ -90,9 +111,12 @@ export function ValidationModal({
 
   if (!isOpen) return null;
 
+  // Modal is larger when showing results
+  const modalWidth = state === 'complete' ? 'max-w-3xl' : 'max-w-lg';
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-lg w-full max-w-lg mx-4">
+      <div className={`bg-slate-900 border border-slate-700 rounded-lg w-full ${modalWidth} mx-4 max-h-[90vh] flex flex-col`}>
         {/* Header */}
         <div className="border-b border-slate-700 px-6 py-4">
           <h2 className="text-lg font-semibold text-white">Validate Hypothesis</h2>
@@ -100,7 +124,7 @@ export function ValidationModal({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 overflow-y-auto flex-1">
           {state === 'config' && (
             <div className="space-y-4">
               {/* Max Rounds */}
@@ -176,14 +200,31 @@ export function ValidationModal({
           )}
 
           {state === 'complete' && (
-            <div className="text-center py-6">
-              <div className="text-4xl mb-4">
-                {hypothesis.status === 'validated' ? '✅' : hypothesis.status === 'invalidated' ? '❌' : '🔄'}
+            <div className="space-y-4">
+              {/* Success Header */}
+              <div className="text-center py-4">
+                <div className="text-3xl mb-2">
+                  {hypothesis.status === 'validated' ? '✅' : hypothesis.status === 'invalidated' ? '❌' : '🔄'}
+                </div>
+                <div className="text-lg font-semibold text-white">Validation Complete</div>
               </div>
-              <div className="text-xl font-semibold text-white mb-2">Validation Complete</div>
-              <div className="text-slate-400">
-                The hypothesis has been analyzed. Check the results in the dashboard.
-              </div>
+
+              {/* Debate Result */}
+              {loadingDebate && (
+                <div className="text-center py-4">
+                  <div className="text-slate-400 animate-pulse">Loading debate results...</div>
+                </div>
+              )}
+
+              {debateResult && (
+                <DebateViewer debate={debateResult} />
+              )}
+
+              {!loadingDebate && !debateResult && (
+                <div className="text-center py-4 text-slate-500">
+                  Debate details not available
+                </div>
+              )}
             </div>
           )}
 

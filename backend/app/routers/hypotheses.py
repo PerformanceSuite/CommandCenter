@@ -10,6 +10,12 @@ from fastapi import APIRouter, HTTPException, Query, status
 from libs.ai_arena.hypothesis.schema import Hypothesis, HypothesisCategory, HypothesisStatus
 
 from app.schemas.hypothesis import (
+    AgentResponseSchema,
+    DebateResultResponse,
+    DebateRoundSchema,
+    EvidenceItemResponse,
+    EvidenceListResponse,
+    EvidenceStatsResponse,
     HypothesisDetailResponse,
     HypothesisEvidenceResponse,
     HypothesisListResponse,
@@ -219,3 +225,128 @@ async def get_validation_task(task_id: str) -> ValidationStatusResponse:
         ),
         error=task_state.get("error"),
     )
+
+
+@router.get("/validation/{task_id}/debate", response_model=DebateResultResponse)
+async def get_debate_result(task_id: str) -> DebateResultResponse:
+    """
+    Get the full debate result for a completed validation task.
+
+    Returns all rounds, agent responses, and consensus information.
+    """
+    debate_result = await hypothesis_service.get_debate_result(task_id)
+
+    if not debate_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Debate result not found for task: {task_id}",
+        )
+
+    # Convert nested structures to schema objects
+    rounds = [
+        DebateRoundSchema(
+            round_number=r["round_number"],
+            responses=[
+                AgentResponseSchema(
+                    answer=resp["answer"],
+                    reasoning=resp["reasoning"],
+                    confidence=resp["confidence"],
+                    evidence=resp.get("evidence", []),
+                    agent_name=resp["agent_name"],
+                    model=resp["model"],
+                )
+                for resp in r["responses"]
+            ],
+            consensus_level=r.get("consensus_level"),
+            started_at=datetime.fromisoformat(r["started_at"]),
+            completed_at=(
+                datetime.fromisoformat(r["completed_at"]) if r.get("completed_at") else None
+            ),
+            metadata=r.get("metadata", {}),
+        )
+        for r in debate_result.get("rounds", [])
+    ]
+
+    dissenting = [
+        AgentResponseSchema(
+            answer=resp["answer"],
+            reasoning=resp["reasoning"],
+            confidence=resp["confidence"],
+            evidence=resp.get("evidence", []),
+            agent_name=resp["agent_name"],
+            model=resp["model"],
+        )
+        for resp in debate_result.get("dissenting_views", [])
+    ]
+
+    return DebateResultResponse(
+        debate_id=debate_result["debate_id"],
+        question=debate_result["question"],
+        rounds=rounds,
+        final_answer=debate_result["final_answer"],
+        final_confidence=debate_result["final_confidence"],
+        consensus_level=debate_result["consensus_level"],
+        dissenting_views=dissenting,
+        status=debate_result["status"],
+        started_at=datetime.fromisoformat(debate_result["started_at"]),
+        completed_at=(
+            datetime.fromisoformat(debate_result["completed_at"])
+            if debate_result.get("completed_at")
+            else None
+        ),
+        total_cost=debate_result.get("total_cost", 0.0),
+        error_message=debate_result.get("error_message"),
+    )
+
+
+# Evidence Explorer Endpoints
+
+
+@router.get("/evidence/list", response_model=EvidenceListResponse)
+async def list_evidence(
+    supports: bool | None = Query(None, description="Filter by supports (true/false)"),
+    source: str | None = Query(None, description="Filter by source text"),
+    min_confidence: int | None = Query(None, ge=0, le=100, description="Minimum confidence"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> EvidenceListResponse:
+    """
+    List all evidence across all hypotheses with optional filtering.
+
+    Useful for exploring evidence patterns and finding insights.
+    """
+    items, total = await hypothesis_service.list_all_evidence(
+        supports=supports,
+        source_filter=source,
+        min_confidence=min_confidence,
+        limit=limit,
+        offset=offset,
+    )
+
+    return EvidenceListResponse(
+        items=[
+            EvidenceItemResponse(
+                id=e["id"],
+                hypothesis_id=e["hypothesis_id"],
+                hypothesis_statement=e["hypothesis_statement"],
+                source=e["source"],
+                content=e["content"],
+                supports=e["supports"],
+                confidence=e["confidence"],
+                collected_at=datetime.fromisoformat(e["collected_at"]),
+                collected_by=e["collected_by"],
+                metadata=e.get("metadata", {}),
+            )
+            for e in items
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/evidence/stats", response_model=EvidenceStatsResponse)
+async def get_evidence_stats() -> EvidenceStatsResponse:
+    """Get statistics about all evidence across hypotheses."""
+    stats = await hypothesis_service.get_evidence_stats()
+    return EvidenceStatsResponse(**stats)

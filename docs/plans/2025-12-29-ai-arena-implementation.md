@@ -386,10 +386,10 @@ class Hypothesis(BaseModel):
 
 ```
 [x] 5.1 Create AIArena service in frontend (hypothesesApi.ts)
-[ ] 5.2 Build DebateViewer component
+[x] 5.2 Build DebateViewer component
 [x] 5.3 Create HypothesisDashboard
 [x] 5.4 Add real-time debate progress (polling, WebSocket later)
-[ ] 5.5 Build evidence explorer
+[x] 5.5 Build evidence explorer
 [ ] 5.6 Create cost tracking dashboard
 ```
 
@@ -397,19 +397,23 @@ class Hypothesis(BaseModel):
 
 ```
 Backend API:
-- backend/app/schemas/hypothesis.py       # API request/response models
-- backend/app/services/hypothesis_service.py  # Service layer
-- backend/app/routers/hypotheses.py       # REST endpoints
+- backend/app/schemas/hypothesis.py       # API request/response models (+ debate schemas)
+- backend/app/services/hypothesis_service.py  # Service layer (+ debate result storage)
+- backend/app/routers/hypotheses.py       # REST endpoints (+ debate result endpoint)
 
 Frontend:
-- hub/frontend/src/types/hypothesis.ts    # TypeScript types
-- hub/frontend/src/services/hypothesesApi.ts  # API client
+- hub/frontend/src/types/hypothesis.ts    # TypeScript types (+ debate types)
+- hub/frontend/src/services/hypothesesApi.ts  # API client (+ getDebateResult)
 - hub/frontend/src/components/HypothesisDashboard/
   ├── index.tsx           # Main dashboard container
   ├── HypothesisCard.tsx  # Individual hypothesis card
   ├── StatsBar.tsx        # Statistics summary
-  └── ValidationModal.tsx # Validation config/progress modal
-- hub/frontend/src/pages/HypothesesPage.tsx  # Page component
+  └── ValidationModal.tsx # Validation config/progress modal (+ DebateViewer integration)
+- hub/frontend/src/components/DebateViewer/
+  └── index.tsx           # Debate visualization component
+- hub/frontend/src/components/EvidenceExplorer/
+  └── index.tsx           # Evidence browsing/filtering component
+- hub/frontend/src/pages/HypothesesPage.tsx  # Page component (with tabs for Hypotheses/Evidence)
 ```
 
 ---

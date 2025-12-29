@@ -151,3 +151,83 @@ class ValidationResultResponse(BaseModel):
     duration_seconds: float
     total_cost: float
     validated_at: datetime
+
+
+# Debate Response Schemas
+
+
+class AgentResponseSchema(BaseModel):
+    """Response from an AI agent in a debate round."""
+
+    answer: str
+    reasoning: str
+    confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
+    evidence: list[str] = []
+    agent_name: str
+    model: str
+
+
+class DebateRoundSchema(BaseModel):
+    """A single round of debate responses."""
+
+    round_number: int
+    responses: list[AgentResponseSchema]
+    consensus_level: str | None = None
+    started_at: datetime
+    completed_at: datetime | None = None
+    metadata: dict[str, Any] = {}
+
+
+class DebateResultResponse(BaseModel):
+    """Full debate result with all rounds."""
+
+    debate_id: str
+    question: str
+    rounds: list[DebateRoundSchema]
+    final_answer: str
+    final_confidence: float
+    consensus_level: str
+    dissenting_views: list[AgentResponseSchema] = []
+    status: str
+    started_at: datetime
+    completed_at: datetime | None = None
+    total_cost: float = 0.0
+    error_message: str | None = None
+
+
+# Evidence Explorer Schemas
+
+
+class EvidenceItemResponse(BaseModel):
+    """Evidence item with associated hypothesis info."""
+
+    id: str
+    hypothesis_id: str
+    hypothesis_statement: str
+    source: str
+    content: str
+    supports: bool
+    confidence: int
+    collected_at: datetime
+    collected_by: str
+    metadata: dict[str, Any] = {}
+
+
+class EvidenceListResponse(BaseModel):
+    """Paginated list of evidence items."""
+
+    items: list[EvidenceItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class EvidenceStatsResponse(BaseModel):
+    """Statistics about all evidence."""
+
+    total: int
+    supporting: int
+    contradicting: int
+    average_confidence: float
+    by_source_type: dict[str, int]
+    by_collector: dict[str, int]

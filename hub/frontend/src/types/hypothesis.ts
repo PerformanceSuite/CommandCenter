@@ -140,3 +140,137 @@ export const CATEGORY_LABELS: Record<HypothesisCategory, string> = {
   competitive: 'Competitive',
   gtm: 'Go-to-Market',
 };
+
+// Debate types
+
+export type ConsensusLevel = 'strong' | 'moderate' | 'weak' | 'deadlock';
+export type DebateStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'timeout';
+
+export interface AgentResponse {
+  answer: string;
+  reasoning: string;
+  confidence: number; // 0-100
+  evidence: string[];
+  agent_name: string;
+  model: string;
+}
+
+export interface DebateRound {
+  round_number: number;
+  responses: AgentResponse[];
+  consensus_level: ConsensusLevel | null;
+  started_at: string;
+  completed_at: string | null;
+  metadata: {
+    agreement_score?: number;
+    weighted_confidence?: number;
+  };
+}
+
+export interface DebateResult {
+  debate_id: string;
+  question: string;
+  rounds: DebateRound[];
+  final_answer: string;
+  final_confidence: number;
+  consensus_level: ConsensusLevel;
+  dissenting_views: AgentResponse[];
+  status: DebateStatus;
+  started_at: string;
+  completed_at: string | null;
+  total_cost: number;
+  error_message: string | null;
+}
+
+export interface ValidationResultResponse {
+  hypothesis_id: string;
+  status: HypothesisStatus;
+  validation_score: number;
+  consensus_reached: boolean;
+  rounds_taken: number;
+  final_answer: string;
+  reasoning_summary: string;
+  recommendation: string;
+  follow_up_questions: string[];
+  duration_seconds: number;
+  total_cost: number;
+  validated_at: string;
+  debate_result?: DebateResult;
+}
+
+// Agent colors for visualization
+export const AGENT_COLORS: Record<string, string> = {
+  analyst: '#3B82F6',    // blue
+  researcher: '#10B981', // green
+  strategist: '#F59E0B', // amber
+  critic: '#EF4444',     // red
+};
+
+export const CONSENSUS_COLORS: Record<ConsensusLevel, string> = {
+  strong: 'green',
+  moderate: 'blue',
+  weak: 'amber',
+  deadlock: 'red',
+};
+
+export const CONSENSUS_LABELS: Record<ConsensusLevel, string> = {
+  strong: 'Strong Consensus',
+  moderate: 'Moderate Consensus',
+  weak: 'Weak Consensus',
+  deadlock: 'Deadlock',
+};
+
+// Evidence Explorer types
+
+export interface EvidenceItem {
+  id: string;
+  hypothesis_id: string;
+  hypothesis_statement: string;
+  source: string;
+  content: string;
+  supports: boolean;
+  confidence: number;
+  collected_at: string;
+  collected_by: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface EvidenceListResponse {
+  items: EvidenceItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface EvidenceStats {
+  total: number;
+  supporting: number;
+  contradicting: number;
+  average_confidence: number;
+  by_source_type: Record<string, number>;
+  by_collector: Record<string, number>;
+}
+
+export interface EvidenceFilters {
+  supports?: boolean;
+  source?: string;
+  min_confidence?: number;
+}
+
+export const SOURCE_TYPE_LABELS: Record<string, string> = {
+  interview: 'Interviews',
+  survey: 'Surveys',
+  web: 'Web Sources',
+  research: 'Research Reports',
+  ai_debate: 'AI Debates',
+  other: 'Other',
+};
+
+export const SOURCE_TYPE_COLORS: Record<string, string> = {
+  interview: '#8B5CF6',  // purple
+  survey: '#06B6D4',     // cyan
+  web: '#3B82F6',        // blue
+  research: '#10B981',   // green
+  ai_debate: '#F59E0B',  // amber
+  other: '#64748B',      // slate
+};

@@ -193,7 +193,11 @@ class HypothesisService:
                 ),
             )
 
-            # Update final state
+            # Update final state with full debate result
+            debate_result_dict = None
+            if result.debate_result:
+                debate_result_dict = result.debate_result.to_dict()
+
             await ValidationTaskStorage.update(
                 task_id,
                 {
@@ -211,6 +215,7 @@ class HypothesisService:
                         "duration_seconds": result.duration_seconds,
                         "total_cost": result.total_cost,
                     },
+                    "debate_result": debate_result_dict,
                 },
             )
 
@@ -276,6 +281,112 @@ class HypothesisService:
                 return state
 
         return None
+
+    async def get_debate_result(self, task_id: str) -> dict[str, Any] | None:
+        """Get the full debate result for a completed validation task."""
+        state = await ValidationTaskStorage.get(task_id)
+        if not state:
+            return None
+
+        # Return debate result if available
+        return state.get("debate_result")
+
+    async def list_all_evidence(
+        self,
+        supports: bool | None = None,
+        source_filter: str | None = None,
+        min_confidence: int | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """
+        List all evidence across all hypotheses.
+
+        Returns:
+            Tuple of (evidence_items, total_count)
+        """
+        all_evidence: list[dict[str, Any]] = []
+
+        # Collect evidence from all hypotheses
+        for hypothesis in self.registry._hypotheses.values():
+            for evidence in hypothesis.evidence:
+                evidence_dict = {
+                    "id": evidence.id,
+                    "hypothesis_id": hypothesis.id,
+                    "hypothesis_statement": hypothesis.statement[:100],
+                    "source": evidence.source,
+                    "content": evidence.content,
+                    "supports": evidence.supports,
+                    "confidence": evidence.confidence,
+                    "collected_at": evidence.collected_at.isoformat(),
+                    "collected_by": evidence.collected_by,
+                    "metadata": evidence.metadata,
+                }
+                all_evidence.append(evidence_dict)
+
+        # Apply filters
+        if supports is not None:
+            all_evidence = [e for e in all_evidence if e["supports"] == supports]
+        if source_filter:
+            source_lower = source_filter.lower()
+            all_evidence = [e for e in all_evidence if source_lower in e["source"].lower()]
+        if min_confidence is not None:
+            all_evidence = [e for e in all_evidence if e["confidence"] >= min_confidence]
+
+        # Sort by collected_at descending (most recent first)
+        all_evidence.sort(key=lambda e: e["collected_at"], reverse=True)
+
+        total = len(all_evidence)
+        return all_evidence[offset : offset + limit], total
+
+    async def get_evidence_stats(self) -> dict[str, Any]:
+        """Get statistics about all evidence."""
+        supporting = 0
+        contradicting = 0
+        total_confidence = 0
+        count = 0
+        by_source: dict[str, int] = {}
+        by_collector: dict[str, int] = {}
+
+        for hypothesis in self.registry._hypotheses.values():
+            for evidence in hypothesis.evidence:
+                count += 1
+                total_confidence += evidence.confidence
+                if evidence.supports:
+                    supporting += 1
+                else:
+                    contradicting += 1
+
+                # Count by source domain/type
+                source_key = self._extract_source_type(evidence.source)
+                by_source[source_key] = by_source.get(source_key, 0) + 1
+
+                # Count by collector
+                by_collector[evidence.collected_by] = by_collector.get(evidence.collected_by, 0) + 1
+
+        return {
+            "total": count,
+            "supporting": supporting,
+            "contradicting": contradicting,
+            "average_confidence": round(total_confidence / count, 1) if count > 0 else 0,
+            "by_source_type": by_source,
+            "by_collector": by_collector,
+        }
+
+    def _extract_source_type(self, source: str) -> str:
+        """Extract source type from source string."""
+        source_lower = source.lower()
+        if "interview" in source_lower:
+            return "interview"
+        if "survey" in source_lower:
+            return "survey"
+        if any(domain in source_lower for domain in ["http://", "https://", ".com", ".org"]):
+            return "web"
+        if "report" in source_lower or "study" in source_lower:
+            return "research"
+        if "ai_arena" in source_lower or "debate" in source_lower:
+            return "ai_debate"
+        return "other"
 
 
 # Singleton instance
