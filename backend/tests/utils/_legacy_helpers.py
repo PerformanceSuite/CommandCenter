@@ -70,7 +70,7 @@ async def create_test_technology(db: AsyncSession, project_id: int = 1, **kwargs
         "title": "Python",
         "vendor": "Python Software Foundation",
         "domain": TechnologyDomain.AI_ML,
-        "status": TechnologyStatus.INTEGRATED,
+        "status": TechnologyStatus.DISCOVERY,  # Match model default
         "description": "A high-level programming language",
         "relevance_score": 90,
         "priority": 5,
