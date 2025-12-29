@@ -6,6 +6,7 @@ from app.routers import (
     auth,
     batch,
     dashboard,
+    hypotheses,
     knowledge,
     repositories,
     research_tasks,
@@ -20,4 +21,5 @@ __all__ = [
     "knowledge",
     "research_tasks",
     "batch",
+    "hypotheses",
 ]

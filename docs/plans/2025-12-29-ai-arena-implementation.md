@@ -375,7 +375,7 @@ class Hypothesis(BaseModel):
 
 ---
 
-## Phase 5: UI Integration (Week 5-6)
+## Phase 5: UI Integration (Week 5-6) - IN PROGRESS
 
 ### Objectives
 - Add AI Arena to Hub frontend
@@ -385,12 +385,31 @@ class Hypothesis(BaseModel):
 ### Tasks
 
 ```
-[ ] 5.1 Create AIArena service in frontend
+[x] 5.1 Create AIArena service in frontend (hypothesesApi.ts)
 [ ] 5.2 Build DebateViewer component
-[ ] 5.3 Create HypothesisDashboard
-[ ] 5.4 Add real-time debate progress (WebSocket)
+[x] 5.3 Create HypothesisDashboard
+[x] 5.4 Add real-time debate progress (polling, WebSocket later)
 [ ] 5.5 Build evidence explorer
 [ ] 5.6 Create cost tracking dashboard
+```
+
+### Files Created
+
+```
+Backend API:
+- backend/app/schemas/hypothesis.py       # API request/response models
+- backend/app/services/hypothesis_service.py  # Service layer
+- backend/app/routers/hypotheses.py       # REST endpoints
+
+Frontend:
+- hub/frontend/src/types/hypothesis.ts    # TypeScript types
+- hub/frontend/src/services/hypothesesApi.ts  # API client
+- hub/frontend/src/components/HypothesisDashboard/
+  ├── index.tsx           # Main dashboard container
+  ├── HypothesisCard.tsx  # Individual hypothesis card
+  ├── StatsBar.tsx        # Statistics summary
+  └── ValidationModal.tsx # Validation config/progress modal
+- hub/frontend/src/pages/HypothesesPage.tsx  # Page component
 ```
 
 ---
