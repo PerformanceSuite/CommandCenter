@@ -249,6 +249,7 @@ class HypothesisValidator:
                 "consensus_level": debate_result.consensus_level.value,
                 "final_confidence": debate_result.final_confidence,
             },
+            debate_result=debate_result.to_dict(),
         )
 
     def _calculate_validation_score(self, debate_result: DebateResult) -> float:

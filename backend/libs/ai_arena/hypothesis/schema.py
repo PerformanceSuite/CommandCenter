@@ -282,6 +282,11 @@ class HypothesisValidationResult(BaseModel):
     validated_at: datetime = Field(default_factory=datetime.utcnow)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
+    # Full debate result as dict (optional, for storage/retrieval)
+    debate_result: dict[str, Any] | None = Field(
+        default=None, description="Full debate result dict for detailed analysis"
+    )
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage."""
         return self.model_dump(mode="json")

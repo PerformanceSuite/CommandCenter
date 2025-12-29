@@ -207,23 +207,39 @@ class HypothesisService:
         """Run the actual validation (background task)."""
         try:
             # Import here to avoid circular imports
-            from libs.ai_arena.hypothesis.validator import HypothesisValidator
+            from libs.ai_arena.hypothesis.validator import HypothesisValidator, ValidationConfig
+            from libs.ai_arena.registry import AgentRegistry
+            from libs.llm_gateway import LLMGateway
 
-            validator = HypothesisValidator()
+            # Create LLM gateway and agent registry
+            gateway = LLMGateway()
+            registry = AgentRegistry(gateway)
 
-            # Run validation with progress updates
-            result = await validator.validate(
-                hypothesis=hypothesis,
-                max_rounds=max_rounds,
-                progress_callback=lambda progress: asyncio.create_task(
-                    self._update_progress(task_id, progress)
-                ),
-            )
+            # Determine which agents to create
+            agent_roles = agents if agents else ["analyst", "researcher", "critic"]
 
-            # Update final state with full debate result
-            debate_result_dict = None
-            if result.debate_result:
-                debate_result_dict = result.debate_result.to_dict()
+            # Create agents based on selected roles
+            agent_list = []
+            for role in agent_roles:
+                role_lower = role.lower()
+                if role_lower in ["analyst", "researcher", "strategist", "critic"]:
+                    agent = registry.create(role_lower)
+                    agent_list.append(agent)
+
+            if not agent_list:
+                raise ValueError("No valid agents specified for validation")
+
+            # Create validation config with max rounds
+            config = ValidationConfig(max_debate_rounds=max_rounds)
+
+            # Create validator with agents and gateway for chairman synthesis
+            validator = HypothesisValidator(agent_list, config=config, llm_gateway=gateway)
+
+            # Run validation
+            result = await validator.validate(hypothesis=hypothesis)
+
+            # Update final state with full debate result (already a dict)
+            debate_result_dict = result.debate_result
 
             await ValidationTaskStorage.update(
                 task_id,
