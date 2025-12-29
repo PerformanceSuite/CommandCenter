@@ -104,7 +104,7 @@ class TestHypothesesListAPI:
         assert data["items"] == []
         assert data["total"] == 0
         assert data["limit"] == 20
-        assert data["offset"] == 0
+        assert data["skip"] == 0
 
     async def test_list_hypotheses(
         self, api_client: AsyncClient, sample_hypotheses: list[Hypothesis]
@@ -146,17 +146,17 @@ class TestHypothesesListAPI:
         self, api_client: AsyncClient, sample_hypotheses: list[Hypothesis]
     ):
         """Test pagination of hypothesis list."""
-        response = await api_client.get("/hypotheses/?limit=2&offset=0")
+        response = await api_client.get("/hypotheses/?limit=2&skip=0")
 
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 2
         assert data["total"] == 3
         assert data["limit"] == 2
-        assert data["offset"] == 0
+        assert data["skip"] == 0
 
         # Get second page
-        response = await api_client.get("/hypotheses/?limit=2&offset=2")
+        response = await api_client.get("/hypotheses/?limit=2&skip=2")
         data = response.json()
         assert len(data["items"]) == 1
 

@@ -83,7 +83,7 @@ class HypothesisListParams(BaseModel):
     status: HypothesisStatus | None = None
     category: HypothesisCategory | None = None
     limit: int = Field(default=20, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
+    skip: int = Field(default=0, ge=0)
 
 
 # Response Schemas
@@ -141,7 +141,7 @@ class HypothesisListResponse(BaseModel):
     items: list[HypothesisSummaryResponse]
     total: int
     limit: int
-    offset: int
+    skip: int
 
 
 class HypothesisStatsResponse(BaseModel):
@@ -267,7 +267,7 @@ class EvidenceListResponse(BaseModel):
     items: list[EvidenceItemResponse]
     total: int
     limit: int
-    offset: int
+    skip: int
 
 
 class EvidenceStatsResponse(BaseModel):

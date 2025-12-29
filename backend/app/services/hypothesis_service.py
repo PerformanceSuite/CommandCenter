@@ -102,7 +102,7 @@ class HypothesisService:
         status: HypothesisStatus | None = None,
         category: HypothesisCategory | None = None,
         limit: int = 20,
-        offset: int = 0,
+        skip: int = 0,
     ) -> tuple[list[Hypothesis], int]:
         """
         List hypotheses with filtering.
@@ -115,7 +115,7 @@ class HypothesisService:
             category=category,
         )
         total = len(hypotheses)
-        return hypotheses[offset : offset + limit], total
+        return hypotheses[skip : skip + limit], total
 
     async def get_hypothesis(self, hypothesis_id: str) -> Hypothesis | None:
         """Get a single hypothesis by ID."""
@@ -324,7 +324,7 @@ class HypothesisService:
         source_filter: str | None = None,
         min_confidence: int | None = None,
         limit: int = 50,
-        offset: int = 0,
+        skip: int = 0,
     ) -> tuple[list[dict[str, Any]], int]:
         """
         List all evidence across all hypotheses.
@@ -364,7 +364,7 @@ class HypothesisService:
         all_evidence.sort(key=lambda e: e["collected_at"], reverse=True)
 
         total = len(all_evidence)
-        return all_evidence[offset : offset + limit], total
+        return all_evidence[skip : skip + limit], total
 
     async def get_evidence_stats(self) -> dict[str, Any]:
         """Get statistics about all evidence."""

@@ -102,7 +102,7 @@ async def list_hypotheses(
     status_filter: HypothesisStatus | None = Query(None, alias="status"),
     category: HypothesisCategory | None = None,
     limit: int = Query(default=20, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    skip: int = Query(default=0, ge=0),
 ) -> HypothesisListResponse:
     """
     List hypotheses with optional filtering.
@@ -113,14 +113,14 @@ async def list_hypotheses(
         status=status_filter,
         category=category,
         limit=limit,
-        offset=offset,
+        skip=skip,
     )
 
     return HypothesisListResponse(
         items=[_to_summary_response(h) for h in hypotheses],
         total=total,
         limit=limit,
-        offset=offset,
+        skip=skip,
     )
 
 
@@ -170,7 +170,7 @@ async def list_evidence(
     source: str | None = Query(None, description="Filter by source text"),
     min_confidence: int | None = Query(None, ge=0, le=100, description="Minimum confidence"),
     limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
+    skip: int = Query(default=0, ge=0),
 ) -> EvidenceListResponse:
     """
     List all evidence across all hypotheses with optional filtering.
@@ -182,7 +182,7 @@ async def list_evidence(
         source_filter=source,
         min_confidence=min_confidence,
         limit=limit,
-        offset=offset,
+        skip=skip,
     )
 
     return EvidenceListResponse(
@@ -203,7 +203,7 @@ async def list_evidence(
         ],
         total=total,
         limit=limit,
-        offset=offset,
+        skip=skip,
     )
 
 
