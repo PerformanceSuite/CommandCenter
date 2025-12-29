@@ -21,7 +21,7 @@ async def test_user_cannot_read_other_user_technologies(
 
     # User A queries technologies
     headers = auth_headers_factory(user_a)
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
 
     # Assert User B's technology not in results
     assert response.status_code == 200
@@ -88,7 +88,7 @@ async def test_user_cannot_read_other_user_repositories(
 
     # User A queries repositories
     headers = auth_headers_factory(user_a)
-    response = await client.get("/api/v1/repositories", headers=headers)
+    response = await client.get("/api/v1/repositories/", headers=headers)
 
     # Assert User B's repository not in results
     assert response.status_code == 200
@@ -136,7 +136,7 @@ async def test_user_cannot_read_other_user_knowledge_entries(
 
     # User A queries knowledge base
     headers = auth_headers_factory(user_a)
-    response = await client.get("/api/v1/knowledge/entries", headers=headers)
+    response = await client.get("/api/v1/knowledge/", headers=headers)
 
     # Assert User B's knowledge not in results
     assert response.status_code == 200
@@ -163,7 +163,7 @@ async def test_technology_list_filtered_by_project(
 
     # User A queries technologies
     headers = auth_headers_factory(user_a)
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
 
     assert response.status_code == 200
     tech_ids = [t["id"] for t in response.json()]
@@ -190,7 +190,7 @@ async def test_repository_list_filtered_by_project(
 
     # User A queries repositories
     headers = auth_headers_factory(user_a)
-    response = await client.get("/api/v1/repositories", headers=headers)
+    response = await client.get("/api/v1/repositories/", headers=headers)
 
     assert response.status_code == 200
     repo_ids = [r["id"] for r in response.json()]

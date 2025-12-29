@@ -6,10 +6,10 @@ import pytest
 async def test_endpoints_require_authentication(client):
     """Protected endpoints reject requests without auth headers."""
     endpoints = [
-        "/api/v1/technologies",
-        "/api/v1/repositories",
-        "/api/v1/research",
-        "/api/v1/knowledge/entries",
+        "/api/v1/technologies/",
+        "/api/v1/repositories/",
+        "/api/v1/research-tasks/",
+        "/api/v1/knowledge/",
     ]
 
     for endpoint in endpoints:
@@ -25,7 +25,7 @@ async def test_invalid_token_rejected(client):
     """Invalid JWT token is rejected."""
     headers = {"Authorization": "Bearer invalid-token-xyz"}
 
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
     assert response.status_code in [401, 403], "Invalid token should be rejected"
 
 
@@ -37,7 +37,7 @@ async def test_tampered_token_rejected(client, jwt_token_factory, user_a):
     tampered_token = valid_token[:-10] + "tampered123"
 
     headers = {"Authorization": f"Bearer {tampered_token}"}
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
 
     assert response.status_code in [401, 403], "Tampered token should be rejected"
 
@@ -49,7 +49,7 @@ async def test_expired_token_rejected(client, jwt_token_factory, user_a):
     expired_token = jwt_token_factory(user_a, expired=True)
 
     headers = {"Authorization": f"Bearer {expired_token}"}
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
 
     assert response.status_code in [401, 403], "Expired token should be rejected"
 
@@ -61,7 +61,7 @@ async def test_csrf_token_required_for_mutations(client, auth_headers_factory, u
 
     # POST without CSRF token should be rejected
     response = await client.post(
-        "/api/v1/technologies", json={"title": "Test Tech", "domain": "security"}, headers=headers
+        "/api/v1/technologies/", json={"title": "Test Tech", "domain": "security"}, headers=headers
     )
 
     # Either requires CSRF token (403) or uses other protection (SameSite cookies)
@@ -85,7 +85,7 @@ async def test_user_cannot_use_another_users_token(client, jwt_token_factory, us
     # Try to access User B's specific resource
     # This should fail due to project_id filtering
     # (Specific endpoint depends on implementation)
-    response = await client.get("/api/v1/technologies", headers=headers)
+    response = await client.get("/api/v1/technologies/", headers=headers)
 
     # Should succeed but return only User A's data (filtered by project_id)
     assert response.status_code == 200
