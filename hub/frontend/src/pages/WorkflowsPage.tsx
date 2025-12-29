@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useWorkflows, useTriggerWorkflow } from '../hooks/useWorkflows';
+import { useWorkflows } from '../hooks/useWorkflows';
+import { useTriggerWorkflow } from '../hooks/useWorkflowRuns';
 import { WorkflowBuilder } from '../components/WorkflowBuilder/WorkflowBuilder';
 import { WorkflowExecutionMonitor } from '../components/WorkflowExecutionMonitor';
 import toast from 'react-hot-toast';
