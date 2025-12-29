@@ -93,7 +93,7 @@ class TestAuthBasic:
         assert decoded is None
 
     async def test_missing_token_returns_401(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that missing token returns 401 Unauthorized"""
         # Create a project (requires authentication)
@@ -104,13 +104,13 @@ class TestAuthBasic:
         }
 
         # Try to create without authentication
-        response = await async_client.post("/projects/", json=project_data)
+        response = await api_client.post("/projects/", json=project_data)
 
         # Should return 401 or 403 (Unauthorized/Forbidden)
         assert response.status_code in [401, 403]
 
     async def test_invalid_credentials_rejected(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that invalid credentials are rejected"""
         # Create a user
@@ -124,7 +124,7 @@ class TestAuthBasic:
             "password": "wrongPassword",
         }
 
-        response = await async_client.post("/auth/token", data=login_data)
+        response = await api_client.post("/auth/token", data=login_data)
 
         # Should return 401 Unauthorized
         assert response.status_code == 401
@@ -182,7 +182,7 @@ class TestAuthBasic:
         assert "sub" not in decoded or decoded.get("sub") is None
 
     async def test_authenticated_endpoint_requires_valid_token(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that authenticated endpoints require valid token"""
         # Create a user and valid token
@@ -191,20 +191,20 @@ class TestAuthBasic:
 
         # Try with valid token
         headers = {"Authorization": f"Bearer {valid_token}"}
-        response = await async_client.get("/projects/", headers=headers)
+        response = await api_client.get("/projects/", headers=headers)
 
         # Should succeed (200) or not found (404) but not unauthorized
         assert response.status_code not in [401, 403]
 
         # Try with invalid token
         invalid_headers = {"Authorization": "Bearer invalid_token_here"}
-        response = await async_client.get("/projects/", headers=invalid_headers)
+        response = await api_client.get("/projects/", headers=invalid_headers)
 
         # Should return 401 Unauthorized
         assert response.status_code in [401, 403]
 
     async def test_token_reuse_across_requests(
-        self, async_client: AsyncClient, db_session: AsyncSession
+        self, api_client: AsyncClient, db_session: AsyncSession
     ):
         """Test that same token can be reused across multiple requests"""
         user = await UserFactory.create(db=db_session)
@@ -213,6 +213,6 @@ class TestAuthBasic:
 
         # Make multiple requests with same token
         for _ in range(3):
-            response = await async_client.get("/projects/", headers=headers)
+            response = await api_client.get("/projects/", headers=headers)
             # Should not return 401 (token should remain valid)
             assert response.status_code != 401
