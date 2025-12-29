@@ -120,6 +120,10 @@ class Settings(BaseSettings):
         default=None,
         description="Google AI API key (direct access)",
     )
+    zai_api_key: Optional[str] = Field(
+        default=None,
+        description="Z.AI (Zhipu) API key for GLM models",
+    )
     default_ai_provider: str = Field(
         default="anthropic",
         description="Default AI provider (openrouter, anthropic, openai, google, litellm)",

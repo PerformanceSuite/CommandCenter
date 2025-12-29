@@ -8,6 +8,7 @@ responses, detecting consensus, and compiling final results.
 from __future__ import annotations
 
 import asyncio
+import re
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -17,7 +18,14 @@ import structlog
 from ..agents import AgentResponse, BaseAgent
 from .consensus import ConsensusDetector
 from .prompts import DiscussionPromptGenerator
-from .state import ConsensusLevel, DebateConfig, DebateResult, DebateRound, DebateStatus
+from .state import (
+    ChairmanSynthesis,
+    ConsensusLevel,
+    DebateConfig,
+    DebateResult,
+    DebateRound,
+    DebateStatus,
+)
 
 if TYPE_CHECKING:
     pass
@@ -47,6 +55,7 @@ class DebateOrchestrator:
     3. Generates follow-up prompts incorporating previous responses
     4. Continues until consensus is reached or max rounds exceeded
     5. Compiles final result with synthesized answer
+    6. (NEW) Runs Chairman synthesis for final authoritative judgment
 
     Example:
         from libs.ai_arena import AgentRegistry
@@ -63,13 +72,14 @@ class DebateOrchestrator:
 
         print(f"Answer: {result.final_answer}")
         print(f"Consensus: {result.consensus_level.value}")
-        print(f"Confidence: {result.final_confidence}%")
+        print(f"Chairman: {result.chairman_synthesis.summary}")
     """
 
     def __init__(
         self,
         agents: list[BaseAgent],
         config: DebateConfig | None = None,
+        llm_gateway=None,
     ):
         """
         Initialize the debate orchestrator.
@@ -77,12 +87,14 @@ class DebateOrchestrator:
         Args:
             agents: List of agents participating in the debate
             config: Optional debate configuration
+            llm_gateway: Optional LLM gateway for chairman synthesis
         """
         if not agents:
             raise ValueError("At least one agent is required for a debate")
 
         self.agents = agents
         self.config = config or DebateConfig()
+        self.llm_gateway = llm_gateway
         self.consensus_detector = ConsensusDetector(
             agreement_threshold=self.config.consensus_threshold,
             strong_confidence_threshold=self.config.confidence_threshold,
@@ -176,8 +188,8 @@ class DebateOrchestrator:
                 ):
                     break
 
-            # Compile final result
-            result = self._compile_result(
+            # Compile final result (now async for chairman synthesis)
+            result = await self._compile_result(
                 debate_id=debate_id,
                 question=question,
                 rounds=rounds,
@@ -305,7 +317,7 @@ class DebateOrchestrator:
 
         return response, cost
 
-    def _compile_result(
+    async def _compile_result(
         self,
         debate_id: str,
         question: str,
@@ -313,7 +325,7 @@ class DebateOrchestrator:
         started_at: datetime,
         total_cost: float,
     ) -> DebateResult:
-        """Compile the final debate result."""
+        """Compile the final debate result with optional chairman synthesis."""
         if not rounds:
             return self._create_failed_result(
                 debate_id=debate_id,
@@ -336,6 +348,37 @@ class DebateOrchestrator:
             best_response = max(final_round.responses, key=lambda r: r.confidence)
             final_answer = best_response.answer
 
+        # Run chairman synthesis if enabled
+        chairman_synthesis = None
+        chairman_cost = 0.0
+        if self.config.enable_chairman and self.llm_gateway:
+            try:
+                chairman_synthesis, chairman_cost = await self._run_chairman_synthesis(
+                    question=question,
+                    rounds=rounds,
+                    consensus_level=final_consensus.level,
+                    majority_answer=final_answer,
+                    dissenting_views=final_consensus.dissenting_responses,
+                )
+                total_cost += chairman_cost
+
+                # Update final answer with chairman's verdict if available
+                if chairman_synthesis and chairman_synthesis.final_verdict:
+                    final_answer = chairman_synthesis.final_verdict
+
+                logger.info(
+                    "chairman_synthesis_completed",
+                    debate_id=debate_id,
+                    chairman_confidence=chairman_synthesis.confidence if chairman_synthesis else 0,
+                    chairman_cost=round(chairman_cost, 4),
+                )
+            except Exception as e:
+                logger.warning(
+                    "chairman_synthesis_failed",
+                    debate_id=debate_id,
+                    error=str(e),
+                )
+
         return DebateResult(
             debate_id=debate_id,
             question=question,
@@ -348,6 +391,88 @@ class DebateOrchestrator:
             started_at=started_at,
             completed_at=datetime.utcnow(),
             total_cost=total_cost,
+            chairman_synthesis=chairman_synthesis,
+        )
+
+    async def _run_chairman_synthesis(
+        self,
+        question: str,
+        rounds: list[DebateRound],
+        consensus_level: ConsensusLevel,
+        majority_answer: str,
+        dissenting_views: list[AgentResponse],
+    ) -> tuple[ChairmanSynthesis | None, float]:
+        """
+        Run the chairman model to synthesize the debate (LLM Council Stage 4).
+
+        Args:
+            question: The original debate question
+            rounds: All debate rounds
+            consensus_level: Detected consensus level
+            majority_answer: The majority position
+            dissenting_views: Minority position responses
+
+        Returns:
+            Tuple of (ChairmanSynthesis, cost)
+        """
+        if not self.llm_gateway:
+            return None, 0.0
+
+        # Generate chairman prompt
+        prompt = self.prompt_generator.generate_chairman_prompt(
+            question=question,
+            rounds=rounds,
+            consensus_level=consensus_level,
+            majority_answer=majority_answer,
+            dissenting_views=dissenting_views,
+        )
+
+        # Call the chairman model
+        response = await self.llm_gateway.complete(
+            provider=self.config.chairman_provider,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are the Chairman of an AI Council. Your role is to synthesize debate outcomes into definitive, actionable judgments.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,  # Lower temperature for more focused synthesis
+            max_tokens=2000,
+        )
+
+        # Parse the chairman response
+        synthesis = self._parse_chairman_response(response["content"], response["model"])
+        synthesis.cost = response.get("cost", 0.0)
+
+        return synthesis, synthesis.cost
+
+    def _parse_chairman_response(self, content: str, model: str) -> ChairmanSynthesis:
+        """Parse the chairman's structured response."""
+        # Extract sections using regex
+        summary_match = re.search(r"\*\*SUMMARY\*\*:\s*(.+?)(?=\*\*|$)", content, re.DOTALL)
+        verdict_match = re.search(r"\*\*FINAL_VERDICT\*\*:\s*(.+?)(?=\*\*|$)", content, re.DOTALL)
+        insights_match = re.search(r"\*\*KEY_INSIGHTS\*\*:\s*(.+?)(?=\*\*|$)", content, re.DOTALL)
+        dissent_match = re.search(
+            r"\*\*DISSENT_ACKNOWLEDGED\*\*:\s*(.+?)(?=\*\*|$)", content, re.DOTALL
+        )
+        confidence_match = re.search(r"\*\*CONFIDENCE\*\*:\s*(\d+)", content)
+
+        # Extract key insights as list
+        key_insights = []
+        if insights_match:
+            insights_text = insights_match.group(1).strip()
+            # Extract bullet points
+            key_insights = re.findall(r"[-•]\s*(.+?)(?=\n[-•]|\n\n|$)", insights_text, re.DOTALL)
+            key_insights = [i.strip() for i in key_insights if i.strip()]
+
+        return ChairmanSynthesis(
+            model=model,
+            summary=summary_match.group(1).strip() if summary_match else content[:500],
+            final_verdict=verdict_match.group(1).strip() if verdict_match else "",
+            key_insights=key_insights[:5],  # Limit to 5 insights
+            dissent_acknowledged=dissent_match.group(1).strip() if dissent_match else "",
+            confidence=float(confidence_match.group(1)) if confidence_match else 70.0,
         )
 
     def _create_failed_result(

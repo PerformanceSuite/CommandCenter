@@ -10,6 +10,7 @@ from app.routers import (
     knowledge,
     repositories,
     research_tasks,
+    settings,
     technologies,
 )
 
@@ -22,4 +23,5 @@ __all__ = [
     "research_tasks",
     "batch",
     "hypotheses",
+    "settings",
 ]

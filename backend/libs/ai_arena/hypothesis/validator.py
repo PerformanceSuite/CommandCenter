@@ -55,17 +55,20 @@ class HypothesisValidator:
     3. Synthesizes debate results into validation outcomes
     4. Extracts evidence from agent responses
     5. Determines final validation status
+    6. (NEW) Runs Chairman synthesis for authoritative final judgment
 
     Example:
         from libs.ai_arena import AgentRegistry, HypothesisValidator
         from libs.ai_arena.hypothesis import Hypothesis, HypothesisCreate
+        from libs.llm_gateway import LLMGateway
 
-        # Create agents
+        # Create gateway and agents
+        gateway = LLMGateway()
         registry = AgentRegistry(gateway)
         agents = registry.create_default_team()
 
-        # Create validator
-        validator = HypothesisValidator(agents)
+        # Create validator with gateway for chairman synthesis
+        validator = HypothesisValidator(agents, llm_gateway=gateway)
 
         # Create and validate hypothesis
         hypothesis = Hypothesis(
@@ -81,12 +84,14 @@ class HypothesisValidator:
         result = await validator.validate(hypothesis)
         print(f"Status: {result.status}")
         print(f"Score: {result.validation_score}%")
+        print(f"Chairman: {result.chairman_summary}")  # NEW
     """
 
     def __init__(
         self,
         agents: list[BaseAgent],
         config: ValidationConfig | None = None,
+        llm_gateway=None,
     ):
         """
         Initialize the hypothesis validator.
@@ -94,20 +99,23 @@ class HypothesisValidator:
         Args:
             agents: List of agents to participate in validation debates
             config: Optional validation configuration
+            llm_gateway: Optional LLM gateway for chairman synthesis
         """
         if not agents:
             raise ValueError("At least one agent is required for validation")
 
         self.agents = agents
         self.config = config or ValidationConfig()
+        self.llm_gateway = llm_gateway
 
-        # Create debate configuration
+        # Create debate configuration with chairman enabled
         self._debate_config = DebateConfig(
             max_rounds=self.config.max_debate_rounds,
             consensus_threshold=self.config.consensus_threshold,
             confidence_threshold=self.config.confidence_threshold,
             timeout_seconds=self.config.timeout_seconds,
             parallel_responses=self.config.parallel_responses,
+            enable_chairman=llm_gateway is not None,  # Enable if gateway provided
         )
 
     async def validate(
@@ -149,8 +157,12 @@ class HypothesisValidator:
             evidence_context = self._format_existing_evidence(hypothesis.evidence)
             question += f"\n\n**Existing Evidence:**\n{evidence_context}"
 
-        # Run debate
-        orchestrator = DebateOrchestrator(self.agents, self._debate_config)
+        # Run debate with chairman synthesis if gateway available
+        orchestrator = DebateOrchestrator(
+            self.agents,
+            self._debate_config,
+            llm_gateway=self.llm_gateway,
+        )
         debate_result = await orchestrator.debate(question, hypothesis.context)
 
         # Process debate result
@@ -386,6 +398,20 @@ class HypothesisValidator:
 
     def _summarize_reasoning(self, debate_result: DebateResult) -> str:
         """Create a summary of the debate reasoning."""
+        # Use chairman synthesis if available (LLM Council Stage 4)
+        if debate_result.chairman_synthesis:
+            chairman = debate_result.chairman_synthesis
+            summary = f"**Chairman Synthesis** (Confidence: {chairman.confidence}%)\n\n"
+            summary += f"{chairman.summary}\n\n"
+            if chairman.key_insights:
+                summary += "**Key Insights:**\n"
+                for insight in chairman.key_insights:
+                    summary += f"- {insight}\n"
+            if chairman.dissent_acknowledged:
+                summary += f"\n**Dissenting Views Considered:** {chairman.dissent_acknowledged}"
+            return summary
+
+        # Fallback to agent-by-agent summary
         if not debate_result.rounds:
             return "No debate rounds completed."
 

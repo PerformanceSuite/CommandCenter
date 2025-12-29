@@ -6,6 +6,7 @@ Provides a single async interface for calling multiple LLM providers
 and Prometheus metrics.
 """
 
+import os
 import time
 from typing import Any, TypedDict
 
@@ -15,7 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from .cost_tracking import calculate_cost, track_usage
 from .metrics import record_request_failure, record_request_success
-from .providers import DEFAULT_PARAMS, get_model_id, list_providers
+from .providers import DEFAULT_PARAMS, get_provider_config, list_providers
 
 logger = structlog.get_logger(__name__)
 
@@ -101,12 +102,22 @@ class LLMGateway:
                 temperature=0.3,
             )
         """
-        model_id = get_model_id(provider)
+        config = get_provider_config(provider)
+        model_id = config.model_id
         defaults = DEFAULT_PARAMS.get(provider, {})
 
         # Use provided values or fall back to defaults
         temp = temperature if temperature is not None else defaults.get("temperature", 0.7)
         tokens = max_tokens if max_tokens is not None else defaults.get("max_tokens", 4096)
+
+        # Build provider-specific kwargs for custom API endpoints (e.g., Z.AI)
+        call_kwargs = dict(kwargs)
+        if config.api_base:
+            call_kwargs["api_base"] = config.api_base
+        if config.api_key_env:
+            api_key = os.environ.get(config.api_key_env)
+            if api_key:
+                call_kwargs["api_key"] = api_key
 
         start_time = time.perf_counter()
 
@@ -116,7 +127,7 @@ class LLMGateway:
                 messages=messages,
                 temperature=temp,
                 max_tokens=tokens,
-                **kwargs,
+                **call_kwargs,
             )
             duration = time.perf_counter() - start_time
 

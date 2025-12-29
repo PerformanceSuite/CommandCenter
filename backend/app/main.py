@@ -41,10 +41,9 @@ from app.routers import (
     research_orchestration,
     research_tasks,
     schedules,
-    technologies,
-    webhooks,
-    webhooks_ingestion,
 )
+from app.routers import settings as settings_router
+from app.routers import technologies, webhooks, webhooks_ingestion
 from app.services import redis_service
 from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
@@ -259,6 +258,7 @@ app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
 app.include_router(hypotheses.router, prefix=settings.api_v1_prefix)  # AI Arena hypotheses
+app.include_router(settings_router.router, prefix=settings.api_v1_prefix)  # Settings & API keys
 
 
 # Test endpoints for observability (only in dev/test environments)

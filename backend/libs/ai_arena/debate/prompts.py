@@ -255,3 +255,93 @@ Based on the complete debate above, provide:
 """
 
         return prompt
+
+    def generate_chairman_prompt(
+        self,
+        question: str,
+        rounds: list[DebateRound],
+        consensus_level: ConsensusLevel,
+        majority_answer: str,
+        dissenting_views: list,
+    ) -> str:
+        """
+        Generate the chairman synthesis prompt (LLM Council Stage 4).
+
+        The chairman reviews all debate rounds and produces a final,
+        authoritative synthesis that incorporates the strongest arguments
+        from all participants while acknowledging dissenting views.
+
+        Args:
+            question: The original question or hypothesis
+            rounds: All debate rounds with responses
+            consensus_level: The algorithmically detected consensus level
+            majority_answer: The majority position from voting
+            dissenting_views: List of minority position responses
+
+        Returns:
+            Formatted prompt for chairman synthesis
+        """
+        prompt = f"""# Chairman Synthesis Request
+
+You are the Chairman of an AI Council. Multiple AI models have debated the following question across {len(rounds)} rounds. Your role is to:
+
+1. Review all perspectives objectively
+2. Synthesize the strongest arguments into a coherent final judgment
+3. Acknowledge valid dissenting views
+4. Provide a definitive verdict with clear reasoning
+
+## Original Question
+
+{question}
+
+## Debate Summary
+
+**Consensus Level (Algorithmic)**: {consensus_level.value}
+**Majority Position**: {self._truncate(majority_answer, 300) if majority_answer else "No clear majority"}
+
+"""
+
+        # Add all responses from all rounds
+        for round_data in rounds:
+            prompt += f"### Round {round_data.round_number + 1}\n\n"
+            for response in round_data.responses:
+                prompt += f"**{response.agent_name}** (Model: {response.model}, Confidence: {response.confidence}%)\n"
+                prompt += f"- **Answer**: {response.answer}\n"
+                prompt += f"- **Reasoning**: {self._truncate(response.reasoning, 400)}\n"
+                if response.evidence:
+                    prompt += f"- **Evidence**: {', '.join(response.evidence[:3])}\n"
+                prompt += "\n"
+
+        # Highlight dissenting views
+        if dissenting_views:
+            prompt += "### Dissenting Views (Minority Positions)\n\n"
+            for dv in dissenting_views:
+                prompt += f"- **{dv.agent_name}**: {self._truncate(dv.answer, 200)} (Confidence: {dv.confidence}%)\n"
+            prompt += "\n"
+
+        prompt += """## Your Task as Chairman
+
+Produce a final synthesis with the following structure. Be specific and decisive.
+
+**SUMMARY**: A 2-3 sentence executive summary of the debate outcome.
+
+**FINAL_VERDICT**: Your definitive answer to the question. Be clear and actionable.
+
+**KEY_INSIGHTS**:
+- Insight 1
+- Insight 2
+- Insight 3
+(List the most important learnings from the debate)
+
+**DISSENT_ACKNOWLEDGED**: Briefly acknowledge any valid points from the minority position, even if you disagree with their conclusion.
+
+**CONFIDENCE**: Your confidence in this synthesis (0-100), considering the quality of debate and strength of arguments.
+
+Important: Your synthesis should add value beyond simple majority voting. Use your judgment to:
+- Identify nuances the voting algorithm might miss
+- Highlight important caveats or conditions
+- Provide actionable guidance
+- Note any red flags or areas requiring further investigation
+"""
+
+        return prompt

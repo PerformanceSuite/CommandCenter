@@ -28,13 +28,21 @@ Example:
 from .consensus import ConsensusDetector, ConsensusResult
 from .orchestrator import DebateError, DebateOrchestrator, DebateTimeoutError, run_quick_debate
 from .prompts import DiscussionPromptGenerator
-from .state import ConsensusLevel, DebateConfig, DebateResult, DebateRound, DebateStatus
+from .state import (
+    ChairmanSynthesis,
+    ConsensusLevel,
+    DebateConfig,
+    DebateResult,
+    DebateRound,
+    DebateStatus,
+)
 
 __all__ = [
     # Orchestrator
     "DebateOrchestrator",
     "run_quick_debate",
     # State
+    "ChairmanSynthesis",
     "DebateConfig",
     "DebateResult",
     "DebateRound",

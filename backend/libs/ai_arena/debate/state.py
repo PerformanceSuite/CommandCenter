@@ -88,6 +88,44 @@ class DebateRound:
 
 
 @dataclass
+class ChairmanSynthesis:
+    """Final synthesis from the chairman model."""
+
+    model: str
+    summary: str
+    final_verdict: str
+    key_insights: list[str]
+    dissent_acknowledged: str
+    confidence: float
+    cost: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "model": self.model,
+            "summary": self.summary,
+            "final_verdict": self.final_verdict,
+            "key_insights": self.key_insights,
+            "dissent_acknowledged": self.dissent_acknowledged,
+            "confidence": self.confidence,
+            "cost": self.cost,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ChairmanSynthesis:
+        """Create from dictionary."""
+        return cls(
+            model=data["model"],
+            summary=data["summary"],
+            final_verdict=data["final_verdict"],
+            key_insights=data.get("key_insights", []),
+            dissent_acknowledged=data.get("dissent_acknowledged", ""),
+            confidence=data.get("confidence", 0.0),
+            cost=data.get("cost", 0.0),
+        )
+
+
+@dataclass
 class DebateResult:
     """Final result of a completed debate."""
 
@@ -103,6 +141,7 @@ class DebateResult:
     completed_at: datetime | None = None
     total_cost: float = 0.0
     error_message: str | None = None
+    chairman_synthesis: ChairmanSynthesis | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -120,12 +159,16 @@ class DebateResult:
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "total_cost": self.total_cost,
             "error_message": self.error_message,
+            "chairman_synthesis": self.chairman_synthesis.to_dict()
+            if self.chairman_synthesis
+            else None,
             "metadata": self.metadata,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DebateResult:
         """Create result from dictionary."""
+        chairman_data = data.get("chairman_synthesis")
         return cls(
             debate_id=data["debate_id"],
             question=data["question"],
@@ -141,6 +184,9 @@ class DebateResult:
             ),
             total_cost=data.get("total_cost", 0.0),
             error_message=data.get("error_message"),
+            chairman_synthesis=ChairmanSynthesis.from_dict(chairman_data)
+            if chairman_data
+            else None,
             metadata=data.get("metadata", {}),
         )
 
@@ -178,6 +224,9 @@ class DebateConfig:
     timeout_seconds: float = 300.0  # 5 minute timeout
     parallel_responses: bool = True  # Whether to collect responses in parallel
     include_critic: bool = True  # Whether to include devil's advocate
+    # Chairman synthesis configuration (LLM Council Stage 4)
+    enable_chairman: bool = True  # Whether to use chairman synthesis
+    chairman_provider: str = "claude"  # Provider for chairman model (uses best available)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -189,5 +238,7 @@ class DebateConfig:
             "timeout_seconds": self.timeout_seconds,
             "parallel_responses": self.parallel_responses,
             "include_critic": self.include_critic,
+            "enable_chairman": self.enable_chairman,
+            "chairman_provider": self.chairman_provider,
             "metadata": self.metadata,
         }
