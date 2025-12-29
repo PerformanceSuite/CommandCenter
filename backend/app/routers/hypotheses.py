@@ -8,9 +8,11 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, status
 from libs.ai_arena.hypothesis.schema import Hypothesis, HypothesisCategory, HypothesisStatus
+from libs.llm_gateway.metrics import get_cost_statistics
 
 from app.schemas.hypothesis import (
     AgentResponseSchema,
+    CostStatsResponse,
     DebateResultResponse,
     DebateRoundSchema,
     EvidenceItemResponse,
@@ -80,6 +82,11 @@ def _to_detail_response(h: Hypothesis) -> HypothesisDetailResponse:
     )
 
 
+# ============================================================================
+# Static path routes (must come before dynamic /{hypothesis_id} routes)
+# ============================================================================
+
+
 @router.get("/", response_model=HypothesisListResponse)
 async def list_hypotheses(
     status_filter: HypothesisStatus | None = Query(None, alias="status"),
@@ -114,88 +121,72 @@ async def get_statistics() -> HypothesisStatsResponse:
     return HypothesisStatsResponse(**stats)
 
 
-@router.get("/{hypothesis_id}", response_model=HypothesisDetailResponse)
-async def get_hypothesis(hypothesis_id: str) -> HypothesisDetailResponse:
-    """Get detailed hypothesis information including evidence."""
-    hypothesis = await hypothesis_service.get_hypothesis(hypothesis_id)
-    if not hypothesis:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Hypothesis not found: {hypothesis_id}",
-        )
-    return _to_detail_response(hypothesis)
-
-
-@router.post(
-    "/{hypothesis_id}/validate",
-    response_model=ValidationTaskResponse,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-async def start_validation(
-    hypothesis_id: str,
-    request: HypothesisValidateRequest | None = None,
-) -> ValidationTaskResponse:
+@router.get("/costs", response_model=CostStatsResponse)
+async def get_cost_stats() -> CostStatsResponse:
     """
-    Start async validation of a hypothesis.
+    Get LLM cost and usage statistics.
 
-    Returns a task_id that can be used to poll for progress.
+    Returns aggregate costs, tokens, and request counts by provider.
+    Data is derived from Prometheus metrics collected during API usage.
     """
-    req = request or HypothesisValidateRequest()
+    stats = get_cost_statistics()
+    return CostStatsResponse(**stats)
 
-    try:
-        task_id = await hypothesis_service.start_validation(
-            hypothesis_id=hypothesis_id,
-            max_rounds=req.max_rounds,
-            agents=req.agents,
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
 
-    return ValidationTaskResponse(
-        task_id=task_id,
-        hypothesis_id=hypothesis_id,
-        status="started",
-        message="Validation started successfully",
+# Evidence Explorer Endpoints
+
+
+@router.get("/evidence/list", response_model=EvidenceListResponse)
+async def list_evidence(
+    supports: bool | None = Query(None, description="Filter by supports (true/false)"),
+    source: str | None = Query(None, description="Filter by source text"),
+    min_confidence: int | None = Query(None, ge=0, le=100, description="Minimum confidence"),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> EvidenceListResponse:
+    """
+    List all evidence across all hypotheses with optional filtering.
+
+    Useful for exploring evidence patterns and finding insights.
+    """
+    items, total = await hypothesis_service.list_all_evidence(
+        supports=supports,
+        source_filter=source,
+        min_confidence=min_confidence,
+        limit=limit,
+        offset=offset,
+    )
+
+    return EvidenceListResponse(
+        items=[
+            EvidenceItemResponse(
+                id=e["id"],
+                hypothesis_id=e["hypothesis_id"],
+                hypothesis_statement=e["hypothesis_statement"],
+                source=e["source"],
+                content=e["content"],
+                supports=e["supports"],
+                confidence=e["confidence"],
+                collected_at=datetime.fromisoformat(e["collected_at"]),
+                collected_by=e["collected_by"],
+                metadata=e.get("metadata", {}),
+            )
+            for e in items
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
     )
 
 
-@router.get(
-    "/{hypothesis_id}/validation-status",
-    response_model=ValidationStatusResponse,
-)
-async def get_validation_status(hypothesis_id: str) -> ValidationStatusResponse:
-    """
-    Get current validation status for a hypothesis.
+@router.get("/evidence/stats", response_model=EvidenceStatsResponse)
+async def get_evidence_stats() -> EvidenceStatsResponse:
+    """Get statistics about all evidence across hypotheses."""
+    stats = await hypothesis_service.get_evidence_stats()
+    return EvidenceStatsResponse(**stats)
 
-    Returns the status of the most recent validation task.
-    """
-    task_state = await hypothesis_service.get_validation_status_by_hypothesis(hypothesis_id)
 
-    if not task_state:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No active validation for hypothesis: {hypothesis_id}",
-        )
-
-    return ValidationStatusResponse(
-        task_id=task_state["task_id"],
-        hypothesis_id=task_state["hypothesis_id"],
-        status=task_state["status"],
-        current_round=task_state.get("current_round", 0),
-        max_rounds=task_state.get("max_rounds", 3),
-        responses_count=task_state.get("responses_count", 0),
-        consensus_level=task_state.get("consensus_level"),
-        started_at=datetime.fromisoformat(task_state["started_at"]),
-        completed_at=(
-            datetime.fromisoformat(task_state["completed_at"])
-            if task_state.get("completed_at")
-            else None
-        ),
-        error=task_state.get("error"),
-    )
+# Validation task routes (static prefix before dynamic hypothesis_id)
 
 
 @router.get("/validation/{task_id}", response_model=ValidationStatusResponse)
@@ -299,54 +290,90 @@ async def get_debate_result(task_id: str) -> DebateResultResponse:
     )
 
 
-# Evidence Explorer Endpoints
+# ============================================================================
+# Dynamic /{hypothesis_id} routes (must come after static paths)
+# ============================================================================
 
 
-@router.get("/evidence/list", response_model=EvidenceListResponse)
-async def list_evidence(
-    supports: bool | None = Query(None, description="Filter by supports (true/false)"),
-    source: str | None = Query(None, description="Filter by source text"),
-    min_confidence: int | None = Query(None, ge=0, le=100, description="Minimum confidence"),
-    limit: int = Query(default=50, ge=1, le=100),
-    offset: int = Query(default=0, ge=0),
-) -> EvidenceListResponse:
+@router.get("/{hypothesis_id}", response_model=HypothesisDetailResponse)
+async def get_hypothesis(hypothesis_id: str) -> HypothesisDetailResponse:
+    """Get detailed hypothesis information including evidence."""
+    hypothesis = await hypothesis_service.get_hypothesis(hypothesis_id)
+    if not hypothesis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hypothesis not found: {hypothesis_id}",
+        )
+    return _to_detail_response(hypothesis)
+
+
+@router.post(
+    "/{hypothesis_id}/validate",
+    response_model=ValidationTaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def start_validation(
+    hypothesis_id: str,
+    request: HypothesisValidateRequest | None = None,
+) -> ValidationTaskResponse:
     """
-    List all evidence across all hypotheses with optional filtering.
+    Start async validation of a hypothesis.
 
-    Useful for exploring evidence patterns and finding insights.
+    Returns a task_id that can be used to poll for progress.
     """
-    items, total = await hypothesis_service.list_all_evidence(
-        supports=supports,
-        source_filter=source,
-        min_confidence=min_confidence,
-        limit=limit,
-        offset=offset,
+    req = request or HypothesisValidateRequest()
+
+    try:
+        task_id = await hypothesis_service.start_validation(
+            hypothesis_id=hypothesis_id,
+            max_rounds=req.max_rounds,
+            agents=req.agents,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+    return ValidationTaskResponse(
+        task_id=task_id,
+        hypothesis_id=hypothesis_id,
+        status="started",
+        message="Validation started successfully",
     )
 
-    return EvidenceListResponse(
-        items=[
-            EvidenceItemResponse(
-                id=e["id"],
-                hypothesis_id=e["hypothesis_id"],
-                hypothesis_statement=e["hypothesis_statement"],
-                source=e["source"],
-                content=e["content"],
-                supports=e["supports"],
-                confidence=e["confidence"],
-                collected_at=datetime.fromisoformat(e["collected_at"]),
-                collected_by=e["collected_by"],
-                metadata=e.get("metadata", {}),
-            )
-            for e in items
-        ],
-        total=total,
-        limit=limit,
-        offset=offset,
+
+@router.get(
+    "/{hypothesis_id}/validation-status",
+    response_model=ValidationStatusResponse,
+)
+async def get_validation_status(hypothesis_id: str) -> ValidationStatusResponse:
+    """
+    Get current validation status for a hypothesis.
+
+    Returns the status of the most recent validation task.
+    """
+    task_state = await hypothesis_service.get_validation_status_by_hypothesis(hypothesis_id)
+
+    if not task_state:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No active validation for hypothesis: {hypothesis_id}",
+        )
+
+    return ValidationStatusResponse(
+        task_id=task_state["task_id"],
+        hypothesis_id=task_state["hypothesis_id"],
+        status=task_state["status"],
+        current_round=task_state.get("current_round", 0),
+        max_rounds=task_state.get("max_rounds", 3),
+        responses_count=task_state.get("responses_count", 0),
+        consensus_level=task_state.get("consensus_level"),
+        started_at=datetime.fromisoformat(task_state["started_at"]),
+        completed_at=(
+            datetime.fromisoformat(task_state["completed_at"])
+            if task_state.get("completed_at")
+            else None
+        ),
+        error=task_state.get("error"),
     )
-
-
-@router.get("/evidence/stats", response_model=EvidenceStatsResponse)
-async def get_evidence_stats() -> EvidenceStatsResponse:
-    """Get statistics about all evidence across hypotheses."""
-    stats = await hypothesis_service.get_evidence_stats()
-    return EvidenceStatsResponse(**stats)
