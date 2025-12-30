@@ -12,6 +12,7 @@ import hypothesesApi from '../../services/hypothesesApi';
 import { HypothesisCard } from './HypothesisCard';
 import { StatsBar } from './StatsBar';
 import { ValidationModal } from './ValidationModal';
+import { HypothesisQuickInput } from './HypothesisQuickInput';
 
 export function HypothesisDashboard() {
   // Data state
@@ -57,6 +58,12 @@ export function HypothesisDashboard() {
     };
     loadData();
   }, [fetchHypotheses, fetchStats]);
+
+  // Handle hypothesis created
+  const handleHypothesisCreated = () => {
+    fetchHypotheses();
+    fetchStats();
+  };
 
   // Handle validate click
   const handleValidate = (id: string) => {
@@ -105,6 +112,9 @@ export function HypothesisDashboard() {
     <div>
       {/* Stats Bar */}
       <StatsBar stats={stats} loading={loading} />
+
+      {/* Quick Input */}
+      <HypothesisQuickInput onHypothesisCreated={handleHypothesisCreated} />
 
       {/* Filters */}
       <div className="flex items-center gap-4 mb-6">
@@ -163,7 +173,7 @@ export function HypothesisDashboard() {
           <p className="text-slate-600 mt-2">
             {filters.status || filters.category
               ? 'Try adjusting your filters'
-              : 'Create hypotheses via the API to get started'}
+              : 'Create a hypothesis above to get started'}
           </p>
         </div>
       ) : (
