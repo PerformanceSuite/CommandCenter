@@ -8,7 +8,7 @@ and Prometheus metrics.
 
 import os
 import time
-from typing import Any, TypedDict
+from typing import Any, Optional, TypedDict
 
 import litellm
 import structlog
@@ -16,7 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from .cost_tracking import calculate_cost, track_usage
 from .metrics import record_request_failure, record_request_success
-from .providers import DEFAULT_PARAMS, get_provider_config, list_providers
+from .providers import DEFAULT_PARAMS, DynamicProviderRegistry, get_provider_config, list_providers
 
 logger = structlog.get_logger(__name__)
 
@@ -50,8 +50,17 @@ class LLMGateway:
     Includes automatic retry with exponential backoff, cost tracking,
     and Prometheus metrics.
 
+    Supports dynamic provider configuration via DynamicProviderRegistry,
+    enabling database-backed provider configs when available.
+
     Example:
+        # Without registry (uses static configs)
         gateway = LLMGateway()
+
+        # With registry (uses DB configs if available)
+        from app.database import get_db
+        registry = DynamicProviderRegistry(db=next(get_db()))
+        gateway = LLMGateway(registry=registry)
 
         response = await gateway.complete(
             provider="claude",
@@ -61,16 +70,35 @@ class LLMGateway:
         print(f"Cost: ${response['cost']:.6f}")
     """
 
-    def __init__(self) -> None:
-        """Initialize LLM Gateway."""
+    def __init__(self, registry: Optional[DynamicProviderRegistry] = None) -> None:
+        """
+        Initialize LLM Gateway.
+        
+        Args:
+            registry: Optional DynamicProviderRegistry for database-backed
+                     provider configs. If None, uses static configs only.
+        """
         # Disable LiteLLM's verbose logging
         litellm.set_verbose = False
-        logger.info("llm_gateway_initialized", providers=list_providers())
+        self.registry = registry
+        
+        if self.registry:
+            logger.info(
+                "llm_gateway_initialized",
+                mode="dynamic",
+                providers=self.registry.list_providers()
+            )
+        else:
+            logger.info(
+                "llm_gateway_initialized",
+                mode="static",
+                providers=list_providers()
+            )
 
     async def complete(
         self,
         provider: str,
-        messages: list[dict[str, str]],
+        messages: list[dict],
         temperature: float | None = None,
         max_tokens: int | None = None,
         **kwargs: Any,
@@ -102,7 +130,12 @@ class LLMGateway:
                 temperature=0.3,
             )
         """
-        config = get_provider_config(provider)
+        # Get config from registry if available, otherwise use static config
+        if self.registry:
+            config = self.registry.get_config(provider)
+        else:
+            config = get_provider_config(provider)
+        
         model_id = config.model_id
         defaults = DEFAULT_PARAMS.get(provider, {})
 
@@ -173,7 +206,7 @@ class LLMGateway:
     async def _call_with_retry(
         self,
         model: str,
-        messages: list[dict[str, str]],
+        messages: list[dict],
         temperature: float,
         max_tokens: int,
         **kwargs: Any,
@@ -202,6 +235,8 @@ class LLMGateway:
         Returns:
             List of provider aliases like ['claude', 'gpt', 'gemini', 'gpt-mini']
         """
+        if self.registry:
+            return self.registry.list_providers()
         return list_providers()
 
     def is_provider_configured(self, provider: str) -> bool:
@@ -227,7 +262,11 @@ class LLMGateway:
 
         # Check for custom api_key_env in provider config
         try:
-            config = get_provider_config(provider)
+            if self.registry:
+                config = self.registry.get_config(provider)
+            else:
+                config = get_provider_config(provider)
+            
             if config.api_key_env:
                 return bool(os.environ.get(config.api_key_env))
         except KeyError:
