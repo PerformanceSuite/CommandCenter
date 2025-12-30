@@ -36,6 +36,13 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+// Quick create request type
+export interface CreateHypothesisRequest {
+  statement: string;
+  context?: string;
+  category?: string;
+}
+
 // Hypotheses API
 export const hypothesesApi = {
   /**
@@ -60,6 +67,15 @@ export const hypothesesApi = {
    */
   get: (id: string): Promise<HypothesisDetail> =>
     fetchJSON(`${API_BASE}/hypotheses/${id}`),
+
+  /**
+   * Create a new hypothesis with quick input
+   */
+  create: (request: CreateHypothesisRequest): Promise<HypothesisDetail> =>
+    fetchJSON(`${API_BASE}/hypotheses`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
 
   /**
    * Get dashboard statistics

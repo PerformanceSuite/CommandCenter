@@ -19,6 +19,14 @@ from pydantic import BaseModel, ConfigDict, Field
 # Request Schemas
 
 
+class CreateHypothesisRequest(BaseModel):
+    """Quick create request for hypothesis with minimal required fields."""
+
+    statement: str = Field(..., min_length=10, max_length=500)
+    context: str | None = None
+    category: str = "general"
+
+
 class HypothesisCreateRequest(BaseModel):
     """Request to create a new hypothesis."""
 
@@ -37,8 +45,8 @@ class HypothesisCreateRequest(BaseModel):
         description="What would validate this hypothesis",
     )
     context: str | None = Field(default=None, description="Additional context")
-    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    tags: list = Field(default_factory=list, description="Tags for categorization")
+    metadata: dict = Field(default_factory=dict)
 
 
 class HypothesisUpdateRequest(BaseModel):
@@ -52,8 +60,8 @@ class HypothesisUpdateRequest(BaseModel):
     status: HypothesisStatus | None = None
     success_criteria: str | None = None
     context: str | None = None
-    tags: list[str] | None = None
-    metadata: dict[str, Any] | None = None
+    tags: list | None = None
+    metadata: dict | None = None
 
 
 class EvidenceCreateRequest(BaseModel):
@@ -64,14 +72,14 @@ class EvidenceCreateRequest(BaseModel):
     supports: bool = Field(..., description="True if supports hypothesis")
     confidence: int = Field(default=70, ge=0, le=100, description="Confidence 0-100")
     collected_by: str = Field(default="api", description="Who collected this evidence")
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict)
 
 
 class HypothesisValidateRequest(BaseModel):
     """Request to validate a hypothesis via AI debate."""
 
     max_rounds: int = Field(default=3, ge=1, le=5, description="Maximum debate rounds")
-    agents: list[str] = Field(
+    agents: list = Field(
         default=["analyst", "researcher", "critic"],
         description="Agent types to include in debate",
     )
@@ -127,10 +135,10 @@ class HypothesisDetailResponse(HypothesisSummaryResponse):
     testability: TestabilityLevel
     success_criteria: str
     context: str | None = None
-    tags: list[str] = []
+    tags: list = []
     evidence: list[HypothesisEvidenceResponse] = []
     validated_at: datetime | None = None
-    metadata: dict[str, Any] = {}
+    metadata: dict = {}
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -148,8 +156,8 @@ class HypothesisStatsResponse(BaseModel):
     """Dashboard statistics."""
 
     total: int
-    by_status: dict[str, int]
-    by_category: dict[str, int]
+    by_status: dict
+    by_category: dict
     average_validation_score: float
     validated_count: int
     invalidated_count: int
@@ -195,7 +203,7 @@ class ValidationResultResponse(BaseModel):
     final_answer: str
     reasoning_summary: str
     recommendation: str
-    follow_up_questions: list[str] = []
+    follow_up_questions: list = []
     duration_seconds: float
     total_cost: float
     validated_at: datetime
@@ -210,7 +218,7 @@ class AgentResponseSchema(BaseModel):
     answer: str
     reasoning: str
     confidence: int = Field(ge=0, le=100, description="Confidence 0-100")
-    evidence: list[str] = []
+    evidence: list = []
     agent_name: str
     model: str
 
@@ -223,7 +231,7 @@ class DebateRoundSchema(BaseModel):
     consensus_level: str | None = None
     started_at: datetime
     completed_at: datetime | None = None
-    metadata: dict[str, Any] = {}
+    metadata: dict = {}
 
 
 class DebateResultResponse(BaseModel):
@@ -258,7 +266,7 @@ class EvidenceItemResponse(BaseModel):
     confidence: int
     collected_at: datetime
     collected_by: str
-    metadata: dict[str, Any] = {}
+    metadata: dict = {}
 
 
 class EvidenceListResponse(BaseModel):
@@ -277,8 +285,8 @@ class EvidenceStatsResponse(BaseModel):
     supporting: int
     contradicting: int
     average_confidence: float
-    by_source_type: dict[str, int]
-    by_collector: dict[str, int]
+    by_source_type: dict
+    by_collector: dict
 
 
 # Cost Tracking Schemas
@@ -308,6 +316,6 @@ class CostStatsResponse(BaseModel):
     total_output_tokens: int
     total_tokens: int
     total_requests: int
-    cost_by_provider: dict[str, float]
-    tokens_by_provider: dict[str, ProviderTokensResponse]
-    requests_by_provider: dict[str, ProviderRequestsResponse]
+    cost_by_provider: dict
+    tokens_by_provider: dict
+    requests_by_provider: dict

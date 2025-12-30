@@ -14,12 +14,16 @@ from libs.ai_arena.hypothesis.schema import (
     HypothesisEvidence,
     HypothesisStatus,
     HypothesisUpdate,
+    ImpactLevel,
+    RiskLevel,
+    TestabilityLevel,
 )
 from libs.llm_gateway.metrics import get_cost_statistics
 
 from app.schemas.hypothesis import (
     AgentResponseSchema,
     CostStatsResponse,
+    CreateHypothesisRequest,
     DebateResultResponse,
     DebateRoundSchema,
     EvidenceCreateRequest,
@@ -125,19 +129,42 @@ async def list_hypotheses(
 
 
 @router.post("/", response_model=HypothesisDetailResponse, status_code=status.HTTP_201_CREATED)
-async def create_hypothesis(request: HypothesisCreateRequest) -> HypothesisDetailResponse:
-    """Create a new hypothesis."""
-    create_data = HypothesisCreate(
-        statement=request.statement,
-        category=request.category,
-        impact=request.impact,
-        risk=request.risk,
-        testability=request.testability,
-        success_criteria=request.success_criteria,
-        context=request.context,
-        tags=request.tags,
-        metadata=request.metadata,
-    )
+async def create_hypothesis(request: HypothesisCreateRequest | CreateHypothesisRequest) -> HypothesisDetailResponse:
+    """Create a new hypothesis with either full or quick input."""
+    # Check if it's a simple CreateHypothesisRequest (quick input)
+    if isinstance(request, CreateHypothesisRequest):
+        # Map string category to enum
+        try:
+            category_enum = HypothesisCategory(request.category)
+        except ValueError:
+            category_enum = HypothesisCategory.CUSTOMER  # Default fallback
+        
+        # Use sensible defaults for quick input
+        create_data = HypothesisCreate(
+            statement=request.statement,
+            category=category_enum,
+            impact=ImpactLevel.MEDIUM,
+            risk=RiskLevel.MEDIUM,
+            testability=TestabilityLevel.MEDIUM,
+            success_criteria="To be defined through validation",
+            context=request.context,
+            tags=[],
+            metadata={},
+        )
+    else:
+        # Full HypothesisCreateRequest with all fields
+        create_data = HypothesisCreate(
+            statement=request.statement,
+            category=request.category,
+            impact=request.impact,
+            risk=request.risk,
+            testability=request.testability,
+            success_criteria=request.success_criteria,
+            context=request.context,
+            tags=request.tags,
+            metadata=request.metadata,
+        )
+    
     hypothesis = await hypothesis_service.create_hypothesis(create_data)
     return _to_detail_response(hypothesis)
 
