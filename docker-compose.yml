@@ -157,8 +157,8 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .  # Build from repo root to access libs/
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_celery_beat
     command: celery -A app.tasks beat --loglevel=info
     env_file: .env.docker
@@ -173,8 +173,8 @@ services:
 
   flower:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .  # Build from repo root to access libs/
+      dockerfile: backend/Dockerfile
     container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_flower
     command: celery -A app.tasks flower --port=5555
     ports:
