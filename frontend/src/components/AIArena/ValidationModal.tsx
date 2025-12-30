@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ValidationStatus, HypothesisSummary, DebateResult } from '../../types/hypothesis';
 import hypothesesApi from '../../services/hypothesesApi';
-import { DebateViewer } from '../DebateViewer';
+import { DebateViewer } from './DebateViewer';
 
 interface ValidationModalProps {
   hypothesis: HypothesisSummary;

@@ -7,6 +7,7 @@ import {
   Database,
   Settings,
   Terminal,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
@@ -20,6 +21,7 @@ const navItems: NavItem[] = [
   { to: '/radar', icon: <Radar size={20} />, label: 'Tech Radar' },
   { to: '/research', icon: <BookOpen size={20} />, label: 'Research Hub' },
   { to: '/knowledge', icon: <Database size={20} />, label: 'Knowledge Base' },
+  { to: '/arena', icon: <Sparkles size={20} />, label: 'AI Arena' },
   { to: '/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];
 

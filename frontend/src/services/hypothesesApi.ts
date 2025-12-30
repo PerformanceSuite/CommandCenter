@@ -1,5 +1,6 @@
 // Hypothesis Dashboard API Client
 
+import api from './api';
 import type {
   DebateResult,
   EvidenceFilters,
@@ -14,28 +15,6 @@ import type {
   ValidationTaskResponse,
 } from '../types/hypothesis';
 
-// API base - points to CommandCenter backend
-// In production, this would be configured per-project
-const API_BASE = '/api/v1';
-
-// Helper function for fetch requests
-async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
-  }
-
-  return response.json();
-}
-
 // Quick create request type
 export interface CreateHypothesisRequest {
   statement: string;
@@ -48,7 +27,7 @@ export const hypothesesApi = {
   /**
    * List hypotheses with optional filtering
    */
-  list: (
+  list: async (
     filters?: HypothesisFilters,
     limit = 20,
     offset = 0
@@ -59,66 +38,80 @@ export const hypothesesApi = {
     params.set('limit', limit.toString());
     params.set('offset', offset.toString());
 
-    return fetchJSON(`${API_BASE}/hypotheses/?${params}`);
+    const response = await api.get<HypothesisListResponse>(`/api/v1/hypotheses/?${params}`);
+    return response.data;
   },
 
   /**
    * Get a single hypothesis with full details
    */
-  get: (id: string): Promise<HypothesisDetail> =>
-    fetchJSON(`${API_BASE}/hypotheses/${id}`),
+  get: async (id: string): Promise<HypothesisDetail> => {
+    const response = await api.get<HypothesisDetail>(`/api/v1/hypotheses/${id}`);
+    return response.data;
+  },
 
   /**
    * Create a new hypothesis with quick input
    */
-  create: (request: CreateHypothesisRequest): Promise<HypothesisDetail> =>
-    fetchJSON(`${API_BASE}/hypotheses/`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    }),
+  create: async (request: CreateHypothesisRequest): Promise<HypothesisDetail> => {
+    const response = await api.post<HypothesisDetail>('/api/v1/hypotheses/', request);
+    return response.data;
+  },
 
   /**
    * Get dashboard statistics
    */
-  stats: (): Promise<HypothesisStats> =>
-    fetchJSON(`${API_BASE}/hypotheses/stats`),
+  stats: async (): Promise<HypothesisStats> => {
+    const response = await api.get<HypothesisStats>('/api/v1/hypotheses/stats');
+    return response.data;
+  },
 
   /**
    * Start validation for a hypothesis
    */
-  validate: (
+  validate: async (
     id: string,
     request?: ValidationRequest
-  ): Promise<ValidationTaskResponse> =>
-    fetchJSON(`${API_BASE}/hypotheses/${id}/validate`, {
-      method: 'POST',
-      body: JSON.stringify(request || {}),
-    }),
+  ): Promise<ValidationTaskResponse> => {
+    const response = await api.post<ValidationTaskResponse>(
+      `/api/v1/hypotheses/${id}/validate`,
+      request || {}
+    );
+    return response.data;
+  },
 
   /**
    * Get validation status for a hypothesis
    */
-  getValidationStatus: (hypothesisId: string): Promise<ValidationStatus> =>
-    fetchJSON(`${API_BASE}/hypotheses/${hypothesisId}/validation-status`),
+  getValidationStatus: async (hypothesisId: string): Promise<ValidationStatus> => {
+    const response = await api.get<ValidationStatus>(
+      `/api/v1/hypotheses/${hypothesisId}/validation-status`
+    );
+    return response.data;
+  },
 
   /**
    * Get validation status by task ID
    */
-  getValidationTask: (taskId: string): Promise<ValidationStatus> =>
-    fetchJSON(`${API_BASE}/hypotheses/validation/${taskId}`),
+  getValidationTask: async (taskId: string): Promise<ValidationStatus> => {
+    const response = await api.get<ValidationStatus>(`/api/v1/hypotheses/validation/${taskId}`);
+    return response.data;
+  },
 
   /**
    * Get full debate result for a completed validation task
    */
-  getDebateResult: (taskId: string): Promise<DebateResult> =>
-    fetchJSON(`${API_BASE}/hypotheses/validation/${taskId}/debate`),
+  getDebateResult: async (taskId: string): Promise<DebateResult> => {
+    const response = await api.get<DebateResult>(`/api/v1/hypotheses/validation/${taskId}/debate`);
+    return response.data;
+  },
 
   // Evidence Explorer endpoints
 
   /**
    * List all evidence across hypotheses with optional filtering
    */
-  listEvidence: (
+  listEvidence: async (
     filters?: EvidenceFilters,
     limit = 50,
     offset = 0
@@ -130,14 +123,17 @@ export const hypothesesApi = {
     params.set('limit', limit.toString());
     params.set('offset', offset.toString());
 
-    return fetchJSON(`${API_BASE}/hypotheses/evidence/list?${params}`);
+    const response = await api.get<EvidenceListResponse>(`/api/v1/hypotheses/evidence/list?${params}`);
+    return response.data;
   },
 
   /**
    * Get evidence statistics
    */
-  getEvidenceStats: (): Promise<EvidenceStats> =>
-    fetchJSON(`${API_BASE}/hypotheses/evidence/stats`),
+  getEvidenceStats: async (): Promise<EvidenceStats> => {
+    const response = await api.get<EvidenceStats>('/api/v1/hypotheses/evidence/stats');
+    return response.data;
+  },
 };
 
 export default hypothesesApi;

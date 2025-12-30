@@ -3,7 +3,6 @@ import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
 import WorkflowsPage from './pages/WorkflowsPage';
 import SettingsPage from './pages/SettingsPage';
-import HypothesesPage from './pages/HypothesesPage';
 import { ApprovalQueue } from './components/ApprovalQueue/ApprovalQueue';
 import { ApprovalBadge } from './components/ApprovalBadge/ApprovalBadge';
 
@@ -26,9 +25,6 @@ function Navigation() {
       </Link>
       <Link to="/workflows" className={linkClass('/workflows')}>
         Workflows
-      </Link>
-      <Link to="/hypotheses" className={linkClass('/hypotheses')}>
-        Hypotheses
       </Link>
       <Link to="/approvals" className={linkClass('/approvals')}>
         Approvals
@@ -89,7 +85,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/workflows" element={<WorkflowsPage />} />
-            <Route path="/hypotheses" element={<HypothesesPage />} />
             <Route path="/approvals" element={<ApprovalQueue />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

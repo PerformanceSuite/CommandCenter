@@ -2,7 +2,6 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import hypothesesApi from '../../services/hypothesesApi';
 import { CATEGORY_LABELS } from '../../types/hypothesis';
-import type { HypothesisCategory } from '../../types/hypothesis';
 
 interface HypothesisQuickInputProps {
   onHypothesisCreated?: () => void;
@@ -33,12 +32,12 @@ export function HypothesisQuickInput({ onHypothesisCreated }: HypothesisQuickInp
       });
 
       toast.success('Hypothesis created successfully!');
-      
+
       // Clear form
       setStatement('');
       setContext('');
       setShowContext(false);
-      
+
       // Notify parent to refresh
       if (onHypothesisCreated) {
         onHypothesisCreated();
