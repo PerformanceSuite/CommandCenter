@@ -271,15 +271,18 @@ class AgentConfigResponse(BaseModel):
 async def list_models() -> dict:
     """
     List all available models grouped by provider.
+
+    Models are dynamically fetched from LiteLLM's registry.
     """
     import os
 
-    from libs.llm_gateway.providers import AVAILABLE_MODELS
+    from libs.llm_gateway.providers import get_cached_models
 
     env_vars = read_env_file()
+    available_models = get_cached_models()
 
     result: dict[str, list[dict]] = {}
-    for provider, models in AVAILABLE_MODELS.items():
+    for provider, models in available_models.items():
         result[provider] = []
         for model in models:
             # Check if API key is configured
@@ -301,6 +304,17 @@ async def list_models() -> dict:
             )
 
     return {"models": result}
+
+
+@router.post("/models/refresh")
+async def refresh_models() -> dict:
+    """
+    Force refresh the models cache from LiteLLM.
+    """
+    from libs.llm_gateway.providers import refresh_models_cache
+
+    models = refresh_models_cache()
+    return {"message": "Models cache refreshed", "provider_count": len(models)}
 
 
 @router.get("/agents")
@@ -328,19 +342,21 @@ async def set_agent_model(role: str, request: AgentConfigRequest) -> dict:
     """
     Set which provider and model an agent role should use.
     """
-    from libs.llm_gateway.providers import AVAILABLE_MODELS
+    from libs.llm_gateway.providers import get_cached_models
 
     from app.services.settings_service import SettingsService
 
+    available_models = get_cached_models()
+
     # Validate provider exists
-    if request.provider not in AVAILABLE_MODELS:
+    if request.provider not in available_models:
         raise HTTPException(
             status_code=400,
-            detail=f"Provider '{request.provider}' not found. Available: {list(AVAILABLE_MODELS.keys())}",
+            detail=f"Provider '{request.provider}' not found. Available: {list(available_models.keys())}",
         )
 
     # Validate model exists for provider
-    provider_models = AVAILABLE_MODELS[request.provider]
+    provider_models = available_models[request.provider]
     valid_model_ids = [m.id for m in provider_models]
     if request.model_id not in valid_model_ids:
         raise HTTPException(

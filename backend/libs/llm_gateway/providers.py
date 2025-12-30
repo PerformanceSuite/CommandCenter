@@ -64,7 +64,7 @@ COSTS: Dict[str, ProviderCost] = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass
 class ModelInfo:
     """Information about an available model"""
 
@@ -76,119 +76,156 @@ class ModelInfo:
     api_base: Optional[str] = None  # Custom API base URL
 
 
-# Available models grouped by provider
-# Used for model selection in Settings UI
-# Updated December 2025
-AVAILABLE_MODELS: Dict[str, list[ModelInfo]] = {
-    "anthropic": [
-        ModelInfo(
-            id="anthropic/claude-opus-4-20250514",
-            name="Claude Opus 4",
-            cost_input=15.0,
-            cost_output=75.0,
-            api_key_env="ANTHROPIC_API_KEY",
-        ),
-        ModelInfo(
-            id="anthropic/claude-sonnet-4-20250514",
-            name="Claude Sonnet 4",
-            cost_input=3.0,
-            cost_output=15.0,
-            api_key_env="ANTHROPIC_API_KEY",
-        ),
-        ModelInfo(
-            id="anthropic/claude-3-5-haiku-20241022",
-            name="Claude 3.5 Haiku",
-            cost_input=0.80,
-            cost_output=4.0,
-            api_key_env="ANTHROPIC_API_KEY",
-        ),
-    ],
-    "openai": [
-        ModelInfo(
-            id="openai/o3-mini",
-            name="o3-mini",
-            cost_input=1.10,
-            cost_output=4.40,
-            api_key_env="OPENAI_API_KEY",
-        ),
-        ModelInfo(
-            id="openai/o1",
-            name="o1",
-            cost_input=15.0,
-            cost_output=60.0,
-            api_key_env="OPENAI_API_KEY",
-        ),
-        ModelInfo(
-            id="openai/o1-mini",
-            name="o1-mini",
-            cost_input=3.0,
-            cost_output=12.0,
-            api_key_env="OPENAI_API_KEY",
-        ),
-        ModelInfo(
-            id="openai/gpt-4o",
-            name="GPT-4o",
-            cost_input=2.50,
-            cost_output=10.0,
-            api_key_env="OPENAI_API_KEY",
-        ),
-        ModelInfo(
-            id="openai/gpt-4o-mini",
-            name="GPT-4o Mini",
-            cost_input=0.15,
-            cost_output=0.60,
-            api_key_env="OPENAI_API_KEY",
-        ),
-    ],
-    "google": [
-        ModelInfo(
-            id="gemini/gemini-2.5-pro",
-            name="Gemini 2.5 Pro",
-            cost_input=1.25,
-            cost_output=10.0,
-            api_key_env="GOOGLE_API_KEY",
-        ),
-        ModelInfo(
-            id="gemini/gemini-2.5-flash",
-            name="Gemini 2.5 Flash",
-            cost_input=0.15,
-            cost_output=0.60,
-            api_key_env="GOOGLE_API_KEY",
-        ),
-        ModelInfo(
-            id="gemini/gemini-2.0-flash",
-            name="Gemini 2.0 Flash",
-            cost_input=0.10,
-            cost_output=0.40,
-            api_key_env="GOOGLE_API_KEY",
-        ),
-        ModelInfo(
-            id="gemini/gemini-2.0-flash-thinking",
-            name="Gemini 2.0 Flash Thinking",
-            cost_input=0.10,
-            cost_output=0.40,
-            api_key_env="GOOGLE_API_KEY",
-        ),
-    ],
-    "zai": [
-        ModelInfo(
-            id="openai/glm-4.7",
-            name="GLM-4.7",
-            cost_input=0.50,
-            cost_output=2.0,
-            api_key_env="ZAI_API_KEY",
-            api_base="https://api.z.ai/api/paas/v4",
-        ),
-        ModelInfo(
-            id="openai/glm-4.5-flash",
-            name="GLM-4.5 Flash",
-            cost_input=0.05,
-            cost_output=0.20,
-            api_key_env="ZAI_API_KEY",
-            api_base="https://api.z.ai/api/paas/v4",
-        ),
-    ],
+# Provider configuration for dynamic model fetching
+PROVIDER_API_KEYS: Dict[str, str] = {
+    "anthropic": "ANTHROPIC_API_KEY",
+    "openai": "OPENAI_API_KEY",
+    "google": "GOOGLE_API_KEY",
+    "zai": "ZAI_API_KEY",
 }
+
+# Custom API bases for non-standard providers
+PROVIDER_API_BASES: Dict[str, str] = {
+    "zai": "https://api.z.ai/api/paas/v4",
+}
+
+# Model prefixes to search for each provider in LiteLLM
+PROVIDER_MODEL_PREFIXES: Dict[str, list[str]] = {
+    "anthropic": ["claude-"],
+    "openai": ["gpt-4o", "gpt-4-turbo", "o1", "o3", "o4"],
+    "google": ["gemini/gemini-2", "gemini/gemini-1.5-pro", "gemini/gemini-1.5-flash"],
+    "zai": [],  # Z.AI uses custom models not in LiteLLM
+}
+
+# Excluded model patterns (embeddings, deprecated, etc.)
+EXCLUDED_PATTERNS = [
+    "embed",
+    "vision",
+    "realtime",
+    "audio",
+    "transcribe",
+    "instruct",
+    "0301",
+    "0314",
+    "0613",
+    "1106",
+    "0125",
+    "exp-",
+    "preview",
+    "latest",
+]
+
+# Z.AI custom models (not in LiteLLM)
+ZAI_MODELS = [
+    ModelInfo(
+        id="openai/glm-4.7",
+        name="GLM-4.7",
+        cost_input=0.50,
+        cost_output=2.0,
+        api_key_env="ZAI_API_KEY",
+        api_base="https://api.z.ai/api/paas/v4",
+    ),
+    ModelInfo(
+        id="openai/glm-4.5-flash",
+        name="GLM-4.5 Flash",
+        cost_input=0.05,
+        cost_output=0.20,
+        api_key_env="ZAI_API_KEY",
+        api_base="https://api.z.ai/api/paas/v4",
+    ),
+]
+
+
+def get_available_models() -> Dict[str, list[ModelInfo]]:
+    """
+    Dynamically fetch available models from LiteLLM's model registry.
+
+    Returns models grouped by provider with cost information.
+    """
+    import litellm
+
+    result: Dict[str, list[ModelInfo]] = {}
+
+    for provider, prefixes in PROVIDER_MODEL_PREFIXES.items():
+        models: list[ModelInfo] = []
+        seen_names: set[str] = set()
+
+        if provider == "zai":
+            # Z.AI uses custom models not in LiteLLM
+            result[provider] = ZAI_MODELS
+            continue
+
+        for model_id, info in litellm.model_cost.items():
+            # Check if model matches any of this provider's prefixes
+            matches_prefix = any(model_id.startswith(prefix) for prefix in prefixes)
+            if not matches_prefix:
+                continue
+
+            # Skip excluded patterns
+            if any(pattern in model_id.lower() for pattern in EXCLUDED_PATTERNS):
+                continue
+
+            # Skip if not a chat model
+            if info.get("mode") != "chat":
+                continue
+
+            # Get cost info (convert from per-token to per-1M tokens)
+            input_cost = info.get("input_cost_per_token", 0) * 1_000_000
+            output_cost = info.get("output_cost_per_token", 0) * 1_000_000
+
+            # Create human-readable name
+            name = model_id.replace("gemini/", "").replace("-", " ").title()
+
+            # Skip duplicates by name
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+
+            # Format model ID for LiteLLM
+            if provider == "anthropic" and not model_id.startswith("anthropic/"):
+                formatted_id = f"anthropic/{model_id}"
+            elif provider == "openai" and not model_id.startswith("openai/"):
+                formatted_id = f"openai/{model_id}"
+            elif provider == "google" and not model_id.startswith("gemini/"):
+                formatted_id = f"gemini/{model_id}"
+            else:
+                formatted_id = model_id
+
+            models.append(
+                ModelInfo(
+                    id=formatted_id,
+                    name=name,
+                    cost_input=round(input_cost, 2),
+                    cost_output=round(output_cost, 2),
+                    api_key_env=PROVIDER_API_KEYS.get(provider),
+                    api_base=PROVIDER_API_BASES.get(provider),
+                )
+            )
+
+        # Sort by cost (cheapest first within each provider)
+        models.sort(key=lambda m: (m.cost_input + m.cost_output))
+        result[provider] = models
+
+    return result
+
+
+# Cache for available models (refreshed on server restart)
+_models_cache: Optional[Dict[str, list[ModelInfo]]] = None
+
+
+def get_cached_models() -> Dict[str, list[ModelInfo]]:
+    """Get cached models, fetching if not cached."""
+    global _models_cache
+    if _models_cache is None:
+        _models_cache = get_available_models()
+    return _models_cache
+
+
+def refresh_models_cache() -> Dict[str, list[ModelInfo]]:
+    """Force refresh the models cache."""
+    global _models_cache
+    _models_cache = get_available_models()
+    return _models_cache
 
 
 # Default parameters for each provider
