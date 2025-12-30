@@ -62,7 +62,7 @@ COSTS: Dict[str, ProviderCost] = {
 
 
 # Default parameters for each provider
-DEFAULT_PARAMS: Dict[str, Dict] = {
+DEFAULT_PARAMS: Dict[str, dict] = {
     "claude": {
         "temperature": 0.7,
         "max_tokens": 4096,
@@ -151,3 +151,105 @@ def get_provider_cost(provider_alias: str) -> ProviderCost:
 def list_providers() -> list[str]:
     """List all available provider aliases."""
     return list(PROVIDERS.keys())
+
+
+class DynamicProviderRegistry:
+    """
+    Registry for LLM providers that supports both static and database-backed configurations.
+    
+    Reads provider configs from database first, then falls back to static PROVIDER_CONFIGS.
+    Caches configs for performance.
+    
+    Example:
+        # Without database (uses static configs only)
+        registry = DynamicProviderRegistry()
+        config = registry.get_config("claude")
+        
+        # With database (prefers DB configs, falls back to static)
+        from sqlalchemy.ext.asyncio import AsyncSession
+        registry = DynamicProviderRegistry(db=db_session)
+        config = registry.get_config("custom-provider")
+    """
+    
+    def __init__(self, db: Optional["AsyncSession"] = None):
+        """
+        Initialize the dynamic provider registry.
+        
+        Args:
+            db: Optional AsyncSession for database access. If None, only static configs are used.
+        """
+        self.db = db
+        self._cache: Dict[str, ProviderConfig] = {}
+    
+    def get_config(self, alias: str) -> ProviderConfig:
+        """
+        Get provider configuration by alias.
+        
+        Lookup order:
+        1. Cache (if previously fetched)
+        2. Database (if db session provided)
+        3. Static PROVIDER_CONFIGS
+        
+        Args:
+            alias: Provider alias like 'claude', 'gpt', or custom provider name
+            
+        Returns:
+            ProviderConfig for the requested provider
+            
+        Raises:
+            KeyError: If provider alias not found in cache, DB, or static configs
+        """
+        # Check cache first
+        if alias in self._cache:
+            return self._cache[alias]
+        
+        # Try database if available (Phase 1 integration point)
+        if self.db is not None:
+            # TODO: Once Phase 1 is complete, query database for provider config
+            # Example:
+            # from app.services.settings_service import SettingsService
+            # service = SettingsService(self.db)
+            # db_config = service.get_provider_config(alias)
+            # if db_config:
+            #     config = ProviderConfig(
+            #         model_id=db_config.model_id,
+            #         api_base=db_config.api_base,
+            #         api_key_env=db_config.api_key_env
+            #     )
+            #     self._cache[alias] = config
+            #     return config
+            pass
+        
+        # Fall back to static configs
+        if alias in PROVIDER_CONFIGS:
+            config = PROVIDER_CONFIGS[alias]
+            self._cache[alias] = config
+            return config
+        
+        # Not found anywhere
+        available = self.list_providers()
+        raise KeyError(
+            f"Unknown provider: {alias}. Available: {available}"
+        )
+    
+    def list_providers(self) -> list[str]:
+        """
+        List all available provider aliases from both static and DB configs.
+        
+        Returns:
+            List of provider aliases (combined from static and database)
+        """
+        providers = set(PROVIDER_CONFIGS.keys())
+        
+        # TODO: Once Phase 1 is complete, also include DB providers
+        # if self.db is not None:
+        #     from app.services.settings_service import SettingsService
+        #     service = SettingsService(self.db)
+        #     db_providers = service.list_provider_aliases()
+        #     providers.update(db_providers)
+        
+        return sorted(list(providers))
+    
+    def clear_cache(self):
+        """Clear the configuration cache. Useful after database updates."""
+        self._cache.clear()
