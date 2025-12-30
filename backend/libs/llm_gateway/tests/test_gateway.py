@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from libs.llm_gateway import LLMGateway, ProviderError
 from libs.llm_gateway.cost_tracking import calculate_cost
+from libs.llm_gateway.providers import DynamicProviderRegistry, ProviderConfig
 
 
 class TestCostCalculation:
@@ -210,3 +211,118 @@ class TestRetryBehavior:
 
             assert response["content"] == "Success after retry"
             assert call_count == 2
+
+
+class TestDynamicProviderRegistryIntegration:
+    """Tests for LLMGateway integration with DynamicProviderRegistry"""
+
+    @pytest.fixture
+    def mock_registry(self):
+        """Create a mock registry with custom provider"""
+        registry = DynamicProviderRegistry()
+        # Add a custom provider to the cache for testing
+        registry._cache["custom-provider"] = ProviderConfig(
+            model_id="openai/gpt-3.5-turbo",
+            api_base="https://custom-api.example.com",
+            api_key_env="CUSTOM_API_KEY",
+        )
+        return registry
+
+    def test_gateway_initialization_with_registry(self, mock_registry):
+        """Gateway should accept and store a registry"""
+        gateway = LLMGateway(registry=mock_registry)
+        assert gateway.registry is mock_registry
+
+    def test_gateway_initialization_without_registry(self):
+        """Gateway should work without a registry"""
+        gateway = LLMGateway()
+        assert gateway.registry is None
+
+    def test_available_providers_uses_registry(self, mock_registry):
+        """available_providers should use registry when provided"""
+        gateway = LLMGateway(registry=mock_registry)
+        providers = gateway.available_providers()
+        
+        # Should include static providers
+        assert "claude" in providers
+        assert "gpt" in providers
+
+    def test_available_providers_without_registry(self):
+        """available_providers should use static list without registry"""
+        gateway = LLMGateway()
+        providers = gateway.available_providers()
+        
+        assert isinstance(providers, list)
+        assert "claude" in providers
+        assert "gpt" in providers
+
+    @pytest.mark.asyncio
+    async def test_complete_uses_registry_config(self, mock_registry):
+        """complete should use registry to get provider config"""
+        gateway = LLMGateway(registry=mock_registry)
+        
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Custom provider response"
+        mock_response.model = "openai/gpt-3.5-turbo"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+
+        with patch("libs.llm_gateway.gateway.litellm.acompletion", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_response
+
+            response = await gateway.complete(
+                provider="custom-provider",
+                messages=[{"role": "user", "content": "Hello"}],
+            )
+
+            assert response["content"] == "Custom provider response"
+            # Verify custom api_base was passed
+            call_kwargs = mock.call_args.kwargs
+            assert call_kwargs["api_base"] == "https://custom-api.example.com"
+
+    @pytest.mark.asyncio
+    async def test_complete_static_provider_with_registry(self, mock_registry):
+        """complete should work with static providers when using registry"""
+        gateway = LLMGateway(registry=mock_registry)
+        
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Hello!"
+        mock_response.model = "anthropic/claude-sonnet-4-20250514"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 5
+        mock_response.usage.total_tokens = 15
+
+        with patch("libs.llm_gateway.gateway.litellm.acompletion", new_callable=AsyncMock) as mock:
+            mock.return_value = mock_response
+
+            response = await gateway.complete(
+                provider="claude",
+                messages=[{"role": "user", "content": "Hello"}],
+            )
+
+            assert response["content"] == "Hello!"
+
+    def test_is_provider_configured_with_registry(self, mock_registry):
+        """is_provider_configured should use registry config"""
+        gateway = LLMGateway(registry=mock_registry)
+        
+        # Test with custom provider that has api_key_env
+        # (won't be configured unless env var is set, but should not error)
+        try:
+            result = gateway.is_provider_configured("custom-provider")
+            assert isinstance(result, bool)
+        except KeyError:
+            pytest.fail("Should not raise KeyError for providers in registry")
+
+    def test_is_provider_configured_without_registry(self):
+        """is_provider_configured should work without registry"""
+        gateway = LLMGateway()
+        
+        # Should work with static providers
+        result = gateway.is_provider_configured("claude")
+        assert isinstance(result, bool)
