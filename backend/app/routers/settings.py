@@ -11,6 +11,10 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.config import settings as app_settings
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -232,3 +236,89 @@ async def get_providers() -> dict:
         )
 
     return {"providers": providers}
+
+
+# ============================================================================
+# Agent Configuration Endpoints (Database-backed)
+# ============================================================================
+
+
+def get_sync_session():
+    """Get a sync database session for settings operations."""
+    # Use sync engine for settings (simple CRUD, not performance critical)
+    sync_url = app_settings.database_url.replace("+aiosqlite", "").replace("+asyncpg", "")
+    engine = create_engine(sync_url)
+    Session = sessionmaker(bind=engine)
+    return Session()
+
+
+class AgentConfigRequest(BaseModel):
+    """Request to update agent's provider"""
+
+    provider_alias: str = Field(..., description="Provider alias to use for this agent")
+
+
+class AgentConfigResponse(BaseModel):
+    """Response for agent config"""
+
+    role: str
+    provider_alias: str
+
+
+@router.get("/agents")
+async def list_agents() -> dict:
+    """
+    List all agent role configurations.
+    """
+    from app.services.settings_service import SettingsService
+
+    session = get_sync_session()
+    try:
+        service = SettingsService(session)
+        configs = service.list_agent_configs()
+        return {"agents": [{"role": c.role, "provider_alias": c.provider_alias} for c in configs]}
+    finally:
+        session.close()
+
+
+@router.put("/agents/{role}")
+async def set_agent_provider(role: str, request: AgentConfigRequest) -> dict:
+    """
+    Set which provider an agent role should use.
+    """
+    from app.services.settings_service import SettingsService
+
+    session = get_sync_session()
+    try:
+        service = SettingsService(session)
+
+        # Verify provider exists
+        provider = service.get_provider(request.provider_alias)
+        if not provider:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{request.provider_alias}' not found",
+            )
+
+        config = service.set_agent_provider(role, request.provider_alias)
+        return {"role": config.role, "provider_alias": config.provider_alias}
+    finally:
+        session.close()
+
+
+@router.post("/seed")
+async def seed_defaults() -> dict:
+    """
+    Seed default providers and agent configurations.
+
+    Only populates if tables are empty.
+    """
+    from app.services.settings_service import SettingsService
+
+    session = get_sync_session()
+    try:
+        service = SettingsService(session)
+        service.seed_defaults()
+        return {"message": "Seeded default providers and agent configs"}
+    finally:
+        session.close()
