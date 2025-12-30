@@ -3,9 +3,11 @@ import TechnologyDeepDiveForm from './TechnologyDeepDiveForm';
 import CustomAgentLauncher from './CustomAgentLauncher';
 import ResearchTaskList from './ResearchTaskList';
 import IntelligenceTab from './IntelligenceTab';
+import WorkflowsTab from './WorkflowsTab';
+import ResearchHubSettings from './ResearchHubSettings';
 import ErrorBoundary from './ErrorBoundary';
 
-type ActiveTab = 'deep-dive' | 'custom-agents' | 'task-list' | 'intelligence';
+type ActiveTab = 'deep-dive' | 'custom-agents' | 'task-list' | 'intelligence' | 'workflows' | 'settings';
 
 const ResearchHubView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('deep-dive');
@@ -45,6 +47,18 @@ const ResearchHubView: React.FC = () => {
         >
           Intelligence
         </button>
+        <button
+          className={`tab-button ${activeTab === 'workflows' ? 'active' : ''}`}
+          onClick={() => setActiveTab('workflows')}
+        >
+          Workflows
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+        >
+          Settings
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -67,6 +81,16 @@ const ResearchHubView: React.FC = () => {
         {activeTab === 'intelligence' && (
           <ErrorBoundary>
             <IntelligenceTab />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'workflows' && (
+          <ErrorBoundary>
+            <WorkflowsTab />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'settings' && (
+          <ErrorBoundary>
+            <ResearchHubSettings />
           </ErrorBoundary>
         )}
       </div>
