@@ -7,6 +7,7 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
 aiofiles==23.2.1
+cryptography>=42.0.0
 dagger-io==0.19.4
 nats-py==2.7.2
 anyio>=4.2.0
