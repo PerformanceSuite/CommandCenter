@@ -90,6 +90,127 @@ DEFAULT_PARAMS: Dict[str, Dict] = {
 }
 
 
+class DynamicProviderRegistry:
+    """
+    Dynamic provider registry that reads from database first, then falls back to static configs.
+    
+    This registry provides a unified interface for accessing provider configurations,
+    with support for:
+    - Database-backed provider configs (when Phase 1 is implemented)
+    - Static fallback to PROVIDER_CONFIGS
+    - Per-instance caching for performance
+    
+    Example:
+        # Without database (falls back to static configs)
+        registry = DynamicProviderRegistry()
+        config = registry.get_config("claude")
+        
+        # With database session (future Phase 1 integration)
+        registry = DynamicProviderRegistry(db=session)
+        config = registry.get_config("custom-provider")
+    """
+    
+    def __init__(self, db: Optional["Session"] = None):
+        """
+        Initialize the registry.
+        
+        Args:
+            db: Optional database session for reading provider configs.
+                If None, only static configs will be available.
+        """
+        self.db = db
+        self._cache: Dict[str, ProviderConfig] = {}
+    
+    def get_config(self, alias: str) -> ProviderConfig:
+        """
+        Get provider configuration by alias.
+        
+        Checks in order:
+        1. Instance cache
+        2. Database (if available and Phase 1 is implemented)
+        3. Static PROVIDER_CONFIGS
+        
+        Args:
+            alias: Provider alias like 'claude', 'gpt', 'gemini'
+        
+        Returns:
+            ProviderConfig with model_id, api_base, and api_key_env
+        
+        Raises:
+            KeyError: If provider alias is not found in any source
+        
+        Example:
+            config = registry.get_config("claude")
+            print(config.model_id)  # "anthropic/claude-sonnet-4-20250514"
+        """
+        # Check cache first
+        if alias in self._cache:
+            return self._cache[alias]
+        
+        # TODO: Phase 1 - Query database for provider config if db is available
+        # if self.db:
+        #     from app.services.settings_service import SettingsService
+        #     settings_service = SettingsService(self.db)
+        #     db_provider = settings_service.get_provider(alias)
+        #     if db_provider:
+        #         config = ProviderConfig(
+        #             model_id=db_provider.model_id,
+        #             api_base=db_provider.api_base,
+        #             api_key_env=db_provider.api_key_env,
+        #         )
+        #         self._cache[alias] = config
+        #         return config
+        
+        # Fall back to static configs
+        if alias not in PROVIDER_CONFIGS:
+            raise KeyError(
+                f"Unknown provider: {alias}. "
+                f"Available: {list(PROVIDER_CONFIGS.keys())}"
+            )
+        
+        config = PROVIDER_CONFIGS[alias]
+        self._cache[alias] = config
+        return config
+    
+    def list_providers(self) -> list[str]:
+        """
+        List all available provider aliases.
+        
+        Combines providers from:
+        - Static PROVIDER_CONFIGS
+        - Database (if available and Phase 1 is implemented)
+        
+        Returns:
+            Sorted list of provider aliases
+        
+        Example:
+            providers = registry.list_providers()
+            # ['claude', 'gemini', 'gpt', 'gpt-mini', 'zai', 'zai-flash']
+        """
+        providers = set(PROVIDER_CONFIGS.keys())
+        
+        # TODO: Phase 1 - Add database providers if db is available
+        # if self.db:
+        #     from app.services.settings_service import SettingsService
+        #     settings_service = SettingsService(self.db)
+        #     db_providers = settings_service.list_providers()
+        #     providers.update(db_providers)
+        
+        return sorted(list(providers))
+    
+    def clear_cache(self):
+        """
+        Clear the configuration cache.
+        
+        Call this when provider configs are updated in the database
+        to force fresh reads on next access.
+        
+        Example:
+            registry.clear_cache()  # Force reload from DB/static on next get_config()
+        """
+        self._cache.clear()
+
+
 def get_model_id(provider_alias: str) -> str:
     """
     Get LiteLLM model identifier from provider alias.
