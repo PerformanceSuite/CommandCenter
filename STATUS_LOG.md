@@ -46,6 +46,7 @@ GET    /api/v1/hypotheses/evidence/stats      - Evidence statistics
 ```
 
 ### Recent Commits
+- `c15b571` - fix(ai-arena): Skip chairman synthesis when Claude API key is unavailable
 - `a7d2585` - fix(ai-arena): Improve JSON extraction for Gemini responses
 - `070960f` - fix(ai-arena): Add debate_result field to HypothesisValidationResult
 - `ed1c9a8` - refactor(hypotheses): Standardize pagination param from offset to skip
@@ -102,7 +103,7 @@ open http://localhost:9000/hypotheses
 
 | Task | Description | Effort |
 |------|-------------|--------|
-| AI API Keys | Configure valid Anthropic key for chairman synthesis | Config |
+| ~~AI API Keys~~ | ~~Configure valid Anthropic key for chairman synthesis~~ | ✅ Now skips gracefully |
 | ~~Validation Testing~~ | ~~End-to-end test of hypothesis validation flow~~ | ✅ Done |
 | Create Hypothesis UI | Add form to create hypotheses from frontend | 4 hrs |
 
@@ -129,7 +130,8 @@ open http://localhost:9000/hypotheses
 
 | Item | Location |
 |------|----------|
-| WorkflowsPage import fix | `hub/frontend/src/pages/WorkflowsPage.tsx` - Fixed today |
+| ~~WorkflowsPage import fix~~ | ~~`hub/frontend/src/pages/WorkflowsPage.tsx`~~ - Fixed |
+| ~~Provider tests outdated~~ | ~~`libs/llm_gateway/tests/test_providers.py`~~ - Fixed (added zai providers) |
 | Pydantic deprecation warnings | Various schemas using `class Config` |
 | Coverage threshold | Backend tests below 80% fail-under |
 
@@ -174,6 +176,7 @@ CommandCenter/
   - Added `is_provider_configured()` method to LLMGateway
   - Orchestrator checks provider availability before attempting synthesis
   - Logs info message instead of warning when skipped
+  - Pushed fix: `c15b571`
 
 ### Earlier Session
 - Walked through AI Arena UI
