@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Use empty string to make relative requests that go through Vite proxy
+const API_BASE = '';
 
 interface Repository {
   id: number;
