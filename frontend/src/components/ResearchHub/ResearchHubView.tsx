@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import TechnologyDeepDiveForm from './TechnologyDeepDiveForm';
 import CustomAgentLauncher from './CustomAgentLauncher';
 import ResearchTaskList from './ResearchTaskList';
-import ResearchSummary from './ResearchSummary';
+import IntelligenceTab from './IntelligenceTab';
 import ErrorBoundary from './ErrorBoundary';
 
-type ActiveTab = 'deep-dive' | 'custom-agents' | 'task-list' | 'summary';
+type ActiveTab = 'deep-dive' | 'custom-agents' | 'task-list' | 'intelligence';
 
 const ResearchHubView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('deep-dive');
@@ -40,10 +40,10 @@ const ResearchHubView: React.FC = () => {
           Research Tasks
         </button>
         <button
-          className={`tab-button ${activeTab === 'summary' ? 'active' : ''}`}
-          onClick={() => setActiveTab('summary')}
+          className={`tab-button ${activeTab === 'intelligence' ? 'active' : ''}`}
+          onClick={() => setActiveTab('intelligence')}
         >
-          Summary
+          Intelligence
         </button>
       </div>
 
@@ -64,9 +64,9 @@ const ResearchHubView: React.FC = () => {
             <ResearchTaskList />
           </ErrorBoundary>
         )}
-        {activeTab === 'summary' && (
+        {activeTab === 'intelligence' && (
           <ErrorBoundary>
-            <ResearchSummary />
+            <IntelligenceTab />
           </ErrorBoundary>
         )}
       </div>

@@ -32,6 +32,7 @@ from app.routers import (
     graph,
     hypotheses,
     ingestion_sources,
+    intelligence,
     jobs,
     knowledge,
     mcp,
@@ -257,7 +258,10 @@ app.include_router(export.router)  # Export API for analysis results (SARIF, HTM
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
-app.include_router(hypotheses.router, prefix=settings.api_v1_prefix)  # AI Arena hypotheses
+app.include_router(hypotheses.router, prefix=settings.api_v1_prefix)  # AI Arena hypotheses (legacy)
+app.include_router(
+    intelligence.router, prefix=settings.api_v1_prefix
+)  # Research Hub intelligence integration
 app.include_router(settings_router.router, prefix=settings.api_v1_prefix)  # Settings & API keys
 
 

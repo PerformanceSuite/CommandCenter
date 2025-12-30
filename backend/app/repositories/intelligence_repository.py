@@ -166,6 +166,26 @@ class HypothesisRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_recently_validated(self, project_id: int, limit: int = 10) -> list[Hypothesis]:
+        """Get recently validated/invalidated hypotheses"""
+        stmt = (
+            select(Hypothesis)
+            .where(Hypothesis.project_id == project_id)
+            .where(
+                Hypothesis.status.in_(
+                    [
+                        HypothesisStatus.VALIDATED,
+                        HypothesisStatus.INVALIDATED,
+                        HypothesisStatus.NEEDS_MORE_DATA,
+                    ]
+                )
+            )
+            .order_by(Hypothesis.updated_at.desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
 
 class EvidenceRepository:
     """Repository for Evidence CRUD operations"""

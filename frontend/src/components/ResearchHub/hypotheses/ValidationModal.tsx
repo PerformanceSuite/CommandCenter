@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { ValidationStatus, HypothesisSummary, DebateResult } from '../../types/hypothesis';
-import hypothesesApi from '../../services/hypothesesApi';
+import { intelligenceApi, HypothesisResponse, DebateResponse } from '../../../services/intelligenceApi';
 import { DebateViewer } from './DebateViewer';
 
 interface ValidationModalProps {
-  hypothesis: HypothesisSummary;
+  hypothesis: HypothesisResponse;
   isOpen: boolean;
   onClose: () => void;
   onComplete: () => void;
@@ -16,9 +15,12 @@ const AVAILABLE_AGENTS = [
   { id: 'analyst', name: 'Analyst', description: 'Claude-based market analyst' },
   { id: 'researcher', name: 'Researcher', description: 'Gemini-based data researcher' },
   { id: 'strategist', name: 'Strategist', description: 'GPT-based business strategist' },
-  { id: 'critic', name: 'Critic', description: 'Claude-based devil\'s advocate' },
+  { id: 'critic', name: 'Critic', description: "Claude-based devil's advocate" },
 ];
 
+/**
+ * ValidationModal - Modal for configuring and running hypothesis validation
+ */
 export function ValidationModal({
   hypothesis,
   isOpen,
@@ -28,28 +30,24 @@ export function ValidationModal({
   const [state, setState] = useState<ModalState>('config');
   const [maxRounds, setMaxRounds] = useState(3);
   const [selectedAgents, setSelectedAgents] = useState(['analyst', 'researcher', 'critic']);
-  const [taskId, setTaskId] = useState<string | null>(null);
-  const [status, setStatus] = useState<ValidationStatus | null>(null);
+  const [debateId, setDebateId] = useState<number | null>(null);
+  const [debate, setDebate] = useState<DebateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [debateResult, setDebateResult] = useState<DebateResult | null>(null);
-  const [loadingDebate, setLoadingDebate] = useState(false);
 
-  // Poll for status updates
+  // Poll for debate status
   useEffect(() => {
-    if (!taskId || state !== 'progress') return;
+    if (!debateId || state !== 'progress') return;
 
     const pollInterval = setInterval(async () => {
       try {
-        const newStatus = await hypothesesApi.getValidationTask(taskId);
-        setStatus(newStatus);
+        const status = await intelligenceApi.getDebate(debateId);
+        setDebate(status);
 
-        if (newStatus.status === 'completed') {
+        if (status.status === 'completed') {
           setState('complete');
           clearInterval(pollInterval);
-          // Fetch the debate result
-          fetchDebateResult(taskId);
-        } else if (newStatus.status === 'failed') {
-          setError(newStatus.error || 'Validation failed');
+        } else if (status.status === 'failed') {
+          setError('Validation failed');
           setState('error');
           clearInterval(pollInterval);
         }
@@ -59,41 +57,25 @@ export function ValidationModal({
     }, 2000);
 
     return () => clearInterval(pollInterval);
-  }, [taskId, state]);
-
-  // Fetch debate result
-  const fetchDebateResult = async (tid: string) => {
-    setLoadingDebate(true);
-    try {
-      const result = await hypothesesApi.getDebateResult(tid);
-      setDebateResult(result);
-    } catch (err) {
-      console.error('Failed to fetch debate result:', err);
-      // Not critical - modal still shows success
-    } finally {
-      setLoadingDebate(false);
-    }
-  };
+  }, [debateId, state]);
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
       setState('config');
-      setTaskId(null);
-      setStatus(null);
+      setDebateId(null);
+      setDebate(null);
       setError(null);
-      setDebateResult(null);
-      setLoadingDebate(false);
     }
   }, [isOpen]);
 
   const handleStartValidation = async () => {
     try {
-      const response = await hypothesesApi.validate(hypothesis.id, {
-        max_rounds: maxRounds,
+      const response = await intelligenceApi.startValidation(hypothesis.id, {
         agents: selectedAgents,
+        rounds: maxRounds,
       });
-      setTaskId(response.task_id);
+      setDebateId(response.debate_id);
       setState('progress');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start validation');
@@ -111,7 +93,6 @@ export function ValidationModal({
 
   if (!isOpen) return null;
 
-  // Modal is larger when showing results
   const modalWidth = state === 'complete' ? 'max-w-3xl' : 'max-w-lg';
 
   return (
@@ -171,18 +152,18 @@ export function ValidationModal({
             </div>
           )}
 
-          {state === 'progress' && status && (
+          {state === 'progress' && debate && (
             <div className="space-y-4">
               {/* Progress Bar */}
               <div>
                 <div className="flex justify-between text-sm text-slate-400 mb-1">
-                  <span>Round {status.current_round} of {status.max_rounds}</span>
-                  <span>{status.responses_count} responses</span>
+                  <span>Round {debate.rounds_completed} of {debate.rounds_requested}</span>
+                  <span>Status: {debate.status}</span>
                 </div>
                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${(status.current_round / status.max_rounds) * 100}%` }}
+                    style={{ width: `${(debate.rounds_completed / debate.rounds_requested) * 100}%` }}
                   />
                 </div>
               </div>
@@ -190,41 +171,31 @@ export function ValidationModal({
               {/* Status Info */}
               <div className="text-center py-4">
                 <div className="text-blue-400 animate-pulse text-lg">Validating...</div>
-                {status.consensus_level && (
+                {debate.consensus_level && (
                   <div className="text-slate-400 mt-2">
-                    Current consensus: <span className="text-white">{status.consensus_level}</span>
+                    Current consensus: <span className="text-white">{debate.consensus_level}</span>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {state === 'complete' && (
+          {state === 'complete' && debate && (
             <div className="space-y-4">
               {/* Success Header */}
               <div className="text-center py-4">
                 <div className="text-3xl mb-2">
-                  {hypothesis.status === 'validated' ? '✅' : hypothesis.status === 'invalidated' ? '❌' : '🔄'}
+                  {debate.final_verdict === 'validated' ? '✅' :
+                   debate.final_verdict === 'invalidated' ? '❌' : '🔄'}
                 </div>
                 <div className="text-lg font-semibold text-white">Validation Complete</div>
+                {debate.final_verdict && (
+                  <div className="text-slate-400 mt-1 capitalize">{debate.final_verdict.replace('_', ' ')}</div>
+                )}
               </div>
 
               {/* Debate Result */}
-              {loadingDebate && (
-                <div className="text-center py-4">
-                  <div className="text-slate-400 animate-pulse">Loading debate results...</div>
-                </div>
-              )}
-
-              {debateResult && (
-                <DebateViewer debate={debateResult} />
-              )}
-
-              {!loadingDebate && !debateResult && (
-                <div className="text-center py-4 text-slate-500">
-                  Debate details not available
-                </div>
-              )}
+              <DebateViewer debate={debate} />
             </div>
           )}
 
