@@ -26,7 +26,7 @@ class RepositoryService:
             db: Database session
         """
         self.db = db
-        self.repo = RepositoryRepository(db)
+        self.repo = RepositoryRepository()
 
     async def list_repositories(
         self,
@@ -48,11 +48,11 @@ class RepositoryService:
             List of repositories
         """
         if owner:
-            return await self.repo.list_by_owner(owner, skip, limit)
+            return await self.repo.list_by_owner(self.db, owner, skip, limit)
         elif language:
-            return await self.repo.search_by_language(language, skip, limit)
+            return await self.repo.search_by_language(self.db, language, skip, limit)
         else:
-            return await self.repo.get_all(skip, limit)
+            return await self.repo.get_all(self.db, skip=skip, limit=limit)
 
     async def get_repository(self, repository_id: int) -> Repository:
         """
@@ -67,7 +67,7 @@ class RepositoryService:
         Raises:
             HTTPException: If repository not found
         """
-        repository = await self.repo.get_by_id(repository_id)
+        repository = await self.repo.get(self.db, repository_id)
 
         if not repository:
             raise HTTPException(
@@ -87,7 +87,7 @@ class RepositoryService:
         Returns:
             Repository or None if not found
         """
-        return await self.repo.get_by_full_name(full_name)
+        return await self.repo.get_by_full_name(self.db, full_name)
 
     async def create_repository(
         self, repository_data: RepositoryCreate, project_id: int
@@ -116,7 +116,7 @@ class RepositoryService:
 
         # Check if repository already exists
         full_name = f"{repository_data.owner}/{repository_data.name}"
-        existing = await self.repo.get_by_full_name(full_name)
+        existing = await self.repo.get_by_full_name(self.db, full_name)
 
         if existing:
             raise HTTPException(
@@ -257,7 +257,7 @@ class RepositoryService:
             raise ValueError("project_id is required and must be a positive integer")
         # Check if already exists
         full_name = f"{owner}/{name}"
-        existing = await self.repo.get_by_full_name(full_name)
+        existing = await self.repo.get_by_full_name(self.db, full_name)
 
         if existing:
             raise HTTPException(
@@ -307,8 +307,8 @@ class RepositoryService:
         Returns:
             Dictionary with statistics
         """
-        total = await self.repo.count()
-        recently_synced = await self.repo.get_recently_synced(limit=5)
+        total = await self.repo.count(self.db)
+        recently_synced = await self.repo.get_recently_synced(self.db, limit=5)
 
         return {
             "total": total,

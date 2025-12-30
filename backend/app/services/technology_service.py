@@ -292,10 +292,10 @@ class TechnologyService:
         Returns:
             Dictionary with statistics
         """
-        total = await self.repo.count()
-        by_status = await self.repo.count_by_status()
-        by_domain = await self.repo.count_by_domain()
-        high_priority = await self.repo.get_high_priority(min_priority=4, limit=5)
+        total = await self.repo.count(self.db)
+        by_status = await self.repo.count_by_status(self.db)
+        by_domain = await self.repo.count_by_domain(self.db)
+        high_priority = await self.repo.get_high_priority(self.db, min_priority=4, limit=5)
 
         return {
             "total": total,

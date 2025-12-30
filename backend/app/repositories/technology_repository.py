@@ -237,3 +237,16 @@ class TechnologyRepository(BaseRepository[Technology]):
             select(Technology.domain, func.count(Technology.id)).group_by(Technology.domain)
         )
         return {domain.value: count for domain, count in result}
+
+    async def count(self, db: AsyncSession) -> int:
+        """
+        Count total technologies
+
+        Args:
+            db: The database session
+
+        Returns:
+            Total count of technologies
+        """
+        result = await db.execute(select(func.count(Technology.id)))
+        return result.scalar_one()

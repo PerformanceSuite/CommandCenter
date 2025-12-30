@@ -4,7 +4,7 @@ Repository-specific data access operations
 
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Repository
@@ -117,3 +117,16 @@ class RepositoryRepository(BaseRepository[Repository]):
             .limit(limit)
         )
         return list(result.scalars().all())
+
+    async def count(self, db: AsyncSession) -> int:
+        """
+        Count total repositories
+
+        Args:
+            db: The database session
+
+        Returns:
+            Total count of repositories
+        """
+        result = await db.execute(select(func.count(Repository.id)))
+        return result.scalar_one()

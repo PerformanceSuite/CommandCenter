@@ -65,10 +65,10 @@ class IntelligenceService:
     def __init__(self, db: AsyncSession):
         """Initialize with database session"""
         self.db = db
-        self.hypothesis_repo = HypothesisRepository(db)
-        self.evidence_repo = EvidenceRepository(db)
-        self.debate_repo = DebateRepository(db)
-        self.finding_repo = ResearchFindingRepository(db)
+        self.hypothesis_repo = HypothesisRepository()
+        self.evidence_repo = EvidenceRepository()
+        self.debate_repo = DebateRepository()
+        self.finding_repo = ResearchFindingRepository()
 
     async def suggest_evidence(
         self, hypothesis_id: int, limit: int = 10

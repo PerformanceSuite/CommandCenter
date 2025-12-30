@@ -187,3 +187,72 @@ CommandCenter/
 ### Known Issues
 - ~~Chairman synthesis fails when Anthropic API key is invalid~~ **FIXED** - Now skips gracefully
 - Redis warnings: `'RedisService' object has no attribute 'is_available'` (non-blocking)
+
+---
+
+## Session Notes - 2025-12-30
+
+### Fixes Committed & Pushed
+
+1. **`1dfa34f` - fix(models): Correct back_populates reference in ResearchFinding**
+   - Changed `back_populates="findings"` → `back_populates="research_findings"`
+   - File: `backend/app/models/research_finding.py:73`
+
+2. **`ddbfa77` - fix(tasks): Fix broken import in webhook_tasks**
+   - Removed non-existent `get_session_context` import
+   - Changed to use `AsyncSessionLocal()` for database sessions
+   - File: `backend/app/tasks/webhook_tasks.py`
+
+### Fixes Applied (Not Yet Committed)
+
+**Systemic Repository/Service Pattern Bug**
+
+The codebase has a widespread issue where services incorrectly interact with repositories:
+
+1. **Constructor bug**: Services were passing `db` to repository constructors which don't accept it
+   - Fixed in: `repository_service.py`, `research_service.py`, `research_task_service.py`, `hypothesis_crud_service.py`, `intelligence_service.py`
+   - Pattern: `self.repo = SomeRepository(db)` → `self.repo = SomeRepository()`
+
+2. **Missing db argument**: Services weren't passing `self.db` to repository method calls
+   - Fixed in: `repository_service.py`, `technology_service.py`, `research_service.py`
+   - Pattern: `await self.repo.method()` → `await self.repo.method(self.db)`
+
+3. **Missing repository methods**: Some repositories were missing `count()` method
+   - Added to: `RepositoryRepository`, `TechnologyRepository`
+
+**Files Modified (uncommitted):**
+- `backend/app/services/repository_service.py`
+- `backend/app/services/research_service.py`
+- `backend/app/services/research_task_service.py`
+- `backend/app/services/hypothesis_crud_service.py`
+- `backend/app/services/intelligence_service.py`
+- `backend/app/services/technology_service.py`
+- `backend/app/repositories/repository_repository.py`
+- `backend/app/repositories/technology_repository.py`
+
+### Current State
+
+**Working:**
+- Hub frontend loads at http://localhost:9000 ✅
+- Main frontend loads at http://localhost:3000 (with dashboard error)
+- Backend API healthy at http://localhost:8000
+
+**Still Broken:**
+- Dashboard returns 500 error - needs more service/repository fixes
+- More services likely have the same pattern issue
+
+### Next Session TODO
+
+1. Commit the uncommitted service/repository fixes
+2. Test dashboard endpoint - may need more `db` passing fixes
+3. There may be more repositories missing `count()` or other methods
+4. Consider a systematic audit of all service→repository interactions
+
+### Architecture Note
+
+The repository pattern in this codebase:
+- Repositories are instantiated WITHOUT `db` in constructor
+- `db: AsyncSession` is passed as first argument to EACH method call
+- Services store `self.db` and must pass it to every repository call
+
+This is different from the pattern where repositories store `db` internally.

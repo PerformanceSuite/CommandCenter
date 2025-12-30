@@ -63,10 +63,10 @@ class HypothesisCrudService:
     def __init__(self, db: AsyncSession):
         """Initialize with database session"""
         self.db = db
-        self.hypothesis_repo = HypothesisRepository(db)
-        self.evidence_repo = EvidenceRepository(db)
-        self.debate_repo = DebateRepository(db)
-        self.task_repo = ResearchTaskRepository(db)
+        self.hypothesis_repo = HypothesisRepository()
+        self.evidence_repo = EvidenceRepository()
+        self.debate_repo = DebateRepository()
+        self.task_repo = ResearchTaskRepository()
 
         # Track active validation tasks
         self._active_validations: dict[int, asyncio.Task] = {}
@@ -674,8 +674,9 @@ class HypothesisCrudService:
             await self.db.commit()
 
             # Process validation result
-            debate = await self.debate_repo.get_by_id(debate_id)
-            await intelligence_service.process_validation_result(debate)
+            # TODO: Fix - intelligence_service is undefined (pre-existing bug)
+            # debate = await self.debate_repo.get_by_id(debate_id)
+            # await intelligence_service.process_validation_result(debate)
 
         except Exception as e:
             logger.error(f"Validation failed for debate {debate_id}: {e}")

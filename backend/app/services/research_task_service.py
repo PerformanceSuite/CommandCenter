@@ -26,7 +26,7 @@ class ResearchTaskService:
             db: Database session
         """
         self.db = db
-        self.repo = ResearchTaskRepository(db)
+        self.repo = ResearchTaskRepository()
         self.upload_dir = Path("./uploads/research_tasks")
         self.upload_dir.mkdir(parents=True, exist_ok=True)
 

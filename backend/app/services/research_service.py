@@ -28,9 +28,9 @@ class ResearchService:
             db: Database session
         """
         self.db = db
-        self.repo = ResearchTaskRepository(db)
-        self.tech_repo = TechnologyRepository(db)
-        self.repo_repo = RepositoryRepository(db)
+        self.repo = ResearchTaskRepository()
+        self.tech_repo = TechnologyRepository()
+        self.repo_repo = RepositoryRepository()
 
     async def list_research_tasks(
         self,
@@ -375,9 +375,9 @@ class ResearchService:
         Returns:
             Dictionary with statistics
         """
-        stats = await self.repo.get_statistics(technology_id, repository_id)
-        overdue = await self.repo.get_overdue(limit=10)
-        upcoming = await self.repo.get_upcoming(days=7, limit=10)
+        stats = await self.repo.get_statistics(self.db, technology_id, repository_id)
+        overdue = await self.repo.get_overdue(self.db, limit=10)
+        upcoming = await self.repo.get_upcoming(self.db, days=7, limit=10)
 
         return {
             **stats,
