@@ -3,6 +3,7 @@ import { X, Upload, Download, FileText } from 'lucide-react';
 import type { ResearchTask, ResearchTaskUpdate } from '../../types/researchTask';
 import { TaskStatus } from '../../types/researchTask';
 import { useUpdateResearchTask, useUploadDocument } from '../../hooks/useResearchTasks';
+import { HypothesisSection } from './hypotheses';
 
 interface ResearchTaskModalProps {
   task: ResearchTask;
@@ -10,7 +11,7 @@ interface ResearchTaskModalProps {
   onClose: () => void;
 }
 
-type TabType = 'overview' | 'documents' | 'notes' | 'findings' | 'activity';
+type TabType = 'overview' | 'hypotheses' | 'documents' | 'notes' | 'findings' | 'activity';
 
 export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
   task,
@@ -64,6 +65,7 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'hypotheses', label: 'Hypotheses' },
     { id: 'documents', label: 'Documents' },
     { id: 'notes', label: 'Notes' },
     { id: 'findings', label: 'Findings' },
@@ -229,6 +231,11 @@ export const ResearchTaskModal: React.FC<ResearchTaskModalProps> = ({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Hypotheses Tab */}
+          {activeTab === 'hypotheses' && (
+            <HypothesisSection taskId={task.id} />
           )}
 
           {/* Documents Tab */}
