@@ -12,7 +12,12 @@ router = APIRouter(prefix="/filesystem", tags=["filesystem"])
 
 @router.get("/home")
 async def get_home_directory():
-    """Get user's home directory"""
+    """Get projects root directory (or user's home if not set)"""
+    # In Docker, PROJECTS_ROOT is the mounted projects directory
+    projects_root = os.environ.get("PROJECTS_ROOT")
+    if projects_root and os.path.exists(projects_root):
+        return {"path": projects_root}
+    # Fallback to home directory
     home = str(Path.home())
     return {"path": home}
 

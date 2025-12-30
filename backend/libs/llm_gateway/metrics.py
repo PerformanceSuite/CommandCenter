@@ -107,3 +107,69 @@ def record_cost(provider: str, cost_dollars: float) -> None:
         cost_dollars: Cost in US dollars
     """
     llm_cost_dollars_total.labels(provider=provider).inc(cost_dollars)
+
+
+def get_cost_statistics() -> dict:
+    """
+    Get aggregated cost and usage statistics from Prometheus metrics.
+
+    Returns:
+        Dictionary with cost, token, and request statistics by provider.
+    """
+    cost_by_provider = {}
+    tokens_by_provider = {}
+    requests_by_provider = {}
+
+    total_cost = 0.0
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_requests = 0
+
+    # Aggregate cost metrics
+    for metric in llm_cost_dollars_total.collect():
+        for sample in metric.samples:
+            if sample.name.endswith("_total"):
+                provider = sample.labels.get("provider", "unknown")
+                value = sample.value
+                cost_by_provider[provider] = value
+                total_cost += value
+
+    # Aggregate token metrics
+    for metric in llm_tokens_total.collect():
+        for sample in metric.samples:
+            if sample.name.endswith("_total"):
+                provider = sample.labels.get("provider", "unknown")
+                direction = sample.labels.get("direction", "unknown")
+                value = int(sample.value)
+
+                if provider not in tokens_by_provider:
+                    tokens_by_provider[provider] = {"input": 0, "output": 0}
+                tokens_by_provider[provider][direction] = value
+
+                if direction == "input":
+                    total_input_tokens += value
+                elif direction == "output":
+                    total_output_tokens += value
+
+    # Aggregate request metrics
+    for metric in llm_requests_total.collect():
+        for sample in metric.samples:
+            if sample.name.endswith("_total"):
+                provider = sample.labels.get("provider", "unknown")
+                value = int(sample.value)
+
+                if provider not in requests_by_provider:
+                    requests_by_provider[provider] = 0
+                requests_by_provider[provider] += value
+                total_requests += value
+
+    return {
+        "total_cost": total_cost,
+        "total_input_tokens": total_input_tokens,
+        "total_output_tokens": total_output_tokens,
+        "total_tokens": total_input_tokens + total_output_tokens,
+        "total_requests": total_requests,
+        "cost_by_provider": cost_by_provider,
+        "tokens_by_provider": tokens_by_provider,
+        "requests_by_provider": requests_by_provider,
+    }

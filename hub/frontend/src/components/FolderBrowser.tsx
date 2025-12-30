@@ -21,10 +21,10 @@ export default function FolderBrowser({ onSelect, onClose }: FolderBrowserProps)
     try {
       let targetPath = path;
 
-      // If no path provided, start at ~/Projects
+      // If no path provided, start at home (which is PROJECTS_ROOT in Docker)
       if (!targetPath) {
         const homeData = await filesystemApi.getHome();
-        targetPath = `${homeData.path}/Projects`;
+        targetPath = homeData.path;
       }
 
       const data = await filesystemApi.browse(targetPath);
