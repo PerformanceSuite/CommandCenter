@@ -70,7 +70,9 @@ class ResearchFinding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    research_task: Mapped["ResearchTask"] = relationship("ResearchTask", back_populates="findings")
+    research_task: Mapped["ResearchTask"] = relationship(
+        "ResearchTask", back_populates="research_findings"
+    )
 
     def __repr__(self) -> str:
         return f"<ResearchFinding(id={self.id}, type='{self.finding_type.value}', agent='{self.agent_role}')>"
