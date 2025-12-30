@@ -352,32 +352,73 @@ class DebateOrchestrator:
         chairman_synthesis = None
         chairman_cost = 0.0
         if self.config.enable_chairman and self.llm_gateway:
-            try:
-                chairman_synthesis, chairman_cost = await self._run_chairman_synthesis(
-                    question=question,
-                    rounds=rounds,
-                    consensus_level=final_consensus.level,
-                    majority_answer=final_answer,
-                    dissenting_views=final_consensus.dissenting_responses,
-                )
-                total_cost += chairman_cost
+            # Check if the chairman provider is configured before attempting synthesis
+            chairman_provider = self.config.chairman_provider
+            if hasattr(self.llm_gateway, "is_provider_configured"):
+                if not self.llm_gateway.is_provider_configured(chairman_provider):
+                    logger.info(
+                        "chairman_synthesis_skipped",
+                        debate_id=debate_id,
+                        reason=f"Provider '{chairman_provider}' API key not configured",
+                    )
+                else:
+                    try:
+                        chairman_synthesis, chairman_cost = await self._run_chairman_synthesis(
+                            question=question,
+                            rounds=rounds,
+                            consensus_level=final_consensus.level,
+                            majority_answer=final_answer,
+                            dissenting_views=final_consensus.dissenting_responses,
+                        )
+                        total_cost += chairman_cost
 
-                # Update final answer with chairman's verdict if available
-                if chairman_synthesis and chairman_synthesis.final_verdict:
-                    final_answer = chairman_synthesis.final_verdict
+                        # Update final answer with chairman's verdict if available
+                        if chairman_synthesis and chairman_synthesis.final_verdict:
+                            final_answer = chairman_synthesis.final_verdict
 
-                logger.info(
-                    "chairman_synthesis_completed",
-                    debate_id=debate_id,
-                    chairman_confidence=chairman_synthesis.confidence if chairman_synthesis else 0,
-                    chairman_cost=round(chairman_cost, 4),
-                )
-            except Exception as e:
-                logger.warning(
-                    "chairman_synthesis_failed",
-                    debate_id=debate_id,
-                    error=str(e),
-                )
+                        logger.info(
+                            "chairman_synthesis_completed",
+                            debate_id=debate_id,
+                            chairman_confidence=(
+                                chairman_synthesis.confidence if chairman_synthesis else 0
+                            ),
+                            chairman_cost=round(chairman_cost, 4),
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            "chairman_synthesis_failed",
+                            debate_id=debate_id,
+                            error=str(e),
+                        )
+            else:
+                # Fallback for gateways without is_provider_configured
+                try:
+                    chairman_synthesis, chairman_cost = await self._run_chairman_synthesis(
+                        question=question,
+                        rounds=rounds,
+                        consensus_level=final_consensus.level,
+                        majority_answer=final_answer,
+                        dissenting_views=final_consensus.dissenting_responses,
+                    )
+                    total_cost += chairman_cost
+
+                    if chairman_synthesis and chairman_synthesis.final_verdict:
+                        final_answer = chairman_synthesis.final_verdict
+
+                    logger.info(
+                        "chairman_synthesis_completed",
+                        debate_id=debate_id,
+                        chairman_confidence=(
+                            chairman_synthesis.confidence if chairman_synthesis else 0
+                        ),
+                        chairman_cost=round(chairman_cost, 4),
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "chairman_synthesis_failed",
+                        debate_id=debate_id,
+                        error=str(e),
+                    )
 
         return DebateResult(
             debate_id=debate_id,

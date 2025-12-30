@@ -203,3 +203,39 @@ class LLMGateway:
             List of provider aliases like ['claude', 'gpt', 'gemini', 'gpt-mini']
         """
         return list_providers()
+
+    def is_provider_configured(self, provider: str) -> bool:
+        """
+        Check if a provider's API key is configured.
+
+        This checks environment variables for the provider's API key.
+        Useful for pre-flight checks before attempting API calls.
+
+        Args:
+            provider: Provider alias like 'claude', 'gpt', 'gemini'
+
+        Returns:
+            True if the provider's API key is set, False otherwise
+        """
+        # Standard environment variables for each provider
+        api_key_vars = {
+            "claude": "ANTHROPIC_API_KEY",
+            "gemini": "GEMINI_API_KEY",
+            "gpt": "OPENAI_API_KEY",
+            "gpt-mini": "OPENAI_API_KEY",
+        }
+
+        # Check for custom api_key_env in provider config
+        try:
+            config = get_provider_config(provider)
+            if config.api_key_env:
+                return bool(os.environ.get(config.api_key_env))
+        except KeyError:
+            pass
+
+        # Fall back to standard vars
+        env_var = api_key_vars.get(provider)
+        if env_var:
+            return bool(os.environ.get(env_var))
+
+        return False

@@ -34,6 +34,16 @@ class TestProviders:
         assert "gpt-mini" in PROVIDERS
         assert "openai/" in PROVIDERS["gpt-mini"]
 
+    def test_providers_contains_zai(self):
+        """Z.AI provider should be configured"""
+        assert "zai" in PROVIDERS
+        assert "openai/" in PROVIDERS["zai"]  # Uses OpenAI-compatible API
+
+    def test_providers_contains_zai_flash(self):
+        """Z.AI Flash provider should be configured"""
+        assert "zai-flash" in PROVIDERS
+        assert "openai/" in PROVIDERS["zai-flash"]
+
     def test_get_model_id_valid(self):
         """get_model_id returns correct model for valid provider"""
         assert get_model_id("claude") == PROVIDERS["claude"]
@@ -49,7 +59,7 @@ class TestProviders:
     def test_list_providers_returns_all(self):
         """list_providers returns all configured providers"""
         providers = list_providers()
-        assert set(providers) == {"claude", "gemini", "gpt", "gpt-mini"}
+        assert set(providers) == {"claude", "gemini", "gpt", "gpt-mini", "zai", "zai-flash"}
 
 
 class TestCosts:
