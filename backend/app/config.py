@@ -88,9 +88,9 @@ class Settings(BaseSettings):
         default=True, description="Whether to encrypt GitHub tokens in database"
     )
 
-    # CORS
-    cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"],
+    # CORS - stored as str to avoid pydantic-settings JSON parsing issues
+    cors_origins: str | list[str] = Field(
+        default="http://localhost:3000,http://localhost:5173",
         description="Allowed CORS origins (comma-separated in env: CORS_ORIGINS)",
     )
     cors_allow_credentials: bool = Field(
@@ -144,8 +144,12 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS from JSON string if provided as string"""
+        """Parse CORS_ORIGINS from string or list, always return list"""
+        if isinstance(v, list):
+            return v
         if isinstance(v, str):
+            # Strip quotes if present
+            v = v.strip("'\"")
             try:
                 # Try to parse as JSON array
                 parsed = json.loads(v)
