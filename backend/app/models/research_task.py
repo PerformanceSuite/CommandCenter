@@ -4,7 +4,7 @@ ResearchTask model for tracking research activities
 
 import enum
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import JSON, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -12,6 +12,10 @@ from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.hypothesis import Hypothesis
+    from app.models.research_finding import ResearchFinding
 
 
 class TaskStatus(str, enum.Enum):
@@ -80,6 +84,11 @@ class ResearchTask(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
+    # Task type for distinguishing regular research vs ad-hoc hypothesis tasks
+    task_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="research"
+    )  # "research" or "ad_hoc_hypothesis"
+
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="research_tasks")
     technology: Mapped[Optional["Technology"]] = relationship(
@@ -87,6 +96,14 @@ class ResearchTask(Base):
     )
     repository: Mapped[Optional["Repository"]] = relationship(
         "Repository", back_populates="research_tasks"
+    )
+
+    # Intelligence integration relationships
+    hypotheses: Mapped[list["Hypothesis"]] = relationship(
+        "Hypothesis", back_populates="research_task", cascade="all, delete-orphan"
+    )
+    research_findings: Mapped[list["ResearchFinding"]] = relationship(
+        "ResearchFinding", back_populates="research_task", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
