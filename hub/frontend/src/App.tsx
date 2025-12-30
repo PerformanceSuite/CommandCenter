@@ -1,41 +1,6 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Dashboard from './pages/Dashboard';
-import WorkflowsPage from './pages/WorkflowsPage';
-import SettingsPage from './pages/SettingsPage';
-import { ApprovalQueue } from './components/ApprovalQueue/ApprovalQueue';
-import { ApprovalBadge } from './components/ApprovalBadge/ApprovalBadge';
-
-function Navigation() {
-  const location = useLocation();
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const linkClass = (path: string) => `
-    px-4 py-2 rounded-lg transition-colors
-    ${isActive(path)
-      ? 'bg-slate-800 text-white'
-      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}
-  `;
-
-  return (
-    <nav className="flex items-center gap-4">
-      <Link to="/" className={linkClass('/')}>
-        Projects
-      </Link>
-      <Link to="/workflows" className={linkClass('/workflows')}>
-        Workflows
-      </Link>
-      <Link to="/approvals" className={linkClass('/approvals')}>
-        Approvals
-      </Link>
-      <Link to="/settings" className={linkClass('/settings')}>
-        Settings
-      </Link>
-      <ApprovalBadge />
-    </nav>
-  );
-}
 
 function App() {
   return (
@@ -67,16 +32,13 @@ function App() {
 
         <header className="bg-slate-900 border-b border-slate-800">
           <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gradient">
-                  CommandCenter Hub
-                </h1>
-                <p className="text-slate-400 text-sm mt-1">
-                  Manage multiple CommandCenter instances across projects
-                </p>
-              </div>
-              <Navigation />
+            <div>
+              <h1 className="text-2xl font-bold text-gradient">
+                CommandCenter Hub
+              </h1>
+              <p className="text-slate-400 text-sm mt-1">
+                Manage multiple CommandCenter instances across projects
+              </p>
             </div>
           </div>
         </header>
@@ -84,9 +46,6 @@ function App() {
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/workflows" element={<WorkflowsPage />} />
-            <Route path="/approvals" element={<ApprovalQueue />} />
-            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

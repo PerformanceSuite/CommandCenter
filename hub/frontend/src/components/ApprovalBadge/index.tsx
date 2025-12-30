@@ -1,1 +1,0 @@
-export { ApprovalBadge } from './ApprovalBadge';
