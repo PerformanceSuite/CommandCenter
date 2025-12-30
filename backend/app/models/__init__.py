@@ -35,6 +35,9 @@ from app.models.project_analysis import ProjectAnalysis
 from app.models.repository import Repository
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.schedule import Schedule, ScheduleFrequency
+
+# Settings models
+from app.models.settings import AgentConfig, Provider
 from app.models.technology import (
     Technology,
     TechnologyDomain,
@@ -93,4 +96,7 @@ __all__ = [
     "AuditKind",
     "AuditStatus",
     "LinkType",
+    # Settings
+    "Provider",
+    "AgentConfig",
 ]
