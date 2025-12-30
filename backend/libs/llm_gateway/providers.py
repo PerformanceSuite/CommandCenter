@@ -6,7 +6,10 @@ Uses LiteLLM model naming conventions.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 
 @dataclass(frozen=True)
@@ -61,6 +64,133 @@ COSTS: Dict[str, ProviderCost] = {
 }
 
 
+@dataclass(frozen=True)
+class ModelInfo:
+    """Information about an available model"""
+
+    id: str  # LiteLLM model identifier (e.g., "anthropic/claude-sonnet-4-20250514")
+    name: str  # Human-readable name (e.g., "Claude Sonnet 4")
+    cost_input: float  # Cost per 1M input tokens
+    cost_output: float  # Cost per 1M output tokens
+    api_key_env: Optional[str] = None  # Environment variable for API key
+    api_base: Optional[str] = None  # Custom API base URL
+
+
+# Available models grouped by provider
+# Used for model selection in Settings UI
+# Updated December 2025
+AVAILABLE_MODELS: Dict[str, list[ModelInfo]] = {
+    "anthropic": [
+        ModelInfo(
+            id="anthropic/claude-opus-4-20250514",
+            name="Claude Opus 4",
+            cost_input=15.0,
+            cost_output=75.0,
+            api_key_env="ANTHROPIC_API_KEY",
+        ),
+        ModelInfo(
+            id="anthropic/claude-sonnet-4-20250514",
+            name="Claude Sonnet 4",
+            cost_input=3.0,
+            cost_output=15.0,
+            api_key_env="ANTHROPIC_API_KEY",
+        ),
+        ModelInfo(
+            id="anthropic/claude-3-5-haiku-20241022",
+            name="Claude 3.5 Haiku",
+            cost_input=0.80,
+            cost_output=4.0,
+            api_key_env="ANTHROPIC_API_KEY",
+        ),
+    ],
+    "openai": [
+        ModelInfo(
+            id="openai/o3-mini",
+            name="o3-mini",
+            cost_input=1.10,
+            cost_output=4.40,
+            api_key_env="OPENAI_API_KEY",
+        ),
+        ModelInfo(
+            id="openai/o1",
+            name="o1",
+            cost_input=15.0,
+            cost_output=60.0,
+            api_key_env="OPENAI_API_KEY",
+        ),
+        ModelInfo(
+            id="openai/o1-mini",
+            name="o1-mini",
+            cost_input=3.0,
+            cost_output=12.0,
+            api_key_env="OPENAI_API_KEY",
+        ),
+        ModelInfo(
+            id="openai/gpt-4o",
+            name="GPT-4o",
+            cost_input=2.50,
+            cost_output=10.0,
+            api_key_env="OPENAI_API_KEY",
+        ),
+        ModelInfo(
+            id="openai/gpt-4o-mini",
+            name="GPT-4o Mini",
+            cost_input=0.15,
+            cost_output=0.60,
+            api_key_env="OPENAI_API_KEY",
+        ),
+    ],
+    "google": [
+        ModelInfo(
+            id="gemini/gemini-2.5-pro",
+            name="Gemini 2.5 Pro",
+            cost_input=1.25,
+            cost_output=10.0,
+            api_key_env="GOOGLE_API_KEY",
+        ),
+        ModelInfo(
+            id="gemini/gemini-2.5-flash",
+            name="Gemini 2.5 Flash",
+            cost_input=0.15,
+            cost_output=0.60,
+            api_key_env="GOOGLE_API_KEY",
+        ),
+        ModelInfo(
+            id="gemini/gemini-2.0-flash",
+            name="Gemini 2.0 Flash",
+            cost_input=0.10,
+            cost_output=0.40,
+            api_key_env="GOOGLE_API_KEY",
+        ),
+        ModelInfo(
+            id="gemini/gemini-2.0-flash-thinking",
+            name="Gemini 2.0 Flash Thinking",
+            cost_input=0.10,
+            cost_output=0.40,
+            api_key_env="GOOGLE_API_KEY",
+        ),
+    ],
+    "zai": [
+        ModelInfo(
+            id="openai/glm-4.7",
+            name="GLM-4.7",
+            cost_input=0.50,
+            cost_output=2.0,
+            api_key_env="ZAI_API_KEY",
+            api_base="https://api.z.ai/api/paas/v4",
+        ),
+        ModelInfo(
+            id="openai/glm-4.5-flash",
+            name="GLM-4.5 Flash",
+            cost_input=0.05,
+            cost_output=0.20,
+            api_key_env="ZAI_API_KEY",
+            api_base="https://api.z.ai/api/paas/v4",
+        ),
+    ],
+}
+
+
 # Default parameters for each provider
 DEFAULT_PARAMS: Dict[str, Dict] = {
     "claude": {
@@ -93,52 +223,52 @@ DEFAULT_PARAMS: Dict[str, Dict] = {
 class DynamicProviderRegistry:
     """
     Dynamic provider registry that reads from database first, then falls back to static configs.
-    
+
     This registry provides a unified interface for accessing provider configurations,
     with support for:
     - Database-backed provider configs (when Phase 1 is implemented)
     - Static fallback to PROVIDER_CONFIGS
     - Per-instance caching for performance
-    
+
     Example:
         # Without database (falls back to static configs)
         registry = DynamicProviderRegistry()
         config = registry.get_config("claude")
-        
+
         # With database session (future Phase 1 integration)
         registry = DynamicProviderRegistry(db=session)
         config = registry.get_config("custom-provider")
     """
-    
+
     def __init__(self, db: Optional["Session"] = None):
         """
         Initialize the registry.
-        
+
         Args:
             db: Optional database session for reading provider configs.
                 If None, only static configs will be available.
         """
         self.db = db
         self._cache: Dict[str, ProviderConfig] = {}
-    
+
     def get_config(self, alias: str) -> ProviderConfig:
         """
         Get provider configuration by alias.
-        
+
         Checks in order:
         1. Instance cache
         2. Database (if available and Phase 1 is implemented)
         3. Static PROVIDER_CONFIGS
-        
+
         Args:
             alias: Provider alias like 'claude', 'gpt', 'gemini'
-        
+
         Returns:
             ProviderConfig with model_id, api_base, and api_key_env
-        
+
         Raises:
             KeyError: If provider alias is not found in any source
-        
+
         Example:
             config = registry.get_config("claude")
             print(config.model_id)  # "anthropic/claude-sonnet-4-20250514"
@@ -146,7 +276,7 @@ class DynamicProviderRegistry:
         # Check cache first
         if alias in self._cache:
             return self._cache[alias]
-        
+
         # TODO: Phase 1 - Query database for provider config if db is available
         # if self.db:
         #     from app.services.settings_service import SettingsService
@@ -160,51 +290,50 @@ class DynamicProviderRegistry:
         #         )
         #         self._cache[alias] = config
         #         return config
-        
+
         # Fall back to static configs
         if alias not in PROVIDER_CONFIGS:
             raise KeyError(
-                f"Unknown provider: {alias}. "
-                f"Available: {list(PROVIDER_CONFIGS.keys())}"
+                f"Unknown provider: {alias}. " f"Available: {list(PROVIDER_CONFIGS.keys())}"
             )
-        
+
         config = PROVIDER_CONFIGS[alias]
         self._cache[alias] = config
         return config
-    
+
     def list_providers(self) -> list[str]:
         """
         List all available provider aliases.
-        
+
         Combines providers from:
         - Static PROVIDER_CONFIGS
         - Database (if available and Phase 1 is implemented)
-        
+
         Returns:
             Sorted list of provider aliases
-        
+
         Example:
             providers = registry.list_providers()
             # ['claude', 'gemini', 'gpt', 'gpt-mini', 'zai', 'zai-flash']
         """
         providers = set(PROVIDER_CONFIGS.keys())
-        
+
         # TODO: Phase 1 - Add database providers if db is available
         # if self.db:
         #     from app.services.settings_service import SettingsService
         #     settings_service = SettingsService(self.db)
         #     db_providers = settings_service.list_providers()
         #     providers.update(db_providers)
-        
+
         return sorted(list(providers))
-    
+
     def clear_cache(self):
         """
         Clear the configuration cache.
-        
+
         Call this when provider configs are updated in the database
         to force fresh reads on next access.
-        
+
         Example:
             registry.clear_cache()  # Force reload from DB/static on next get_config()
         """

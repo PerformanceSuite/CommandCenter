@@ -7,7 +7,20 @@ export interface Provider {
   cost_per_1m_output: number | null;
 }
 
+export interface ModelOption {
+  id: string;
+  name: string;
+  cost_per_1m_input: number;
+  cost_per_1m_output: number;
+  configured: boolean;
+}
+
+export interface ModelsResponse {
+  [provider: string]: ModelOption[];
+}
+
 export interface AgentConfig {
   role: string;
-  provider_alias: string;
+  provider: string;
+  model_id: string;
 }

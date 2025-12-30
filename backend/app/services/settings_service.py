@@ -51,13 +51,13 @@ DEFAULT_PROVIDERS: list[dict[str, Any]] = [
     },
 ]
 
-# Default agent configurations
+# Default agent configurations (provider + model_id)
 DEFAULT_AGENT_CONFIGS: list[dict[str, str]] = [
-    {"role": "analyst", "provider_alias": "gemini"},
-    {"role": "researcher", "provider_alias": "gemini"},
-    {"role": "strategist", "provider_alias": "gpt"},
-    {"role": "critic", "provider_alias": "gemini"},
-    {"role": "chairman", "provider_alias": "claude"},
+    {"role": "analyst", "provider": "google", "model_id": "gemini/gemini-2.5-flash"},
+    {"role": "researcher", "provider": "google", "model_id": "gemini/gemini-2.5-flash"},
+    {"role": "strategist", "provider": "openai", "model_id": "openai/gpt-4o"},
+    {"role": "critic", "provider": "google", "model_id": "gemini/gemini-2.5-flash"},
+    {"role": "chairman", "provider": "anthropic", "model_id": "anthropic/claude-sonnet-4-20250514"},
 ]
 
 
@@ -154,14 +154,15 @@ class SettingsService:
 
     # --- Agent Config ---
 
-    def set_agent_provider(self, role: str, provider_alias: str) -> AgentConfig:
-        """Set which provider an agent role uses."""
+    def set_agent_model(self, role: str, provider: str, model_id: str) -> AgentConfig:
+        """Set which provider and model an agent role uses."""
         config = self.db.query(AgentConfig).filter(AgentConfig.role == role).first()
 
         if config:
-            config.provider_alias = provider_alias
+            config.provider = provider
+            config.model_id = model_id
         else:
-            config = AgentConfig(role=role, provider_alias=provider_alias)
+            config = AgentConfig(role=role, provider=provider, model_id=model_id)
             self.db.add(config)
 
         self.db.commit()
@@ -197,7 +198,8 @@ class SettingsService:
         # Seed agent configs
         if self.db.query(AgentConfig).count() == 0:
             for c in DEFAULT_AGENT_CONFIGS:
-                self.set_agent_provider(
+                self.set_agent_model(
                     role=str(c["role"]),
-                    provider_alias=str(c["provider_alias"]),
+                    provider=str(c["provider"]),
+                    model_id=str(c["model_id"]),
                 )

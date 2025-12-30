@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, DateTime, Float, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
 
@@ -35,29 +35,20 @@ class Provider(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    # Relationship to agent configs
-    agent_configs: Mapped[list["AgentConfig"]] = relationship(
-        "AgentConfig", back_populates="provider"
-    )
-
     def __repr__(self):
         return f"<Provider {self.alias}: {self.model_id}>"
 
 
 class AgentConfig(Base):
-    """Agent role to provider mapping."""
+    """Agent role to provider/model mapping."""
 
     __tablename__ = "agent_configs"
 
     role: Mapped[str] = mapped_column(String(50), primary_key=True)  # analyst, researcher, etc.
-    provider_alias: Mapped[str] = mapped_column(
-        String(50),
-        ForeignKey("providers.alias", onupdate="CASCADE"),
-        nullable=False,
-    )
-
-    # Relationship to provider
-    provider: Mapped["Provider"] = relationship("Provider", back_populates="agent_configs")
+    provider: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # anthropic, openai, google, zai
+    model_id: Mapped[str] = mapped_column(String(200), nullable=False)  # LiteLLM format model ID
 
     def __repr__(self):
-        return f"<AgentConfig {self.role} -> {self.provider_alias}>"
+        return f"<AgentConfig {self.role} -> {self.provider}/{self.model_id}>"

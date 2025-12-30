@@ -59,7 +59,7 @@ export const hypothesesApi = {
     params.set('limit', limit.toString());
     params.set('offset', offset.toString());
 
-    return fetchJSON(`${API_BASE}/hypotheses?${params}`);
+    return fetchJSON(`${API_BASE}/hypotheses/?${params}`);
   },
 
   /**
@@ -72,7 +72,7 @@ export const hypothesesApi = {
    * Create a new hypothesis with quick input
    */
   create: (request: CreateHypothesisRequest): Promise<HypothesisDetail> =>
-    fetchJSON(`${API_BASE}/hypotheses`, {
+    fetchJSON(`${API_BASE}/hypotheses/`, {
       method: 'POST',
       body: JSON.stringify(request),
     }),

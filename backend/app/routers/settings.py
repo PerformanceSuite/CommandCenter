@@ -253,16 +253,54 @@ def get_sync_session():
 
 
 class AgentConfigRequest(BaseModel):
-    """Request to update agent's provider"""
+    """Request to update agent's provider and model"""
 
-    provider_alias: str = Field(..., description="Provider alias to use for this agent")
+    provider: str = Field(..., description="Provider name (anthropic, openai, google, zai)")
+    model_id: str = Field(..., description="LiteLLM model ID")
 
 
 class AgentConfigResponse(BaseModel):
     """Response for agent config"""
 
     role: str
-    provider_alias: str
+    provider: str
+    model_id: str
+
+
+@router.get("/models")
+async def list_models() -> dict:
+    """
+    List all available models grouped by provider.
+    """
+    import os
+
+    from libs.llm_gateway.providers import AVAILABLE_MODELS
+
+    env_vars = read_env_file()
+
+    result: dict[str, list[dict]] = {}
+    for provider, models in AVAILABLE_MODELS.items():
+        result[provider] = []
+        for model in models:
+            # Check if API key is configured
+            api_key_env = model.api_key_env
+            configured = (
+                bool(env_vars.get(api_key_env) or os.environ.get(api_key_env))
+                if api_key_env
+                else True
+            )
+
+            result[provider].append(
+                {
+                    "id": model.id,
+                    "name": model.name,
+                    "cost_per_1m_input": model.cost_input,
+                    "cost_per_1m_output": model.cost_output,
+                    "configured": configured,
+                }
+            )
+
+    return {"models": result}
 
 
 @router.get("/agents")
@@ -276,32 +314,45 @@ async def list_agents() -> dict:
     try:
         service = SettingsService(session)
         configs = service.list_agent_configs()
-        return {"agents": [{"role": c.role, "provider_alias": c.provider_alias} for c in configs]}
+        return {
+            "agents": [
+                {"role": c.role, "provider": c.provider, "model_id": c.model_id} for c in configs
+            ]
+        }
     finally:
         session.close()
 
 
 @router.put("/agents/{role}")
-async def set_agent_provider(role: str, request: AgentConfigRequest) -> dict:
+async def set_agent_model(role: str, request: AgentConfigRequest) -> dict:
     """
-    Set which provider an agent role should use.
+    Set which provider and model an agent role should use.
     """
+    from libs.llm_gateway.providers import AVAILABLE_MODELS
+
     from app.services.settings_service import SettingsService
+
+    # Validate provider exists
+    if request.provider not in AVAILABLE_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Provider '{request.provider}' not found. Available: {list(AVAILABLE_MODELS.keys())}",
+        )
+
+    # Validate model exists for provider
+    provider_models = AVAILABLE_MODELS[request.provider]
+    valid_model_ids = [m.id for m in provider_models]
+    if request.model_id not in valid_model_ids:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model '{request.model_id}' not found for provider '{request.provider}'. Available: {valid_model_ids}",
+        )
 
     session = get_sync_session()
     try:
         service = SettingsService(session)
-
-        # Verify provider exists
-        provider = service.get_provider(request.provider_alias)
-        if not provider:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Provider '{request.provider_alias}' not found",
-            )
-
-        config = service.set_agent_provider(role, request.provider_alias)
-        return {"role": config.role, "provider_alias": config.provider_alias}
+        config = service.set_agent_model(role, request.provider, request.model_id)
+        return {"role": config.role, "provider": config.provider, "model_id": config.model_id}
     finally:
         session.close()
 
