@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict
 
 from app.database import AsyncSessionLocal
-from app.mcp.connection import get_session_context
 from app.services.webhook_service import WebhookService
 from app.tasks import celery_app
 
@@ -145,7 +144,7 @@ async def _create_and_deliver_webhook_async(
     Returns:
         Delivery result dictionary
     """
-    async with get_session_context() as db:
+    async with AsyncSessionLocal() as db:
         service = WebhookService(db)
 
         try:
@@ -218,7 +217,7 @@ async def _process_pending_deliveries_async(max_deliveries: int) -> Dict[str, An
     Returns:
         Processing result dictionary
     """
-    async with get_session_context() as db:
+    async with AsyncSessionLocal() as db:
         service = WebhookService(db)
 
         try:
