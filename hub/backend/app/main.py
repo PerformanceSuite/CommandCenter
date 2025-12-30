@@ -6,10 +6,13 @@ Manages multiple CommandCenter instances
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import asyncio
 import logging
 
 from app.database import engine, Base, AsyncSessionLocal
-from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc, federation, services
+from app.routers import projects, orchestration, filesystem, logs, tasks, events, health, rpc, federation, services, settings
+# Import models to ensure they're registered with Base.metadata
+from app.models import settings as settings_models  # noqa: F401
 from app.correlation.middleware import correlation_middleware
 from app.streaming.sse import router as sse_router
 from app.events.bridge import NATSBridge
@@ -107,6 +110,7 @@ app.include_router(orchestration.router, prefix="/api")
 app.include_router(filesystem.router, prefix="/api")
 app.include_router(logs.router)
 app.include_router(tasks.router)  # Background task endpoints
+app.include_router(settings.router, prefix="/api")  # Settings and agent configuration
 
 
 @app.get("/")
