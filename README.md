@@ -29,6 +29,7 @@ make shell-db                 # PostgreSQL shell
 
 **Access Points:**
 - Frontend: http://localhost:3000
+- AI Arena: http://localhost:3000/arena
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - Hub (Multi-Project): http://localhost:9000
@@ -60,8 +61,10 @@ CommandCenter is a multi-project R&D management and knowledge base system that:
 
 ### Key Features
 
+✅ **AI Arena**: Multi-model hypothesis validation with AI debates (Claude, GPT-4, Gemini)
 ✅ **GitHub Integration**: Sync repositories, track commits, manage access tokens
 ✅ **Knowledge Base**: Hybrid vector + keyword search with PostgreSQL + pgvector
+✅ **LLM Gateway**: Multi-provider abstraction with dynamic configuration and cost tracking
 ✅ **Privacy-First**: Data isolation, local embeddings, self-hosted infrastructure
 ✅ **Production-Ready**: Full observability, health checks, automated testing
 ✅ **Type-Safe Orchestration**: Dagger SDK for container management (no docker-compose)
@@ -139,43 +142,43 @@ app/
 
 ## 📊 Current Status
 
-**Phase**: Active Development - Event Infrastructure Complete ✅
-**Infrastructure**: 92% Complete
+**Phase**: Active Development - AI Arena & Settings Complete ✅
+**Infrastructure**: 95% Complete
 **Testing**: 1,700+ tests passing
+
+### Recent Releases (December 2025)
+
+✅ **AI Arena** - Multi-model hypothesis validation
+- Hypothesis CRUD with quick input
+- Multi-agent debate system (Analyst, Researcher, Strategist, Critic)
+- Chairman synthesis for consensus
+- Evidence exploration and cost tracking
+- Moved to main frontend at `/arena` route
+
+✅ **Settings & Provider Management**
+- Dynamic provider configuration (Anthropic, OpenAI, Google, Z.AI)
+- Model selection with LiteLLM registry (live pricing)
+- Encrypted API key storage
+- Two-dropdown provider/model UI
+
+✅ **LLM Gateway Enhancements**
+- Dynamic provider registry with DB support
+- Cost statistics and aggregated metrics
+- Per-instance caching for performance
 
 ### Completed Phases
 
 ✅ **Phase A**: Dagger Production Hardening (PR #74) - PRODUCTION-READY
-- Port forwarding, service persistence, build process fixes
-- 40 total tests (27 unit + 6 integration + 7 API validation)
-- Zero-mock validation with real Dagger containers
-
 ✅ **Phase B**: Automated Knowledge Ingestion (PR #63) - MERGED
-- RSS, docs, webhooks, file watchers, source management
-- 50+ new tests for ingestion flows
-- Full CI/CD integration
-
 ✅ **Phase C**: Observability Layer (PR #73) - PRODUCTION
-- Correlation middleware, postgres-exporter, 5 Grafana dashboards
-- 5 AlertManager rules, 17 integration tests
-- Database migration for monitoring
-
-✅ **Phase 1**: Event System Bootstrap (11-03) - COMPLETE
-- NATS 2.10 with JetStream integration
-- EventService with publish/subscribe/replay
-- HTTP and WebSocket API endpoints
-- PostgreSQL persistence with optimized indexes
-- 40+ tests passing
-
-✅ **Phase 2-3**: Event Streaming & Correlation (11-04) - COMPLETE
-- Correlation middleware for request tracing
-- Server-Sent Events (SSE) streaming
-- CLI tools (query, follow commands)
-- Natural language time parsing
-- 17 tests passing
+✅ **Phase 1**: Event System Bootstrap - COMPLETE
+✅ **Phase 2-3**: Event Streaming & Correlation - COMPLETE
 
 ### Active Components
 
+- **AI Arena**: Hypothesis validation ✅
+- **LLM Gateway**: Multi-provider with cost tracking ✅
+- **Settings Service**: Provider/model configuration ✅
 - **Celery Task System**: Production-ready ✅
 - **RAG Backend**: KnowledgeBeast v3.0 ✅
 - **Knowledge Ingestion**: Complete ✅
@@ -185,11 +188,10 @@ app/
 
 ### Quality Metrics
 
-- **ESLint**: 0 errors, 6 warnings ✅
-- **Frontend Tests**: 12/12 passing (100%) ✅
-- **Backend Tests**: 1,676 tests passing ✅
+- **ESLint**: 0 errors ✅
+- **Frontend Tests**: Passing ✅
+- **Backend Tests**: 1,700+ tests passing ✅
 - **Pre-commit Hooks**: All passing (black, isort, flake8, mypy) ✅
-- **Hygiene Score**: Clean root directory ✅
 
 ---
 
