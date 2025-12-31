@@ -24,6 +24,7 @@ from app.middleware import LoggingMiddleware, add_security_headers, limiter
 from app.middleware.correlation import CorrelationIDMiddleware
 from app.nats_client import init_nats_client, shutdown_nats_client
 from app.routers import (
+    agents,
     alerts,
     auth,
     batch,
@@ -265,6 +266,7 @@ app.include_router(
     intelligence.router, prefix=settings.api_v1_prefix
 )  # Research Hub intelligence integration
 app.include_router(settings_router.router, prefix=settings.api_v1_prefix)  # Settings & API keys
+app.include_router(agents.router, prefix=settings.api_v1_prefix)  # Agent persona management
 app.include_router(alerts.router)  # AlertManager webhook integration
 app.include_router(prompts.router)  # Prompt analysis and improvement API
 

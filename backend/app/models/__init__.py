@@ -49,6 +49,7 @@ from app.models.research_task import ResearchTask, TaskStatus
 from app.models.schedule import Schedule, ScheduleFrequency
 
 # Settings models
+from app.models.agent_persona import AgentPersona
 from app.models.settings import AgentConfig, Provider
 from app.models.technology import (
     Technology,
@@ -129,4 +130,5 @@ __all__ = [
     # Settings
     "Provider",
     "AgentConfig",
+    "AgentPersona",
 ]
