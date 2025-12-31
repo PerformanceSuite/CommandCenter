@@ -133,6 +133,17 @@ Router (HTTP) → Service (Logic) → Model (ORM) → Schema (Validation)
 | `backend/libs/` | Core libraries (AI Arena, LLM Gateway, RAG) |
 | `frontend/src/App.tsx` | Frontend routing |
 
+## Current Focus
+
+**Unified Agent Framework** - See [`docs/plans/2025-12-31-unified-agent-framework.md`](docs/plans/2025-12-31-unified-agent-framework.md)
+
+Unifying AI Arena, Research Orchestrator, and E2B Sandboxes into one framework:
+- Single `AgentExecutor` for all parallel agent work
+- Execution environment as configuration (local vs sandbox)
+- Pluggable synthesis strategies (Chairman, Voting, Summary)
+- E2B as swappable compute backend via `ComputeGateway`
+- No new database tables or API endpoints needed
+
 ## Notes for AI Assistants
 
 - Check `docs/CAPABILITIES.md` for current feature status
