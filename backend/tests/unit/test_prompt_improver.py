@@ -135,13 +135,14 @@ class TestAnalyze:
     """Tests for the analyze method (requires API key)."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(
-        not pytest.importorskip("anthropic", reason="anthropic package not installed"),
-        reason="anthropic package required",
-    )
     async def test_analyze_returns_scores(self):
         """Should return scores from analysis."""
         import os
+
+        try:
+            import anthropic  # noqa: F401
+        except ImportError:
+            pytest.skip("anthropic package not installed")
 
         if not os.environ.get("ANTHROPIC_API_KEY"):
             pytest.skip("ANTHROPIC_API_KEY not set")
@@ -157,13 +158,14 @@ class TestAnalyze:
         assert all(0 <= v <= 100 for v in result.scores.values())
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(
-        not pytest.importorskip("anthropic", reason="anthropic package not installed"),
-        reason="anthropic package required",
-    )
     async def test_analyze_finds_issues_in_bad_prompt(self):
         """Should find issues in a bad prompt."""
         import os
+
+        try:
+            import anthropic  # noqa: F401
+        except ImportError:
+            pytest.skip("anthropic package not installed")
 
         if not os.environ.get("ANTHROPIC_API_KEY"):
             pytest.skip("ANTHROPIC_API_KEY not set")
@@ -176,13 +178,14 @@ class TestAnalyze:
         assert len(result.issues) > 0
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(
-        not pytest.importorskip("anthropic", reason="anthropic package not installed"),
-        reason="anthropic package required",
-    )
     async def test_analyze_generates_improved_version_for_bad_prompt(self):
         """Should generate improved version for low-scoring prompt."""
         import os
+
+        try:
+            import anthropic  # noqa: F401
+        except ImportError:
+            pytest.skip("anthropic package not installed")
 
         if not os.environ.get("ANTHROPIC_API_KEY"):
             pytest.skip("ANTHROPIC_API_KEY not set")
