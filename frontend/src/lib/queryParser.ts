@@ -20,6 +20,19 @@ import {
 import { EntityType, EdgeType } from '../types/graph';
 
 // ============================================================================
+// Valid Type Constants (for runtime validation)
+// ============================================================================
+
+const VALID_ENTITY_TYPES: Set<string> = new Set([
+  'repo', 'file', 'symbol', 'service', 'task', 'spec', 'project'
+]);
+
+const VALID_EDGE_TYPES: Set<string> = new Set([
+  'contains', 'import', 'call', 'extends', 'implements', 'uses',
+  'references', 'dependsOn', 'tests', 'documents', 'produces', 'consumes'
+]);
+
+// ============================================================================
 // Parse URL Params -> ComposedQuery
 // ============================================================================
 
@@ -28,8 +41,10 @@ export function parseQueryFromParams(params: URLSearchParams): ComposedQuery {
   const filters = parseFilters(params);
   const relationships = parseRelationships(params);
   const presentation = parsePresentation(params);
-  const limit = params.get('limit') ? parseInt(params.get('limit')!, 10) : undefined;
-  const offset = params.get('offset') ? parseInt(params.get('offset')!, 10) : undefined;
+  const limitStr = params.get('limit');
+  const offsetStr = params.get('offset');
+  const limit = limitStr ? parseInt(limitStr, 10) : undefined;
+  const offset = offsetStr ? parseInt(offsetStr, 10) : undefined;
 
   return {
     entities,
@@ -49,13 +64,24 @@ function parseEntities(params: URLSearchParams): EntitySelector[] {
 function parseEntityString(str: string): EntitySelector | null {
   // Format: "type:id" or "type:id:projectId" or just "type"
   const parts = str.split(':');
-  if (parts.length === 0) return null;
+  if (parts.length === 0 || !parts[0]) return null;
 
-  const type = parts[0] as EntityType;
-  const id = parts[1] ? parseInt(parts[1], 10) : undefined;
-  const projectId = parts[2] ? parseInt(parts[2], 10) : undefined;
+  const type = parts[0];
+  if (!VALID_ENTITY_TYPES.has(type)) return null;
 
-  return { type, id, projectId };
+  let id: number | undefined;
+  if (parts[1]) {
+    const parsed = parseInt(parts[1], 10);
+    id = isNaN(parsed) ? undefined : parsed;
+  }
+
+  let projectId: number | undefined;
+  if (parts[2]) {
+    const parsed = parseInt(parts[2], 10);
+    projectId = isNaN(parsed) ? undefined : parsed;
+  }
+
+  return { type: type as EntityType, id, projectId };
 }
 
 function parseFilters(params: URLSearchParams): Filter[] {
@@ -110,9 +136,10 @@ function parseFilterValue(value: string, operator: FilterOperator): unknown {
 }
 
 function parseRelationships(params: URLSearchParams): RelationshipSpec[] {
-  const depth = params.get('depth') ? parseInt(params.get('depth')!, 10) : 1;
+  const depthStr = params.get('depth');
+  const depth = depthStr ? parseInt(depthStr, 10) : 1;
   const direction = (params.get('rel_direction') || 'both') as 'inbound' | 'outbound' | 'both';
-  const types = params.getAll('rel_type') as EdgeType[];
+  const types = params.getAll('rel_type').filter(t => VALID_EDGE_TYPES.has(t)) as EdgeType[];
 
   // Only create relationships if depth > 0 or specific types are requested
   if (types.length === 0 && depth > 0) {

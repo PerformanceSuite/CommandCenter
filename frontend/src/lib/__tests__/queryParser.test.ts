@@ -109,6 +109,41 @@ describe('queryParser', () => {
       const query = parseQueryFromParams(params);
       expect(query.relationships[0]?.direction).toBe('outbound');
     });
+
+    it('ignores invalid entity types', () => {
+      const params = new URLSearchParams('entity=invalid:123&entity=project:1');
+      const query = parseQueryFromParams(params);
+      expect(query.entities).toHaveLength(1);
+      expect(query.entities[0].type).toBe('project');
+    });
+
+    it('handles non-numeric entity IDs gracefully', () => {
+      const params = new URLSearchParams('entity=project:abc');
+      const query = parseQueryFromParams(params);
+      expect(query.entities).toHaveLength(1);
+      expect(query.entities[0].id).toBeUndefined();
+    });
+
+    it('handles empty entity string', () => {
+      const params = new URLSearchParams('entity=');
+      const query = parseQueryFromParams(params);
+      expect(query.entities).toHaveLength(0);
+    });
+
+    it('filters out invalid edge types', () => {
+      const params = new URLSearchParams('rel_type=invalid&rel_type=dependsOn');
+      const query = parseQueryFromParams(params);
+      expect(query.relationships).toHaveLength(1);
+      expect(query.relationships[0].type).toBe('dependsOn');
+    });
+
+    it('handles non-numeric projectId gracefully', () => {
+      const params = new URLSearchParams('entity=file:42:notanumber');
+      const query = parseQueryFromParams(params);
+      expect(query.entities).toHaveLength(1);
+      expect(query.entities[0].id).toBe(42);
+      expect(query.entities[0].projectId).toBeUndefined();
+    });
   });
 
   describe('serializeQueryToParams', () => {
