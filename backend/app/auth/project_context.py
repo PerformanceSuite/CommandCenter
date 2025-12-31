@@ -1,89 +1,121 @@
 """
-Project context helpers for multi-tenant isolation
+Project context helpers for multi-tenant isolation.
 
-IMPORTANT: This module provides project_id resolution for the current request.
-Currently defaults to project_id=1 for development. This will be replaced with
-proper multi-tenant isolation once User-Project relationships are implemented.
-
-Roadmap for Multi-Tenant Support:
-1. Create UserProject association table (many-to-many)
-2. Add default_project_id to User model
-3. Update get_current_project_id() to use authenticated user's default project
-4. Add project_id parameter to protected routes
-5. Validate user has access to requested project_id
-6. Remove DEFAULT_PROJECT_ID constant
-
-See docs/DATA_ISOLATION.md for complete architecture.
+Provides project_id resolution from:
+1. X-Project-ID header (explicit override)
+2. User's default project
+3. First available project for user
 """
 
 import logging
 from typing import Optional
 
-from fastapi import Depends
+from fastapi import Depends, Header, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, get_optional_user
+from app.database import get_async_session
 from app.models.user import User
+from app.models.user_project import UserProject
 
 logger = logging.getLogger(__name__)
 
-# TEMPORARY: Default project ID for single-tenant development mode
-# TODO: Remove this once User-Project relationships are implemented
-DEFAULT_PROJECT_ID = 1
-
 
 async def get_current_project_id(
-    user: Optional[User] = Depends(get_current_user),
+    user: User = Depends(get_current_user),
+    x_project_id: Optional[int] = Header(None, alias="X-Project-ID"),
+    db: AsyncSession = Depends(get_async_session),
 ) -> int:
     """
     Get the current project ID from authenticated user context.
 
-    TEMPORARY IMPLEMENTATION:
-    Currently returns DEFAULT_PROJECT_ID (1) for all users.
-    This bypasses multi-project isolation and is a known security limitation.
-
-    Future Implementation (when User-Project relationships exist):
-    1. Get user from JWT token (already working)
-    2. Fetch user's default_project_id from database
-    3. Return user's default project
-    4. Validate user has access to the project
+    Resolution order:
+    1. X-Project-ID header (if provided and user has access)
+    2. User's default project
+    3. User's first available project
 
     Args:
-        user: Current authenticated user (optional during transition)
+        user: Current authenticated user (required)
+        x_project_id: Optional project ID from header
+        db: Database session
 
     Returns:
-        Project ID for the current context (currently always 1)
+        Project ID for the current context
 
-    Security Warning:
-        This implementation does NOT provide multi-tenant isolation.
-        All users share project_id=1. This is acceptable for development
-        but MUST be fixed before multi-project production use.
+    Raises:
+        HTTPException 403: If user has no project access or invalid project requested
     """
-    if user:
-        logger.debug(
-            f"Project context for user {user.email}: Using DEFAULT_PROJECT_ID={DEFAULT_PROJECT_ID}"
+    # If explicit project requested via header
+    if x_project_id is not None:
+        has_access = await _user_has_project_access(db, user.id, x_project_id)
+        if not has_access:
+            logger.warning(f"User {user.email} denied access to project {x_project_id}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"No access to project {x_project_id}",
+            )
+        logger.debug(f"Using requested project {x_project_id} for user {user.email}")
+        return x_project_id
+
+    # Get user's default or first project
+    project_id = await _get_user_default_project(db, user.id)
+    if project_id is None:
+        logger.warning(f"User {user.email} has no assigned projects")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No project assigned. Contact administrator.",
         )
-    else:
-        logger.debug(f"No authenticated user - Using DEFAULT_PROJECT_ID={DEFAULT_PROJECT_ID}")
 
-    # TODO: When User model has project relationships:
-    # if user.default_project_id:
-    #     return user.default_project_id
-    # raise HTTPException(
-    #     status_code=status.HTTP_403_FORBIDDEN,
-    #     detail="User has no assigned project"
-    # )
-
-    return DEFAULT_PROJECT_ID
+    logger.debug(f"Using default project {project_id} for user {user.email}")
+    return project_id
 
 
-async def get_optional_project_id() -> int:
+async def get_optional_project_id(
+    user: Optional[User] = Depends(get_optional_user),
+    x_project_id: Optional[int] = Header(None, alias="X-Project-ID"),
+    db: AsyncSession = Depends(get_async_session),
+) -> Optional[int]:
     """
     Get project ID without requiring authentication.
 
-    Used for endpoints that are transitioning to require auth but
-    need to maintain backward compatibility.
-
-    Returns:
-        Project ID (currently always DEFAULT_PROJECT_ID)
+    Used for endpoints transitioning to require auth.
+    Returns None if no user or no project.
     """
-    return DEFAULT_PROJECT_ID
+    if user is None:
+        return None
+
+    try:
+        return await get_current_project_id(user, x_project_id, db)
+    except HTTPException:
+        return None
+
+
+async def _user_has_project_access(db: AsyncSession, user_id: int, project_id: int) -> bool:
+    """Check if user has access to a specific project."""
+    result = await db.execute(
+        select(UserProject).where(
+            UserProject.user_id == user_id, UserProject.project_id == project_id
+        )
+    )
+    return result.scalar_one_or_none() is not None
+
+
+async def _get_user_default_project(db: AsyncSession, user_id: int) -> Optional[int]:
+    """Get user's default project ID, or first available."""
+    # Try to get default project
+    result = await db.execute(
+        select(UserProject).where(
+            UserProject.user_id == user_id, UserProject.is_default == True  # noqa: E712
+        )
+    )
+    default = result.scalar_one_or_none()
+    if default:
+        return default.project_id
+
+    # Fall back to first available
+    result = await db.execute(
+        select(UserProject).where(UserProject.user_id == user_id).order_by(UserProject.created_at)
+    )
+    first = result.scalar_one_or_none()
+    return first.project_id if first else None

@@ -13,6 +13,7 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.hypothesis import Hypothesis
     from app.models.ingestion_source import IngestionSource
+    from app.models.user_project import UserProject
 
 
 class Project(Base):
@@ -86,6 +87,11 @@ class Project(Base):
     # Intelligence integration
     hypotheses: Mapped[list["Hypothesis"]] = relationship(
         "Hypothesis", back_populates="project", cascade="all, delete-orphan"
+    )
+
+    # User-Project associations
+    user_projects: Mapped[list["UserProject"]] = relationship(
+        "UserProject", back_populates="project", cascade="all, delete-orphan"
     )
 
     # Unique constraint: owner + name must be unique

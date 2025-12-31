@@ -57,6 +57,7 @@ from app.models.technology import (
     technology_repositories,
 )
 from app.models.user import User
+from app.models.user_project import UserProject
 from app.models.webhook import GitHubRateLimit, WebhookConfig, WebhookDelivery, WebhookEvent
 
 __all__ = [
@@ -78,6 +79,7 @@ __all__ = [
     # Core Models
     "Project",
     "User",
+    "UserProject",
     "Repository",
     "Technology",
     "TechnologyDomain",

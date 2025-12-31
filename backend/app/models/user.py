@@ -4,13 +4,16 @@ User model for authentication and authorization
 
 import os
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from email_validator import EmailNotValidError, validate_email
 from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.user_project import UserProject
 
 
 class User(Base):
@@ -47,6 +50,20 @@ class User(Base):
     integrations: Mapped[list["Integration"]] = relationship(  # noqa: F821
         "Integration", back_populates="user"
     )
+    user_projects: Mapped[list["UserProject"]] = relationship(
+        "UserProject", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    @property
+    def default_project_id(self) -> Optional[int]:
+        """Get user's default project ID."""
+        for up in self.user_projects:
+            if up.is_default:
+                return up.project_id
+        # Return first project if no default set
+        if self.user_projects:
+            return self.user_projects[0].project_id
+        return None
 
     @validates("email")
     def validate_email_format(self, key: str, email: str) -> str:
