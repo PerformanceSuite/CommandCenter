@@ -188,6 +188,20 @@ services:
     networks:
       - commandcenter
 
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    networks:
+      - commandcenter
+
 volumes:
   postgres_data:
     driver: local
