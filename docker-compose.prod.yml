@@ -241,6 +241,40 @@ services:
         limits:
           memory: 2G
 
+
+  # AlertManager - Alert Management and Routing
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=https://alertmanager.${DOMAIN}'
+      - '--cluster.listen-address='
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.${DOMAIN}`)"
+      - "traefik.http.routers.alertmanager.entrypoints=websecure"
+      - "traefik.http.routers.alertmanager.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.alertmanager.middlewares=alertmanager-auth"
+      - "traefik.http.middlewares.alertmanager-auth.basicauth.users=${ALERTMANAGER_USER}"
+      - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
   # Grafana - Metrics Visualization
   grafana:
     image: grafana/grafana:10.2.2
@@ -374,6 +408,8 @@ volumes:
   traefik_logs:
     driver: local
   backend_logs:
+    driver: local
+  alertmanager_data:
     driver: local
 
 networks:
