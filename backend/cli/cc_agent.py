@@ -65,6 +65,9 @@ Examples:
     show_parser = subparsers.add_parser("show-persona", help="Show persona details")
     show_parser.add_argument("name", help="Persona name")
 
+    # check-setup command
+    check_parser = subparsers.add_parser("check-setup", help="Verify API keys and environment")
+
     # improve-prompt command
     improve_parser = subparsers.add_parser("improve-prompt", help="Analyze and improve a prompt")
     improve_parser.add_argument("--file", "-f", help="Read prompt from file")
@@ -81,6 +84,8 @@ Examples:
         cmd_list_personas(args)
     elif args.command == "show-persona":
         cmd_show_persona(args)
+    elif args.command == "check-setup":
+        cmd_check_setup()
     elif args.command == "improve-prompt":
         asyncio.run(cmd_improve_prompt(args))
 
@@ -157,6 +162,65 @@ def cmd_list_personas(args):
         desc = p.description[:35] + "..." if len(p.description) > 35 else p.description
         print(f"{p.name:<20} {p.category:<15} {desc}")
     print()
+
+
+def cmd_check_setup():
+    """Check API keys and environment setup."""
+    from libs.agent_framework.sandbox import find_api_key, get_key_setup_instructions, API_KEY_LOCATIONS
+    from pathlib import Path
+
+    print("\n🔧 Agent Framework Setup Check")
+    print("=" * 50)
+
+    # Check each required key
+    keys = [
+        ("E2B_API_KEY", "e2b_", "Required for sandbox execution"),
+        ("ANTHROPIC_API_KEY", "sk-ant-", "Required for Claude API"),
+        ("GITHUB_TOKEN", "ghp_", "Required for git push/PR (use classic PAT!)"),
+    ]
+
+    all_good = True
+    for key_name, prefix, description in keys:
+        value = find_api_key(key_name)
+        if value:
+            # Check prefix for common mistakes
+            if prefix and not value.startswith(prefix):
+                print(f"⚠️  {key_name}: Found but may be wrong format")
+                print(f"      Expected prefix: {prefix}")
+                print(f"      Found: {value[:15]}...")
+                all_good = False
+            else:
+                print(f"✅ {key_name}: {value[:10]}...")
+        else:
+            print(f"❌ {key_name}: Not found")
+            print(f"   {description}")
+            all_good = False
+
+    # Show where we looked
+    print("\n📂 Key search locations (in order):")
+    print("   1. Environment variables")
+    for path in API_KEY_LOCATIONS[1:]:
+        exists = "✓" if path.exists() else "✗"
+        print(f"   {exists} {path}")
+
+    # Show skill location
+    skill_path = Path.home() / ".claude" / "skills" / "agent-sandboxes" / "SKILL.md"
+    print(f"\n📚 Full setup guide: {skill_path}")
+
+    if not all_good:
+        print("\n" + "=" * 50)
+        print("❌ Setup incomplete. Missing keys need to be configured.")
+        print("\nQuick fix - add to ~/.config/api-keys/.env.api-keys:")
+        print("-" * 50)
+        for key_name, prefix, _ in keys:
+            if not find_api_key(key_name):
+                print(f"{key_name}={prefix}your_key_here")
+        print("-" * 50)
+        print("\nThen: source ~/.zshrc")
+    else:
+        print("\n" + "=" * 50)
+        print("✅ All keys configured! Ready to run agents.")
+        print("\nTry: python -m cli.cc_agent run backend-coder --task 'echo hello'")
 
 
 def cmd_show_persona(args):
