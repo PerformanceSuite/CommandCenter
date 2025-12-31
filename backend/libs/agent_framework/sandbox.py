@@ -279,7 +279,7 @@ class AgentSandbox:
             )
         except ImportError:
             logger.warning("e2b package not installed")
-            logger.info("install_e2b", command="pip install e2b-code-interpreter")
+            logger.info("install_e2b", command="pip install e2b")
             return await self._run_local(prompt, model, max_turns)
         except Exception as e:
             logger.error("sandbox_run_failed", error=str(e))
@@ -302,63 +302,38 @@ class AgentSandbox:
         pr_title: Optional[str],
         start_time: float,
     ) -> SandboxResult:
-        """Run agent in E2B sandbox."""
-        from e2b_code_interpreter import Sandbox
+        """Run agent in E2B sandbox using claude-code template."""
+        from e2b import Sandbox
         
         # Set E2B API key in environment (SDK reads from env)
         os.environ["E2B_API_KEY"] = self.e2b_api_key
+        
+        # Get Anthropic key for Claude Code
+        anthropic_key = find_api_key("ANTHROPIC_API_KEY")
+        if not anthropic_key:
+            logger.warning("ANTHROPIC_API_KEY not found")
+            return SandboxResult(
+                success=False,
+                output="",
+                exit_code=1,
+                cost_usd=0.0,
+                duration_seconds=time.perf_counter() - start_time,
+                error="ANTHROPIC_API_KEY required for Claude Code",
+            )
 
         logger.info("starting_e2b_sandbox", timeout_minutes=timeout_minutes)
         
-        # E2B SDK uses Sandbox.create() class method
-        sandbox = Sandbox.create(timeout=timeout_minutes * 60)
+        # Use claude-code template which has Claude Code pre-installed
+        sandbox = Sandbox.create(
+            template="claude-code",
+            envs={
+                "ANTHROPIC_API_KEY": anthropic_key,
+                "GITHUB_TOKEN": self.github_token or "",
+            },
+            timeout=timeout_minutes * 60,
+        )
 
         try:
-            # Helper to run shell commands
-            def run_shell(cmd: str) -> tuple[str, str, int]:
-                """Run shell command and return (stdout, stderr, returncode)."""
-                code = f'''
-import subprocess
-import sys
-result = subprocess.run({repr(cmd)}, shell=True, capture_output=True, text=True)
-sys.stdout.write("__STDOUT_START__")
-sys.stdout.write(result.stdout)
-sys.stdout.write("__STDOUT_END__")
-sys.stdout.write("__STDERR_START__")
-sys.stdout.write(result.stderr)
-sys.stdout.write("__STDERR_END__")
-sys.stdout.write(f"__RETCODE__{{result.returncode}}__")
-'''
-                result = sandbox.run_code(code)
-                full_output = "".join(result.logs.stdout)
-                
-                # Parse stdout
-                stdout = ""
-                if "__STDOUT_START__" in full_output and "__STDOUT_END__" in full_output:
-                    start = full_output.find("__STDOUT_START__") + len("__STDOUT_START__")
-                    end = full_output.find("__STDOUT_END__")
-                    stdout = full_output[start:end]
-                
-                # Parse stderr
-                stderr = ""
-                if "__STDERR_START__" in full_output and "__STDERR_END__" in full_output:
-                    start = full_output.find("__STDERR_START__") + len("__STDERR_START__")
-                    end = full_output.find("__STDERR_END__")
-                    stderr = full_output[start:end]
-                
-                # Parse return code
-                retcode = 1  # Default to error
-                if "__RETCODE__" in full_output:
-                    try:
-                        start = full_output.find("__RETCODE__") + len("__RETCODE__")
-                        end = full_output.find("__", start)
-                        retcode = int(full_output[start:end])
-                    except (ValueError, IndexError):
-                        pass
-                
-                return stdout, stderr, retcode
-
-            # Setup: clone repo, configure git
             logger.info("sandbox_setup", repo=self.repo_url, branch=self.branch)
             
             # Clone repo
@@ -368,79 +343,58 @@ sys.stdout.write(f"__RETCODE__{{result.returncode}}__")
                     "https://", f"https://x-access-token:{self.github_token}@"
                 )
             
-            stdout, stderr, retcode = run_shell(f"git clone --depth 50 {clone_url} /home/user/repo")
-            if retcode != 0:
-                logger.error("clone_failed", stderr=stderr)
-                raise RuntimeError(f"Failed to clone repo: {stderr}")
+            result = sandbox.commands.run(f"git clone --depth 50 {clone_url} /home/user/repo", timeout=120)
+            if result.exit_code != 0:
+                logger.error("clone_failed", stderr=result.stderr)
+                raise RuntimeError(f"Failed to clone repo: {result.stderr}")
             
             # Configure git
-            run_shell('cd /home/user/repo && git config user.email "agent@commandcenter.ai"')
-            run_shell('cd /home/user/repo && git config user.name "CC Agent"')
-            run_shell(f'cd /home/user/repo && git checkout {self.branch}')
-
-            # Check if Claude Code is installed, install if not
-            logger.info("checking_claude_code")
-            which_out, _, retcode = run_shell('which claude')
-            logger.info("claude_check", which_out=which_out, retcode=retcode)
+            sandbox.commands.run('cd /home/user/repo && git config user.email "agent@commandcenter.ai"')
+            sandbox.commands.run('cd /home/user/repo && git config user.name "CC Agent"')
+            sandbox.commands.run(f'cd /home/user/repo && git checkout {self.branch}')
             
-            if retcode != 0 or not which_out.strip():
-                logger.info("installing_claude_code")
-                # Try to install Claude Code via npm (requires node)
-                install_out, install_err, install_ret = run_shell('npm install -g @anthropic-ai/claude-code 2>&1')
-                logger.info("npm_install_result", retcode=install_ret, out=install_out[:200] if install_out else "")
-                
-                # Verify installation
-                which_out2, _, retcode2 = run_shell('which claude')
-                if retcode2 != 0 or not which_out2.strip():
-                    logger.warning("claude_code_not_available", msg="Claude Code not installed in sandbox, using API fallback")
-                    # Fall back to direct API call
-                    result = await self._run_api_fallback(prompt, model, sandbox, start_time)
-                    sandbox.kill()
-                    return result
+            # Write prompt to file (escaping for shell)
+            prompt_escaped = prompt.replace("'", "'\"'\"'")
+            sandbox.commands.run(f"echo '{prompt_escaped}' > /home/user/task.md")
             
-            # Set ANTHROPIC_API_KEY in sandbox environment for Claude Code
-            anthropic_key = find_api_key("ANTHROPIC_API_KEY")
-            if anthropic_key:
-                sandbox.run_code(f'''
-import os
-os.environ["ANTHROPIC_API_KEY"] = "{anthropic_key}"
-''')
+            # Update Claude Code to latest version
+            logger.info("updating_claude_code")
+            update_result = sandbox.commands.run("claude update", timeout=120)
+            logger.info("claude_update_result", exit_code=update_result.exit_code, stdout=update_result.stdout[:200] if update_result.stdout else "none")
 
-            # Write prompt to file
-            prompt_escaped = prompt.replace('"', r'\"').replace("'", r"\'")
-            sandbox.run_code(f'''
-with open("/home/user/task.md", "w") as f:
-    f.write("""{prompt}""")
-''')
-
-            # Run Claude Code as non-root user (required for --dangerously-skip-permissions)
-            # Claude Code CLI: claude [options] <prompt>
+            # Run Claude Code with the prompt
             logger.info("running_claude_code", model=model, max_turns=max_turns)
-            anthropic_key = find_api_key("ANTHROPIC_API_KEY")
-            export_cmd = f"export ANTHROPIC_API_KEY={anthropic_key} && " if anthropic_key else ""
-            # Create a non-root user and run claude as that user
-            setup_user_cmd = '''useradd -m agent 2>/dev/null || true
-chown -R agent:agent /home/user/repo
-chmod -R 755 /home/user/repo
-'''
-            run_shell(setup_user_cmd)
             
-            # Run as 'agent' user with su
-            claude_cmd = f'{export_cmd}su - agent -c "cd /home/user/repo && claude --print --dangerously-skip-permissions --model {model} --max-turns {max_turns} \"$(cat /home/user/task.md)\"" 2>&1'
-            stdout, stderr, exit_code = run_shell(claude_cmd)
-            output = stdout + stderr
+            # Use -p (print mode) for non-interactive, pipe prompt through stdin
+            # Claude Code uses simple model names: sonnet, opus, haiku
+            claude_cmd = f"cd /home/user/repo && cat /home/user/task.md | claude -p --dangerously-skip-permissions --model {model} --max-turns {max_turns}"
             
-            logger.info("claude_completed", exit_code=exit_code, output_len=len(output), output_preview=output[:500] if output else "")
+            try:
+                result = sandbox.commands.run(claude_cmd, timeout=timeout_minutes * 60)
+                output = (result.stdout or "") + (result.stderr or "")
+                exit_code = result.exit_code
+            except Exception as cmd_err:
+                # Command may exit non-zero but still produce useful output
+                # Try to extract output from the exception
+                err_str = str(cmd_err)
+                logger.info("claude_command_exception", error_type=type(cmd_err).__name__, error=err_str[:200])
+                
+                # Try to get stdout/stderr from exception if available
+                if hasattr(cmd_err, 'stdout'):
+                    output = (getattr(cmd_err, 'stdout', '') or "") + (getattr(cmd_err, 'stderr', '') or "")
+                    exit_code = getattr(cmd_err, 'exit_code', 1)
+                else:
+                    output = err_str
+                    exit_code = 1
+            
+            logger.info("claude_completed", exit_code=exit_code, output_len=len(output), output_preview=output[:500] if output else "none")
 
             # Get changed files (staged + unstaged + untracked)
-            status_stdout, _, status_ret = run_shell("cd /home/user/repo && git status --porcelain")
-            logger.info("git_status", stdout=status_stdout[:200] if status_stdout else "", retcode=status_ret)
+            status_result = sandbox.commands.run("cd /home/user/repo && git status --porcelain")
             files_changed = []
-            for line in status_stdout.split("\n"):
+            for line in status_result.stdout.split("\n"):
                 line = line.strip()
                 if line and len(line) > 2:
-                    # Format: XY filename (where XY is status)
-                    # Examples: "?? newfile.txt", "M  modified.txt", " M unstaged.txt"
                     files_changed.append(line[2:].strip())
             
             logger.info("sandbox_completed", exit_code=exit_code, files_changed=len(files_changed))
@@ -467,35 +421,56 @@ chmod -R 755 /home/user/repo
 
     async def _create_pr_e2b(self, sandbox, title: str) -> Optional[str]:
         """Commit changes and create PR in E2B sandbox."""
-        branch_name = f"agent/{title.lower().replace(' ', '-')[:30]}-{int(time.time())}"
-
-        pr_script = f"""
-cd /home/user/repo
-git checkout -b {branch_name}
-git add -A
-git commit -m "{title}"
-git push -u origin {branch_name}
-
-# Create PR using gh CLI if available
-if command -v gh &> /dev/null; then
-    gh pr create --title "{title}" --body "Automated changes by CC Agent" --head {branch_name}
-fi
-"""
+        import re
+        # Clean branch name - only allow alphanumeric, dash, underscore
+        clean_title = re.sub(r'[^a-zA-Z0-9\-_]', '-', title.lower())[:30]
+        clean_title = re.sub(r'-+', '-', clean_title).strip('-')  # Remove duplicate dashes
+        branch_name = f"agent/{clean_title}-{int(time.time())}"
 
         logger.info("creating_pr", branch=branch_name, title=title)
-        result = sandbox.run_code(pr_script)
-        output = result.text or ""
-
-        # Try to extract PR URL from output
-        if "github.com" in output and "/pull/" in output:
-            for line in output.split("\n"):
-                if "github.com" in line and "/pull/" in line:
-                    pr_url = line.strip()
-                    logger.info("pr_created", url=pr_url)
-                    return pr_url
-
-        logger.warning("pr_url_not_found", output_preview=output[:200])
-        return None
+        
+        try:
+            # Create branch
+            sandbox.commands.run(f"cd /home/user/repo && git checkout -b {branch_name}")
+            
+            # Stage all changes
+            sandbox.commands.run("cd /home/user/repo && git add -A")
+            
+            # Commit
+            sandbox.commands.run(f'cd /home/user/repo && git commit -m "{title}"')
+            
+            # Push
+            sandbox.commands.run(f"cd /home/user/repo && git push -u origin {branch_name}")
+            
+        except Exception as git_err:
+            logger.warning("git_pr_error", error=str(git_err)[:200])
+            # Continue anyway to try to generate compare URL
+        
+        # Try to create PR using gh CLI (may not be installed)
+        try:
+            gh_result = sandbox.commands.run(
+                f'cd /home/user/repo && gh pr create --title "{title}" --body "Automated changes by CC Agent" --head {branch_name}',
+                timeout=60
+            )
+            
+            output = (gh_result.stdout or "") + (gh_result.stderr or "")
+            
+            # Try to extract PR URL from output
+            if "github.com" in output and "/pull/" in output:
+                for line in output.split("\n"):
+                    if "github.com" in line and "/pull/" in line:
+                        pr_url = line.strip()
+                        logger.info("pr_created", url=pr_url)
+                        return pr_url
+        except Exception as gh_err:
+            logger.info("gh_cli_not_available", error=str(gh_err)[:100])
+        
+        # If gh CLI failed, construct compare URL manually
+        # Extract org/repo from clone URL
+        repo_path = self.repo_url.replace("https://github.com/", "").replace(".git", "")
+        pr_url = f"https://github.com/{repo_path}/compare/{self.branch}...{branch_name}?expand=1"
+        logger.info("pr_compare_url", url=pr_url)
+        return pr_url
 
     async def _run_api_fallback(
         self,
