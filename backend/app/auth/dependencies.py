@@ -131,3 +131,56 @@ def require_auth(user: User = Depends(get_current_active_user)) -> User:
         Current active user
     """
     return user
+
+
+# Optional HTTP Bearer scheme for routes that work with or without auth
+optional_security = HTTPBearer(auto_error=False)
+
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """
+    Get the current user if authenticated, or None if not.
+
+    Use this for routes that work both authenticated and unauthenticated,
+    but may behave differently based on auth status.
+
+    Args:
+        credentials: Optional HTTP Bearer token credentials
+        db: Database session
+
+    Returns:
+        Current user object if authenticated, None otherwise
+    """
+    if credentials is None:
+        return None
+
+    token = credentials.credentials
+    payload = decode_token(token)
+
+    if payload is None:
+        return None
+
+    # Verify token type
+    token_type = payload.get("type")
+    if token_type != "access":
+        return None
+
+    # Extract user ID
+    user_id: Optional[str] = payload.get("sub")
+    if user_id is None:
+        return None
+
+    # Fetch user from database
+    try:
+        result = await db.execute(select(User).where(User.id == int(user_id)))
+        user = result.scalar_one_or_none()
+    except Exception:
+        return None
+
+    if user is None or not user.is_active:
+        return None
+
+    return user

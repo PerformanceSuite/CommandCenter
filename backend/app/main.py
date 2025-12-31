@@ -38,6 +38,7 @@ from app.routers import (
     knowledge,
     mcp,
     projects,
+    prompts,
     rate_limits,
     repositories,
     research_orchestration,
@@ -265,6 +266,7 @@ app.include_router(
 )  # Research Hub intelligence integration
 app.include_router(settings_router.router, prefix=settings.api_v1_prefix)  # Settings & API keys
 app.include_router(alerts.router)  # AlertManager webhook integration
+app.include_router(prompts.router)  # Prompt analysis and improvement API
 
 
 # Test endpoints for observability (only in dev/test environments)
