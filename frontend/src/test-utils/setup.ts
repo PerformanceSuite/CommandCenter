@@ -6,8 +6,13 @@ import { cleanup } from '@testing-library/react';
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  localStorage.clear();
-  sessionStorage.clear();
+  // Clear storage safely (may not be available in all environments)
+  if (typeof localStorage !== 'undefined' && typeof localStorage.clear === 'function') {
+    localStorage.clear();
+  }
+  if (typeof sessionStorage !== 'undefined' && typeof sessionStorage.clear === 'function') {
+    sessionStorage.clear();
+  }
 });
 
 // Setup before all tests
