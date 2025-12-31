@@ -13,7 +13,10 @@ from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.schemas.graph import (
     CreateTaskRequest,
+    CrossProjectLinkResponse,
     DependencyGraph,
+    FederationQueryRequest,
+    FederationQueryResponse,
     GhostNode,
     GraphAuditResponse,
     GraphFilters,
@@ -197,6 +200,135 @@ async def search_graph(
         project_id=current_project_id,
         query=request.query,
         scope=request.scope,
+    )
+
+
+# ============================================================================
+# Federation Endpoints
+# ============================================================================
+
+
+@router.post("/federation/query", response_model=FederationQueryResponse)
+async def query_federation(
+    request: FederationQueryRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Query cross-project links for federation visualization.
+
+    Returns links between entities in different projects, enabling
+    cross-project dependency visualization in VISLZR.
+
+    **Scope types:**
+    - `ecosystem`: Query all projects the user has access to
+    - `projects`: Query specific project IDs (must have access)
+
+    **Filters:**
+    - `link_types`: Filter by relationship type (e.g., DEPENDS_ON, REFERENCES)
+    - `entity_types`: Filter by entity table (e.g., graph_repos, graph_symbols)
+
+    **Example request:**
+    ```json
+    {
+      "scope": {"type": "ecosystem"},
+      "link_types": ["dependsOn", "references"],
+      "limit": 100
+    }
+    ```
+    """
+    # Get user's accessible projects
+    # For now, use current_project_id as the only accessible project
+    # TODO: Expand to get all user's projects from UserProject table
+    from sqlalchemy import select
+
+    from app.models.user_project import UserProject
+
+    # Get all project IDs the user has access to
+    stmt = select(UserProject.project_id)
+    result = await db.execute(stmt)
+    user_project_ids = [row[0] for row in result.fetchall()]
+
+    # If no projects found, at least include current project
+    if not user_project_ids:
+        user_project_ids = [current_project_id]
+
+    service = GraphService(db)
+    return await service.query_cross_project_links(
+        request=request,
+        user_project_ids=user_project_ids,
+    )
+
+
+@router.post(
+    "/federation/links",
+    response_model=CrossProjectLinkResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_cross_project_link(
+    source_project_id: int = Query(..., description="Source project ID"),
+    target_project_id: int = Query(..., description="Target project ID"),
+    from_entity: str = Query(..., description="Source entity table name"),
+    from_id: int = Query(..., description="Source entity ID"),
+    to_entity: str = Query(..., description="Target entity table name"),
+    to_id: int = Query(..., description="Target entity ID"),
+    link_type: str = Query(..., description="Link type"),
+    weight: float = Query(1.0, ge=0.0, le=100.0, description="Link weight"),
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Create a cross-project link between entities in different projects.
+
+    Used for establishing dependencies, references, or other relationships
+    between entities that span project boundaries.
+
+    **Authorization:** User must have access to both source and target projects.
+    """
+    from app.models.graph import LinkType
+
+    # Validate user has access to both projects
+    # For now, just verify they have access to at least one
+    # TODO: Proper multi-project authorization
+    if current_project_id not in [source_project_id, target_project_id]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Must have access to at least one of the linked projects",
+        )
+
+    # Validate link type
+    try:
+        parsed_link_type = LinkType(link_type)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid link type: {link_type}. Valid types: {[lt.value for lt in LinkType]}",
+        )
+
+    service = GraphService(db)
+    link = await service.create_cross_project_link(
+        source_project_id=source_project_id,
+        target_project_id=target_project_id,
+        from_entity=from_entity,
+        from_id=from_id,
+        to_entity=to_entity,
+        to_id=to_id,
+        link_type=parsed_link_type,
+        weight=weight,
+    )
+
+    return CrossProjectLinkResponse(
+        id=link.id,
+        source_project_id=link.source_project_id,
+        target_project_id=link.target_project_id,
+        from_entity=link.from_entity,
+        from_id=link.from_id,
+        to_entity=link.to_entity,
+        to_id=link.to_id,
+        type=link.type,
+        weight=link.weight,
+        metadata=link.metadata_,
+        created_at=link.created_at,
     )
 
 

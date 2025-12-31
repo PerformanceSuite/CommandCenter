@@ -31,7 +31,10 @@ from app.models.graph import (
 )
 from app.nats_client import get_nats_client
 from app.schemas.graph import (
+    CrossProjectLinkResponse,
     DependencyGraph,
+    FederationQueryRequest,
+    FederationQueryResponse,
     GhostNode,
     GraphEdge,
     GraphFilters,
@@ -628,6 +631,184 @@ class GraphService:
 
         results.total = len(results.symbols) + len(results.files) + len(results.tasks)
         return results
+
+    # ========================================================================
+    # Federation Operations
+    # ========================================================================
+
+    async def query_cross_project_links(
+        self,
+        request: FederationQueryRequest,
+        user_project_ids: List[int],
+    ) -> FederationQueryResponse:
+        """
+        Query cross-project links for federation.
+
+        Returns links where source_project_id != target_project_id,
+        filtered by scope and user's accessible projects.
+
+        Args:
+            request: Federation query request with scope and filters
+            user_project_ids: Project IDs the user has access to (for authorization)
+
+        Returns:
+            FederationQueryResponse with matching cross-project links
+        """
+        from sqlalchemy import func
+
+        # Build base query for cross-project links
+        # Cross-project = both project IDs set AND they're different
+        base_conditions = [
+            GraphLink.source_project_id.isnot(None),
+            GraphLink.target_project_id.isnot(None),
+            GraphLink.source_project_id != GraphLink.target_project_id,
+        ]
+
+        # Apply scope filter
+        if request.scope.type == "projects":
+            # Specific projects requested - intersect with user's access
+            if not request.scope.project_ids:
+                return FederationQueryResponse(
+                    links=[],
+                    total=0,
+                    metadata={"error": "project_ids required when scope.type='projects'"},
+                )
+
+            allowed_ids = set(request.scope.project_ids) & set(user_project_ids)
+            if not allowed_ids:
+                return FederationQueryResponse(
+                    links=[],
+                    total=0,
+                    metadata={"error": "No accessible projects in scope"},
+                )
+
+            # Links where both source AND target are in allowed projects
+            base_conditions.append(GraphLink.source_project_id.in_(allowed_ids))
+            base_conditions.append(GraphLink.target_project_id.in_(allowed_ids))
+        else:
+            # Ecosystem scope - use all user's accessible projects
+            base_conditions.append(GraphLink.source_project_id.in_(user_project_ids))
+            base_conditions.append(GraphLink.target_project_id.in_(user_project_ids))
+
+        # Apply link type filter
+        if request.link_types:
+            base_conditions.append(GraphLink.type.in_(request.link_types))
+
+        # Apply entity type filter
+        if request.entity_types:
+            base_conditions.append(
+                or_(
+                    GraphLink.from_entity.in_(request.entity_types),
+                    GraphLink.to_entity.in_(request.entity_types),
+                )
+            )
+
+        # Get total count
+        count_stmt = select(func.count(GraphLink.id)).filter(and_(*base_conditions))
+        count_result = await self.db.execute(count_stmt)
+        total = count_result.scalar() or 0
+
+        # Get paginated results
+        query_stmt = (
+            select(GraphLink)
+            .filter(and_(*base_conditions))
+            .order_by(GraphLink.created_at.desc())
+            .offset(request.offset)
+            .limit(request.limit)
+        )
+        result = await self.db.execute(query_stmt)
+        links = result.scalars().all()
+
+        # Build response
+        link_responses = []
+        project_ids_involved = set()
+
+        for link in links:
+            project_ids_involved.add(link.source_project_id)
+            project_ids_involved.add(link.target_project_id)
+
+            link_responses.append(
+                CrossProjectLinkResponse(
+                    id=link.id,
+                    source_project_id=link.source_project_id,
+                    target_project_id=link.target_project_id,
+                    from_entity=link.from_entity,
+                    from_id=link.from_id,
+                    to_entity=link.to_entity,
+                    to_id=link.to_id,
+                    type=link.type,
+                    weight=link.weight,
+                    metadata=link.metadata_,
+                    created_at=link.created_at,
+                )
+            )
+
+        return FederationQueryResponse(
+            links=link_responses,
+            total=total,
+            metadata={
+                "projects_involved": list(project_ids_involved),
+                "scope_type": request.scope.type,
+                "filters_applied": {
+                    "link_types": [lt.value for lt in request.link_types]
+                    if request.link_types
+                    else None,
+                    "entity_types": request.entity_types,
+                },
+            },
+        )
+
+    async def create_cross_project_link(
+        self,
+        source_project_id: int,
+        target_project_id: int,
+        from_entity: str,
+        from_id: int,
+        to_entity: str,
+        to_id: int,
+        link_type: LinkType,
+        weight: float = 1.0,
+        metadata: Optional[dict] = None,
+    ) -> GraphLink:
+        """
+        Create a cross-project link between entities in different projects.
+
+        Args:
+            source_project_id: Project ID of the source entity
+            target_project_id: Project ID of the target entity
+            from_entity: Source table name
+            from_id: Source entity ID
+            to_entity: Target table name
+            to_id: Target entity ID
+            link_type: Link type
+            weight: Link weight/strength
+            metadata: Optional metadata
+
+        Returns:
+            Created GraphLink instance
+        """
+        link = GraphLink(
+            source_project_id=source_project_id,
+            target_project_id=target_project_id,
+            from_entity=from_entity,
+            from_id=from_id,
+            to_entity=to_entity,
+            to_id=to_id,
+            type=link_type,
+            weight=weight,
+            metadata_=metadata,
+        )
+
+        self.db.add(link)
+        await self.db.commit()
+        await self.db.refresh(link)
+
+        logger.info(
+            f"Created cross-project link: {from_entity}:{from_id} -> {to_entity}:{to_id} "
+            f"(projects {source_project_id} -> {target_project_id})"
+        )
+
+        return link
 
     # ========================================================================
     # Mutation Operations

@@ -373,3 +373,85 @@ class GraphEventResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Federation Query Models
+# ============================================================================
+
+
+class FederationScope(BaseModel):
+    """Scope for federation queries"""
+
+    type: Literal["ecosystem", "projects"] = Field(
+        ...,
+        description="'ecosystem' for all projects, 'projects' for specific project IDs",
+    )
+    project_ids: Optional[List[int]] = Field(
+        None,
+        description="List of project IDs (required when type='projects')",
+    )
+
+
+class CrossProjectLinkResponse(BaseModel):
+    """Cross-project link with full context"""
+
+    id: int
+    source_project_id: int
+    target_project_id: int
+    from_entity: str
+    from_id: int
+    to_entity: str
+    to_id: int
+    type: LinkType
+    weight: float
+    metadata: Optional[dict]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class FederationQueryRequest(BaseModel):
+    """Request for cross-project federation query"""
+
+    scope: FederationScope = Field(
+        ...,
+        description="Query scope (ecosystem or specific projects)",
+    )
+    link_types: Optional[List[LinkType]] = Field(
+        None,
+        description="Filter by link types (None = all types)",
+    )
+    entity_types: Optional[List[str]] = Field(
+        None,
+        description="Filter by entity types (e.g., ['graph_repos', 'graph_symbols'])",
+    )
+    limit: int = Field(
+        100,
+        ge=1,
+        le=1000,
+        description="Maximum number of links to return",
+    )
+    offset: int = Field(
+        0,
+        ge=0,
+        description="Pagination offset",
+    )
+
+
+class FederationQueryResponse(BaseModel):
+    """Response for cross-project federation query"""
+
+    links: List[CrossProjectLinkResponse] = Field(
+        ...,
+        description="Cross-project links matching the query",
+    )
+    total: int = Field(
+        ...,
+        description="Total number of matching links (before pagination)",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Query metadata (projects involved, etc.)",
+    )

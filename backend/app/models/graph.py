@@ -580,11 +580,30 @@ class GraphLink(Base):
     - Service → Repo (service deployed from repo)
     - Task → Symbol (task modifies symbol)
     - Audit → File (audit targets file)
+
+    Cross-Project Federation:
+    - source_project_id and target_project_id enable cross-project queries
+    - When both are set and different, this is a cross-project link
+    - Nullable for backward compatibility with existing intra-project links
     """
 
     __tablename__ = "graph_links"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Project context for federation queries (nullable for backward compatibility)
+    source_project_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    target_project_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
 
     # From entity (polymorphic)
     from_entity: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # table name
@@ -604,8 +623,18 @@ class GraphLink(Base):
     # Timestamp
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    @property
+    def is_cross_project(self) -> bool:
+        """Returns True if this link spans across different projects."""
+        return (
+            self.source_project_id is not None
+            and self.target_project_id is not None
+            and self.source_project_id != self.target_project_id
+        )
+
     def __repr__(self) -> str:
-        return f"<GraphLink(id={self.id}, type={self.type}, {self.from_entity}:{self.from_id} → {self.to_entity}:{self.to_id})>"
+        cross = " [cross-project]" if self.is_cross_project else ""
+        return f"<GraphLink(id={self.id}, type={self.type}, {self.from_entity}:{self.from_id} → {self.to_entity}:{self.to_id}{cross})>"
 
 
 # ============================================================================
