@@ -2,6 +2,9 @@
 SQLAlchemy models for Command Center
 """
 
+# Agent Persona Models
+from app.models.agent_persona import AgentPersona
+
 # Intelligence Integration Models
 from app.models.debate import ConsensusLevel, Debate, DebateStatus, DebateVerdict
 from app.models.evidence import Evidence, EvidenceSourceType, EvidenceStance
@@ -61,6 +64,8 @@ from app.models.user_project import UserProject
 from app.models.webhook import GitHubRateLimit, WebhookConfig, WebhookDelivery, WebhookEvent
 
 __all__ = [
+    # Agent Persona
+    "AgentPersona",
     # Intelligence Integration
     "Hypothesis",
     "HypothesisCategory",

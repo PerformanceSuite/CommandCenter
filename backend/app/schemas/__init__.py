@@ -2,6 +2,12 @@
 Pydantic schemas for API validation and serialization
 """
 
+from app.schemas.agent_persona import (
+    AgentPersonaCreate,
+    AgentPersonaListResponse,
+    AgentPersonaResponse,
+    AgentPersonaUpdate,
+)
 from app.schemas.batch import (
     BatchAnalyzeRequest,
     BatchAnalyzeResponse,
@@ -124,6 +130,12 @@ from app.schemas.webhook import (
 )
 
 __all__ = [
+    # Agent Persona
+    "AgentPersonaCreate",
+    "AgentPersonaUpdate",
+    "AgentPersonaResponse",
+    "AgentPersonaListResponse",
+    # Project
     "ProjectCreate",
     "ProjectUpdate",
     "ProjectResponse",
