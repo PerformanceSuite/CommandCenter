@@ -24,52 +24,82 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def is_sqlite() -> bool:
+    """Check if we're running on SQLite."""
+    conn = op.get_bind()
+    return conn.dialect.name == "sqlite"
+
+
+def column_exists(table_name: str, column_name: str) -> bool:
+    """Check if a column exists in a table."""
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [c["name"] for c in inspector.get_columns(table_name)]
+    return column_name in columns
+
+
+def index_exists(table_name: str, index_name: str) -> bool:
+    """Check if an index exists on a table."""
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    indexes = [idx["name"] for idx in inspector.get_indexes(table_name)]
+    return index_name in indexes
+
+
 def upgrade() -> None:
-    # Add source_project_id column with FK to projects table
-    op.add_column(
-        "graph_links",
-        sa.Column("source_project_id", sa.Integer(), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_graph_links_source_project_id",
-        "graph_links",
-        "projects",
-        ["source_project_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-    op.create_index(
-        "ix_graph_links_source_project_id",
-        "graph_links",
-        ["source_project_id"],
-    )
+    # Add source_project_id column with FK to projects table (idempotent)
+    if not column_exists("graph_links", "source_project_id"):
+        op.add_column(
+            "graph_links",
+            sa.Column("source_project_id", sa.Integer(), nullable=True),
+        )
+    # SQLite doesn't support ALTER TABLE ADD CONSTRAINT for foreign keys
+    if not is_sqlite():
+        op.create_foreign_key(
+            "fk_graph_links_source_project_id",
+            "graph_links",
+            "projects",
+            ["source_project_id"],
+            ["id"],
+            ondelete="CASCADE",
+        )
+    if not index_exists("graph_links", "ix_graph_links_source_project_id"):
+        op.create_index(
+            "ix_graph_links_source_project_id",
+            "graph_links",
+            ["source_project_id"],
+        )
 
-    # Add target_project_id column with FK to projects table
-    op.add_column(
-        "graph_links",
-        sa.Column("target_project_id", sa.Integer(), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_graph_links_target_project_id",
-        "graph_links",
-        "projects",
-        ["target_project_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-    op.create_index(
-        "ix_graph_links_target_project_id",
-        "graph_links",
-        ["target_project_id"],
-    )
+    # Add target_project_id column with FK to projects table (idempotent)
+    if not column_exists("graph_links", "target_project_id"):
+        op.add_column(
+            "graph_links",
+            sa.Column("target_project_id", sa.Integer(), nullable=True),
+        )
+    if not is_sqlite():
+        op.create_foreign_key(
+            "fk_graph_links_target_project_id",
+            "graph_links",
+            "projects",
+            ["target_project_id"],
+            ["id"],
+            ondelete="CASCADE",
+        )
+    if not index_exists("graph_links", "ix_graph_links_target_project_id"):
+        op.create_index(
+            "ix_graph_links_target_project_id",
+            "graph_links",
+            ["target_project_id"],
+        )
 
-    # Add composite index for cross-project federation queries
+    # Add composite index for cross-project federation queries (idempotent)
     # This optimizes queries like: "find all links between project A and project B"
-    op.create_index(
-        "ix_graph_links_cross_project",
-        "graph_links",
-        ["source_project_id", "target_project_id"],
-    )
+    if not index_exists("graph_links", "ix_graph_links_cross_project"):
+        op.create_index(
+            "ix_graph_links_cross_project",
+            "graph_links",
+            ["source_project_id", "target_project_id"],
+        )
 
 
 def downgrade() -> None:
@@ -78,10 +108,12 @@ def downgrade() -> None:
 
     # Drop target_project_id
     op.drop_index("ix_graph_links_target_project_id", table_name="graph_links")
-    op.drop_constraint("fk_graph_links_target_project_id", "graph_links", type_="foreignkey")
+    if not is_sqlite():
+        op.drop_constraint("fk_graph_links_target_project_id", "graph_links", type_="foreignkey")
     op.drop_column("graph_links", "target_project_id")
 
     # Drop source_project_id
     op.drop_index("ix_graph_links_source_project_id", table_name="graph_links")
-    op.drop_constraint("fk_graph_links_source_project_id", "graph_links", type_="foreignkey")
+    if not is_sqlite():
+        op.drop_constraint("fk_graph_links_source_project_id", "graph_links", type_="foreignkey")
     op.drop_column("graph_links", "source_project_id")

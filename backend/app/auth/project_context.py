@@ -115,7 +115,10 @@ async def _get_user_default_project(db: AsyncSession, user_id: int) -> Optional[
 
     # Fall back to first available
     result = await db.execute(
-        select(UserProject).where(UserProject.user_id == user_id).order_by(UserProject.created_at)
+        select(UserProject)
+        .where(UserProject.user_id == user_id)
+        .order_by(UserProject.created_at)
+        .limit(1)
     )
     first = result.scalar_one_or_none()
     return first.project_id if first else None

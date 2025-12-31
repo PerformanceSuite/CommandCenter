@@ -10,7 +10,6 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "a2d26e62e1f3"
@@ -19,8 +18,16 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def is_sqlite() -> bool:
+    """Check if we're running on SQLite."""
+    conn = op.get_bind()
+    return conn.dialect.name == "sqlite"
+
+
 def create_enum_if_not_exists(enum_name: str, values: list[str]) -> None:
-    """Create PostgreSQL enum type if it doesn't already exist."""
+    """Create PostgreSQL enum type if it doesn't already exist (no-op for SQLite)."""
+    if is_sqlite():
+        return  # SQLite doesn't support ENUMs
     values_str = ", ".join(f"'{v}'" for v in values)
     op.execute(
         f"""
@@ -92,45 +99,10 @@ def upgrade() -> None:
             sa.Column("project_id", sa.Integer(), nullable=False),
             sa.Column("research_task_id", sa.Integer(), nullable=False),
             sa.Column("statement", sa.Text(), nullable=False),
-            sa.Column(
-                "category",
-                postgresql.ENUM(
-                    "customer",
-                    "problem",
-                    "solution",
-                    "technical",
-                    "market",
-                    "regulatory",
-                    "competitive",
-                    "gtm",
-                    name="hypothesiscategory",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
-            sa.Column(
-                "status",
-                postgresql.ENUM(
-                    "untested",
-                    "validating",
-                    "validated",
-                    "invalidated",
-                    "needs_more_data",
-                    name="hypothesisstatus",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
-            sa.Column(
-                "impact",
-                postgresql.ENUM("high", "medium", "low", name="impactlevel", create_type=False),
-                nullable=False,
-            ),
-            sa.Column(
-                "risk",
-                postgresql.ENUM("high", "medium", "low", name="risklevel", create_type=False),
-                nullable=False,
-            ),
+            sa.Column("category", sa.String(length=50), nullable=False),
+            sa.Column("status", sa.String(length=50), nullable=False),
+            sa.Column("impact", sa.String(length=20), nullable=False),
+            sa.Column("risk", sa.String(length=20), nullable=False),
             sa.Column("priority_score", sa.Float(), nullable=False, server_default="0.0"),
             sa.Column("validation_score", sa.Float(), nullable=True),
             sa.Column("knowledge_entry_id", sa.String(length=255), nullable=True),
@@ -159,30 +131,9 @@ def upgrade() -> None:
             sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
             sa.Column("hypothesis_id", sa.Integer(), nullable=False),
             sa.Column("content", sa.Text(), nullable=False),
-            sa.Column(
-                "source_type",
-                postgresql.ENUM(
-                    "research_finding",
-                    "knowledge_base",
-                    "manual",
-                    "external",
-                    name="evidencesourcetype",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
+            sa.Column("source_type", sa.String(length=50), nullable=False),
             sa.Column("source_id", sa.String(length=255), nullable=True),
-            sa.Column(
-                "stance",
-                postgresql.ENUM(
-                    "supporting",
-                    "contradicting",
-                    "neutral",
-                    name="evidencestance",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
+            sa.Column("stance", sa.String(length=30), nullable=False),
             sa.Column("confidence", sa.Float(), nullable=False, server_default="0.5"),
             sa.Column("created_at", sa.DateTime(), nullable=False),
             sa.ForeignKeyConstraint(["hypothesis_id"], ["hypotheses.id"], ondelete="CASCADE"),
@@ -198,44 +149,12 @@ def upgrade() -> None:
             "debates",
             sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
             sa.Column("hypothesis_id", sa.Integer(), nullable=False),
-            sa.Column(
-                "status",
-                postgresql.ENUM(
-                    "pending",
-                    "running",
-                    "completed",
-                    "failed",
-                    name="debatestatus",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
+            sa.Column("status", sa.String(length=30), nullable=False),
             sa.Column("rounds_requested", sa.Integer(), nullable=False, server_default="3"),
             sa.Column("rounds_completed", sa.Integer(), nullable=False, server_default="0"),
             sa.Column("agents_used", sa.JSON(), nullable=True),
-            sa.Column(
-                "consensus_level",
-                postgresql.ENUM(
-                    "strong",
-                    "moderate",
-                    "weak",
-                    "deadlock",
-                    name="consensuslevel",
-                    create_type=False,
-                ),
-                nullable=True,
-            ),
-            sa.Column(
-                "final_verdict",
-                postgresql.ENUM(
-                    "validated",
-                    "invalidated",
-                    "needs_more_data",
-                    name="debateverdict",
-                    create_type=False,
-                ),
-                nullable=True,
-            ),
+            sa.Column("consensus_level", sa.String(length=30), nullable=True),
+            sa.Column("final_verdict", sa.String(length=30), nullable=True),
             sa.Column("verdict_reasoning", sa.Text(), nullable=True),
             sa.Column("gap_analysis", sa.JSON(), nullable=True),
             sa.Column("suggested_research", sa.JSON(), nullable=True),
@@ -256,19 +175,7 @@ def upgrade() -> None:
             sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
             sa.Column("research_task_id", sa.Integer(), nullable=False),
             sa.Column("content", sa.Text(), nullable=False),
-            sa.Column(
-                "finding_type",
-                postgresql.ENUM(
-                    "fact",
-                    "claim",
-                    "insight",
-                    "question",
-                    "recommendation",
-                    name="findingtype",
-                    create_type=False,
-                ),
-                nullable=False,
-            ),
+            sa.Column("finding_type", sa.String(length=30), nullable=False),
             sa.Column("agent_role", sa.String(length=100), nullable=False),
             sa.Column("confidence", sa.Float(), nullable=False, server_default="0.5"),
             sa.Column("sources", sa.JSON(), nullable=True),
@@ -327,14 +234,15 @@ def downgrade() -> None:
         op.drop_index(op.f("ix_hypotheses_project_id"), table_name="hypotheses")
         op.drop_table("hypotheses")
 
-    # Drop enum types
-    op.execute("DROP TYPE IF EXISTS findingtype")
-    op.execute("DROP TYPE IF EXISTS debateverdict")
-    op.execute("DROP TYPE IF EXISTS consensuslevel")
-    op.execute("DROP TYPE IF EXISTS debatestatus")
-    op.execute("DROP TYPE IF EXISTS evidencestance")
-    op.execute("DROP TYPE IF EXISTS evidencesourcetype")
-    op.execute("DROP TYPE IF EXISTS risklevel")
-    op.execute("DROP TYPE IF EXISTS impactlevel")
-    op.execute("DROP TYPE IF EXISTS hypothesisstatus")
-    op.execute("DROP TYPE IF EXISTS hypothesiscategory")
+    # Drop enum types (PostgreSQL only)
+    if not is_sqlite():
+        op.execute("DROP TYPE IF EXISTS findingtype")
+        op.execute("DROP TYPE IF EXISTS debateverdict")
+        op.execute("DROP TYPE IF EXISTS consensuslevel")
+        op.execute("DROP TYPE IF EXISTS debatestatus")
+        op.execute("DROP TYPE IF EXISTS evidencestance")
+        op.execute("DROP TYPE IF EXISTS evidencesourcetype")
+        op.execute("DROP TYPE IF EXISTS risklevel")
+        op.execute("DROP TYPE IF EXISTS impactlevel")
+        op.execute("DROP TYPE IF EXISTS hypothesisstatus")
+        op.execute("DROP TYPE IF EXISTS hypothesiscategory")
