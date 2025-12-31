@@ -4,16 +4,22 @@ Agent Framework - Unified agent execution and management.
 This module provides:
 - PromptImprover: Analyze and improve agent prompts
 - PersonaStore: Manage agent persona definitions
-- Persona: Data class for agent personas
-- AgentExecutor: Execute agents in various environments (coming soon)
+- AgentExecutor: Execute agents in various environments
+- AgentSandbox: Run agents in E2B sandboxes
 """
 
+from .executor import AgentExecutor, ExecutionResult
 from .persona_store import Persona, PersonaStore
 from .prompt_improver import PromptAnalysis, PromptImprover
+from .sandbox import AgentSandbox, SandboxResult
 
 __all__ = [
     "PromptImprover",
     "PromptAnalysis",
     "PersonaStore",
     "Persona",
+    "AgentExecutor",
+    "ExecutionResult",
+    "AgentSandbox",
+    "SandboxResult",
 ]
