@@ -319,26 +319,44 @@ class AgentSandbox:
                 """Run shell command and return (stdout, stderr, returncode)."""
                 code = f'''
 import subprocess
+import sys
 result = subprocess.run({repr(cmd)}, shell=True, capture_output=True, text=True)
-print("STDOUT:", result.stdout)
-print("STDERR:", result.stderr) 
-print("RETCODE:", result.returncode)
+sys.stdout.write("__STDOUT_START__")
+sys.stdout.write(result.stdout)
+sys.stdout.write("__STDOUT_END__")
+sys.stdout.write("__STDERR_START__")
+sys.stdout.write(result.stderr)
+sys.stdout.write("__STDERR_END__")
+sys.stdout.write(f"__RETCODE__{{result.returncode}}__")
 '''
                 result = sandbox.run_code(code)
-                stdout_lines = []
-                stderr_lines = []
-                retcode = 0
-                for line in result.logs.stdout:
-                    if line.startswith("STDOUT: "):
-                        stdout_lines.append(line[8:])
-                    elif line.startswith("STDERR: "):
-                        stderr_lines.append(line[8:])
-                    elif line.startswith("RETCODE: "):
-                        try:
-                            retcode = int(line[9:].strip())
-                        except ValueError:
-                            pass
-                return "".join(stdout_lines), "".join(stderr_lines), retcode
+                full_output = "".join(result.logs.stdout)
+                
+                # Parse stdout
+                stdout = ""
+                if "__STDOUT_START__" in full_output and "__STDOUT_END__" in full_output:
+                    start = full_output.find("__STDOUT_START__") + len("__STDOUT_START__")
+                    end = full_output.find("__STDOUT_END__")
+                    stdout = full_output[start:end]
+                
+                # Parse stderr
+                stderr = ""
+                if "__STDERR_START__" in full_output and "__STDERR_END__" in full_output:
+                    start = full_output.find("__STDERR_START__") + len("__STDERR_START__")
+                    end = full_output.find("__STDERR_END__")
+                    stderr = full_output[start:end]
+                
+                # Parse return code
+                retcode = 1  # Default to error
+                if "__RETCODE__" in full_output:
+                    try:
+                        start = full_output.find("__RETCODE__") + len("__RETCODE__")
+                        end = full_output.find("__", start)
+                        retcode = int(full_output[start:end])
+                    except (ValueError, IndexError):
+                        pass
+                
+                return stdout, stderr, retcode
 
             # Setup: clone repo, configure git
             logger.info("sandbox_setup", repo=self.repo_url, branch=self.branch)
@@ -360,6 +378,34 @@ print("RETCODE:", result.returncode)
             run_shell('cd /home/user/repo && git config user.name "CC Agent"')
             run_shell(f'cd /home/user/repo && git checkout {self.branch}')
 
+            # Check if Claude Code is installed, install if not
+            logger.info("checking_claude_code")
+            which_out, _, retcode = run_shell('which claude')
+            logger.info("claude_check", which_out=which_out, retcode=retcode)
+            
+            if retcode != 0 or not which_out.strip():
+                logger.info("installing_claude_code")
+                # Try to install Claude Code via npm (requires node)
+                install_out, install_err, install_ret = run_shell('npm install -g @anthropic-ai/claude-code 2>&1')
+                logger.info("npm_install_result", retcode=install_ret, out=install_out[:200] if install_out else "")
+                
+                # Verify installation
+                which_out2, _, retcode2 = run_shell('which claude')
+                if retcode2 != 0 or not which_out2.strip():
+                    logger.warning("claude_code_not_available", msg="Claude Code not installed in sandbox, using API fallback")
+                    # Fall back to direct API call
+                    result = await self._run_api_fallback(prompt, model, sandbox, start_time)
+                    sandbox.kill()
+                    return result
+            
+            # Set ANTHROPIC_API_KEY in sandbox environment for Claude Code
+            anthropic_key = find_api_key("ANTHROPIC_API_KEY")
+            if anthropic_key:
+                sandbox.run_code(f'''
+import os
+os.environ["ANTHROPIC_API_KEY"] = "{anthropic_key}"
+''')
+
             # Write prompt to file
             prompt_escaped = prompt.replace('"', r'\"').replace("'", r"\'")
             sandbox.run_code(f'''
@@ -367,17 +413,35 @@ with open("/home/user/task.md", "w") as f:
     f.write("""{prompt}""")
 ''')
 
-            # Run Claude Code
+            # Run Claude Code as non-root user (required for --dangerously-skip-permissions)
+            # Claude Code CLI: claude [options] <prompt>
             logger.info("running_claude_code", model=model, max_turns=max_turns)
-            claude_cmd = f'cd /home/user/repo && claude --print --model {model} --max-turns {max_turns} --prompt "$(cat /home/user/task.md)"'
+            anthropic_key = find_api_key("ANTHROPIC_API_KEY")
+            export_cmd = f"export ANTHROPIC_API_KEY={anthropic_key} && " if anthropic_key else ""
+            # Create a non-root user and run claude as that user
+            setup_user_cmd = '''useradd -m agent 2>/dev/null || true
+chown -R agent:agent /home/user/repo
+chmod -R 755 /home/user/repo
+'''
+            run_shell(setup_user_cmd)
+            
+            # Run as 'agent' user with su
+            claude_cmd = f'{export_cmd}su - agent -c "cd /home/user/repo && claude --print --dangerously-skip-permissions --model {model} --max-turns {max_turns} \"$(cat /home/user/task.md)\"" 2>&1'
             stdout, stderr, exit_code = run_shell(claude_cmd)
             output = stdout + stderr
             
-            logger.info("claude_completed", exit_code=exit_code, output_len=len(output))
+            logger.info("claude_completed", exit_code=exit_code, output_len=len(output), output_preview=output[:500] if output else "")
 
-            # Get changed files
-            diff_stdout, _, _ = run_shell("cd /home/user/repo && git diff --name-only HEAD")
-            files_changed = [f.strip() for f in diff_stdout.split("\n") if f.strip() and not f.startswith(("STDOUT:", "STDERR:", "RETCODE:"))]
+            # Get changed files (staged + unstaged + untracked)
+            status_stdout, _, status_ret = run_shell("cd /home/user/repo && git status --porcelain")
+            logger.info("git_status", stdout=status_stdout[:200] if status_stdout else "", retcode=status_ret)
+            files_changed = []
+            for line in status_stdout.split("\n"):
+                line = line.strip()
+                if line and len(line) > 2:
+                    # Format: XY filename (where XY is status)
+                    # Examples: "?? newfile.txt", "M  modified.txt", " M unstaged.txt"
+                    files_changed.append(line[2:].strip())
             
             logger.info("sandbox_completed", exit_code=exit_code, files_changed=len(files_changed))
 
@@ -432,6 +496,116 @@ fi
 
         logger.warning("pr_url_not_found", output_preview=output[:200])
         return None
+
+    async def _run_api_fallback(
+        self,
+        prompt: str,
+        model: str,
+        sandbox,
+        start_time: float,
+    ) -> SandboxResult:
+        """
+        Fallback when Claude Code CLI isn't available.
+        Uses Anthropic API directly to execute coding tasks.
+        """
+        import anthropic
+        
+        anthropic_key = find_api_key("ANTHROPIC_API_KEY")
+        if not anthropic_key:
+            return SandboxResult(
+                success=False,
+                output="",
+                exit_code=1,
+                cost_usd=0.0,
+                duration_seconds=time.perf_counter() - start_time,
+                error="Neither Claude Code nor ANTHROPIC_API_KEY available",
+            )
+        
+        client = anthropic.Anthropic(api_key=anthropic_key)
+        
+        # Helper to run shell in sandbox
+        def run_shell(cmd: str) -> tuple[str, str, int]:
+            code = f'''
+import subprocess
+result = subprocess.run({repr(cmd)}, shell=True, capture_output=True, text=True)
+print("STDOUT:", result.stdout)
+print("STDERR:", result.stderr)
+print("RETCODE:", result.returncode)
+'''
+            result = sandbox.run_code(code)
+            stdout_lines = []
+            stderr_lines = []
+            retcode = 0
+            for line in result.logs.stdout:
+                if line.startswith("STDOUT: "):
+                    stdout_lines.append(line[8:])
+                elif line.startswith("STDERR: "):
+                    stderr_lines.append(line[8:])
+                elif line.startswith("RETCODE: "):
+                    try:
+                        retcode = int(line[9:].strip())
+                    except ValueError:
+                        pass
+            return "".join(stdout_lines), "".join(stderr_lines), retcode
+        
+        # Get repo structure for context
+        ls_out, _, _ = run_shell("cd /home/user/repo && find . -type f -name '*.py' -o -name '*.md' | head -50")
+        
+        system_prompt = f"""You are an expert coding agent working in a git repository.
+You can execute shell commands by wrapping them in <shell>command</shell> tags.
+You can create/edit files by using <file path="path/to/file">content</file> tags.
+
+Repository structure (first 50 files):
+{ls_out}
+
+Execute the task and respond with the commands/files needed."""
+
+        logger.info("api_fallback_calling_claude", model=model)
+        
+        response = client.messages.create(
+            model=f"claude-3-5-{model}-latest" if model in ["sonnet", "haiku"] else model,
+            max_tokens=4096,
+            system=system_prompt,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        
+        output = response.content[0].text
+        logger.info("api_fallback_response", output_len=len(output))
+        
+        # Parse and execute shell commands
+        import re
+        shell_commands = re.findall(r'<shell>(.*?)</shell>', output, re.DOTALL)
+        for cmd in shell_commands:
+            logger.info("executing_shell", cmd=cmd[:50])
+            run_shell(f"cd /home/user/repo && {cmd.strip()}")
+        
+        # Parse and create files
+        file_matches = re.findall(r'<file path="([^"]+)">(.*?)</file>', output, re.DOTALL)
+        for path, content in file_matches:
+            logger.info("creating_file", path=path)
+            # Write file via Python in sandbox
+            escaped_content = content.replace('\\', '\\\\').replace("'''", "\\'''")
+            sandbox.run_code(f'''
+import os
+os.makedirs(os.path.dirname("/home/user/repo/{path}") or ".", exist_ok=True)
+with open("/home/user/repo/{path}", "w") as f:
+    f.write(\'\'\'{escaped_content}\'\'\')
+''')
+        
+        # Get changed files
+        diff_stdout, _, _ = run_shell("cd /home/user/repo && git status --porcelain")
+        files_changed = [line[3:].strip() for line in diff_stdout.split("\n") if line.strip()]
+        
+        duration = time.perf_counter() - start_time
+        
+        return SandboxResult(
+            success=True,
+            output=output,
+            exit_code=0,
+            cost_usd=0.0,
+            duration_seconds=duration,
+            files_changed=files_changed,
+        )
 
     async def _run_local(
         self,
