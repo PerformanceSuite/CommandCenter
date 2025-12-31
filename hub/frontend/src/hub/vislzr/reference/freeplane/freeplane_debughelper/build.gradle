@@ -1,0 +1,64 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+repositories {
+    maven { url "https://josm.openstreetmap.de/repository/releases/" }
+    maven { url "https://repo.spring.io/plugins-release/"}
+}
+
+dependencies {
+	def exclusions = [project.name, 'freeplane_ant']
+	if (! Os.isFamily(Os.FAMILY_MAC)) {
+		exclusions.add('freeplane_mac')
+	}
+	parent.subprojects.findAll{! exclusions.contains(it.name)}.each {
+		runtimeOnly it
+	}
+
+	runtimeOnly project(':freeplane').sourceSets.viewer.resources.sourceDirectories
+	runtimeOnly project(':freeplane').sourceSets.editor.resources.sourceDirectories
+	runtimeOnly project(':freeplane').sourceSets.external.resources.sourceDirectories
+	runtimeOnly files("${project(':freeplane').buildDir}/emoji/xml")
+}
+
+java {
+	disableAutoTargetJvm()
+}
+
+task(run, dependsOn: 'classes', type: JavaExec) {
+    mainClass ='org.freeplane.launcher.Launcher'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs = ['-XX:MaxRAM=20g', '-XX:MaxRAMPercentage=15.0',
+    "-Dorg.freeplane.basedirectory=$globalBin",
+    "-Dorg.freeplane.globalresourcedir=${rootDir.path}/freeplane/src/external/resources",
+	"-Dorg.freeplane.builtin.scripts.dir=${rootDir.path}/freeplane_plugin_script/scripts",
+    "-Djava.security.policy=$projectDir/security/freeplane.policy",
+    '-Dorg.freeplane.main.application.FreeplaneSecurityManager.disable=false',
+    '-Dorg.freeplane.main.application.FreeplaneStarter.headless=false',
+    '-Dorg.osgi.framework.bundle.parent=app',
+    '-Dorg.freeplane.nosplash=false',
+    '--add-exports=java.desktop/sun.awt.shell=ALL-UNNAMED']
+}
+
+task(debug, dependsOn: 'classes', type: JavaExec) {
+    mainClass = run.mainClass
+    jvmArgs = run.allJvmArgs
+    debug = true
+}
+
+task(runDist, dependsOn: 'classes', type: JavaExec) {
+	mainClass ='org.freeplane.launcher.Launcher'
+	classpath = fileTree(dir: globalBin, include: '*.jar')
+	jvmArgs = ['-XX:MaxRAM=20g', '-XX:MaxRAMPercentage=15.0',
+			   "-Dorg.freeplane.basedirectory=$globalBin",
+			   "-Djava.security.policy=$projectDir/security/freeplane.policy",
+			   '-Dorg.freeplane.main.application.FreeplaneSecurityManager.disable=false',
+			   '-Dorg.freeplane.main.application.FreeplaneStarter.headless=false',
+			   '-Dorg.freeplane.nosplash=false',
+			   '--add-exports=java.desktop/sun.awt.shell=ALL-UNNAMED']
+}
+
+task(debugDist, dependsOn: 'classes', type: JavaExec) {
+	mainClass = runDist.mainClass
+	jvmArgs = run.allJvmArgs
+	debug = true
+}

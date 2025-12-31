@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>console</headerType>
+  <jar>freeplanelauncher.jar</jar>
+  <outfile>freeplaneConsole.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir></chdir>
+  <priority>normal</priority>
+  <downloadUrl>https://www.azul.com/downloads/?version=java-15-mts&amp;os=windows&amp;architecture=x86-64-bit&amp;package=jre#download-openjdk</downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>true</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon></icon>
+  <jre>
+    <path>runtime;%FREEPLANE_JAVA_HOME%;%JAVA_HOME%</path>
+    <minVersion>1.8.0</minVersion>
+    <maxVersion>23.999</maxVersion>
+    <opt>-Dorg.freeplane.userfpdir=&quot;%APPDATA%\\Freeplane&quot;</opt>
+    <opt>-Djava.security.manager=allow</opt>
+    <opt>-XX:+IgnoreUnrecognizedVMOptions</opt>
+    <opt>--add-exports=java.desktop/sun.awt.shell=ALL-UNNAMED</opt>
+    <opt>--add-exports=java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED</opt>
+  </jre>
+</launch4jConfig>

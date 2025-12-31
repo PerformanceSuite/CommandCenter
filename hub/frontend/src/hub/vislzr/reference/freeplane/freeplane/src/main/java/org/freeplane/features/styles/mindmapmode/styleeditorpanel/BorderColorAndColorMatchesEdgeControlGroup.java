@@ -1,0 +1,164 @@
+/*
+ *  Freeplane - mind map editor
+ *  Copyright (C) 2016 jberry
+ *
+ *  This file author is jberry
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.freeplane.features.styles.mindmapmode.styleeditorpanel;
+
+import java.awt.Color;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import org.freeplane.core.resources.components.BooleanProperty;
+import org.freeplane.core.resources.components.ColorProperty;
+import org.freeplane.core.resources.components.IPropertyControl;
+import org.freeplane.core.util.ColorUtils;
+import org.freeplane.features.edge.EdgeController;
+import org.freeplane.features.map.NodeModel;
+import org.freeplane.features.mode.Controller;
+import org.freeplane.features.nodestyle.NodeBorderModel;
+import org.freeplane.features.nodestyle.NodeStyleController;
+import org.freeplane.features.nodestyle.mindmapmode.MNodeStyleController;
+import org.freeplane.features.styles.LogicalStyleController.StyleOption;
+import org.freeplane.features.styles.MapStyleModel;
+
+import com.jgoodies.forms.builder.DefaultFormBuilder;
+
+/**
+ * @author Joe Berry
+ * Dec 17, 2016
+ */
+public class BorderColorAndColorMatchesEdgeControlGroup implements ControlGroup {
+	private static final String BORDER_COLOR_MATCHES_EDGE_COLOR = "border_color_matches_edge_color";
+	private static final String BORDER_COLOR = "border_color";
+
+	private RevertingProperty mSetBorderColor;
+	private ColorProperty mBorderColor;
+
+	private RevertingProperty mSetBorderColorMatchesEdgeColor;
+	private BooleanProperty mBorderColorMatchesEdgeColor;
+
+	private BorderColorListener borderColorListener;
+	private BorderColorMatchesEdgeColorListener borderColorMatchesEdgeColorChangeListener;
+	private boolean canEdit;
+
+	private class BorderColorListener extends ControlGroupChangeListener {
+		public BorderColorListener(final RevertingProperty mSet,final IPropertyControl mProperty) {
+			super(mSet, mProperty);
+		}
+
+		@Override
+		void applyValue(final boolean enabled, final NodeModel node, final PropertyChangeEvent evt) {
+			final MNodeStyleController styleController = (MNodeStyleController) Controller
+			.getCurrentModeController().getExtension(NodeStyleController.class);
+			styleController.setBorderColor(node, enabled ? mBorderColor.getColorValue(): null);
+		}
+
+		@Override
+		void setStyleOnExternalChange(NodeModel node) {
+			final NodeStyleController styleController = NodeStyleController.getController();
+			final NodeBorderModel nodeBorderModel = NodeBorderModel.getModel(node);
+			final Color color = nodeBorderModel != null ? nodeBorderModel.getBorderColor() : null;
+			final Color viewColor = styleController.getBorderColor(node, StyleOption.FOR_UNSELECTED_NODE);
+			mSetBorderColor.setValue(color != null);
+			mBorderColor.setColorValue(viewColor);
+		}
+
+        @Override
+        void adjustForStyle(NodeModel node) {
+            StylePropertyAdjuster.adjustPropertyControl(node, mSetBorderColor);
+            StylePropertyAdjuster.adjustPropertyControl(node, mBorderColor);
+            if(!MapStyleModel.isStyleNode(node) || mBorderColor.isEnabled())
+                enableOrDisableBorderColorControls();
+        }
+	}
+
+	private class BorderColorMatchesEdgeColorListener extends ControlGroupChangeListener {
+		public BorderColorMatchesEdgeColorListener(final RevertingProperty mSet,final IPropertyControl mProperty) {
+			super(mSet, mProperty);
+		}
+
+		@Override
+		void applyValue(final boolean enabled, final NodeModel node, final PropertyChangeEvent evt) {
+			final MNodeStyleController styleController = (MNodeStyleController) Controller
+			.getCurrentModeController().getExtension(NodeStyleController.class);
+			styleController.setBorderColorMatchesEdgeColor(node, enabled ? mBorderColorMatchesEdgeColor.getBooleanValue(): null);
+		}
+
+		@Override
+		void setStyleOnExternalChange(NodeModel node) {
+			final NodeStyleController styleController = NodeStyleController.getController();
+			final NodeBorderModel nodeBorderModel = NodeBorderModel.getModel(node);
+			final Boolean match = nodeBorderModel != null ? nodeBorderModel.getBorderColorMatchesEdgeColor() : null;
+			final Boolean viewMatch = styleController.getBorderColorMatchesEdgeColor(node, StyleOption.FOR_UNSELECTED_NODE);
+			mSetBorderColorMatchesEdgeColor.setValue(match != null);
+			mBorderColorMatchesEdgeColor.setValue(viewMatch);
+		}
+
+		@Override
+		void adjustForStyle(NodeModel node) {
+		    StylePropertyAdjuster.adjustPropertyControl(node, mSetBorderColorMatchesEdgeColor);
+		    StylePropertyAdjuster.adjustPropertyControl(node, mBorderColorMatchesEdgeColor);
+		}
+	}
+
+	@Override
+	public void addControlGroup(DefaultFormBuilder formBuilder) {
+		addBorderColorMatchesEdgeColorControl(formBuilder);
+		addBorderColorControl(formBuilder);
+	}
+
+	private void addBorderColorControl(DefaultFormBuilder formBuilder) {
+		mSetBorderColor = new RevertingProperty();
+		mBorderColor = new ColorProperty(BORDER_COLOR, ColorUtils.colorToString(EdgeController.STANDARD_EDGE_COLOR));
+		borderColorListener = new BorderColorListener(mSetBorderColor, mBorderColor);
+		mSetBorderColor.addPropertyChangeListener(borderColorListener);
+		mBorderColor.addPropertyChangeListener(borderColorListener);
+		mBorderColor.appendToForm(formBuilder);
+		mSetBorderColor.appendToForm(formBuilder);
+	}
+
+	public void addBorderColorMatchesEdgeColorControl(DefaultFormBuilder formBuilder) {
+		mSetBorderColorMatchesEdgeColor = new RevertingProperty();
+		mBorderColorMatchesEdgeColor = new BooleanProperty(BORDER_COLOR_MATCHES_EDGE_COLOR);
+		borderColorMatchesEdgeColorChangeListener = new BorderColorMatchesEdgeColorListener(mSetBorderColorMatchesEdgeColor, mBorderColorMatchesEdgeColor);
+		mSetBorderColorMatchesEdgeColor.addPropertyChangeListener(borderColorMatchesEdgeColorChangeListener);
+		mBorderColorMatchesEdgeColor.addPropertyChangeListener(borderColorMatchesEdgeColorChangeListener);
+		mBorderColorMatchesEdgeColor.addPropertyChangeListener(new PropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				enableOrDisableBorderColorControls();
+			}
+		});
+
+		mBorderColorMatchesEdgeColor.appendToForm(formBuilder);
+		mSetBorderColorMatchesEdgeColor.appendToForm(formBuilder);
+	}
+
+	@Override
+	public void setStyle(NodeModel node, boolean canEdit) {
+		this.canEdit = canEdit;
+		borderColorListener.setStyle(node);
+		borderColorMatchesEdgeColorChangeListener.setStyle(node);
+	}
+
+	private void enableOrDisableBorderColorControls() {
+		final boolean borderColorCanBeSet = ! mBorderColorMatchesEdgeColor.getBooleanValue();
+		mSetBorderColor.setEnabled(borderColorCanBeSet && canEdit);
+		mBorderColor.setEnabled(borderColorCanBeSet && canEdit);
+	}
+}

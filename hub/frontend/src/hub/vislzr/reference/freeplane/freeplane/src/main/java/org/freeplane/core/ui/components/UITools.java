@@ -1,0 +1,884 @@
+/*
+ *  Freeplane - mind map editor
+ *  Copyright (C) 2008 Dimitry Polivaev
+ *
+ *  This file author is Dimitry Polivaev
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.freeplane.core.ui.components;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.Frame;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.MenuBar;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.net.URI;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.FocusManager;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import org.freeplane.api.swing.JFileChooser;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.JTextComponent;
+
+import org.freeplane.api.LengthUnit;
+import org.freeplane.core.resources.IFreeplanePropertyListener;
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.resources.components.OptionPanelBuilder;
+import org.freeplane.core.util.Compat;
+import org.freeplane.core.util.Hyperlink;
+import org.freeplane.core.util.LogUtils;
+import org.freeplane.core.util.TextUtils;
+import org.freeplane.features.map.NodeModel;
+import org.freeplane.features.mode.Controller;
+import org.freeplane.features.mode.ModeController;
+import org.freeplane.features.ui.IMapViewManager;
+import org.freeplane.features.url.UrlManager;
+import org.freeplane.main.application.FreeplaneSplashModern;
+
+/**
+ * Utilities for accessing the GUI, creating dialogs etc.: In scripts available as "global variable" <code>ui</code>.
+ * <p>
+ * In scripts this would be a simple way of opening a info popup:
+ * <pre>
+ * ui.informationMessage("Hello World!")
+ * ui.informationMessage(ui.frame, "Hello World!") // longer version, equivalent
+ * </pre>
+ *
+ * @author Dimitry Polivaev
+ * @since 29.12.2008
+ */
+public class UITools {
+	private static final String MONITOR_SIZE_INCHES_PROPERTY = "monitor_size_inches";
+
+	public static class Defaults {
+		public static float DEFAULT_FONT_SCALING_FACTOR = 1f;
+	}
+
+	public static final String MAIN_FREEPLANE_FRAME = "mainFreeplaneFrame";
+
+	@SuppressWarnings("serial")
+    public static final class InsertEolAction extends AbstractAction {
+        @Override
+		public void actionPerformed(ActionEvent e) {
+        	JTextComponent c = (JTextComponent) e.getSource();
+        	c.replaceSelection("\n");
+        }
+    }
+
+
+	public static void addEscapeActionToDialog(final JDialog dialog) {
+		class EscapeAction extends AbstractAction {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(final ActionEvent e) {
+				dialog.dispose();
+			};
+		}
+		UITools.addEscapeActionToDialog(dialog, new EscapeAction());
+	}
+
+	public static void addEscapeActionToDialog(final JDialog dialog, final Action action) {
+		UITools.addKeyActionToDialog(dialog, action, "ESCAPE", "end_dialog");
+	}
+
+	public static void addKeyActionToDialog(final JDialog dialog, final Action action, final String keyStroke,
+	                                        final String actionId) {
+		action.putValue(Action.NAME, actionId);
+		dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(keyStroke),
+		    action.getValue(Action.NAME));
+		dialog.getRootPane().getActionMap().put(action.getValue(Action.NAME), action);
+	}
+
+	public static void convertPointFromAncestor(final Component ancestor, final Point p, Component c) {
+		int x, y;
+		while (c != ancestor && c != null) {
+			x = c.getX();
+			y = c.getY();
+			p.x -= x;
+			p.y -= y;
+			c = c.getParent();
+		};
+	}
+
+	public static void convertPointToAncestor(final Component source, final Point point, final Class<?> ancestorClass) {
+		final Component destination = SwingUtilities.getAncestorOfClass(ancestorClass, source);
+		UITools.convertPointToAncestor(source, point, destination);
+	}
+
+	public static void convertRectangleToAncestor(final Component from, final Rectangle r, final Component destination) {
+		Point p = new Point(r.x, r.y);
+		UITools.convertPointToAncestor(from, p , destination);
+		r.x = p.x;
+		r.y = p.y;
+	}
+
+	public static void convertPointToAncestor(final Component from, final Point p, final Component destination) {
+		int x, y;
+		for (Component c = from; c != destination && c != null; c = c.getParent()) {
+			x = c.getX();
+			y = c.getY();
+			p.x += x;
+			p.y += y;
+		};
+	}
+
+	static private final AtomicBoolean errorMessageQueued = new AtomicBoolean(false);
+
+	static public void errorMessage(final Object message) {
+		final String myMessage;
+		if (message != null) {
+			myMessage = message.toString();
+		}
+		else {
+			myMessage = TextUtils.getText("undefined_error");
+		}
+		LogUtils.warn(myMessage);
+		if(! GraphicsEnvironment.isHeadless() && ! errorMessageQueued.getAndSet(true))
+			EventQueue.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					final Component currentRootComponent = UITools.getCurrentRootComponent();
+					if(currentRootComponent != null) {
+						try {
+							currentRootComponent.validate();
+							JOptionPane.showMessageDialog(currentRootComponent, myMessage, "Freeplane", JOptionPane.ERROR_MESSAGE);
+						}
+						catch (Exception e) {
+							currentRootComponent.setVisible(false);
+							UITools.getFrame().setVisible(false);
+							JOptionPane.showMessageDialog(null, myMessage, "Freeplane", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(null, TextUtils.getText("program_terminates"), "Freeplane", JOptionPane.ERROR_MESSAGE);
+							System.exit(-1);
+						}
+					}
+					errorMessageQueued.set(false);
+				}
+			});
+	}
+
+	public static Frame getCurrentFrame() {
+		final Component currentRootComponent = getCurrentRootComponent();
+		return frameOf(currentRootComponent);
+	}
+
+	private static Frame frameOf(final Component currentRootComponent) {
+		return currentRootComponent instanceof Frame ? (Frame)currentRootComponent : JOptionPane.getFrameForComponent(currentRootComponent);
+	}
+
+	public static Frame getFrame() {
+		final Component mainFrame = Controller.getCurrentController().getViewController().getMainFrameComponent();
+		return frameOf(mainFrame);
+	}
+
+	static public Component getMenuComponent(){
+		return Controller.getCurrentController().getViewController().getMenuComponent();
+	}
+
+	static public Component getCurrentRootComponent(){
+		return Controller.getCurrentController().getViewController().getCurrentRootComponent();
+	}
+
+	/** returns a KeyStroke if possible and null otherwise. */
+	public static KeyStroke getKeyStroke(final String keyStrokeDescription) {
+		if (keyStrokeDescription == null) {
+			return null;
+		}
+		final KeyStroke keyStroke = KeyStroke.getKeyStroke(keyStrokeDescription);
+		if (keyStroke != null) {
+			return keyStroke;
+		}
+		final int lastSpacePos = keyStrokeDescription.lastIndexOf(' ') + 1;
+		final String modifiedDescription = keyStrokeDescription.substring(0, lastSpacePos) + "typed "
+		        + keyStrokeDescription.substring(lastSpacePos);
+		return KeyStroke.getKeyStroke(modifiedDescription);
+	}
+
+	/** formats a KeyStroke in a ledgible way, e.g. Control+V. Null is converted to "".
+	 * Taken from MotifGraphicsUtils.paintMenuItem(). */
+	public static String keyStrokeToString(KeyStroke keyStroke) {
+		String acceleratorText = "";
+		if (keyStroke != null) {
+		    int modifiers = keyStroke.getModifiers();
+		    if (modifiers > 0) {
+			acceleratorText = KeyEvent.getKeyModifiersText(modifiers);
+			acceleratorText += "+";
+		    }
+		    acceleratorText += KeyEvent.getKeyText(keyStroke.getKeyCode());
+		}
+		return acceleratorText;
+	}
+
+	static public void informationMessage(final Object message) {
+		UITools.informationMessage(UITools.getCurrentRootComponent(), message);
+	}
+
+	static public void informationMessage(final Component frame, final Object message) {
+		UITools.informationMessage(frame, message, "Freeplane");
+	}
+
+	static public void informationMessage(final Component frame, final Object message, final String title) {
+		JOptionPane.showMessageDialog(frame, message, title, JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public static void informationMessage(final Component frame, final Object text, final String title, final int type) {
+		JOptionPane.showMessageDialog(frame, text, title, type);
+	}
+
+	static public void setBounds(final Component frame, int win_x, int win_y, int win_width, int win_height) {
+		final Rectangle frameBounds = getValidFrameBounds(frame, win_x, win_y, win_width, win_height);
+		frame.setBounds(frameBounds);
+	}
+
+	public static Rectangle getValidFrameBounds(final Component frame, int win_x, int win_y, int win_width,
+			int win_height) {
+		GraphicsConfiguration graphicsConfiguration = findGraphicsConfiguration(frame, win_x, win_y);
+		final Rectangle screenBounds = getScreenBounds(graphicsConfiguration);
+		int screenWidth = screenBounds.width;
+		if(win_width != -1)
+			win_width = Math.min(win_width, screenWidth );
+		else
+			win_width =  screenWidth * 4 / 5;
+		int screenHeight = screenBounds.height;
+		if(win_height != -1)
+			win_height = Math.min(win_height, screenHeight);
+		else
+			win_height =  screenHeight * 4 / 5;
+		if(win_x != -1){
+			win_x = Math.min(screenWidth + screenBounds.x - win_width, win_x);
+			win_x = Math.max(screenBounds.x, win_x);
+		}
+		else
+			win_x = screenBounds.x + (screenWidth - win_width) / 2;
+		if(win_y != -1){
+			win_y = Math.max(screenBounds.y, win_y);
+			win_y = Math.min(screenHeight + screenBounds.y - win_height, win_y);
+		}
+		else
+			win_y = screenBounds.y + (screenHeight - win_height) / 2;
+		final Rectangle frameBounds = new Rectangle( win_x, win_y, win_width, win_height);
+		return frameBounds;
+	}
+
+	private static GraphicsConfiguration findGraphicsConfiguration(final Component component, int x, int y) {
+	    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	      GraphicsDevice[] gs = ge.getScreenDevices();
+	      for (int j = 0; j < gs.length; j++) {
+	          GraphicsDevice gd = gs[j];
+	          GraphicsConfiguration[] gc = gd.getConfigurations();
+	          for (int i=0; i < gc.length; i++) {
+	              final Rectangle screenBounds = gc[i].getBounds();
+	              if(screenBounds.contains(x, y))
+	            	  return gc[i];
+	          }
+	      }
+		return component != null ? component.getGraphicsConfiguration() : null;
+	}
+
+	public static Rectangle getAvailableScreenBounds(Component frame) {
+		final GraphicsConfiguration graphicsConfiguration = frame.getGraphicsConfiguration();
+		return getScreenBounds(graphicsConfiguration);
+    }
+
+	public static Rectangle getScreenBounds(final GraphicsConfiguration graphicsConfiguration) {
+		final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
+		final Insets screenInsets = defaultToolkit.getScreenInsets(graphicsConfiguration);
+		final Rectangle screenBounds = graphicsConfiguration.getBounds();
+		final Point screenLocation = screenBounds.getLocation();
+		final Dimension screenSize = screenBounds.getSize();
+		final int screenWidth = screenSize.width - screenInsets.left - screenInsets.right;
+		final int screenHeight = screenSize.height - screenInsets.top - screenInsets.bottom;
+		return new Rectangle(screenLocation.x + screenInsets.left,  screenLocation.y + screenInsets.top, screenWidth, screenHeight);
+	}
+
+	public static void setDialogLocationRelativeTo(final JDialog dialog, final Component c) {
+		if (c == null || ! c.isShowing()) {
+			return;
+		}
+		final Point location = findBestLocation(dialog, c);
+		dialog.setLocation(location);
+	}
+
+	public static Point findBestLocation(final Component placedComponent, final Component displayedComponent) {
+		final Point compLocation = displayedComponent.getLocationOnScreen();
+		final int cw = displayedComponent.getWidth();
+		final int ch = displayedComponent.getHeight();
+		final Window window =  displayedComponent instanceof Window ? (Window) displayedComponent : SwingUtilities.getWindowAncestor(displayedComponent);
+		final Point parentLocation = window.getLocationOnScreen();
+		final int pw = window.getWidth();
+		final int ph = window.getHeight();
+		final Rectangle desktopBounds = getAvailableScreenBounds(displayedComponent);
+		final int minX = Math.max(parentLocation.x, desktopBounds.x);
+		final int minY = Math.max(parentLocation.y, desktopBounds.y);
+		final int maxX = Math.min(parentLocation.x + pw, desktopBounds.x + desktopBounds.width);
+		final int maxY = Math.min(parentLocation.y + ph, desktopBounds.y + desktopBounds.height);
+		final Dimension preferredSize = placedComponent.getPreferredSize();
+		final int dw = preferredSize.width;
+		int dh = preferredSize.height;
+		int dx, dy;
+		if (compLocation.x + cw < minX) {
+			dx = minX;
+		}
+		else if (compLocation.x > maxX) {
+			dx = maxX - dw;
+		}
+		else {
+			final int leftSpace = compLocation.x - minX;
+			final int rightSpace = maxX - (compLocation.x + cw);
+			if (leftSpace > rightSpace) {
+				if (leftSpace > dw) {
+					dx = compLocation.x - dw;
+					dh = 0;
+				}
+				else {
+					dx = minX;
+				}
+			}
+			else {
+				if (rightSpace > dw) {
+					dx = compLocation.x + cw;
+					dh = 0;
+				}
+				else {
+					dx = maxX - dw;
+				}
+			}
+		}
+		if (compLocation.y + ch < minY) {
+			dy = minY;
+		}
+		else if (compLocation.y > maxY) {
+			dy = maxY - dh;
+		}
+		else {
+			final int topSpace = compLocation.y - minY;
+			final int bottomSpace = maxY - (compLocation.y + ch);
+			if (topSpace > bottomSpace) {
+				if (topSpace > dh) {
+					dy = compLocation.y - dh;
+				}
+				else {
+					dy = minY;
+				}
+			}
+			else {
+				if (bottomSpace > dh) {
+					dy = compLocation.y + ch;
+				}
+				else {
+					dy = maxY - dh;
+				}
+			}
+		}
+		final Point location = new Point(dx, dy);
+		return location;
+	}
+
+	public static void setDialogLocationRelativeTo(final JDialog dialog,
+	                                               final NodeModel node) {
+		if (node == null) {
+			return;
+		}
+		final IMapViewManager viewController = Controller.getCurrentController().getMapViewManager();
+		viewController.scrollNodeToVisible(node);
+		final Component c = viewController.getComponent(node);
+		if(c == null)
+			return;
+		UITools.setDialogLocationRelativeTo(dialog, c);
+	}
+
+	public static void setDialogLocationUnder(final JDialog dialog, final NodeModel node) {
+		if(node == null)
+			return;
+		final Controller controller = Controller.getCurrentController();
+		final IMapViewManager viewController = controller.getMapViewManager();
+		final JComponent c = (JComponent) viewController.getComponent(node);
+		if(c == null)
+			return;
+		final int x = 0;
+		final int y = c.getHeight();
+		final Point location = new Point(x, y);
+		SwingUtilities.convertPointToScreen(location, c);
+		UITools.setBounds(dialog, location.x, location.y, dialog.getWidth(), dialog.getHeight());
+	}
+
+	/**
+	 * Shows the error message  "attributes_adding_empty_attribute_error"
+	 */
+	public static void showAttributeEmptyStringErrorMessage() {
+		JOptionPane.showMessageDialog(null, TextUtils.getText("attributes_adding_empty_attribute_error"),
+		    TextUtils.getText("error"), JOptionPane.ERROR_MESSAGE);
+	}
+
+	static public void showMessage(String message, int messageType) {
+		backOtherWindows();
+		JTextArea infoPane = new JTextArea();
+		infoPane.setEditable(false);
+		infoPane.setMargin(new Insets(5,5,5,5));
+		infoPane.setLineWrap(true);
+		infoPane.setWrapStyleWord(true);
+		infoPane.setText(message);
+		infoPane.setColumns(60);
+		JScrollPane scrollPane = new JScrollPane(infoPane);
+		UITools.setScrollbarIncrement(scrollPane);
+		scrollPane.setPreferredSize(new Dimension(400, 200));
+		JOptionPane.showMessageDialog(getCurrentRootComponent(), scrollPane, "Freeplane", messageType);
+	}
+	public static int showConfirmDialog(final NodeModel node, final Object message, final String title,
+	                                    final int optionType, final int messageType) {
+		final Controller controller = Controller.getCurrentController();
+		final IMapViewManager viewController = controller.getMapViewManager();
+		final Component parentComponent;
+		if (node == null) {
+			parentComponent = getCurrentRootComponent();
+		}
+		else {
+			viewController.scrollNodeToVisible(node);
+			Component c = viewController.getComponent(node);
+			parentComponent =  c != null ? c : getCurrentRootComponent();
+		}
+		return JOptionPane.showConfirmDialog(parentComponent, message, title, optionType, messageType);
+	}
+
+	public static int showConfirmDialog( final NodeModel node, final Object message,
+	                                    final String title, final int optionType) {
+		return showConfirmDialog( node, message, title, optionType, JOptionPane.QUESTION_MESSAGE);
+	}
+
+	public static String showInputDialog( final NodeModel node, final String message,
+	                                     final String initialValue) {
+		if (node == null) {
+			return null;
+		}
+		final Controller controller = Controller.getCurrentController();
+		final IMapViewManager viewController = controller.getMapViewManager();
+		viewController.scrollNodeToVisible(node);
+		final Component c = viewController.getComponent(node);
+		return JOptionPane.showInputDialog(c != null ? c : getCurrentRootComponent(), message, initialValue);
+	}
+
+	public static String showInputDialog( final NodeModel node, final String text,
+	                                     final String title, final int type) {
+		if (node == null) {
+			return null;
+		}
+		final Controller controller = Controller.getCurrentController();
+		final IMapViewManager viewController = controller.getMapViewManager();
+		viewController.scrollNodeToVisible(node);
+		final Component c = viewController.getComponent(node);
+		return JOptionPane.showInputDialog(c != null ? c : getCurrentRootComponent(), text, title, type);
+	}
+
+	public static final String SCROLLBAR_INCREMENT = "scrollbar_increment";
+
+	public static void setScrollbarIncrement(final JScrollPane scrollPane) {
+		final int scrollbarIncrement = ResourceController.getResourceController()
+		    .getIntProperty(SCROLLBAR_INCREMENT, 1);
+		scrollPane.getHorizontalScrollBar().setUnitIncrement(scrollbarIncrement);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(scrollbarIncrement);
+	}
+
+	public static void addScrollbarIncrementPropertyListener(final JScrollPane scrollPane) {
+		ResourceController.getResourceController().addPropertyChangeListener(new IFreeplanePropertyListener() {
+			@Override
+			public void propertyChanged(final String propertyName, final String newValue, final String oldValue) {
+				if (!propertyName.equals(SCROLLBAR_INCREMENT)) {
+					return;
+				}
+				final int scrollbarIncrement = Integer.valueOf(newValue);
+				scrollPane.getHorizontalScrollBar().setUnitIncrement(scrollbarIncrement);
+				scrollPane.getVerticalScrollBar().setUnitIncrement(scrollbarIncrement);
+			}
+		});
+	}
+
+    public static Color getTextColorForBackground(final Color color) {
+        return isLight(color) ? Color.BLACK : Color.WHITE;
+    }
+
+    public static Color getDisabledTextColorForBackground(final Color color) {
+        return isLight(color) ? Color.DARK_GRAY : Color.LIGHT_GRAY;
+    }
+
+	public static boolean isLight(final Color color) {
+		return isLighter(color, 160);
+	}
+
+	public static boolean isLighter(final Color color, int minimum) {
+		if(color == null)
+			return true;
+		final int red = color.getRed();
+		final int blue = color.getBlue();
+		final int green = color.getGreen();
+		double luminance = 0.299 * red + 0.587 * green + 0.114 * blue;
+		return luminance > minimum;
+	}
+
+	public static final Dimension MAX_BUTTON_DIMENSION = new Dimension(1000, 1000);
+
+	public static void focusOn(JComponent component) {
+		component.addAncestorListener(new AncestorListener() {
+			@Override
+			public void ancestorRemoved(AncestorEvent event) {
+			}
+
+			@Override
+			public void ancestorMoved(AncestorEvent event) {
+			}
+
+			@Override
+			public void ancestorAdded(AncestorEvent event) {
+				final JComponent component = event.getComponent();
+				EventQueue.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						component.requestFocus();					}
+				});
+				component.removeAncestorListener(this);
+			}
+		});
+    }
+
+	public static BasicStroke createStroke(float width, final int[] dash, int join) {
+		final float[] fdash = dashToFloats(dash);
+		final BasicStroke stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, join, 1f, fdash, 0f);
+        return stroke;
+	}
+
+	private static float[] dashToFloats(final int[] dash) {
+		final float[] fdash;
+    	if(dash  != null && dash.length > 0){
+    		fdash = new float[dash.length];
+    		int i = 0;
+    		for(float d : dash){
+    			fdash[i++] = d * FONT_SCALE_FACTOR;
+    		}
+    	}
+    	else{
+    		fdash = null;
+    	}
+		return fdash;
+	}
+
+	public static void repaintAll(Container root) {
+		root.repaint();
+		for(int i = 0; i < root.getComponentCount(); i++){
+			final Component component = root.getComponent(i);
+			if(component instanceof Container){
+				repaintAll((Container) component);
+			}
+			else{
+				component.repaint();
+			}
+		}
+	}
+
+	public static JDialog createCancelDialog(final Component component, final String title, final String text) {
+        return createCancelDialog(component, title, text, TextUtils.getText("cancel"));
+    }
+
+    public static JDialog createCancelDialog(final Component component, final String title,
+            final String text, String buttonText) {
+        final String[] options = { buttonText };
+    	final JOptionPane infoPane = new JOptionPane(text, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null,
+    	    options);
+    	JDialog dialog = infoPane.createDialog(component, title);
+    	dialog.setModal(false);
+    	return dialog;
+    }
+
+	public static TitledBorder addTitledBorder(final JComponent c, final String title, final float size) {
+        final TitledBorder titledBorder = BorderFactory.createTitledBorder(title);
+        final Font titleFont = UIManager.getFont("TitledBorder.font");
+        titledBorder.setTitleFont(titleFont.deriveFont(size));
+    	final Border btnBorder = c.getBorder();
+    	if(btnBorder != null){
+    	final CompoundBorder compoundBorder = BorderFactory.createCompoundBorder(titledBorder, btnBorder);
+    	c.setBorder(compoundBorder);
+    	}
+    	else{
+    		c.setBorder(titledBorder);
+    	}
+    	return titledBorder;
+    }
+
+	public static void backOtherWindows() {
+	    Component owner = getCurrentRootComponent();
+		if(owner instanceof Window){
+        	final Window[] ownedWindows = ((Window) owner).getOwnedWindows();
+        	for(Window w : ownedWindows){
+        		if(w.isVisible()){
+        			w.toBack();
+        		}
+        	}
+        }
+    }
+
+	public static JButton createHtmlLinkStyleButton(final URI uri, final String title) {
+        final JButton button = new JButton("<html><a href='" + uri + "'>" + title);
+    	button.setBorderPainted(false);
+    	button.setOpaque(false);
+    	button.setBackground(Color.lightGray);
+    	button.setFocusable(false);
+    	button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    	button.addActionListener(new ActionListener() {
+    		@Override
+			public void actionPerformed(ActionEvent e) {
+    			final ModeController modeController = Controller.getCurrentModeController();
+    			final UrlManager urlManager = modeController.getExtension(UrlManager.class);
+    			urlManager.loadHyperlink(new Hyperlink(uri));
+    		}
+    	});
+    	return button;
+	}
+
+	public static final int getComponentIndex(Component component) {
+		if (component != null && component.getParent() != null) {
+			Container c = component.getParent();
+			for (int i = 0; i < c.getComponentCount(); i++) {
+				if (c.getComponent(i) == component)
+					return i;
+			}
+		}
+
+		return -1;
+	}
+
+	public static final float FONT_SCALE_FACTOR;
+
+	static {
+		float factor = Defaults.DEFAULT_FONT_SCALING_FACTOR;
+		try {
+	        factor = UITools.getScaleFactor();
+	        LengthUnit.setScalingFactor(factor);
+        }
+        catch (Exception e) {
+        }
+		FONT_SCALE_FACTOR = factor > 0 ? factor :Defaults.DEFAULT_FONT_SCALING_FACTOR;
+	}
+	private static JTabbedPane FREEPLANE_TABBED_PANEL;
+
+	private static float getScaleFactor() {
+			final ResourceController resourceController = ResourceController.getResourceController();
+			int windowX = resourceController.getIntProperty("appwindow_x", 0);
+			int windowY = resourceController.getIntProperty("appwindow_y", 0);
+			final GraphicsConfiguration graphicsConfiguration = findGraphicsConfiguration(windowX, windowY);
+			final int userDefinedScreenResolution;
+			final int userDefinedDisplayScale = resourceController.getIntProperty("display_scale");
+			if(graphicsConfiguration != null) {
+				if(Compat.isWindowsOS() && ! Compat.isJavaVersionLessThan(Compat.JAVA_VERSION_15) || Compat.isMacOsX()) {
+					if (OptionPanelBuilder.hidePropertyByDefault(MONITOR_SIZE_INCHES_PROPERTY)) {
+						int screenResolution = Toolkit.getDefaultToolkit().getScreenResolution();
+						return (screenResolution * userDefinedDisplayScale) / (72f * 100f);
+					}
+				}
+				final Rectangle screenBounds = graphicsConfiguration.getBounds();
+				final int w = screenBounds.width;
+				final int h = screenBounds.height;
+				final double diagonalPixels = Math.sqrt(w*w + h*h);
+				final double monitorSize = resourceController.getDoubleProperty(MONITOR_SIZE_INCHES_PROPERTY, 0);
+				if(monitorSize >= 1 && diagonalPixels >= 1){
+					userDefinedScreenResolution = (int) Math.round(diagonalPixels / monitorSize);
+					resourceController.setProperty("user_defined_screen_resolution", userDefinedScreenResolution);
+				}
+				else{
+					userDefinedScreenResolution = resourceController.getIntProperty("user_defined_screen_resolution", 96);
+					final double effectiveMonitorSize = Math.round(diagonalPixels / userDefinedScreenResolution * 10) / 10;
+					resourceController.setDefaultProperty(MONITOR_SIZE_INCHES_PROPERTY, Double.toString(effectiveMonitorSize));
+				}
+			}
+			else {
+				userDefinedScreenResolution = resourceController.getIntProperty("user_defined_screen_resolution", 96);
+				resourceController.setDefaultProperty(MONITOR_SIZE_INCHES_PROPERTY, Double.toString(0));
+			}
+			return (userDefinedScreenResolution * userDefinedDisplayScale)  / (72f * 100f);
+    }
+
+	private static GraphicsConfiguration findGraphicsConfiguration(int windowX, int windowY) {
+		final GraphicsConfiguration graphicsConfiguration = findGraphicsConfiguration(null, windowX, windowY);
+		if(graphicsConfiguration != null || windowX == 0 && windowY == 0)
+			return graphicsConfiguration;
+		else
+			return findGraphicsConfiguration(null, 0, 0);
+	}
+
+	public static Font scale(Font font) {
+		return font.deriveFont(font.getSize2D()*FONT_SCALE_FACTOR);
+	}
+
+	public static Font scaleUI(Font font) {
+		return scale(font);
+	}
+
+	public static Font scaleFontInt(Font font, double additionalFactor) {
+		Font derivedFont = font.deriveFont(font.getStyle(), Math.round(font.getSize2D()*UITools.FONT_SCALE_FACTOR * additionalFactor));
+		if(font instanceof FontUIResource && ! (derivedFont instanceof FontUIResource))
+			return new FontUIResource(derivedFont);
+		else
+			return derivedFont;
+	}
+
+
+	public static Font invertScale(Font font) {
+		return font.deriveFont(font.getSize2D()/FONT_SCALE_FACTOR);
+	}
+
+	public static void showFrame() {
+		final Component component = UITools.getCurrentRootComponent();
+		if(component instanceof Window) {
+			Window window = (Window) component;
+			final Window[] ownedWindows = window.getOwnedWindows();
+			for (int i = 0; i < ownedWindows.length; i++) {
+				final Window ownedWindow = ownedWindows[i];
+				if (ownedWindow.getClass().equals(FreeplaneSplashModern.class) && ownedWindow.isVisible()) {
+					ownedWindow.setVisible(false);
+				}
+			}
+			if(window != null && ! window.isVisible()){
+				window.setVisible(true);
+				window.toFront();
+			}
+		}
+    }
+
+	public static boolean isEditingText() {
+	    final Component focusOwner = FocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+		final boolean isTextComponentFocused = focusOwner instanceof JEditorPane;
+		return isTextComponentFocused && focusOwner.isShowing() && ((JTextComponent)focusOwner).isEditable();
+    }
+
+	public static void executeWhenNodeHasFocus(final Runnable runnable) {
+		final Component selectedComponent = Controller.getCurrentController().getMapViewManager().getSelectedComponent();
+		if(selectedComponent != null && ! selectedComponent.hasFocus()){
+			selectedComponent.addFocusListener(new  FocusListener() {
+
+				@Override
+				public void focusLost(FocusEvent e) {
+				}
+
+				@Override
+				public void focusGained(FocusEvent e) {
+					selectedComponent.removeFocusListener(this);
+					final Timer timer = new Timer(100, evt -> runnable.run());
+					timer.setRepeats(false);
+					timer.start();
+				}
+			});
+			selectedComponent.requestFocusInWindow();
+		}
+		else
+			runnable.run();
+	}
+
+	public static int getUIFontSize(double scalingFactor) {
+		return getUIFontSize((float) scalingFactor);
+	}
+
+	public static int getUIFontSize(float scalingFactor) {
+		Font font = getUIFont();
+		return Math.round(font.getSize() * scalingFactor);
+	}
+
+	public static Font getUIFont(float scalingFactor) {
+		Font uiFont = getUIFont();
+		return uiFont.deriveFont(uiFont.getSize2D() * scalingFactor);
+	}
+
+	public static Font getUIFont() {
+	    Font font = UIManager.getFont("MenuItem.font");
+	    return (font != null) ? font : new JMenuItem().getFont();	}
+
+	public static Font getDefaultLabelFont() {
+		return UIManager.getDefaults().getFont("Label.font");
+	}
+
+    public static JFileChooser newFileChooser() {
+       return Controller.getCurrentModeController().getExtension(UrlManager.class).getFileChooser();
+    }
+
+    public static JFileChooser newFileChooser(File directory) {
+        return new JFreeplaneCustomizableFileChooser(directory);
+    }
+
+    public static JTabbedPane getFreeplaneTabbedPanel() {
+    	if(FREEPLANE_TABBED_PANEL == null)
+    		FREEPLANE_TABBED_PANEL = createTabbedPane();
+        return FREEPLANE_TABBED_PANEL;
+    }
+
+	private static JTabbedPane createTabbedPane() {
+		JTabbedPane pane = new JTabbedPane();
+		pane.setBorder(BorderFactory.createEmptyBorder((int) (10 * FONT_SCALE_FACTOR), 0, 0, 0));
+		return pane;
+	}
+
+	public static boolean isLightLookAndFeelInstalled() {
+		return isLight(UIManager.getColor("Panel.background"));
+	}
+
+    public static void resetMenuBarOnMac() {
+        if(Compat.isMacOsX()) {
+            final Frame frame = frameOf(getMenuComponent());
+            if(frame != null) {
+                final MenuBar menuBar = frame.getMenuBar();
+                System.setProperty("apple.laf.useScreenMenuBar", "true");
+                frame.setMenuBar(null);
+                frame.setMenuBar(menuBar);
+                System.setProperty("apple.laf.useScreenMenuBar", "false");
+            }
+        }
+    }
+
+}

@@ -1,0 +1,119 @@
+/*
+ *  Freeplane - mind map editor
+ *
+ *  Copyright (C) 2020 Felix Natter
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General License for more details.
+ *
+ *  You should have received a copy of the GNU General License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.freeplane.features.commandsearch;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.ui.AFreeplaneAction;
+import org.freeplane.core.ui.svgicons.FreeplaneIconFactory;
+
+public class MenuItem extends SearchItem {
+
+    private static final ImageIcon menuIcon = FreeplaneIconFactory.toImageIcon(ResourceController
+            .getResourceController().getIcon("/images/menu_items.svg?useAccentColor=true"));
+
+    private static final ImageIcon selectedMenuIcon = FreeplaneIconFactory.toImageIcon(ResourceController
+            .getResourceController().getIcon("/images/selected_menu_items.svg?useAccentColor=true"));
+
+    private final AFreeplaneAction action;
+
+    private final String path;
+
+    private final String tooltip;
+
+    private final String searchedText;
+
+    MenuItem(final AFreeplaneAction action, final String path) {
+        int searchedTextStart = path.indexOf(ITEM_PATH_SEPARATOR) + ITEM_PATH_SEPARATOR.length();
+        this.path = path;
+        this.searchedText = normalizeText(path.substring(searchedTextStart));
+        this.action = action;
+        this.tooltip = (String) action.getValue(Action.SHORT_DESCRIPTION);
+    }
+
+    @Override
+    public Icon getTypeIcon() {
+        if(action.checkSelectionOnPopup())
+            action.setSelected();
+        return action.isSelected() ? selectedMenuIcon : menuIcon;
+    }
+
+    @Override
+    public String getDisplayedText() {
+        String accelerator = AcceleratorDescriptionCreator.INSTANCE.createAcceleratorDescription(action);
+        return accelerator != null ? this.path + " (" + accelerator + ")" : this.path;
+    }
+
+    String getSearchedText() {
+        String accelerator = AcceleratorDescriptionCreator.INSTANCE.createAcceleratorDescription(action);
+        return accelerator != null ? this.searchedText + " (" + normalizeText(accelerator) + ")" : this.searchedText;
+    }
+
+    @Override
+    public String getTooltip() {
+        return tooltip;
+    }
+
+    @Override
+    void execute(InputEvent event) {
+        if(action.isEnabled())
+            action.actionPerformed(new ActionEvent(event.getSource(), ActionEvent.ACTION_PERFORMED, (String) action.getValue(Action.NAME)));
+    }
+
+    @Override
+    void assignNewAccelerator() {
+        assignNewAccelerator(action);
+    }
+
+    @Override
+    boolean shouldUpdateResultList() {
+        return true;
+    }
+
+    @Override
+    int getItemTypeRank() {
+        return 2;
+    }
+
+    @Override
+    public String getComparedText() {
+        return path;
+    }
+
+    @Override
+    public String getCopiedText() {
+        return getDisplayedText();
+    }
+
+    @Override
+    protected boolean checkAndMatch(String searchTerm, ItemChecker textChecker) {
+        return textChecker.contains(getSearchedText(), searchTerm);
+    }
+
+    @Override
+    public String toString() {
+        return "MenuItem [" + getDisplayedText() + "]";
+    }
+}

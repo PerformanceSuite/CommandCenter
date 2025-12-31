@@ -1,0 +1,26 @@
+task binZip(type: Zip) {
+    destinationDirectory = new File(globalDist)
+    archiveFileName = 'freeplane_bin-' + distVersion + '.zip'
+
+    from(globalBin) {
+        include('**')
+        exclude('freeplane.sh')
+    }
+
+    from(globalBin) {
+        include('freeplane.sh')
+        filePermissions {
+            unix(0755)
+        }
+    }
+
+    from(rootDir) {
+        include('license.txt')
+    }
+
+    into('freeplane-' + distVersion)
+
+    for (p in subprojects) {
+        dependsOn p.tasks.getByPath("build")
+    }
+}

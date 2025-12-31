@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<preferences_structure xmlns="http://freeplane.sf.net/ui/preferences/1.0">
+	<tabbed_pane>
+		<tab name="Environment">
+			<separator name="single_instance_mode">
+				<boolean name="single_instance" />
+				<boolean name="single_instance_force" />
+			</separator>
+			<separator name="language">
+				<languages name="language" />
+				<boolean name="useSystemLocale" />
+			</separator>
+			<separator name="files">
+				<number name="last_opened_list_length" min="1" max="50" />
+				<boolean name="load_last_map" />
+				<boolean name="load_last_maps" />
+				<boolean name="always_load_last_maps" />
+				<boolean name="create_new_map_if_no_maps_are_loaded" />
+				<boolean name="experimental_file_locking_on" />
+				<boolean name="skip_template_selection" />
+			</separator>
+			<separator name="load">
+				<boolean name="monitor_external_mind_map_file_changes" />
+				<combo name="load_folding">
+					<choice value="always_fold_all_after_load" />
+					<choice value="load_folding_from_map_default_fold_all" />
+					<choice value="always_show_less_than_N_nodes_after_load" />
+					<choice value="show_less_than_N_nodes_by_default_after_load" />
+					<choice value="load_folding_from_map_default_unfold_all" />
+					<choice value="always_unfold_all_after_load" />
+				</combo>
+				<number name="max_displayed_node_count" min="1" />
+			</separator>
+			<separator name="save">
+				<radiobuttons name="save_folding">
+					<choice value="never_save_folding" />
+					<choice value="save_folding_if_map_is_changed" />
+					<choice value="always_save_folding" />
+				</radiobuttons>
+				<boolean name="save_modification_times" />
+				<boolean name="save_last_position_in_map" />
+				<path name="default_save_dir" dir="true"/>
+			</separator>
+			<separator name="automatic_save">
+				<boolean name="automatically_overwrite_mindmap_files" />
+				<time_period name="time_for_automatic_save" />
+				<boolean name="single_backup_directory" />
+				<path name="single_backup_directory_path" dir="true" />
+				<boolean name="delete_automatic_saves_at_exit" />
+				<number name="number_of_different_files_for_automatic_save"
+					min="0" max="25" />
+				<number name="backup_file_number" min="0" max="25" />
+				<boolean name="saveQuickFilters"/>
+				<number name="savedConditionLimit" min="0" max="1000"/>
+				<boolean name="outputs_status_message_after_automatic_save"/>
+			</separator>
+			<separator name="export">
+				<number name="exported_image_resolution_dpi" min="72" max="2400" />
+				<boolean name="indentTextOutput" />
+				<boolean name="indentationUsesTabsInTextOutput" />
+				<boolean name="org.freeplane.plugin.svg.export.pdf.convert_text_to_shapes"/>
+				<boolean name="org.freeplane.plugin.svg.export.svg.embed_fonts"/>
+			</separator>
+			<separator name="hyperlink_types">
+				<radiobuttons name="links">
+					<choice value="relative" />
+					<choice value="absolute" />
+				</radiobuttons>
+			</separator>
+			<separator name="cache">
+				<combo name="image_cache">
+					<choice value="ic_disable" />
+					<choice value="ic_file" />
+					<choice value="ic_ram" />
+				</combo>
+			</separator>
+			<separator name="updates">
+				<boolean name="check_updates_automatically" />
+			</separator>
+			<separator name="surveys">
+				<boolean name="neverShowSurvey" />
+			</separator>
+			<separator name="sounds"></separator>
+				<boolean name="playsSound.error"/>
+			<separator name="org.freeplane.plugin.bugreport">
+				<combo name="org.freeplane.plugin.bugreport">
+					<choice value="org.freeplane.plugin.bugreport.allowed" />
+					<choice value="org.freeplane.plugin.bugreport.denied" />
+					<choice value="org.freeplane.plugin.bugreport.ask" />
+				</combo>
+				<string name="org.freeplane.plugin.bugreport.userid" />
+			</separator>
+		</tab>
+		<tab name="Appearance">
+			<separator name="look_and_feel">
+				<group name="lookandfeel" />
+				<boolean name="ui_elements_follow_selected_map" />
+                <number name="monitor_size_inches" min="1" max="200" step="0.1" />
+                <number name="display_scale" min="50" max="200" />
+				<boolean name="resources_use_default_font_for_notes_too" />
+				<boolean name="resources_use_margin_top_zero_for_notes" />
+				<boolean name="show_menu_icons"/>
+				<number name="max_menu_item_count" min="10" />
+				<number name="menuItemFontSize" min="3" />
+				<length name="toolbar_icon_height" defaultUnit = "pt" min="0" max = "1000" step = "0.1"/>
+				<combo name="styleEditorPanelSize" enum="org.freeplane.features.styles.mindmapmode.styleeditorpanel.StyleEditorPanel$StyleEditorPanelSize"/>
+				<boolean name="file_chooser_shows_special_folders"/>
+				<string name="workspaceTitle"/>
+			</separator>
+			<separator name="status">
+				<boolean name="display_node_id" />
+			</separator>
+			<separator name="default_colors">
+				<color name="revision_color" supports_transparent_color="false"/>
+				<boolean name="printonwhitebackground" />
+			</separator>
+			<separator name="spotlight" text="OptionPanel.spotlight">
+				<boolean name="activateSpotlightByDefault"/>
+				<color name= "spotlight_background_color" supports_transparent_color="false"/>
+			</separator>
+			<separator name="root_node_appearance">
+				<boolean name="use_common_out_point_for_root_node" />
+			</separator>
+			<separator name="anti_alias">
+				<combo name="antialias">
+					<choice value="antialias_edges" />
+					<choice value="antialias_all" />
+					<choice value="antialias_none" />
+				</combo>
+				<boolean name="antialias_during_scrolling" />
+			</separator>
+			<separator name="svg_icons">
+				<boolean name="antialias_svg" />
+			</separator>
+			<separator name="size_limits">
+				<number name="max_shortened_text_length" />
+				<number name="max_image_width" />
+				<length name="foldingsymbolsize" defaultUnit = "pt" min="3" max = "50" step = "1" />
+				<length name="foldingSwitchMinWidth" defaultUnit = "pt" min="3" max = "50" step = "1" />
+				<length name="statesymbolwidth"  defaultUnit = "pt" min="3" max = "50" step = "1"/>
+				<length name="dragging_area_width" defaultUnit = "pt" min="3" max = "50" step = "1" />
+				<number name="toolTipManager.max_tooltip_width" />
+				<number name="toolTipManager.max_tooltip_height" />
+				<length name="default_attribute_key_column_width" defaultUnit = "px" min="0" max = "1000" step = "0.1" />
+				<length name="default_attribute_value_column_width" defaultUnit = "px" min="0" max = "1000" step = "0.1" />
+
+			</separator>
+			<separator name="clones">
+				<boolean name="markClones"/>
+				<boolean name="markSelectedClones"/>
+				<boolean name="preferBorderColorForStateSymbolBackground"/>
+			</separator>
+			<separator name="edit_long_node_window">
+				<boolean name="el__buttons_above" />
+				<boolean name="el__position_window_below_node" />
+				<number name="el__min_default_window_height" />
+				<number name="el__max_default_window_height" />
+				<number name="el__min_default_window_width" />
+				<number name="el__max_default_window_width" />
+			</separator>
+			<separator name="outline_view">
+				<length defaultUnit = "px" name="outline_vgap" min="0" max = "1000" step = "0.1"/>
+				<length defaultUnit = "px" name="outline_hgap" min="0" max = "1000" step = "0.1" />
+				<boolean name="outline_view_fits_window_width"/>
+			</separator>
+			<separator name="outline_panel">
+				<radiobuttons name="outlineBreadcrumbMode" enum="org.freeplane.view.swing.map.outline.BreadcrumbMode"/>
+				<number name="outlineItemFontSize" min="3" />
+				<boolean name="useColoredOutlineItems" />
+				<length name="outlineItemIndentation" min="0" max = "1000" step = "0.1" defaultUnit = "mm" />
+				<boolean name="showOutlineFoldingButtons" />
+				<number name="initiallyExpandedOutlineLevel" min="1" />
+				<number name="minimalFoldableOutlineLevel" min="1" />
+				<number name="outlineFilterHistorySize" min="1" max = "100"/>
+				<radiobuttons name="outlineTextWritingDirection" enum="org.freeplane.api.TextWritingDirection"/>
+			</separator>
+			<separator name="icon_properties">
+				<boolean name="structured_icon_toolbar" />
+				<boolean name="add_emojis_to_menu" />
+				<boolean name="add_emojis_to_icon_toolbar" />
+				<boolean name="add_emojis_to_icon_selector" />
+                <boolean name="showLinkSpecificIcons" />
+                <boolean name="show_bookmark_icons" />
+				<number name="fast_access_icon_number" min="0" max="100"/>
+			</separator>
+		</tab>
+		<tab name="Defaults">
+			<separator name="cloud">
+				<color name="standardcloudcolor" supports_transparent_color="false"/>
+				<combo name="standardcloudshape" enum="org.freeplane.features.cloud.CloudShape"/>
+			</separator>
+			<separator name="connectors">
+				<boolean name="assignsNodeDependantStylesToNewConnectors"/>
+				<combo name="show_connectors" >
+					<choice value="true" text="OptionPanel.show_connectors.true" />
+					<choice value="false" text="OptionPanel.show_connectors.false" />
+					<choice value="for_selection" text="OptionPanel.show_connectors.for_selection" />
+					<choice value="only_arrows_for_selection" text="OptionPanel.show_connectors.only_arrows_for_selection" />
+					<choice value="never" text="OptionPanel.show_connectors.never" />
+				</combo>
+				<boolean name="paint_connectors_behind" />
+			</separator>
+			<separator name="tags" text="tags">
+				<string name="category_separator" />
+				<boolean name="showTagsOnMinimizedNodes"/>
+			</separator>
+			<separator name="selection_colors">
+                <boolean name="standarddrawrectangleforselection" />
+                <boolean name="highlightascendantedges" />
+				<color name="standardselectednoderectanglecolor" supports_transparent_color="false"/>
+				<color name="standardselectednodecolor" supports_transparent_color="false"/>
+			</separator>
+			<separator name="cmdsearch">
+                <number name="cmdsearch_item_limit" min="10"/>
+                <boolean name="cmdsearch_close_after_execute"/>
+				<boolean name="cmdsearch_whole_words"/>
+			</separator>
+		</tab>
+		<tab name="Behaviour">
+			<separator name="behaviour">
+				<combo name="placenewbranches">
+					<choice value="first" />
+					<choice value="last" />
+				</combo>
+				<boolean name="fold_on_click_inside" />
+				<boolean name="unfold_on_navigation" />
+				<boolean name="unfold_on_paste" />
+				<boolean name="edit_on_double_click" />
+				<boolean name="openLinksOnPlainClicks"/>
+				<length name="grid_size" defaultUnit = "px" min="0" max = "1000" step = "0.01"/>
+				<number name="scrolling_speed" min="1" max="30" />
+				<number name="map_view_zoom_step" min="1" max="100" />
+				<boolean name="zoomAroundSelectedNode"/>
+				<boolean name="keepSelectedNodeVisible"/>
+				<boolean name="goto_note_end_on_edit" />
+				<radiobuttons name="key_type_action">
+					<choice value="EDIT_CURRENT" />
+					<choice value="IGNORE" />
+					<choice value="ADD_SIBLING" />
+					<choice value="ADD_CHILD" />
+				</radiobuttons>
+				<boolean name="filtersCopiedNodes"/>
+				<boolean name="filtersCopiedText"/>
+				<boolean name="copyFormatToNewSibling"/>
+				<boolean name="copyFormatToNewChild"/>
+				<boolean name="copyFormatToNewNodeIncludesIcons"/>
+				<boolean name="iconActionRemovesIconIfExists" />
+				<boolean name="shouldCenterSmallMaps"/>
+				<boolean name="pasteImagesFromFiles"/>
+				<boolean name="findEmailsInText"/>
+				<boolean name="enforceModalEditorDialogs" />
+				<boolean name="mouseDrivenNodeShiftsAreDisabled"/>
+				<boolean name="automaticSideDistribution"/>
+			</separator>
+			<separator name="reminderOptions">
+				<maybe_boolean name="reminder.showPastRemindersOnStart" />
+				<boolean name="remindersBlink" />
+				<boolean name="remindersShowNotifications" />
+				<time_period name="remindersStandardDelay" />
+			</separator>
+			<separator name="SplitToWordsAction">
+				<string name="SplitToWordsAction.auxiliaryWordList"/>
+				<string name="SplitToWordsAction.charactersAcceptedInWord"/>
+				<string name="SplitToWordsAction.nodeNumbersInLine"/>
+				<boolean name="SplitToWordsAction.capitalizeWords"/>
+				<boolean name="SplitToWordsAction.leaveOriginalNodeEmpty"/>
+				<boolean name="SplitToWordsAction.saveOriginalTextAsDetails"/>
+			</separator>
+			<separator name="JoinNodesAction">
+				<string name="JoinNodesAction.textSeparators"/>
+			</separator>
+			<separator name="data_formats">
+				<boolean name="parse_data" />
+				<string name="number_format" />
+				<string name="date_format" />
+				<string name="datetime_format" />
+				<languages name="format_locale" />
+				<boolean name="parse_formulas"/>
+				<boolean name="parse_latex"/>
+			</separator>
+			<separator name="search">
+				<boolean name="compare_as_number" />
+				<number name="approximate_search_threshold" min="0.1" max="1.0"
+					step="0.05" />
+				<boolean name="nodelist_shows_style_icons"/>
+			</separator>
+			<separator name="inline_editor">
+				<boolean name="display_inline_editor_for_all_new_nodes" />
+				<boolean name="layout_map_on_text_change" />
+				<boolean name="el__enter_confirms_by_default" />
+				<number name="editor_extra_width" min="0" max="1000" step="40" />
+			</separator>
+			<separator name="spelling">
+				<boolean name="spelling_opt_case_sensitive" />
+				<boolean name="spelling_opt_ignore_all_caps_words" />
+				<boolean name="spelling_opt_ignore_capitalization" />
+				<boolean name="spelling_opt_ignore_words_with_numbers" />
+				<number name="spelling_opt_suggestions_limit_dialog" min="0" />
+				<number name="spelling_opt_suggestions_limit_menu" min="0" />
+			</separator>
+			<separator name="notifications">
+				<maybe_boolean name="remind_use_rich_text_in_new_nodes" />
+				<boolean name="delete_nodes_without_question" />
+				<boolean name="cut_nodes_without_question" />
+				<boolean name="remove_notes_without_question" />
+			</separator>
+			<separator name="mouse_over_behavior">
+				<radiobuttons name="mouse_over_selection">
+					<choice value="disabled" />
+					<choice value="delayed" />
+					<choice value="immediate" />
+				</radiobuttons>
+				<radiobuttons name="mouse_over_selection_inside">
+					<choice value="selection_inside.selected_map_view" />
+					<choice value="selection_inside.same_map" />
+					<choice value="selection_inside.selected_window" />
+					<choice value="selection_inside.any_map" />
+				</radiobuttons>
+				<radiobuttons name="mouse_over_folding">
+					<choice value="disabled" />
+					<choice value="delayed" />
+					<choice value="immediate" />
+				</radiobuttons>
+				<radiobuttons name="mouse_over_folding_action">
+					<choice value="toggle" />
+					<choice value="unfold_only" />
+					<choice value="preview" />
+				</radiobuttons>
+				<number name="mouse_over_delay" min="50" max="5000" />
+			</separator>
+			<separator name="selection">
+				<radiobuttons name="siblingSelection" enum="org.freeplane.view.swing.map.SiblingSelection"/>
+				<boolean name="synchronizeSelectionOnlyOnBranchChange" />
+				<boolean name="selected_map_follows_active_window" />
+			</separator>
+			<separator name="scrollling">
+				<number name="scrollbar_increment" />
+				<boolean name="slow_scroll_selected_node" />
+				<boolean name="center_selected_node" />
+				<boolean name="scrollOnSelect"/>
+				<boolean name="scrollOnUnfold"/>
+				<boolean name="autoscroll_disabled_for_mouse_interaction" />
+			</separator>
+			<separator name="tooltip">
+				<boolean name="show_node_tooltips" />
+				<number name="toolTipManager.initialDelay" min="0" />
+				<boolean name="show_styles_in_tooltip" />
+				<boolean name="show_note_icon_in_tooltip" />
+			</separator>
+			<separator name="undo">
+				<number name="undo_levels" />
+			</separator>
+			<separator name="RichTextEditor">
+				<combo name="simplyhtml.images_copied_by_editor" enum="com.lightdev.app.shtm.CopiedImageSources"/>
+				<radiobuttons name="simplyhtml.default_paste_mode">
+					<choice value="PASTE_HTML" />
+					<choice value="PASTE_PLAIN_TEXT" />
+				</radiobuttons>
+			</separator>
+		</tab>
+		<tab name="HTML">
+			<separator name="html_export">
+				<combo name="html_export_folding">
+					<choice value="html_export_no_folding" />
+					<choice value="html_export_fold_currently_folded" />
+					<choice value="html_export_fold_all" />
+					<choice value="html_export_based_on_headings" />
+					<boolean name="html_export_includes_colors" />
+				</combo>
+				<boolean name="export_icons_in_html" />
+			</separator>
+			<separator name="html_import">
+				<boolean name="structured_html_import" />
+				<boolean name="cut_out_pictures_when_pasting_html"/>
+				<boolean name="saveCompactHypertext"/>
+			</separator>
+		</tab>
+		<tab name="Presentation">
+			<separator name="presentation">
+				<boolean name="presentation.slideDisplaysAllNodes"/>
+				<boolean name="presentation.processesNavigationKeys"/>
+				<boolean name="presentation.processesEscapeKey"/>
+				<boolean name="presentation.switchToFullScreen"/>
+				<boolean name="presentation.switchToSpotlight"/>
+				<boolean name="presentation.zoom"/>
+				<boolean name="presentation.combineAll"/>
+				<boolean name="presentation.slowMotion"/>
+				<number name="presentation.maxDropBoxRowCount" min="3" max="999" />
+				<string name="presentation.exportDirectory" />
+			</separator>
+
+		</tab>
+		<tab name="Keystrokes">
+			<separator name="commands_for_the_program">
+				<boolean name="ignore_unassigned_f_keys" />
+				<text name="use_assign_short_cut" />
+				<text name="use_control_click_on_icon" />
+				<text name="use_control_click_on_menu_item" />
+			</separator>
+		</tab>
+		<tab name="plugins" />
+	</tabbed_pane>
+</preferences_structure>

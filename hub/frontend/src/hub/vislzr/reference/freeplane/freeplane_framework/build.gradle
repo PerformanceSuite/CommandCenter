@@ -1,0 +1,119 @@
+import org.apache.tools.ant.filters.*
+import org.apache.tools.ant.taskdefs.condition.Os
+
+configurations{
+	mergedApiDependency
+	lib.extendsFrom(mergedApiDependency)
+}
+
+dependencies {
+	mergedApiDependency project(':freeplane_api')
+}
+
+test {
+	// TestApp is not a JUnit test, just a debugging app
+	failOnNoDiscoveredTests = false
+}
+
+task freeplanelauncherJar(type: Jar) {
+     archiveFileName = 'freeplanelauncher.jar'
+     destinationDirectory = new File(globalBin)
+
+     dependsOn classes
+     from (sourceSets.main.output) {
+          include("**")
+     }
+     includeEmptyDirs = false
+
+     manifest {
+          attributes("Manifest-Version": "1.0",
+                     "Main-Class": "org.freeplane.launcher.Launcher",
+                     "Class-Path": "framework.jar")
+     }
+
+	 configurations.mergedApiDependency.files.each {
+    	from(zipTree(it.path)) {
+    		exclude('META-INF/MANIFEST.MF')
+    	}
+    }
+}
+
+jar.dependsOn freeplanelauncherJar
+freeplanelauncherJar.dependsOn (':freeplane_api:jar')
+
+task copyFreeplaneShellScript(type: Copy) {
+     from('script/') {
+         include('freeplane.sh')
+        filePermissions {
+            unix(0755)
+        }
+     }
+	 into(globalBin)
+	 filter(FixCrLfFilter.class, eol:FixCrLfFilter.CrLf.newInstance("lf"))
+}
+
+ext {launch4jDir = "$System.env.LAUNCH4J_DIR"}
+
+task createExeFiles {
+	onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) && launch4jDir !=  null && file(launch4jDir).exists()}
+	inputs.dir('launch4j')
+	outputs.files("${globalBin}/freeplane.exe", "${globalBin}/freeplaneConsole.exe")
+	doLast {
+        ant.taskdef(name: 'launch4j',
+                    classname: 'net.sf.launch4j.ant.Launch4jTask',
+                    classpath: "${launch4jDir}/launch4j.jar:${launch4jDir}/lib/xstream.jar")
+        ant.launch4j (
+        	configFile: 'launch4j/freeplaneGui.lj4.xml',
+        	outfile: "${globalBin}/freeplane.exe"
+        )
+        ant.launch4j (
+        	configFile: 'launch4j/freeplaneConsole.lj4.xml',
+        	outfile: "${globalBin}/freeplaneConsole.exe"
+        )
+    }
+}
+
+task copyLauncherStuff(type: Copy) {
+	 dependsOn 'copyFreeplaneShellScript', 'createExeFiles'
+     from('script/') {
+         include('*')
+         exclude('freeplane.sh')
+     }
+
+     def knopflerfishJarFile = project.configurations.runtimeClasspath.files.find {
+         isKnopflerfishJar(it.name)
+     }
+     from(knopflerfishJarFile)
+     // rename [knopflerfish-]framework-*.jar to framework.jar
+     rename { String fileName ->
+         if (isKnopflerfishJar(fileName))
+            return "framework.jar"
+         else
+            return fileName
+     }
+
+     from('windows-icons/') {
+         include('freeplaneIcons.dll')
+     }
+     from('launch4j/') {
+         include('*.exe')
+         include('*.ini')
+     }
+     into(globalBin)
+     dependsOn jar
+}
+
+eclipse {
+    jdt {
+        javaRuntimeName = 'JavaSE-15'
+    }
+}
+
+eclipseJdt {
+    doLast {
+        File f = file('.settings/org.eclipse.core.resources.prefs')
+        f.append('encoding/windows-installer=ISO-8859-1\n')
+    }
+}
+
+build.dependsOn (copyLauncherStuff)

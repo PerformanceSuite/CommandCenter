@@ -1,0 +1,48 @@
+def signJarPropertyFile = file('signjar.properties')
+
+ext.signJarProperties = new Properties()
+if (signJarPropertyFile.exists())
+{
+    signJarProperties.load(new FileInputStream(signJarPropertyFile))
+}
+
+def signJarTask(String name, String signedJarName) {
+	return tasks.create(name, Exec) {
+		onlyIf { signJarProperties['signjar.cardpass'] }
+		commandLine 'jarsigner', '-keystore',  'NONE', '-tsa', signJarProperties['signjar.tsaurl'],
+			'-storetype', 'PKCS11', '-providerClass', 'sun.security.pkcs11.SunPKCS11',
+			'-providerArg', signJarProperties['signjar.cfg'], '-storepass',  signJarProperties['signjar.cardpass'],
+			'-certchain', signJarProperties['signjar.certchain'],
+			file(globalBin + '/core/' + pluginid + '/lib/' + signedJarName),
+			signJarProperties['signjar.owner']
+		dependsOn copyOSGiJars
+	}
+}
+
+if (signJarProperties['signjar.cardpass'])
+{
+
+	signJarTask('signViewerJar', 'freeplaneviewer.jar')
+
+	signJarTask('signViewerApiJar', 'freeplaneapi_viewer.jar')
+
+	signJarTask('signSvgJar', 'svgSalamander-1.1.4.jar')
+
+	build.dependsOn signViewerJar
+	build.dependsOn signViewerApiJar
+	build.dependsOn signSvgJar
+}
+else
+{
+	task doNotSignViewerJar {
+		onlyIf { !signJarProperties['signjar.cardpass'] }
+		doLast {
+			println('No ' + rootDir.path + '/freeplane/signjar.properties found')
+			println('Applet is NOT signed!')
+			println('(see ' + rootDir.path + '/freeplane/signjar-example.properties)')
+		}
+		dependsOn copyOSGiJars
+	}
+
+	build.dependsOn doNotSignViewerJar
+}

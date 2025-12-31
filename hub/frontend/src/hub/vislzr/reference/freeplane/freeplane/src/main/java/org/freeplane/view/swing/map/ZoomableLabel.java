@@ -1,0 +1,369 @@
+package org.freeplane.view.swing.map;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.security.AccessControlException;
+
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
+
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.util.HtmlUtils;
+import org.freeplane.core.util.LogUtils;
+import org.freeplane.features.mode.ModeController;
+import org.freeplane.features.nodestyle.NodeCss;
+import org.freeplane.features.nodestyle.NodeStyleController;
+
+@SuppressWarnings("serial")
+public class ZoomableLabel extends JLabel {
+	public static final String CUSTOM_CSS = "customCss";
+
+	private static final String TEXT_RENDERING_ICON = "TextRenderingIcon";
+
+	protected static final Graphics2D fmg;
+	static {
+		fmg = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics();
+		fmg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+	}
+
+	private int minimumWidth;
+	private int maximumWidth;
+	private String css = "";
+
+	public int getZoomedIconWidth() {
+		final Icon icon = getIcon();
+		if (icon == null) {
+			return 0;
+		}
+		return getMap().getZoomed(icon.getIconWidth());
+	}
+	public int getZoomedIconTextGap() {
+		final int iconTextGap = getIconTextGap();
+		return iconTextGap == 0 ? 0 : getMap().getZoomed(iconTextGap);
+	}
+
+	public NodeView getNodeView() {
+		return (NodeView) SwingUtilities.getAncestorOfClass(NodeView.class, this);
+	}
+
+
+	@Override
+	public Dimension getPreferredSize() {
+		return getZoomableLabelPreferredZize();
+	}
+
+	private Dimension getZoomableLabelPreferredZize() {
+		if (isPreferredSizeSet()) {
+			Dimension preferredSize = super.getPreferredSize();
+			return preferredSize;
+		}
+		return ((ZoomableLabelUI)getUI()).getPreferredSize(this);
+	}
+
+	protected float getZoom() {
+		final float zoom = getMap().getZoom();
+		return zoom;
+	}
+
+	protected MapView getMap() {
+		return getNodeView().getMap();
+	}
+
+	@Override
+	public void paint(final Graphics g) {
+		switch (getMap().getPaintingMode()) {
+			case CLOUDS:
+				return;
+			default:
+				break;
+		}
+		super.paint(g);
+	}
+
+	protected void updateText(String text) {
+		try{
+			updateTextUnsafe(text);
+		}
+		catch (Exception e1) {
+			if(e1 instanceof AccessControlException)
+				LogUtils.warn(e1.getMessage());
+			else
+				LogUtils.severe(e1);
+			final String localizedMessage = e1.getLocalizedMessage();
+			if(text.length() > 603)
+				text = text.substring(0, 600) + "...";
+			try{
+				updateTextUnsafe(localizedMessage + '\n' + text);
+			}
+			catch (Exception e2){
+			}
+		}
+	}
+
+	private void updateTextUnsafe(String nodeText) throws Exception{
+		final NodeView node = (NodeView) SwingUtilities.getAncestorOfClass(NodeView.class, this);
+		final MapView map = node.getMap();
+		if (map == null || nodeText == null) {
+			return;
+		}
+		final boolean isHtml = HtmlUtils.isHtml(nodeText);
+		boolean widthMustBeRestricted = ! areInsetsFixed();
+		boolean isLong = false;
+		if (!isHtml) {
+			final String[] lines = nodeText.split("\n");
+			for (int line = 0; line < lines.length; line++) {
+				if (widthMustBeRestricted)
+					break;
+				setText(lines[line]);
+				final int oldMaximumWidth = getMaximumWidth();
+				try{
+					final ModeController modeController = map.getModeController();
+					final NodeStyleController nsc = NodeStyleController.getController(modeController);
+					final double maxNodeWidth = nsc.getMaxWidth(node.getNode(), node.getStyleOption()).toBaseUnits();
+					setMaximumWidth(Integer.MAX_VALUE);
+					widthMustBeRestricted = getZoomableLabelPreferredZize().width > map.getZoomed(maxNodeWidth);
+				}
+				finally{
+					setMaximumWidth(oldMaximumWidth);
+				}
+			}
+			isLong = widthMustBeRestricted || lines.length > 1;
+		}
+		if (isHtml) {
+			if (nodeText.indexOf("<img") >= 0 && nodeText.indexOf("<base ") < 0) {
+				nodeText = "<html><base href=\"" + map.getMap().getURL() + "\">" + nodeText.substring(6);
+			}
+			final String htmlLongNodeHead = ResourceController.getResourceController().getProperty(
+				"html_long_node_head");
+			if (htmlLongNodeHead != null && !htmlLongNodeHead.equals("")) {
+				if (nodeText.matches("(?ims).*<head>.*")) {
+					nodeText = nodeText.replaceFirst("(?ims).*<head>.*", "<head>" + htmlLongNodeHead);
+				}
+				else {
+					nodeText = nodeText.replaceFirst("(?ims)<html>", "<html><head>" + htmlLongNodeHead + "</head>");
+				}
+			}
+			setText(nodeText);
+		}
+		else if (nodeText.startsWith("<table>")) {
+			final String[] lines = nodeText.split("\n");
+			lines[0] = lines[0].substring(7);
+			final int startingLine = lines[0].matches("\\s*") ? 1 : 0;
+			String text = "<html><table border=1 style=\"border-color: white\">";
+			for (int line = startingLine; line < lines.length; line++) {
+				text += "<tr><td style=\"border-color: white;\">"
+						+ HtmlUtils.toXMLEscapedText(lines[line])
+							.replaceAll("\t", "<td style=\"border-color: white\">");
+			}
+			setText(text);
+		}
+		else if (isLong) {
+			String text = HtmlUtils.plainToHTML(nodeText);
+			setText(text);
+		}
+		else {
+			setText(nodeText);
+		}
+	}
+
+	public void setStyleSheet(String css, StyleSheet styleSheet) {
+		if(! this.css.equals(css)) {
+			StyleSheet old = (StyleSheet) getClientProperty(StyleSheet.class);
+			putClientProperty(StyleSheet.class, styleSheet);
+			this.css = css;
+			firePropertyChange(CUSTOM_CSS, old, styleSheet);
+			revalidate();
+			repaint();
+		}
+	}
+
+	public StyleSheet getStyleSheet() {
+		StyleSheet s = (StyleSheet) getClientProperty(StyleSheet.class);
+		return s != null ? s : NodeCss.EMPTY.getStyleSheet();
+	}
+
+	protected boolean areInsetsFixed() {
+		return true;
+	}
+
+	public ZoomableLabel() {
+		setUI(ZoomableLabelUI.createUI(this));
+	}
+
+	@Override
+	public void updateUI() {
+	}
+
+	@Override
+	public ZoomableLabelUI getUI() {
+		return (ZoomableLabelUI)ui;
+	}
+
+
+	@Override
+	public FontMetrics getFontMetrics(final Font font) {
+		try {
+			if (!useFractionalMetrics()) {
+				return super.getFontMetrics(font);
+			}
+			fmg.setFont(font);
+			final FontMetrics fontMetrics = fmg.getFontMetrics();
+			return fontMetrics;
+		} catch (Exception e) {
+			return super.getFontMetrics(font);
+		}
+	}
+
+	protected boolean useFractionalMetrics() {
+		final MapView map = getMap();
+		if (map.isPrinting()) {
+			return true;
+		}
+		final float zoom = map.getZoom();
+		return 1f != zoom;
+	}
+
+	protected FontMetrics getFontMetrics() {
+		if (!useFractionalMetrics()) {
+			return super.getFontMetrics(getFont());
+		}
+		fmg.setFont(getFont());
+		final FontMetrics fontMetrics = fmg.getFontMetrics();
+		return fontMetrics;
+	}
+
+	public String getLink(Point p){
+		View view = (View)getClientProperty(BasicHTML.propertyKey);
+		if(view == null)
+			return null;
+		Rectangle textR = ((ZoomableLabelUI)getUI()).getTextR(this);
+		if(textR == null)
+			return null;
+		if(!textR.contains(p))
+			return null;
+		final float zoom = getZoom();
+		int x = (int) (p.x / zoom);
+		int y = (int) (p.y / zoom);
+		final int pos = view.viewToModel(x, y, textR);
+		final HTMLDocument document = (HTMLDocument) view.getDocument();
+		final String linkURL = HtmlUtils.getURLOfExistingLink(document, pos);
+		return linkURL;
+	}
+
+	public Insets getZoomedInsets() {
+		Insets unzoomedInsets = getInsets();
+		float zoom = getZoom();
+		Insets zoomedInsets = new Insets((int) (unzoomedInsets.top * zoom),
+				(int) (unzoomedInsets.left * zoom),
+				(int) (unzoomedInsets.bottom * zoom),
+				(int) (unzoomedInsets.right * zoom));
+		return zoomedInsets;
+	}
+
+	public int getMinimumWidth() {
+		return minimumWidth;
+	}
+
+	public int getMaximumWidth() {
+		return maximumWidth;
+	}
+
+	public void setMaximumWidth(int maximumWidth) {
+		this.maximumWidth = maximumWidth;
+	}
+	public void setMinimumWidth(int minimumWidth) {
+		this.minimumWidth = minimumWidth;
+	}
+
+	protected int limitWidth(int width, int borderWidth) {
+		final int minimumWidth = getMinimumWidth() + 2 * borderWidth;
+		final int maximumWidth = getMaximumWidth();
+		if(width < minimumWidth)
+			return Math.min(minimumWidth, maximumWidth);
+		else if(width > maximumWidth)
+			return maximumWidth;
+		else
+			return width;
+	}
+
+	protected double limitWidth(double width, int borderWidth) {
+		final int minimumWidth = getMinimumWidth() + 2 * borderWidth;
+		final int maximumWidth = getMaximumWidth();
+		if(width < minimumWidth)
+			return Math.min(minimumWidth, maximumWidth);
+		else if(width > maximumWidth)
+			return maximumWidth;
+		else
+			return width;
+	}
+
+	public Color getUnselectedForeground() {
+		return super.getForeground();
+	}
+
+	public Icon getTextRenderingIcon() {
+		return (Icon) getClientProperty(ZoomableLabel.TEXT_RENDERING_ICON);
+	}
+
+	public void setTextRenderingIcon(Icon icon) {
+		putClientProperty(TEXT_RENDERING_ICON, icon);
+	}
+
+	public int getEffectiveHorizontalTextPosition() {
+		return effectiveHorizontalPosition(getHorizontalTextPosition());
+	}
+
+	public int getEffectiveHorizontalAlignment() {
+		return effectiveHorizontalPosition(getHorizontalAlignment());
+	}
+
+	private int effectiveHorizontalPosition(int position) {
+		switch (position) {
+		case SwingConstants.LEADING:
+			return getComponentOrientation().isLeftToRight() ? SwingConstants.LEFT : SwingConstants.RIGHT;
+		case SwingConstants.TRAILING:
+			return getComponentOrientation().isLeftToRight() ? SwingConstants.RIGHT : SwingConstants.LEFT;
+		}
+		return position;
+	}
+
+	public void preserveLayout(Dimension size) {
+		setPreferredSize(size);
+		ZoomableLabelUI ui = getUI();
+		if(size != null) {
+			setSize(size);
+			ui.preserveLayout(this);
+		} else
+			ui.releaseLayout(this);
+	}
+
+	public int getMaximumTextAreaWidth() {
+		int textWidth;
+		final float zoom = getZoom();
+		final int maximumWidth = (int) (zoom == 1f ? getMaximumWidth() : getMaximumWidth() / zoom);
+		if (getVerticalTextPosition() != SwingConstants.BOTTOM) {
+			final Icon icon = getIcon();
+			int iconWidth = icon != null ? icon.getIconWidth() : 0;
+			int iconWithGapWidth = iconWidth > 0 ? iconWidth + getIconTextGap() : 0;
+			textWidth = maximumWidth - iconWithGapWidth;
+		}
+		else
+			textWidth = maximumWidth;
+		return textWidth;
+	}
+}

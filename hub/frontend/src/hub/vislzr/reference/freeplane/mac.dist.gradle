@@ -1,0 +1,228 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.apache.tools.ant.filters.*
+
+def macAppPropertiesFile = file('macapp.properties')
+
+Properties macAppProperties = new Properties()
+if (macAppPropertiesFile.exists())
+{
+    macAppProperties.load(new FileInputStream(macAppPropertiesFile))
+}
+
+String macosapp_input_dir
+
+task macosapp_extractzip {
+    mustRunAfter binZip
+
+    def zipExtracted = 'build/zip-extracted'
+
+    doFirst {
+      if(! binZip.archiveFile.get().asFile.exists())
+        ant.fail("File ${binZip.archiveFile.get().asFile.path} not found")
+
+      delete zipExtracted
+      mkdir zipExtracted
+
+      copy {
+        from(zipTree(binZip.archiveFile.get().asFile))
+        into(zipExtracted)
+      }
+      macosapp_input_dir = zipExtracted + '/' + file(zipExtracted).list()[0]
+    }
+}
+
+task macosapp_input {
+    dependsOn macosapp_extractzip
+
+    doFirst {
+        copy {
+        from(macosapp_input_dir) {
+            include '*.*'
+        }
+        into 'build/macosapp/input'
+      }
+    }
+}
+
+  def macosapp_copyvolumeicon= tasks.create ("macosapp_copyvolumeicon", Copy) {
+    from file ('freeplane_framework/mac-appbundler/freeplane.icns')
+    into file('build/macosapp/dmg-resource-dir')
+    rename { String fileName ->
+      'Freeplane-volume.icns'
+    }
+  }
+
+def defineMacBuildTasks =  { architecture ->
+
+   def jpackage = macAppProperties["macapp.${architecture}.jpackage.jdk"] + '/bin/jpackage'
+
+   def macosapp_deleteAppImage = tasks.create("macosapp_deleteAppImage_${architecture}", Delete) {
+     delete "build/macosapp/app-image-${architecture}"
+   }
+
+   macosapp_extractzip.mustRunAfter macosapp_deleteAppImage
+
+   def jpackage_macosxapp = tasks.create ("jpackage_macosxapp_${architecture}", Exec) {
+
+   	commandLine jpackage,
+        	 '--name' , 'Freeplane',
+   	 '--type', 'app-image',
+     '--icon', 'freeplane_framework/mac-appbundler/freeplane.icns',
+     '--app-version', majorVersion,
+     '--java-options', "-XX:-IgnoreUnrecognizedVMOptions",
+     '--java-options', "-XX:MaxRAM=20g",
+     '--java-options', "-XX:MaxRAMPercentage=15.0",
+     '--java-options', '-Djava.security.manager=allow',
+     '--java-options', '-Dapple.laf.useScreenMenuBar=false',
+     '--java-options', '-Xdock:name=Freeplane',
+     '--java-options', '--add-exports',
+     '--java-options', 'java.desktop/com.apple.eawt=ALL-UNNAMED',
+     '--java-options', '--add-exports',
+     '--java-options', 'java.desktop/com.apple.eawt.event=ALL-UNNAMED',
+     '--java-options', '--add-exports',
+     '--java-options', 'java.desktop/sun.awt=ALL-UNNAMED',
+     '--java-options', '--add-exports',
+     '--java-options', 'java.desktop/sun.swing=ALL-UNNAMED',
+     '--java-options', '--add-exports',
+     '--java-options', 'java.desktop/com.apple.laf=ALL-UNNAMED',
+     '--java-options', '--add-opens',
+     '--java-options', 'java.desktop/javax.swing.text.html=ALL-UNNAMED',
+   	 '--input', 'build/macosapp/input',
+     '--main-class', 'org.freeplane.launcher.Launcher',
+  	 '--main-jar', 'freeplanelauncher.jar',
+     '--runtime-image', macAppProperties["macapp.${architecture}.jdk.runtime.image"],
+     '--copyright', "Freeplane ${distVersion}",
+   	 '--dest', "build/macosapp/app-image-${architecture}"
+
+     dependsOn macosapp_input, macosapp_deleteAppImage
+   }
+
+   def macosapp_makeapp= tasks.create ("macosapp_makeapp_${architecture}") {
+	   dependsOn jpackage_macosxapp
+     doFirst {
+        copy {
+          from(macosapp_input_dir) {
+                include '*/**'
+          }
+          into "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app"
+        }
+        copy {
+            from project('freeplane').configurations.maclib
+            into("build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/core/org.freeplane.core/lib")
+        }
+
+        copy {
+          from file ('freeplane_framework/mac-appbundler/freeplanedoc.icns')
+          into "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/Resources"
+        }
+
+        def dist_macos_info = "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/Info.plist"
+        ant.move(file:dist_macos_info, tofile:dist_macos_info + '2')
+
+        ant.xslt(in: new File(dist_macos_info + '2'),
+          style: new File('freeplane_framework/mac-appbundler/mac_info_plist.xslt'),
+          out: new File(dist_macos_info)
+        )
+
+        delete dist_macos_info + '2'
+
+      }
+    }
+  def signFlatlaf= tasks.create ("signFlatlaf_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+    commandLine 'bash', 'codesign/sign-jars-on-mac.sh',
+                "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/core/org.freeplane.core/lib/flatlaf-*.jar",
+                macAppProperties['macapp.codesign.identity']
+    dependsOn macosapp_makeapp
+  }
+  def signJline= tasks.create ("signJline_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+    commandLine 'bash', 'codesign/sign-jars-on-mac.sh',
+                "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/plugins/org.freeplane.plugin.script/lib/jline-*.jar",
+                macAppProperties['macapp.codesign.identity']
+    dependsOn macosapp_makeapp
+}
+
+  def signJnr= tasks.create ("signJnr_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+    commandLine 'bash', 'codesign/sign-jars-on-mac.sh',
+                "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/core/org.freeplane.core/lib/jnr-*.jar",
+                macAppProperties['macapp.codesign.identity']
+    dependsOn macosapp_makeapp
+}
+
+  def signVappearances= tasks.create ("signVappearances_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+    commandLine 'bash', 'codesign/sign-jars-on-mac.sh',
+                "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/core/org.freeplane.core/lib/vappearances-*.jar",
+                macAppProperties['macapp.codesign.identity']
+    dependsOn macosapp_makeapp
+}
+
+  def signVaqua= tasks.create ("signVaqua_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+    commandLine 'bash', 'codesign/sign-jars-on-mac.sh',
+                "build/macosapp/app-image-${architecture}/Freeplane.app/Contents/app/core/org.freeplane.core/lib/vaqua-*.jar",
+                macAppProperties['macapp.codesign.identity']
+    dependsOn macosapp_makeapp
+}
+
+  def signMacApp= tasks.create ("signMacApp_${architecture}", Exec) {
+        onlyIf { Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null}
+
+   	commandLine jpackage,
+     '--type', 'app-image',
+     '--app-image', "build/macosapp/app-image-${architecture}/Freeplane.app",
+     '--mac-sign',
+     '--mac-signing-key-user-name', macAppProperties['macapp.codesign.identity']
+        dependsOn macosapp_makeapp, signFlatlaf, signJline, signJnr, signVappearances, signVaqua
+    }
+
+  def dmg4mac = tasks.create ("dmg4mac_${architecture}", Exec) {
+    doFirst {
+        mkdir globalDist
+        file("$globalDist/freeplane-${majorVersion}.dmg").delete()
+        file("$globalDist/freeplane-$distVersion-${architecture}.dmg").delete()
+    }
+
+   	commandLine jpackage,
+        '--name' , 'Freeplane',
+        '--type', 'dmg',
+        '--app-version', majorVersion,
+        '--app-image', "build/macosapp/app-image-${architecture}/Freeplane.app",
+        '--mac-package-identifier', 'org.freeplane.core',
+        '--mac-package-name', 'Freeplane',
+        '--resource-dir', 'build/macosapp/dmg-resource-dir',
+        '--dest', globalDist
+
+        dependsOn signMacApp, macosapp_copyvolumeicon
+
+    doLast {
+      ant.move (file:"$globalDist/Freeplane-${majorVersion}.dmg", tofile:"$globalDist/Freeplane-${distVersion}-${architecture}.dmg")
+    }
+  }
+  def signDmg = tasks.create ("signDmg_${architecture}", Exec) {
+    commandLine 'bash', '-e', '-c', """
+    set -x; codesign --sign "Developer ID Application: ${macAppProperties['macapp.codesign.identity']}" $globalDist/Freeplane-${distVersion}-${architecture}.dmg
+    """
+    dependsOn dmg4mac
+  }
+
+  def notarytool = tasks.create ("notarytool_${architecture}", Exec) {
+    commandLine 'bash', '-e', '-c', """
+    set -x; xcrun notarytool submit $globalDist/Freeplane-${distVersion}-${architecture}.dmg --keychain-profile ${macAppProperties['macapp.notarytool.keychainprofile']}
+    """
+    dependsOn signDmg
+  }
+}
+
+if ( Os.isFamily(Os.FAMILY_MAC) && macAppProperties['macapp.codesign.identity'] != null) {
+  if (macAppProperties['macapp.intel.jdk.runtime.image'] != null
+      && macAppProperties['macapp.intel.jpackage.jdk'] != null) {
+    defineMacBuildTasks('intel')
+  }
+  if (macAppProperties['macapp.apple.jdk.runtime.image'] != null
+      && macAppProperties['macapp.apple.jpackage.jdk'] != null) {
+    defineMacBuildTasks('apple')
+  }
+}

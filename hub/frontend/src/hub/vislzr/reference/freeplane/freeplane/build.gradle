@@ -1,0 +1,413 @@
+import groovy.io.FileType
+import org.gradle.util.GradleVersion
+import org.gradle.plugins.ide.eclipse.model.AccessRule
+
+configurations{
+	emoji
+	lib.extendsFrom emoji
+	mergedViewerDependencies
+	api.extendsFrom mergedViewerDependencies
+}
+
+apply from: './emoji.gradle'
+
+sourceSets {
+    viewer {}
+    editor {}
+    external {}
+}
+
+dependencies {
+	mergedViewerDependencies 'org.freeplane.dpolivaev.mnemonicsetter:mnemonicsetter:0.6'
+	lib 'com.formdev:svgSalamander:1.1.4'
+	lib 'com.github.robtimus:data-url:2.0.1'
+	lib 'com.formdev:flatlaf:3.6'
+	lib 'com.twelvemonkeys.imageio:imageio-jpeg:3.12.0'
+
+    lib project(':JOrtho_0.4_freeplane')
+    api project(':freeplane_api')
+
+    lib 'commons-lang:commons-lang:2.6',
+            'commons-io:commons-io:2.19.0',
+            'commons-codec:commons-codec:1.18.0',
+            'com.jgoodies:jgoodies-forms:1.9.0',
+            'com.jgoodies:jgoodies-common:1.8.1'
+
+	lib  ('org.freeplane.lightdev:simplyhtml:0.19.12') {
+		exclude module: 'javahelp'
+		exclude module: 'mnemonicsetter'
+	}
+
+    lib ':idw-gpl-1.6.1'
+
+    maclib 'org.violetlib:vaqua:13'
+
+    runtimeOnly files("${project.buildDir}/emoji/xml")
+    emoji 'org.freeplane.emoji:twemoji:12.1.4'
+}
+
+test {
+	classpath = project.sourceSets.test.runtimeClasspath +
+		sourceSets.viewer.resources.sourceDirectories +
+ 		sourceSets.editor.resources.sourceDirectories +
+ 		sourceSets.external.resources.sourceDirectories
+
+    dependsOn createEmojiList
+}
+
+java {
+    targetCompatibility=JavaVersion.VERSION_1_8
+    sourceCompatibility=JavaVersion.VERSION_1_8
+}
+/*
+compileJava {
+    options.compilerArgs << '--add-exports=java.desktop/sun.awt.shell=ALL-UNNAMED'
+}
+*/
+eclipse {
+	project {
+		// work around for new gradle bug if subproject name equals to root dir name
+		name = 'freeplane'
+	}
+	//configure access restriction exceptions
+	classpath {
+	    file {
+	        whenMerged {
+	            def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
+	            jre.accessRules.add(new AccessRule('accessible', 'sun/awt/shell/ShellFolder'))
+	        }
+	    }
+	}
+}
+
+ext.bundleDeps = configurations.lib.files.collect {
+    externalizeJar(it)
+}
+bundleDeps.addAll(configurations.maclib.files.collect {
+    externalizeJar(it)
+})
+bundleDeps.add(0, "lib/freeplaneosgi-${project.version}.jar")
+// this is built from :freeplane_mac on a Mac!
+bundleDeps.add(0, "lib/freeplane_mac-${project.version}.jar")
+bundleDeps.add(0, "lib/freeplaneeditor-${project.version}.jar")
+bundleDeps.add(0, "lib/freeplaneviewer.jar")
+
+ext.bundleExports = """\
+                    com.inet.jortho,
+                    org.freeplane.api,
+                    org.freeplane.core.extension,
+                    org.freeplane.core.io,
+                    org.freeplane.core.io.xml,
+                    org.freeplane.core.resources,
+                    org.freeplane.core.resources.components,
+                    org.freeplane.core.awt,
+                    org.freeplane.core.ui,
+                    org.freeplane.core.ui.components,
+                    org.freeplane.core.ui.components.calendar,
+                    org.freeplane.core.ui.components.html,
+                    org.freeplane.core.ui.components.resizer,
+                    org.freeplane.core.ui.sounds,
+                    org.freeplane.core.ui.textchanger,
+                    org.freeplane.core.ui.menubuilders,
+        			org.freeplane.core.ui.menubuilders.action,
+					org.freeplane.core.ui.menubuilders.generic,
+					org.freeplane.core.ui.menubuilders.menu,
+                    org.freeplane.core.undo,
+                    org.freeplane.core.util,
+                    org.freeplane.core.util.collection,
+                    org.freeplane.core.util.logging,
+                    org.freeplane.features.attribute,
+                    org.freeplane.features.attribute.mindmapmode,
+                    org.freeplane.features.clipboard,
+                    org.freeplane.features.clipboard.mindmapmode,
+                    org.freeplane.features.cloud,
+                    org.freeplane.features.cloud.mindmapmode,
+                    org.freeplane.features.commandsearch,
+                    org.freeplane.features.bookmarks.mindmapmode,
+                    org.freeplane.features.bookmarks.mindmapmode.ui,
+                    org.freeplane.features.edge,
+                    org.freeplane.features.edge.mindmapmode,
+                    org.freeplane.features.encrypt,
+                    org.freeplane.features.encrypt.mindmapmode,
+        			org.freeplane.features.explorer,
+        			org.freeplane.features.explorer.mindmapmode,
+                    org.freeplane.features.export.mindmapmode,
+                    org.freeplane.features.filter,
+                    org.freeplane.features.filter.condition,
+                    org.freeplane.features.format,
+                    org.freeplane.features.help,
+                    org.freeplane.features.highlight,
+                    org.freeplane.features.icon,
+                    org.freeplane.features.icon.factory,
+                    org.freeplane.features.icon.mindmapmode,
+                    org.freeplane.features.layout,
+                    org.freeplane.features.layout.mindmapmode,
+                    org.freeplane.features.link,
+                    org.freeplane.features.link.mindmapmode,
+                    org.freeplane.features.map,
+                    org.freeplane.features.map.clipboard,
+                    org.freeplane.features.map.filemode,
+                    org.freeplane.features.map.mindmapmode,
+                    org.freeplane.features.map.mindmapmode.clipboard,
+                    org.freeplane.features.mapio,
+                    org.freeplane.features.mapio.mindmapmode,
+                    org.freeplane.features.mode,
+                    org.freeplane.features.mode.browsemode,
+                    org.freeplane.features.mode.filemode,
+                    org.freeplane.features.mode.mindmapmode,
+                    org.freeplane.features.nodelocation,
+                    org.freeplane.features.nodelocation.mindmapmode,
+                    org.freeplane.features.nodestyle,
+                    org.freeplane.features.nodestyle.filemode,
+                    org.freeplane.features.nodestyle.mindmapmode,
+                    org.freeplane.features.note,
+                    org.freeplane.features.note.mindmapmode,
+                    org.freeplane.features.print,
+                    org.freeplane.features.script,
+                    org.freeplane.features.spellchecker.mindmapmode,
+                    org.freeplane.features.styles,
+                    org.freeplane.features.styles.mindmapmode,
+                    org.freeplane.features.text,
+                    org.freeplane.features.text.mindmapmode,
+                    org.freeplane.features.time,
+                    org.freeplane.features.ui,
+                    org.freeplane.features.url,
+                    org.freeplane.features.url.mindmapmode,
+                    org.freeplane.main.addons,
+                    org.freeplane.main.applet,
+                    org.freeplane.main.application,
+                    org.freeplane.main.application.protocols.freeplaneresource,
+                    org.freeplane.main.browsemode,
+                    org.freeplane.main.filemode,
+                    org.freeplane.main.headlessmode,
+                    org.freeplane.main.mindmapmode,
+                    org.freeplane.main.mindmapmode.stylemode,
+                    org.freeplane.main.osgi,
+                    org.freeplane.n3.nanoxml,
+                    org.freeplane.plugin.macos,
+                    org.freeplane.view.swing.features,
+                    org.freeplane.view.swing.features.filepreview,
+                    org.freeplane.view.swing.features.nodehistory,
+                    org.freeplane.view.swing.features.progress.mindmapmode,
+                    org.freeplane.view.swing.features.time.mindmapmode,
+                    org.freeplane.view.swing.map,
+                    org.freeplane.view.swing.map.attribute,
+                    org.freeplane.view.swing.map.cloud,
+                    org.freeplane.view.swing.map.edge,
+                    org.freeplane.view.swing.map.link,
+                    org.freeplane.view.swing.map.mindmapmode,
+                    org.freeplane.view.swing.ui,
+                    org.freeplane.view.swing.ui.mindmapmode,
+                    com.jgoodies.forms.builder,
+                    com.jgoodies.forms.debug,
+                    com.jgoodies.forms.factories,
+                    com.jgoodies.forms.layout,
+                    com.jgoodies.forms.util,
+                    com.lightdev.app.shtm,
+                    org.apache.commons.io,
+                    org.apache.commons.io.comparator,
+                    org.apache.commons.io.filefilter,
+                    org.apache.commons.io.input,
+                    org.apache.commons.io.monitor,
+                    org.apache.commons.io.output,
+                    org.apache.commons.lang,
+                    org.apache.commons.lang.builder,
+                    org.apache.commons.lang.exception,
+                    org.apache.commons.lang.math,
+                    org.apache.commons.lang.time
+                    """
+ext.bundleActivator = 'org.freeplane.main.osgi.Activator'
+
+task generateIconGroupProperties {
+    def inputDir = file('src/viewer/resources/images/icons')
+	def props = new Properties();
+	def relPath = {file -> inputDir.toURI().relativize(file.toURI())}
+	def groupName = {file -> relPath(file).toString()[0..-2].replaceAll('/', '.')}
+	def collect
+	collect = { File file ->
+		   	   def group = file == inputDir ? '' : groupName(file)
+		   	   def groupsPropertyName = group.isEmpty() ? 'icons.groups' :"icons.groups.$group".toString()
+		   	   def groups = []
+			   file.eachFile(FileType.DIRECTORIES) { f -> groups << groupName(f)}
+			   if(! group.isEmpty()) {
+			   	   def icons = []
+				   file.eachFile(FileType.FILES) { f -> icons << relPath(f).toString()[0..-5]}
+				   if (! icons.isEmpty())
+				   	  props.put("icons.group.$group".toString(), icons.join(';'))
+			   }
+			   if (! groups.isEmpty())
+			       props.put(groupsPropertyName, groups.join(';'))
+			   file.eachFile(FileType.DIRECTORIES) { f -> collect(f)}
+	}
+
+    doLast {
+		collect(inputDir)
+        props.store(System.out, null)
+    }
+}
+
+task copyLauncherImages(type: Copy) {
+    from('src/editor/resources/images/') {
+        include('Freeplane_frame_icon_32x32.png')
+        rename('Freeplane_frame_icon_32x32.png', 'freeplane.png')
+    }
+
+    from('src/editor/resources/images/') {
+        include('Freeplane_frame_icon_256x256.png')
+        rename('Freeplane_frame_icon_256x256.png', 'freeplane256.png')
+    }
+    into(globalBin)
+}
+
+build.dependsOn copyLauncherImages
+
+task copyFlatLafDll(type: Copy) {
+    def dependencyFile = configurations.lib.find { it.name.startsWith('flatlaf-')}
+    from zipTree(dependencyFile)
+    into(globalBin)
+    include { file -> file.name.endsWith('.dll') || file.name.endsWith('.so') }
+    eachFile { details ->
+        details.path = details.file.name
+    }
+}
+
+build.dependsOn copyFlatLafDll
+
+task copyOSGiJars(type: Copy) {
+    from ("$buildDir/libs") {
+        include("*.jar")
+        exclude('freeplane-*.jar')
+    }
+    from (configurations.lib) {
+        include("*.jar")
+    }
+    from (project(':freeplane_mac').jar.outputs.files)
+    from (project(':freeplane_api').file('build/libs/freeplaneapi_viewer.jar'))
+    into(globalBin + '/core/' + pluginid + '/lib/')
+}
+
+task copyOSGiManifest(type: Copy) {
+     from ("$buildDir/manifest/") {
+          include("MANIFEST.MF")
+     }
+     into(globalBin + '/core/' + pluginid + '/META-INF/')
+}
+
+// Define jar content patterns to avoid duplication
+ext.editorJarIncludes = [
+    "**/application/**",
+    "**/mindmapmode/**",
+    "**/ortho/**",
+    "**/filemode/**",
+    "**/core/resources/ui/**",
+    "translations/**"
+]
+
+ext.osgiJarIncludes = [
+    "**/osgi/**"
+]
+
+task editorJar(type: Jar) {
+    // use '= project.manifest' to avoid that an OSGi manifest is created!
+    manifest = project.java.manifest {
+        attributes("Manifest-Version": "1.0",
+                   "Main-Class": "org.freeplane.main.application.FreeplaneMain")
+    }
+    archiveBaseName = 'freeplaneeditor'
+    dependsOn classes
+    from (sourceSets.main.output) {
+        include editorJarIncludes
+    }
+    from (sourceSets.editor.resources)
+    includeEmptyDirs = false
+}
+
+task osgiJar(type: Jar) {
+	// use '= project.manifest' to avoid that an OSGi manifest is created!
+	manifest = project.java.manifest {
+		attributes("Manifest-Version": "1.0")
+	}
+	archiveBaseName = 'freeplaneosgi'
+	dependsOn classes
+    from (sourceSets.main.output) {
+        include osgiJarIncludes
+    }
+    includeEmptyDirs = false
+}
+
+task viewerJar(type: Jar) {
+    // use '= project.manifest' to avoid that an OSGi manifest is created!
+    manifest = project.java.manifest {
+        attributes("Manifest-Version": "1.0",
+                   "Permissions": "all-permissions",
+                   "Codebase": "*",
+                   "Application-Library-Allowable-Codebase": "*",
+                   "Application-Name": "Freeplane Viewer Applet")
+    }
+
+    // this must be unversioned because the applet export code relies on this
+    archiveFileName = 'freeplaneviewer.jar'
+    dependsOn classes
+    dependsOn createEmojiList
+    from (sourceSets.main.output) {
+        exclude editorJarIncludes
+        exclude osgiJarIncludes
+    }
+    from (sourceSets.viewer.output)
+    from (files("${project.buildDir}/emoji/xml"))
+
+
+    configurations.mergedViewerDependencies.files.each {
+    	from(zipTree(it.path))
+    }
+
+    includeEmptyDirs = false
+}
+
+copyOSGiJars.dependsOn tasks.getByPath(':freeplane_mac:jar')
+copyOSGiJars.dependsOn tasks.getByPath(':freeplane_api:viewerApiJar')
+copyOSGiJars.dependsOn editorJar
+copyOSGiJars.dependsOn viewerJar
+copyOSGiJars.dependsOn osgiJar
+
+eclipseJdt {
+    doLast {
+        File f = file('.settings/org.eclipse.core.resources.prefs')
+        f.append('''encoding//resources/translations=ISO-8859-1
+encoding//viewer-resources/translations=ISO-8859-1
+''')
+    }
+}
+
+
+apply from: './git.gradle'
+
+task copyExternalResources(type: Copy) {
+    from(sourceSets.external.output) {
+        include('**')
+    }
+    into(globalBin + '/resources')
+
+    // (exactly) one of these two groups (copy vs. create) is always disabled!
+    dependsOn copyGitTxt
+    dependsOn copyGitProperty
+    dependsOn createGitProperty
+}
+
+task copyDoc(type: Copy) {
+    from('doc/') {
+        include('**')
+    }
+    into(globalBin + '/doc')
+}
+
+jar.dependsOn viewerJar
+jar.dependsOn editorJar
+jar.dependsOn osgiJar
+build.dependsOn copyOSGiJars
+build.dependsOn copyOSGiManifest
+build.dependsOn copyExternalResources
+build.dependsOn copyDoc
+apply from: './signjar.gradle'
+
+apply from: './format_translation.gradle'

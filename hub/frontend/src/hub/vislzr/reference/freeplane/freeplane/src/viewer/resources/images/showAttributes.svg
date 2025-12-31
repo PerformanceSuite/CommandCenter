@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 15 16" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <rect x="1.4435" y=".91827" width="5.8104" height="14.118" fill="#ffff00" fill-rule="evenodd" style="paint-order:markers stroke fill"/>
+ <path d="m0.89653 0.87297h7" fill="none" stroke="#333333" stroke-width=".99102"/>
+ <path d="m0.89653 5.6243h7" fill="none" stroke="#333333" stroke-width=".99102"/>
+ <path d="m0.89653 10.376h7" fill="none" stroke="#333333" stroke-width=".99103"/>
+ <path d="m0.89653 15.127h6.885" fill="none" stroke="#333333" stroke-width=".99103"/>
+ <path d="m1.392 0.37746v15.197" fill="none" stroke="#333333" stroke-width=".99102px"/>
+ <rect x="7.691" y=".91827" width="5.8104" height="14.118" fill="#ffff00" fill-rule="evenodd" style="paint-order:markers stroke fill"/>
+ <path d="m7.0957 0.87297h7" fill="none" stroke="#333333" stroke-width=".99102"/>
+ <path d="m7.0957 5.6243h7" fill="none" stroke="#333333" stroke-width=".99102"/>
+ <path d="m7.0957 10.376h7" fill="none" stroke="#333333" stroke-width=".99103"/>
+ <path d="m7.2185 15.127h6.885" fill="none" stroke="#333333" stroke-width=".99103"/>
+ <path d="m13.6 15.204v-14.826" fill="none" stroke="#333333" stroke-width=".99102px"/>
+ <path d="m7.401 15.204v-14.826" fill="none" stroke="#333333" stroke-width=".99102px"/>
+</svg>

@@ -1,0 +1,418 @@
+/*
+ *  Freeplane - mind map editor
+ *  Copyright (C) 2008 Dimitry Polivaev
+ *
+ *  This file author is Dimitry Polivaev
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.freeplane.features.filter;
+
+import java.awt.FontMetrics;
+import java.util.List;
+import java.util.Objects;
+import java.util.WeakHashMap;
+import javax.swing.Icon;
+
+import org.freeplane.core.extension.IExtension;
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.ui.components.MultipleImageIcon;
+import org.freeplane.core.ui.components.TextIcon;
+import org.freeplane.features.filter.condition.ASelectableCondition;
+import org.freeplane.features.filter.condition.ICondition;
+import org.freeplane.features.filter.hidden.NodeVisibility;
+import org.freeplane.features.link.ConnectorModel;
+import org.freeplane.features.map.MapModel;
+import org.freeplane.features.map.NodeModel;
+import org.freeplane.features.mode.Controller;
+
+/**
+ * @author Dimitry Polivaev
+ */
+public class Filter implements IExtension {
+
+    public enum FilteredElement{NODE, CONNECTOR, NODE_AND_CONNECTOR}
+
+    public static Filter createTransparentFilter() {
+		final ResourceController resourceController = ResourceController.getResourceController();
+		FilteredElement filteredElement = resourceController.getEnumProperty("filter.filteredElement", FilteredElement.NODE);
+		return new Filter(null, false, resourceController.getBooleanProperty("filter.showAncestors"), resourceController.getBooleanProperty("filter.showDescendants"), false, filteredElement, null);
+	}
+
+	static class FilterInfoAccessor {
+	    private final WeakHashMap<NodeModel, FilterInfo> filterInfos = new WeakHashMap<>();
+
+	    FilterInfo getFilterInfo(NodeModel node) {
+	        return filterInfos.computeIfAbsent(node, x -> new FilterInfo());
+	    }
+
+	}
+
+	static public Filter createFilter(final ICondition condition, final boolean areAncestorsShown,
+            final boolean areDescendantsShown, final boolean appliesToVisibleElementsOnly, Filter baseFilter) {
+		return new Filter(condition, false, areAncestorsShown, areDescendantsShown, appliesToVisibleElementsOnly, baseFilter);
+	}
+
+	final private ICondition condition;
+	final int options;
+
+	private FilterInfoAccessor accessor;
+	private final boolean hidesMatchingElements;
+	private final boolean appliesToVisibleElementsOnly;
+	private final Filter baseFilter;
+    private final FilteredElement filteredElement;
+
+	public Filter(final ICondition condition, final boolean hidesMatchingElements, final boolean areAncestorsShown,
+	        final boolean areDescendantsShown, final boolean appliesToVisibleElementsOnly, Filter baseFilter) {
+	    this(condition, hidesMatchingElements, areAncestorsShown, areDescendantsShown,
+	            appliesToVisibleElementsOnly, FilteredElement.NODE, baseFilter);
+	}
+
+	public Filter(final ICondition condition, final boolean hidesMatchingElements, final boolean areAncestorsShown,
+	        final boolean areDescendantsShown, final boolean appliesToVisibleElementsOnly, FilteredElement filteredElement,
+	        Filter baseFilter) {
+	    super();
+	    this.condition = condition;
+	    this.hidesMatchingElements = hidesMatchingElements;
+	    this.appliesToVisibleElementsOnly = appliesToVisibleElementsOnly;
+        this.filteredElement = filteredElement;
+		this.accessor = new FilterInfoAccessor();
+
+		int options;
+		if(hidesMatchingElements) {
+            options = FilterInfo.SHOW_AS_HIDDEN;
+            if (areAncestorsShown) {
+                options += FilterInfo.SHOW_AS_HIDDEN_ANCESTOR;
+            }
+            if (areDescendantsShown) {
+                options += FilterInfo.SHOW_AS_HIDDEN_DESCENDANT;
+            }
+		}
+		else {
+		    options = FilterInfo.SHOW_AS_MATCHED;
+		    if (areAncestorsShown) {
+		        options += FilterInfo.SHOW_AS_MATCHED_ANCESTOR;
+		    }
+		    if (areDescendantsShown) {
+		        options += FilterInfo.SHOW_AS_MATCHED_DESCENDANT;
+		    }
+		}
+		this.options = options;
+		this.baseFilter = baseFilter;
+	}
+
+    void addFilterResult(final NodeModel node, final int flags) {
+        getFilterInfo(node).add(flags);
+    }
+
+    void setFilterResult(final NodeModel node, final int flags) {
+        getFilterInfo(node).set(flags);
+    }
+
+	protected boolean appliesToVisibleElementsOnly() {
+		return appliesToVisibleElementsOnly;
+	}
+
+	static private Icon filterIcon;
+
+	void displayFilterStatus() {
+		if (filterIcon == null) {
+			filterIcon = ResourceController.getResourceController().getIcon("ShowFilterToolbarAction.icon");
+		}
+		if (getCondition() != null) {
+			Controller.getCurrentController().getViewController().addStatusInfo("filter", null, filterIcon);
+		}
+		else {
+			Controller.getCurrentController().getViewController().removeStatus("filter");
+		}
+	}
+
+	public void calculateFilterResults(final MapModel map) {
+	    this.accessor = new FilterInfoAccessor();
+		final NodeModel root = map.getRootNode();
+		resetFilter(root);
+		int ownStateAsAncestor = checkNode(root) ? FilterInfo.HAS_MATCHED_ANCESTOR : FilterInfo.HAS_HIDDEN_ANCESTOR;
+        addFilterResult(root, filterChildrenGetDescendantState(root, ownStateAsAncestor));
+	}
+
+    public void calculateFilterResults(final NodeModel root) {
+        this.accessor = new FilterInfoAccessor();
+        applyFilterGetDescendantState(root, 0);
+    }
+
+    private int filterChildrenGetDescendantState(final NodeModel node, int state) {
+        int descendantState = 0;
+        for (final NodeModel child : children(node)) {
+            descendantState = applyFilterGetDescendantState(child, state) | descendantState;
+        }
+        return descendantState;
+    }
+
+	private int applyFilterGetDescendantState(final NodeModel node, int ancestorState) {
+		final boolean matchesCombinedFilter = checkNode(node);
+		int ownStateAsAncestor;
+		if(ancestorState != 0 || ! node.isRoot())
+		    ownStateAsAncestor = matchesCombinedFilter ?  FilterInfo.HAS_MATCHED_ANCESTOR : FilterInfo.HAS_HIDDEN_ANCESTOR;
+		else
+		    ownStateAsAncestor = 0;
+        int childrenAncestorState = ancestorState | ownStateAsAncestor;
+		int descendantState = filterChildrenGetDescendantState(node, childrenAncestorState);
+        setFilterResult(node, ancestorState | descendantState | (matchesCombinedFilter ? FilterInfo.MATCHES : FilterInfo.NO_MATCH));
+		int ownStateAsDescendant = matchesCombinedFilter ? FilterInfo.HAS_MATCHED_DESCENDANT : FilterInfo.HAS_HIDDEN_DESCENDANT;
+        return descendantState | ownStateAsDescendant;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see freeplane.controller.filter.Filter#areAncestorsShown()
+	 */
+	public boolean areAncestorsShown() {
+		return 0 != (options & (FilterInfo.SHOW_AS_MATCHED_ANCESTOR|FilterInfo.SHOW_AS_HIDDEN_ANCESTOR));
+	}
+
+	boolean areMatchingElementsHidden() {
+	    return hidesMatchingElements;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see freeplane.controller.filter.Filter#areDescendantsShown()
+	 */
+	public boolean areDescendantsShown() {
+		return 0 != (options & (FilterInfo.SHOW_AS_MATCHED_DESCENDANT | FilterInfo.SHOW_AS_HIDDEN_DESCENDANT));
+	}
+
+	public FilteredElement getFilteredElement() {
+        return filteredElement;
+    }
+
+    private boolean checkNode(final NodeModel node) {
+		return condition == null || ! shouldRemainInvisible(node) && condition.checkNode(node);
+	}
+
+	private boolean shouldRemainInvisible(final NodeModel node) {
+		return condition != null && appliesToVisibleElementsOnly() && (node.isHiddenSummary() || !baseFilter.accepts(node));
+	}
+
+    protected List<NodeModel> children(final NodeModel node) {
+        return node.getChildren();
+    }
+
+	public ICondition getCondition() {
+		return condition;
+	}
+
+	public boolean canUseFilterResultsFrom(final Filter oldFilter) {
+		return (! oldFilter.appliesToVisibleElementsOnly || appliesToVisibleElementsOnly)
+		        && Objects.equals(condition, oldFilter.getCondition());
+	}
+
+
+    public void useFilterResultsFrom(Filter oldFilter) {
+        accessor = oldFilter.accessor;
+    }
+
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * freeplane.controller.filter.Filter#isVisible(freeplane.modes.MindMapNode)
+	 */
+	public boolean isVisible(final NodeModel node) {
+		return filteredElement == FilteredElement.CONNECTOR && ! NodeVisibility.isHidden(node)
+				|| accepts(node);
+	}
+
+	public boolean isVisible(final ConnectorModel connector) {
+	    return filteredElement == FilteredElement.NODE
+	            || accepts(connector.getSource())
+	            && accepts(connector.getTarget());
+	}
+
+    public boolean accepts(NodeModel source) {
+        return accepts(source, options);
+    }
+
+    public boolean isFoldable(final NodeModel node) {
+        return  filteredElement == FilteredElement.CONNECTOR ||
+        		(areDescendantsShown() ?
+        				accepts(node)
+        				: accepts(node,
+        						hidesMatchingElements ? FilterInfo.SHOW_AS_HIDDEN_ANCESTOR : FilterInfo.SHOW_AS_MATCHED_ANCESTOR));
+    }
+
+    private boolean accepts(final NodeModel node, int options) {
+        if(NodeVisibility.isHidden(node))
+			return false;
+		if (condition == null || node.isRoot()) {
+			return true;
+		}
+		FilterInfo filterInfo = getFilterInfo(node);
+        return filterInfo.isNotChecked() || filterInfo.matches(options);
+    }
+
+	void resetFilter(final NodeModel node) {
+		getFilterInfo(node).reset();
+	}
+
+	public FilterInfo getFilterInfo(final NodeModel node) {
+		return node !=  null ? accessor.getFilterInfo(node) : new FilterInfo();
+	}
+
+    public void showAsMatched(NodeModel node) {
+        FilterInfo filterInfo = getFilterInfo(node);
+        if(! filterInfo.matches(FilterInfo.SHOW_AS_MATCHED)) {
+            filterInfo.add(FilterInfo.SHOW_AS_MATCHED);
+            if(! filterInfo.matches(FilterInfo.SHOW_AS_MATCHED_ANCESTOR))
+                showAncestors(node);
+            if(! filterInfo.matches(FilterInfo.SHOW_AS_MATCHED_DESCENDANT))
+                showDescendants(node);
+        }
+    }
+
+    private void showAncestors(NodeModel node) {
+        NodeModel parent = node.getParentNode();
+        if(parent == null)
+            return;
+        FilterInfo filterInfo = getFilterInfo(parent);
+        if(! filterInfo.matches(FilterInfo.SHOW_AS_MATCHED_ANCESTOR)) {
+            filterInfo.add(FilterInfo.SHOW_AS_MATCHED_ANCESTOR);
+            showAncestors(parent);
+        }
+    }
+
+    private void showDescendants(NodeModel node) {
+        for (NodeModel child : children(node)) {
+            FilterInfo filterInfo = getFilterInfo(child);
+            filterInfo.add(FilterInfo.SHOW_AS_MATCHED_DESCENDANT);
+            showDescendants(child);
+        }
+    }
+
+    public void updateFilterResults(NodeModel node, FilterUpdateListener callbackOnUpdate) {
+        if(condition == null)
+            return;
+        boolean wasVisible = isVisible(node);
+        boolean matches = checkNode(node);
+        FilterInfo filterInfo = getFilterInfo(node);
+        filterInfo.set(matches ? FilterInfo.MATCHES : FilterInfo.NO_MATCH);
+        if(wasVisible != isVisible(node))
+        	callbackOnUpdate.onFilterResultUpdate(this, node);
+        updateFilterResultsAndAncestors(node, callbackOnUpdate);
+        updateDescendantResults(node, matches ? FilterInfo.HAS_MATCHED_ANCESTOR : FilterInfo.HAS_HIDDEN_ANCESTOR, callbackOnUpdate);
+    }
+
+    private void updateFilterResultsAndAncestors(NodeModel node,
+    		FilterUpdateListener callbackOnUpdate) {
+        FilterInfo filterInfo = getFilterInfo(node);
+        NodeModel parentNode = node.getParentNode();
+        FilterInfo parentFilterInfo = getFilterInfo(parentNode);
+        if(! filterInfo.isNotChecked()) {
+            boolean matches = filterInfo.isMatched();
+            boolean wasVisible = isVisible(node);
+            int ownState = matches ? FilterInfo.MATCHES : FilterInfo.NO_MATCH;
+            int ancestorState = parentFilterInfo.isMatched() ? FilterInfo.HAS_MATCHED_ANCESTOR
+                    : parentFilterInfo.get(FilterInfo.HAS_MATCHED_ANCESTOR | FilterInfo.HAS_HIDDEN_ANCESTOR);
+            int descendantState = node.getChildren().stream()
+                    .map(this::getFilterInfo)
+                    .mapToInt(x -> x.get(FilterInfo.MATCHES | FilterInfo.NO_MATCH | FilterInfo.HAS_HIDDEN_DESCENDANT | FilterInfo.HAS_MATCHED_DESCENDANT))
+                    .reduce(0, (m, n) -> m|n);
+            if((descendantState & FilterInfo.MATCHES) != 0) {
+                descendantState &= ~FilterInfo.MATCHES;
+                descendantState |= FilterInfo.HAS_MATCHED_DESCENDANT;
+            }
+            if((descendantState & FilterInfo.NO_MATCH) != 0) {
+                descendantState &= ~FilterInfo.NO_MATCH;
+                descendantState |= FilterInfo.HAS_HIDDEN_DESCENDANT;
+            }
+            filterInfo.set(ancestorState | ownState | descendantState);
+            if(wasVisible != isVisible(node))
+                callbackOnUpdate.onFilterResultUpdate(this, node);
+        }
+        if(parentNode != null)
+            updateFilterResultsAndAncestors(parentNode, callbackOnUpdate);
+
+    }
+
+    private void updateDescendantResults(NodeModel node, int options, FilterUpdateListener callbackOnUpdate) {
+        for(NodeModel child : node.getChildren()) {
+            FilterInfo childInfo = getFilterInfo(child);
+            if(childInfo.matches(options))
+                continue;
+            if(childInfo.isNotChecked()) {
+                updateDescendantResults(child, options, callbackOnUpdate);
+                continue;
+            }
+            boolean wasVisible = isVisible(child);
+            if(childInfo.add(options))
+                if(wasVisible != isVisible(child))
+                    callbackOnUpdate.onFilterResultUpdate(this, child);
+                updateDescendantResults(child, options, callbackOnUpdate);
+        }
+    }
+
+    public void reset(NodeModel node) {
+        getFilterInfo(node).reset();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Filter)) return false;
+        Filter other = (Filter) obj;
+        return this.hidesMatchingElements == other.hidesMatchingElements
+                && this.appliesToVisibleElementsOnly == other.appliesToVisibleElementsOnly
+                && this.filteredElement == other.filteredElement
+                && this.areAncestorsShown() == other.areAncestorsShown()
+                && this.areDescendantsShown() == other.areDescendantsShown()
+                && Objects.equals(this.condition, other.condition)
+                && Objects.equals(this.baseFilter, other.baseFilter);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(condition, hidesMatchingElements, appliesToVisibleElementsOnly,
+                filteredElement, Boolean.valueOf(areAncestorsShown()), Boolean.valueOf(areDescendantsShown()), baseFilter);
+    }
+
+    public boolean equalsIgnoringAncestors(Filter other) {
+        if (other == null) return false;
+        return this.hidesMatchingElements == other.hidesMatchingElements
+                && this.appliesToVisibleElementsOnly == other.appliesToVisibleElementsOnly
+                && this.filteredElement == other.filteredElement
+                && Objects.equals(this.condition, other.condition)
+                && Objects.equals(this.baseFilter, other.baseFilter);
+    }
+
+    public MultipleImageIcon createIcon(FontMetrics fontMetrics) {
+    	MultipleImageIcon icon;
+    	if (condition instanceof ASelectableCondition) {
+    		icon = ((ASelectableCondition)condition).createIcon(fontMetrics);
+    	} else {
+			icon = new MultipleImageIcon();
+			TextIcon textIcon = new TextIcon(condition != null ? condition.toString() : "--", fontMetrics);
+			icon.addIcon(textIcon);
+		}
+		if(!areAncestorsShown() && !areDescendantsShown() && !areMatchingElementsHidden())
+			return icon;
+		icon.addIcon(new TextIcon(" : ", fontMetrics));
+		if(areAncestorsShown())
+			icon.addIcon(ResourceController.getResourceController().getIcon("ShowAncestorsAction.icon"));
+		if(areDescendantsShown())
+			icon.addIcon(ResourceController.getResourceController().getIcon("ShowDescendantsAction.icon"));
+		if(areMatchingElementsHidden())
+			icon.addIcon(ResourceController.getResourceController().getIcon("HideMatchingNodesAction.icon"));
+		return icon;
+    }
+}

@@ -1,0 +1,63 @@
+ext.globalDist = rootDir.path + '/DIST'
+
+task gitinfoDist(type: Copy) {
+    from(globalBin) {
+        include('gitinfo.txt')
+    }
+    from(globalBin + '/resources') {
+        include('gitinfo.properties')
+    }
+    into(globalDist)
+
+    for (p in subprojects) {
+        dependsOn p.tasks.getByPath("build")
+    }
+}
+
+task historyDist(type:Copy) {
+	from(rootDir.path + '/freeplane/doc/'){
+		include 'history_en.txt'
+	}
+	into(globalDist)
+}
+
+task dist {}
+
+apply from: './bin.dist.gradle'
+apply from: './win.dist.gradle'
+apply from: './mac.dist.gradle'
+apply from: './src.dist.gradle'
+apply from: './linux-packages.gradle'
+
+// meta task
+dist {
+    dependsOn binZip
+    dependsOn srcTarGz
+    dependsOn srcpureTarGz
+    dependsOn windowsPortableInstaller
+    dependsOn gitinfoDist
+    dependsOn historyDist
+    dependsOn freeplaneDeb
+}
+
+// clean
+task cleanDist(type: Delete) {
+    delete globalDist
+}
+clean.dependsOn cleanDist
+
+task createGitTag(type: Exec) {
+	def tag = "${versionStatus.empty ? 'release':versionStatus}-$distVersion"
+    ignoreExitValue = true
+	doFirst {
+		println "> Press enter to create tag $tag"
+		System.in.newReader().readLine()
+	}
+    commandLine 'git', 'tag', tag
+}
+
+task release {
+	dependsOn (clean, dist, createGitTag)
+}
+dist.mustRunAfter clean
+createGitTag.mustRunAfter dist

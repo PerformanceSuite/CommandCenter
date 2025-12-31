@@ -1,0 +1,36 @@
+dependencies {
+	testImplementation 'junit:junit:4.13.2',
+			'org.hamcrest:hamcrest-all:1.3',
+			'org.mockito:mockito-core:5.18.0',
+		 	'org.assertj:assertj-core:3.27.3'
+}
+
+java {
+	targetCompatibility=JavaVersion.VERSION_1_8
+	sourceCompatibility=JavaVersion.VERSION_1_8
+}
+
+task viewerApiJar(type: Jar) {
+    // use '= project.manifest' to avoid that an OSGi manifest is created!
+	manifest = project.java.manifest {
+		attributes("Manifest-Version": "1.0")
+	}
+
+    archiveFileName = 'freeplaneapi_viewer.jar'
+    dependsOn classes
+
+    from (sourceSets.main.output) {
+				include '**/LengthUnit.class'
+				include '**/PhysicalUnit.class'
+				include '**/Quantity.class'
+				include '**/EdgeStyle.class'
+				include '**/FreeplaneVersion.class'
+				include '**/LayoutOrientation.class'
+				include '**/ChildNodesLayout.class'
+				include '**/ChildrenSides.class'
+				include '**/ChildNodesAlignment.class'
+    }
+    includeEmptyDirs = false
+}
+
+build.dependsOn viewerApiJar

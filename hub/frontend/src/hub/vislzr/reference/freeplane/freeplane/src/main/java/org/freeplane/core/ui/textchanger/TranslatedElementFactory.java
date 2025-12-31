@@ -1,0 +1,179 @@
+package org.freeplane.core.ui.textchanger;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButton;
+import javax.swing.JToggleButton;
+
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.ui.AFreeplaneAction;
+import org.freeplane.core.ui.LabelAndMnemonicSetter;
+import org.freeplane.core.ui.components.JAutoToggleButton;
+import org.freeplane.core.util.TextUtils;
+
+public class TranslatedElementFactory {
+	public static JButton createButton(Action action, String labelKey) {
+		final JButton component = action != null ? new JButton(action) : new JButton();
+		final String text = TextUtils.getRawText(labelKey);
+		LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+		TranslatedElement.TEXT.setKey(component, labelKey);
+		createTooltip(component, labelKey + ".tooltip");
+		return component;
+	}
+
+	public static JButton createButton(String labelKey) {
+		return createButton(null, labelKey);
+	}
+	public static JToggleButton createToggleButton(String labelKey) {
+		final JToggleButton component = new JAutoToggleButton();
+		final String text = TextUtils.getRawText(labelKey);
+		LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+		TranslatedElement.TEXT.setKey(component, labelKey);
+		createTooltip(component, labelKey + ".tooltip");
+		return component;
+	}
+
+    public static JCheckBox createCheckBox(String labelKey) {
+        final String text = TextUtils.getRawText(labelKey);
+        final JCheckBox component = new JCheckBox();
+        LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+        TranslatedElement.TEXT.setKey(component, labelKey);
+        createTooltip(component, labelKey + ".tooltip");
+        return component;
+    }
+
+    public static JMenu createMenu(String labelKey) {
+        final String text = TextUtils.getRawText(labelKey);
+        final JMenu component = new JMenu();
+        LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+        TranslatedElement.TEXT.setKey(component, labelKey);
+        createTooltip(component, labelKey + ".tooltip");
+        return component;
+    }
+
+    public static JMenuItem createMenuItem(String labelKey) {
+        final String text = TextUtils.getRawText(labelKey);
+        final JMenuItem component = new JMenuItem();
+        LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+        TranslatedElement.TEXT.setKey(component, labelKey);
+        createTooltip(component, labelKey + ".tooltip");
+        return component;
+    }
+
+    public static JMenuItem createMenuItem(Action action, String labelKey) {
+        final JMenuItem component = action != null ? new JMenuItem(action) : new JMenuItem();
+        final String text = TextUtils.getRawText(labelKey);
+        LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+        TranslatedElement.TEXT.setKey(component, labelKey);
+        createTooltip(component, labelKey + ".tooltip");
+        if (action != null) {
+            Object ks = action.getValue(Action.ACCELERATOR_KEY);
+            if (ks instanceof javax.swing.KeyStroke) {
+                component.setAccelerator((javax.swing.KeyStroke) ks);
+            }
+        }
+        return component;
+    }
+
+    public static JCheckBoxMenuItem createCheckboxMenuItem(String labelKey) {
+        final String text = TextUtils.getRawText(labelKey);
+        final JCheckBoxMenuItem component = new JCheckBoxMenuItem();
+        LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+        TranslatedElement.TEXT.setKey(component, labelKey);
+        createTooltip(component, labelKey + ".tooltip");
+        return component;
+    }
+
+	public static JCheckBox createPropertyCheckbox(String propertyName, String labelKey) {
+		JCheckBox component = createCheckBox(labelKey);
+        component.setSelected(ResourceController.getResourceController().getBooleanProperty(propertyName));
+        component.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ResourceController.getResourceController().setProperty(propertyName, component.isSelected());
+            }
+        });
+        return component;
+	}
+
+	public static void createTitledBorder(JComponent component, String labelKey) {
+		final String text = TextUtils.getText(labelKey);
+		component.setBorder(BorderFactory.createTitledBorder(text));
+		TranslatedElement.BORDER.setKey(component, labelKey);
+	}
+
+	public static JLabel createLabel(String labelKey) {
+		final String text = TextUtils.getText(labelKey);
+		final JLabel component = new JLabel(text);
+		TranslatedElement.TEXT.setKey(component, labelKey);
+		createTooltip(component, labelKey + ".tooltip");
+		return component;
+	}
+
+	public static void createTooltip(JComponent component, String labelKey) {
+		final String text = TextUtils.getOptionalText(labelKey, null);
+		if (text != null) {
+			component.setToolTipText(text);
+		}
+		TranslatedElement.TOOLTIP.setKey(component, labelKey);
+	}
+
+    public static JButton createButtonWithIcon(AFreeplaneAction action) {
+        return createButtonWithIcon(action, action.getIconKey(), action.getTextKey());
+    }
+    public static JButton createButtonWithIcon(Action action, final String iconKey, final String tooltipKey) {
+		final Icon icon = ResourceController.getResourceController().getImageIcon(iconKey);
+		final JButton button;
+		if (action == null)
+			button = new JButton(icon);
+		else {
+			button = new JButton(action);
+			button.setText(null);
+			button.setIcon(icon);
+		}
+		createTooltip(button, tooltipKey);
+		return button;
+	}
+
+	public static JButton createButtonWithIcon(final String iconKey, final String tooltipKey) {
+		return createButtonWithIcon(null, iconKey, tooltipKey);
+	}
+
+    public static JToggleButton createToggleButtonWithIconAndLabel(final String iconKey, String labelKey) {
+		JToggleButton button = createToggleButton(labelKey);
+		return addIcon(button, iconKey);
+	}
+
+	public static JToggleButton createToggleButtonWithIcon(final String iconKey, String tooltipKey) {
+		final JToggleButton button = new JAutoToggleButton();
+		createTooltip(button, tooltipKey);
+		return addIcon(button, iconKey);
+	}
+
+	public static <T extends AbstractButton> T addIcon(T button, final String iconKey) {
+		final Icon icon = ResourceController.getResourceController().getIcon(iconKey);
+		button.setIcon(icon);
+		return button;
+	}
+
+	public static JRadioButton createRadioButton(String labelKey) {
+		final JRadioButton component = new JRadioButton();
+		final String text = TextUtils.getRawText(labelKey);
+		LabelAndMnemonicSetter.setLabelAndMnemonic(component, text);
+		TranslatedElement.TEXT.setKey(component, labelKey);
+		createTooltip(component, labelKey + ".tooltip");
+		return component;
+	}
+}

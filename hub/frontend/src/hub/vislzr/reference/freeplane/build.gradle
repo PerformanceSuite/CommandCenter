@@ -1,0 +1,299 @@
+import org.gradle.util.GradleVersion
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:7.1.0'
+  }
+}
+
+plugins {
+  id 'com.netflix.nebula.ospackage' version '11.11.2'
+  id 'org.owasp.dependencycheck' version '12.1.2' apply false
+  id 'se.patrikerdes.use-latest-versions' version '0.2.18'  apply false
+  id 'com.github.ben-manes.versions' version '0.52.0'  apply false
+}
+
+Properties props = new Properties()
+props.load(new FileInputStream(rootDir.path + '/freeplane/src/viewer/resources/version.properties'))
+
+allprojects {
+
+	apply plugin: 'org.owasp.dependencycheck'
+	apply plugin: 'com.github.ben-manes.versions'
+    apply plugin: 'se.patrikerdes.use-latest-versions'
+    // in a multi-project setup, all projects must have the same version number!
+    // the real (specific) version number is in freeplane/viewer-resources/version.properties!
+	ext.majorVersion = props['freeplane_version']
+	ext.versionStatus = props['freeplane_version_status']
+	ext.minorVersion = System.getProperty('minor', '')
+	ext.distVersion = """$majorVersion${versionStatus.empty?'':'-'+versionStatus}${
+        (minorVersion.empty || minorVersion.startsWith('u'))
+        ? minorVersion
+        : (minorVersion.find(/^[a-z]/) ? '-' + minorVersion : '-pre' + minorVersion)
+        }"""
+    version = ext.majorVersion
+
+    // WARNING: this is removed with "gradle clean"!!
+    ext.globalBin = rootDir.path + '/BIN'
+
+    repositories {
+		mavenCentral()
+		maven { url 'https://resources.knopflerfish.org/repo/maven2/release/' }
+		maven { url "${project.gradle.gradleUserHomeDir}/local-artifacts" }
+
+        // this is necessary to grab both binary and source jars
+        // for local (git) dependencies
+        flatDir name: 'localGitDepsRepository',
+                dirs: [rootDir.path + "/freeplane/lib",
+                       rootDir.path + "/freeplane_plugin_jsyntaxpane/lib"]
+    }
+
+}
+
+/* this is used for (linux) packages, where the dependencies
+  live on the file system (/usr/share/java/*.jar on Debian): */
+def externalizeJar(File jar) {
+    // do not externalize, jars are copied over to /BUILD
+    // in development workflow!
+    return "lib/${jar.name}"
+}
+
+// this is overridden in linux packages where this might be named
+// knopflerfish-framework.jar
+def isKnopflerfishJar(fileName) {
+    return fileName.startsWith('framework-') &&
+           fileName.endsWith('.jar');
+}
+
+def filterAndExternalizePluginDependencies(runtime_files) {
+    return runtime_files.findAll {
+        File file -> !isKnopflerfishJar(file.name)
+    }.findAll {
+        File file ->
+        file.name != "freeplane-${project.version}.jar" &&
+        !(file.name.startsWith('freeplane_plugin_') &&
+          file.name.endsWith('-' + project.version + '.jar'))
+    }.collect {
+        File file -> externalizeJar(file)
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+
+    java {
+        targetCompatibility=JavaVersion.VERSION_1_8
+        sourceCompatibility=JavaVersion.VERSION_1_8
+    }
+
+    tasks.withType(JavaCompile) {
+      options.encoding = "UTF-8"
+    }
+    tasks.withType(AbstractArchiveTask).configureEach {
+      preserveFileTimestamps = false
+      reproducibleFileOrder = true
+    }
+    javadoc {
+      options.encoding = "UTF-8"
+      options.docEncoding = "UTF-8"
+      options.charSet = "UTF-8"
+      options.locale="en_US"
+      options.jFlags('-Duser.language=en', '-Duser.country=US')
+      enabled = false
+      failOnError = false
+    }
+
+    repositories {
+       maven  {
+        url "https://repo1.maven.org/maven2"
+       }
+    }
+
+    configurations {
+        lib
+        maclib
+        api.extendsFrom(lib)
+        api.extendsFrom(maclib)
+    }
+
+    dependencies {
+		testImplementation 'junit:junit:4.13.2',
+				'org.hamcrest:hamcrest-all:1.3',
+				'org.mockito:mockito-core:5.18.0',
+			 	'org.assertj:assertj-core:3.27.3'
+    }
+
+    if(GradleVersion.current() >= GradleVersion.version('6.4')) {
+        java {
+            modularity.inferModulePath = false
+        }
+
+        tasks.named('compileJava') {
+            modularity.inferModulePath = false
+        }
+    }
+
+    task copyEclipseSettings(type: Copy) {
+        from(rootDir.path + "/freeplane_framework/eclipse/settings-templates/") {
+            include("*.prefs")
+        }
+        into(project.file(".settings/"))
+    }
+    eclipseJdt.dependsOn copyEclipseSettings
+
+    task cleanEclipseSettings(type: Delete) {
+        delete(project.file(".settings"))
+    }
+    cleanEclipseJdt.dependsOn cleanEclipseSettings
+
+	if (project.hasProperty('TestLoggingFull')) {
+		test {
+			testLogging {
+				events "failed"
+				exceptionFormat "full"
+			}
+		}
+	}
+}
+
+// OSGi projects (/plugin/, freeplane) need this for compilation (e.g. resolve Bundle),
+// and freeplane_framework needs to copy it to BUILD/framework.jar
+configure(subprojects.findAll {it.name =~ /plugin/ || it.name =~ /^freeplane$/ || it.name =~ /^freeplane_framework$/}){
+    dependencies {
+        implementation group: 'org.knopflerfish.kf6', name:'framework', version: '8.0.11'
+    }
+   task cleanBUILD(type: Delete) {
+       delete "$buildDir/libs"
+   }
+
+   // Gradle 9.0 is stricter about test discovery - many subprojects have non-JUnit test files
+   test {
+       failOnNoDiscoveredTests = false
+   }
+
+   jar.dependsOn cleanBUILD
+}
+
+// common configuration for all OSGi projects...
+configure(subprojects.findAll {it.name =~ /plugin/ || it.name =~ /^freeplane$/ }) {
+
+    apply plugin: 'biz.aQute.bnd.builder'
+
+    ext.bundleImports = 'nothing.*'
+    ext.bundleExports = ''
+
+    if (project.name.equals("freeplane"))
+       ext.pluginid = 'org.freeplane.core'
+
+   afterEvaluate {
+
+     if (it.name =~ /plugin/) {
+       ext.bundleDeps = filterAndExternalizePluginDependencies(configurations.lib.files)
+       bundleDeps.add(0, "lib/plugin-" + project.version + '.jar')
+     }
+
+     jar {
+        def bndConfiguration = [
+        '-savemanifest': 'build/manifest/MANIFEST.MF',
+        'Bundle-SymbolicName': pluginid,
+        'Export-Package': bundleExports.replaceAll("\\s+", ""),
+        'Bundle-Vendor': 'Freeplane Project',
+        'Import-Package': bundleImports.replaceAll("\\s+", ""),
+        'Bundle-Activator': bundleActivator,
+        'Bundle-ClassPath': '., ' + bundleDeps.join(', ')
+        ]
+        if (project.name =~ /plugin/) {
+            bndConfiguration << ['Require-Bundle':'org.freeplane.core']
+        }
+        bundle {
+            bnd(bndConfiguration)
+        }
+
+       }
+   }
+
+}
+
+// common configuration for all plugins...
+configure(subprojects.findAll {it.name =~ /plugin/}) {
+
+   ext.pluginid = project.name.replace("freeplane_plugin_", "org.freeplane.plugin.")
+   ext.bundleActivator = pluginid + ".Activator"
+
+    task copyOSGiJars(type: Copy) {
+        from ("$buildDir/libs") {
+            include("*.jar")
+            exclude('freeplane-' + project.version + '.jar')
+            exclude('freeplane_plugin_*-' + project.version + '.jar')
+        }
+        from (configurations.lib) {
+            include("*.jar")
+        }
+        from ('lib') {
+            include("*.jar")
+            exclude('*-sources.jar')
+        }
+        into(globalBin + '/plugins/' + pluginid + '/lib/')
+    }
+
+    task copyOSGiManifest(type: Copy) {
+        from ("$buildDir/manifest/") {
+            include("MANIFEST.MF")
+        }
+        into(globalBin + '/plugins/' + pluginid + '/META-INF/')
+    }
+
+    task copyOSGiConfig(type: Copy) {
+        from ("OSGI-INF")
+        into(globalBin + '/plugins/' + pluginid + '/OSGI-INF/')
+    }
+
+    build.dependsOn copyOSGiJars
+    build.dependsOn copyOSGiManifest
+    build.dependsOn copyOSGiConfig
+
+    // create a separate non-OSGi(!) jar for each plugin!
+    task pluginJar(type: Jar) {
+         archiveBaseName = 'plugin'
+         dependsOn classes
+
+         from (sourceSets.main.output) {
+             include("**")
+         }
+
+         includeEmptyDirs = false
+
+         // use a non-OSGi manifest (this jar is referenced from an OSGi bundle)!
+         manifest { }
+    }
+
+    // jar must execute after pluginJar so that the OSGi manifest can still be
+    // picked up from build/manifest
+    jar.dependsOn pluginJar
+    copyOSGiJars.dependsOn pluginJar
+}
+
+apply plugin: 'base' // necessary to get the global 'clean' task
+
+task cleanBUILD(type: Delete) {
+    delete globalBin
+}
+clean.dependsOn(cleanBUILD)
+build.dependsOn(cleanBUILD)
+
+task check_translation {
+    dependsOn ':JOrtho_0.4_freeplane:check_translation'
+    dependsOn ':freeplane:check_translation'
+}
+task format_translation {
+    dependsOn ':JOrtho_0.4_freeplane:format_translation'
+    dependsOn ':freeplane:format_translation'
+}
+
+apply from: './dist.gradle'
+apply from: './jdt-config.gradle'

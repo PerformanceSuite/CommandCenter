@@ -1,0 +1,17 @@
+rootProject.name='freeplane_root'
+include 'freeplane',
+        'freeplane_api',
+        'freeplane_ant',
+        'freeplane_framework',
+        'freeplane_mac',
+        'freeplane_plugin_bugreport',
+        'freeplane_plugin_formula',
+        'freeplane_plugin_latex',
+        'freeplane_plugin_markdown',
+        'freeplane_plugin_openmaps',
+        'freeplane_plugin_script',
+        'freeplane_plugin_svg',
+        'freeplane_plugin_jsyntaxpane',
+        'freeplane_plugin_codeexplorer',
+		'freeplane_debughelper',
+        'JOrtho_0.4_freeplane'

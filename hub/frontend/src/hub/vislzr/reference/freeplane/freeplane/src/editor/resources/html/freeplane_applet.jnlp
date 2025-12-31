@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="" href="">
+    <information>
+        <title>Freeplane Viewer Applet</title>
+        <vendor>Freeplane Team</vendor>
+    </information>
+    <resources>
+        <!-- Application Resources -->
+        <j2se version="1.8+"
+              href="http://java.sun.com/products/autodl/j2se"/>
+        <jar href="freeplaneviewer.jar" main="true" />
+        <jar href="freeplaneapi_viewer.jar" main="false"/>
+        <jar href="svgSalamander-1.1.4.jar" main="false"/>
+    </resources>
+    <security>
+        <all-permissions/>
+    </security>
+    <applet-desc
+         name="Freeplane Viewer Applet"
+         main-class="org.freeplane.main.applet.FreeplaneApplet"
+         width="800"
+         height="600">
+     </applet-desc>
+     <update check="background"/>
+</jnlp>

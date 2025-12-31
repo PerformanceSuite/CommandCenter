@@ -1,0 +1,111 @@
+# SourceForge does not provide REST API for file uploads
+# This workflow requires SCP/SSH access with secrets:
+# - SF_USER: SourceForge username
+# - SF_SSH_KEY: Private SSH key content
+#
+# Alternative: Consider using GitHub Releases as primary distribution
+# and SourceForge as mirror, updated manually or via different automation
+
+name: Publish stable release assets to SourceForge
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to publish (e.g., v1.12.5)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run - show what would be uploaded without actually uploading'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  sourceforge:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false }}
+    runs-on: ubuntu-latest
+    env:
+      SF_HOST: frs.sourceforge.net
+      SF_USER: ${{ secrets.SF_USER }}
+      SF_BASE: /home/frs/project/freeplane
+    steps:
+      - name: Derive version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          # Strip "release-" prefix and "v" prefix to get version
+          VERSION="${TAG#release-}"
+          VERSION="${VERSION#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p assets
+          gh release download "${{ steps.version.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --dir assets
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SF_SSH_KEY }}
+
+      - name: Show upload plan
+        run: |
+          echo "=== Upload Plan ==="
+          echo "Tag: ${{ steps.version.outputs.tag }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Files to upload:"
+          ls -la assets/
+          echo ""
+          echo "Target stable: $SF_USER@$SF_HOST:$SF_BASE/freeplane stable/"
+          echo "Target archive: $SF_USER@$SF_HOST:$SF_BASE/freeplane stable/archive/${{ steps.version.outputs.version }}/"
+          echo "Dry run: ${{ inputs.dry_run }}"
+
+      - name: Upload to stable directory
+        if: ${{ !inputs.dry_run }}
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" \
+            assets/ \
+            "$SF_USER@$SF_HOST:$SF_BASE/freeplane stable/"
+
+      - name: Upload to archive directory
+        if: ${{ !inputs.dry_run }}
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=accept-new" \
+            assets/ \
+            "$SF_USER@$SF_HOST:$SF_BASE/freeplane stable/archive/${{ steps.version.outputs.version }}/"
+
+      - name: Set default downloads
+        if: ${{ !inputs.dry_run }}
+        run: |
+          # Set macOS default
+          curl -H "Accept: application/json" \
+            -X PUT \
+            -d "default=mac" \
+            -d "api_key=${{ secrets.SF_API_KEY }}" \
+            "https://sourceforge.net/projects/freeplane/files/freeplane%20stable/Freeplane-${{ steps.version.outputs.version }}-apple.dmg"
+
+          # Set Windows default
+          curl -H "Accept: application/json" \
+            -X PUT \
+            -d "default=windows" \
+            -d "api_key=${{ secrets.SF_API_KEY }}" \
+            "https://sourceforge.net/projects/freeplane/files/freeplane%20stable/Freeplane-Setup-${{ steps.version.outputs.version }}.exe"
+
+          # Set default for others (Linux, BSD, Solaris)
+          curl -H "Accept: application/json" \
+            -X PUT \
+            -d "default=linux&default=bsd&default=solaris&default=others" \
+            -d "api_key=${{ secrets.SF_API_KEY }}" \
+            "https://sourceforge.net/projects/freeplane/files/freeplane%20stable/freeplane_bin-${{ steps.version.outputs.version }}.zip"

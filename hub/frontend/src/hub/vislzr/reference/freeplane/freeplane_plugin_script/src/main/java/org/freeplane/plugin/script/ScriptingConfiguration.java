@@ -1,0 +1,182 @@
+/*
+ *  Freeplane - mind map editor
+ *  Copyright (C) 2009 Volker Boerchers
+ *
+ *  This file author is Volker Boerchers
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+package org.freeplane.plugin.script;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+
+import org.freeplane.core.resources.ResourceController;
+import org.freeplane.core.ui.components.UITools;
+import org.freeplane.core.util.ConfigurationUtils;
+import org.freeplane.core.util.HtmlUtils;
+import org.freeplane.core.util.LogUtils;
+import org.freeplane.core.util.MenuUtils;
+import org.freeplane.core.util.TextUtils;
+import org.freeplane.features.mode.Controller;
+import org.freeplane.main.addons.AddOnProperties;
+import org.freeplane.main.addons.AddOnProperties.AddOnType;
+import org.freeplane.main.addons.AddOnsController;
+import org.freeplane.plugin.script.addons.ScriptAddOnProperties;
+import org.freeplane.plugin.script.proxy.ScriptUtils;
+
+/**
+ * scans for scripts to be registered via {@link ScriptingRegistration}.
+ *
+ * @author Volker Boerchers
+ */
+class ScriptingConfiguration {
+
+    private static Map<String, Object> staticProperties = createStaticProperties();
+
+    final static private FilenameFilter JAR_FILE_FILTER = new FilenameFilter() {
+        @Override
+        public boolean accept(final File dir, final String name) {
+            return name.endsWith(".jar");
+        }
+    };
+
+	static void register() {
+	    ScriptingConfiguration scriptingConfiguration = new ScriptingConfiguration();
+        ArrayList<String> classpath = scriptingConfiguration.buildClasspath();
+        ScriptResources.setClasspath(classpath);
+        scriptingConfiguration.addPluginDefaults();
+	}
+
+	private ScriptingConfiguration() {/**/}
+
+ 	private void addPluginDefaults() {
+		final URL defaults = ScriptingConfiguration.class.getResource("defaults.properties");
+		Objects.requireNonNull(defaults);
+		Properties props = new Properties();
+        ResourceController.loadProperties(props, defaults);
+        ResourceController resourceController = Controller.getCurrentController().getResourceController();
+        resourceController.addDefaults(props);
+        props.keySet().forEach(key -> resourceController.secureProperty((String)key));
+	}
+
+    private List<ScriptAddOnProperties> getInstalledScriptAddOns() {
+        final List<ScriptAddOnProperties> installedAddOns = new ArrayList<ScriptAddOnProperties>();
+		for (AddOnProperties addOnProperties : AddOnsController.getController().getInstalledAddOns()) {
+	        if (addOnProperties.getAddOnType() == AddOnType.SCRIPT) {
+	        	installedAddOns.add((ScriptAddOnProperties) addOnProperties);
+	        }
+        }
+        return installedAddOns;
+    }
+
+    private File getPrivateAddOnDirectory(AddOnProperties addOnProperties) {
+        return new File(AddOnsController.getController().getAddOnsDir(), addOnProperties.getName());
+    }
+	/**
+	 * if <code>path</code> is not an absolute path, prepends the freeplane user
+	 * directory to it.
+	 */
+	private File createFile(final String path) {
+		File file = new File(path);
+		if (!file.isAbsolute()) {
+			file = new File(ResourceController.getResourceController().getFreeplaneUserDirectory(), path);
+		}
+		return file;
+	}
+	private ArrayList<String> buildClasspath() {
+	    final ArrayList<String> classpath = new ArrayList<String>();
+	    classpath.add(ScriptResources.getPrecompiledScriptsDir().getAbsolutePath());
+	    addClasspathForAddOns(classpath);
+        addClasspathForConfiguredEntries(classpath);
+        return classpath;
+    }
+
+    private void addClasspathForAddOns(final ArrayList<String> classpath) {
+        final List<ScriptAddOnProperties> installedScriptAddOns = getInstalledScriptAddOns();
+        for (ScriptAddOnProperties scriptAddOnProperties : installedScriptAddOns) {
+            final List<String> lib = scriptAddOnProperties.getLib();
+            if (lib != null) {
+                for (String libEntry : lib) {
+                    final File dir = new File(getPrivateAddOnDirectory(scriptAddOnProperties), "lib");
+                    classpath.add(new File(dir, libEntry).getAbsolutePath());
+                }
+            }
+        }
+    }
+
+    private void addClasspathForConfiguredEntries(final ArrayList<String> classpath) {
+        for (File classpathElement : uniqueClassPathElements(ResourceController.getResourceController())) {
+            addClasspathElement(classpath, classpathElement);
+        }
+    }
+
+    private Set<File> uniqueClassPathElements(final ResourceController resourceController) {
+        final String classpathString = resourceController.getProperty(ScriptResources.RESOURCES_SCRIPT_CLASSPATH);
+        final Set<File> classpathElements = new LinkedHashSet<File>();
+        if (classpathString != null) {
+            for (String string : ConfigurationUtils.decodeListValue(classpathString, false)) {
+                classpathElements.add(createFile(string));
+            }
+        }
+        classpathElements.add(ScriptResources.getUserLibDir());
+        return classpathElements;
+    }
+
+    private void addClasspathElement(final ArrayList<String> classpath, File classpathElement) {
+        final File file = classpathElement;
+        if (!file.exists()) {
+            LogUtils.warn("classpath entry '" + classpathElement + "' doesn't exist. (Use " + File.pathSeparator
+                    + " to separate entries.)");
+        }
+        else if (file.isDirectory()) {
+            classpath.add(file.getAbsolutePath());
+            for (final File jar : file.listFiles(JAR_FILE_FILTER)) {
+                classpath.add(jar.getAbsolutePath());
+            }
+        }
+        else {
+            classpath.add(file.getAbsolutePath());
+        }
+    }
+
+	List<String> getClasspath() {
+		return ScriptResources.getClasspath();
+	}
+
+    public static Map<String, Object> getStaticProperties() {
+        return staticProperties;
+    }
+
+    private static Map<String, Object> createStaticProperties() {
+        Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    	properties.put("logger", new LogUtils());
+    	properties.put("ui", new UITools());
+    	properties.put("htmlUtils", HtmlUtils.getInstance());
+    	properties.put("textUtils", new TextUtils());
+    	properties.put("menuUtils", new MenuUtils());
+    	properties.put("scriptUtils", new ScriptUtils());
+    	properties.put("config", new FreeplaneScriptBaseClass.ConfigProperties());
+        return properties;
+    }
+}
