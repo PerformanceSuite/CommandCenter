@@ -17,6 +17,9 @@ export type EntityType =
   | 'task'
   | 'spec'
   | 'project';
+  | 'persona'
+  | 'workflow'
+  | 'execution';
 
 export type EdgeType =
   | 'contains'
@@ -197,6 +200,21 @@ export const NODE_STYLES: Record<EntityType, NodeStyleConfig> = {
   spec: {
     background: '#475569',
     border: '#94a3b8',
+    color: '#ffffff',
+  },
+  persona: {
+    background: '#7c2d12',
+    border: '#c2410c',
+    color: '#ffffff',
+  },
+  workflow: {
+    background: '#0e7490',
+    border: '#06b6d4',
+    color: '#ffffff',
+  },
+  execution: {
+    background: '#047857',
+    border: '#10b981',
     color: '#ffffff',
   },
 };
