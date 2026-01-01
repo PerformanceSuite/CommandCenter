@@ -1,10 +1,13 @@
 #!/bin/bash
-# Run document intelligence extraction with API key from config
+# Quick launcher for document extraction
+# Runs in background, logs to /tmp/extraction.log
 
-# Load API key from config
+# Source API key from config
 source ~/.config/api-keys/.env.api-keys
 
-cd /Users/danielconnolly/Projects/CommandCenter
+cd ~/Projects/CommandCenter
 
-# Run extraction with any passed arguments
-python3 scripts/extract_document_intelligence.py "$@"
+echo "Starting extraction at $(date)" > /tmp/extraction.log
+/usr/bin/python3 scripts/extract_document_intelligence.py "$@" >> /tmp/extraction.log 2>&1
+echo "Finished at $(date)" >> /tmp/extraction.log
+echo "Results in docs/cleanup/extraction-results.yaml"

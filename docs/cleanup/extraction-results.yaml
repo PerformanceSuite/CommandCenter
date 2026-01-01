@@ -1,6 +1,6 @@
 all_concepts:
 - &id001
-  definition: Main application being tested with a comprehensive testing strategy and philosophy.
+  definition: The main platform being tested, with specific testing philosophy, coverage goals, and best practices.
   domain: development
   name: CommandCenter
   related_entities:
@@ -8,9 +8,10 @@ all_concepts:
   - Testing Strategy
   source_doc: docs/TESTING_STRATEGY.md
   status: active
-  type: product
+  type: platform
 - &id002
-  definition: Testing principle with many unit tests (75%), some integration tests (15%), and few E2E tests (10%).
+  definition: Testing principle with many unit tests, some integration tests, and few E2E tests, shown with specific percentages
+    (75% unit, 15% integration, 10% E2E).
   domain: development
   name: Test Pyramid
   related_entities:
@@ -21,37 +22,55 @@ all_concepts:
   status: implemented
   type: framework
 - &id003
-  definition: Service component that provides business logic for technology-related operations including relevance scoring.
+  definition: Service class that handles business logic for technologies, including calculating relevance scores.
   domain: development
   name: TechnologyService
   related_entities:
   - Technology
   - Unit Tests
   source_doc: docs/TESTING_STRATEGY.md
-  status: active
+  status: implemented
   type: module
 - &id004
-  definition: Model class representing technology entities with properties like title, domain, vendor, status, and relevance.
+  definition: Model representing a technology entity with properties like title, domain, vendor, status, and relevance.
   domain: development
   name: Technology
   related_entities:
   - TechnologyService
   - Technology Radar
   source_doc: docs/TESTING_STRATEGY.md
-  status: active
-  type: module
+  status: implemented
+  type: product
 - &id005
-  definition: User interface feature that allows users to view and create technology entries in a radar chart visualization.
+  definition: Feature that allows users to view and manage technologies in a radar chart visualization.
   domain: development
   name: Technology Radar
   related_entities:
   - Technology
   - E2E Tests
   source_doc: docs/TESTING_STRATEGY.md
-  status: active
+  status: implemented
   type: feature
 - &id006
-  definition: Code coverage tracking service with configuration for project and patch coverage targets.
+  definition: Web framework used in the backend application, referenced in integration test examples.
+  domain: development
+  name: FastAPI
+  related_entities:
+  - Integration Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: framework
+- &id007
+  definition: Browser automation framework used for E2E testing with TypeScript support.
+  domain: development
+  name: Playwright
+  related_entities:
+  - E2E Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: framework
+- &id008
+  definition: Coverage tracking service configured to enforce 80% backend and 60% frontend coverage targets.
   domain: development
   name: Codecov
   related_entities:
@@ -59,458 +78,2468 @@ all_concepts:
   - CI/CD Integration
   source_doc: docs/TESTING_STRATEGY.md
   status: implemented
-  type: integration
-- &id007
-  definition: Browser automation framework used for E2E testing with support for complete user journey testing.
-  domain: development
-  name: Playwright
-  related_entities:
-  - E2E Tests
-  - Performance Testing
-  source_doc: docs/TESTING_STRATEGY.md
-  status: active
-  type: framework
-- &id008
-  definition: Security testing capability that ensures tampered, expired, and invalid format tokens are properly rejected.
-  domain: security
+  type: platform
+- &id009
+  definition: Security testing approach that ensures tampered, expired, and invalid format tokens are properly rejected.
+  domain: compliance
   name: JWT Validation
   related_entities:
-  - Security Testing
+  - Security Testing Approach
   - RBAC
   source_doc: docs/TESTING_STRATEGY.md
-  status: active
-  type: capability
-- &id009
-  definition: Mandatory security feature ensuring users cannot access other users' data with database filtering by project_id.
-  domain: security
+  status: implemented
+  type: process
+- &id010
+  definition: Mandatory security feature ensuring User A cannot access User B's data through cross-project query blocking
+    and database filtering by project_id.
+  domain: compliance
   name: Project Isolation
   related_entities:
-  - Security Testing
-  - RBAC
+  - Security Testing Approach
+  - JWT Validation
   source_doc: docs/TESTING_STRATEGY.md
-  status: active
+  status: implemented
   type: capability
-- &id010
-  definition: Role-Based Access Control system with permission checks, owner vs member access, and admin capabilities.
-  domain: security
+- &id011
+  definition: Role-Based Access Control system implementing permission checks, owner vs member access, and admin capabilities.
+  domain: compliance
   name: RBAC
   related_entities:
+  - Security Testing Approach
   - JWT Validation
-  - Project Isolation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  type: capability
+- &id012
+  definition: Service that interfaces with GitHub API for repository operations, used in mocking examples.
+  domain: development
+  name: GitHubService
+  related_entities:
+  - GitHub API
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  type: module
+- &id013
+  definition: Load testing tool mentioned as alternative to unit tests for performance testing.
+  domain: development
+  name: K6
+  related_entities:
+  - Load Testing
+  - Locust
   source_doc: docs/TESTING_STRATEGY.md
   status: active
+  type: technology
+- &id014
+  definition: Load testing tool mentioned as alternative to unit tests for performance testing.
+  domain: development
+  name: Locust
+  related_entities:
+  - Load Testing
+  - K6
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: technology
+- &id062
+  definition: A development methodology where all development happens inside Docker containers to ensure identical behavior
+    between development and production environments.
+  domain: development
+  name: Docker-First Development Workflow
+  related_entities:
+  - Docker
+  - docker-compose
+  - Production Environment
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: implemented
+  type: framework
+- &id063
+  definition: Container orchestration tool used to manage multiple Docker services including backend, postgres, and other
+    application components.
+  domain: development
+  name: docker-compose
+  related_entities:
+  - Docker
+  - backend
+  - postgres
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id064
+  definition: Database migration tool used for creating, applying, and managing database schema changes with auto-generation
+    capabilities from models.
+  domain: development
+  name: Alembic
+  related_entities:
+  - Database Migrations
+  - backend
+  - postgres
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id065
+  definition: Automated database schema management process using Alembic to create, apply, rollback, and track database changes.
+  domain: development
+  name: Database Migrations
+  related_entities:
+  - Alembic
+  - postgres
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: process
+- &id066
+  definition: Testing framework used for running unit tests, integration tests, and code coverage analysis within the Docker
+    environment.
+  domain: development
+  name: pytest
+  related_entities:
+  - backend
+  - Code Quality
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id067
+  definition: Automated code formatting, linting, and type checking using Black, flake8, and mypy tools within Docker containers.
+  domain: development
+  name: Code Quality
+  related_entities:
+  - Black
+  - flake8
+  - mypy
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: process
+- &id068
+  definition: Python code formatter used for maintaining consistent code style and formatting standards.
+  domain: development
+  name: Black
+  related_entities:
+  - Code Quality
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id069
+  definition: Python linting tool used for code quality checks and style enforcement.
+  domain: development
+  name: flake8
+  related_entities:
+  - Code Quality
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id070
+  definition: Python type checker used for static type analysis and type safety verification.
+  domain: development
+  name: mypy
+  related_entities:
+  - Code Quality
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id071
+  definition: Database model representing graph repositories, accessible through Python shell sessions for data querying and
+    manipulation.
+  domain: development
+  name: GraphRepo
+  related_entities:
+  - SessionLocal
+  - backend
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: product
+- &id072
+  definition: Database session factory used for creating database connections and performing database operations in the application
+    context.
+  domain: development
+  name: SessionLocal
+  related_entities:
+  - GraphRepo
+  - postgres
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id073
+  definition: Primary database system used for data persistence, accessible through psql shell and SQL queries within Docker
+    containers.
+  domain: development
+  name: PostgreSQL
+  related_entities:
+  - postgres
+  - Database Migrations
+  - SessionLocal
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id074
+  definition: Database schema migration that added 11 new graph-related tables to support Phase 7 functionality, successfully
+    implemented using the Docker-first workflow.
+  domain: development
+  name: Phase 7 Graph Schema
+  related_entities:
+  - Database Migrations
+  - Alembic
+  - GraphRepo
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: implemented
+  type: feature
+- &id075
+  definition: Load balancer and reverse proxy solution referenced for zero-conflict deployment, used to resolve port conflicts
+    in development environments.
+  domain: development
+  name: Traefik
+  related_entities:
+  - Docker-First Development Workflow
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: technology
+- &id076
+  definition: Multi-instance security feature that ensures separation and protection of data across different application
+    instances.
+  domain: development
+  name: Data Isolation
+  related_entities:
+  - Docker-First Development Workflow
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: active
+  type: capability
+- &id107
+  definition: SDK used by Hub for orchestration, replacing docker-compose subprocess calls in the CommandCenter system.
+  domain: development
+  name: Dagger SDK
+  related_entities:
+  - Hub
+  - docker-compose
+  - commandcenter.py
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  type: framework
+- &id108
+  definition: Core component of CommandCenter that now uses Dagger SDK for orchestration and manages project creation.
+  domain: development
+  name: Hub
+  related_entities:
+  - Dagger SDK
+  - Backend
+  - CommandCenter
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: active
+  type: product
+- &id109
+  definition: Main platform that provides project templates and orchestration services, including Hub and Backend components.
+  domain: development
+  name: CommandCenter
+  related_entities:
+  - Hub
+  - Backend
+  - Project Analyzer
+  - MCP
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: active
+  type: product
+- &id110
+  definition: Design pattern implemented for code reuse and consistency in database operations across repository methods.
+  domain: development
+  name: BaseRepository pattern
+  related_entities:
+  - Backend
+  - database.py
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  type: framework
+- &id111
+  definition: Professional command-line interface framework used in the deferred CLI interface for enhanced user experience.
+  domain: development
+  name: Rich TUI
+  related_entities:
+  - CLI interface
+  - Textual framework
+  - Click
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  type: framework
+- &id112
+  definition: Protocol for provider implementations that enables integration with CommandCenter for AI tool access and authentication.
+  domain: development
+  name: Model Context Protocol
+  related_entities:
+  - CommandCenter
+  - Project Analyzer
+  - provider authentication
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  type: technology
+- &id113
+  definition: Automated service for project analysis including technology stack detection and dependency scanning with gap
+    analysis.
+  domain: development
+  name: Project Analyzer
+  related_entities:
+  - MCP
+  - CommandCenter
+  - dependency scanning
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  type: feature
+- &id114
+  definition: Framework component used alongside Rich TUI for building the professional CLI interface.
+  domain: development
+  name: Textual framework
+  related_entities:
+  - Rich TUI
+  - CLI interface
+  - Click
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  type: framework
+- &id115
+  definition: Command-based structure framework used for building the CLI interface with Rich TUI and Textual.
+  domain: development
+  name: Click
+  related_entities:
+  - Rich TUI
+  - Textual framework
+  - CLI interface
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  type: framework
+- &id116
+  definition: Backend component that has been refactored with improved DB session handling and BaseRepository pattern implementation.
+  domain: development
+  name: Backend
+  related_entities:
+  - Hub
+  - CommandCenter
+  - BaseRepository pattern
+  - database.py
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: active
+  type: module
+- &id143
+  definition: A TypeScript-based reference implementation serving as a lightweight local-only hub for tool discovery and event
+    bus simulation.
+  domain: development
+  name: Hub Prototype
+  related_entities:
+  - Python Hub
+  - FastAPI
+  - Next.js
+  - MockBus
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: product
+- &id144
+  definition: A production-ready multi-project CommandCenter instance manager built with FastAPI, React, and Dagger SDK for
+    type-safe container orchestration.
+  domain: development
+  name: Python Hub
+  related_entities:
+  - CommandCenter
+  - Dagger SDK
+  - SQLAlchemy
+  - Celery
+  - React
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: active
+  type: product
+- &id145
+  definition: A deployment system that the Python Hub manages multiple instances of for project orchestration.
+  domain: development
+  name: CommandCenter
+  related_entities:
+  - Python Hub
+  - Dagger SDK
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: active
+  type: platform
+- &id146
+  definition: A software development kit used for type-safe container orchestration within the Python Hub system.
+  domain: development
+  name: Dagger SDK
+  related_entities:
+  - Python Hub
+  - CommandCenter
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: active
+  type: technology
+- &id147
+  definition: An event bus component for event publishing within the TypeScript hub prototype that includes correlation tracking.
+  domain: development
+  name: MockBus
+  related_entities:
+  - Hub Prototype
+  - HubEvent
+  - EventStreamer
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: module
+- &id148
+  definition: A component that provides file watcher capabilities for live event tailing in the TypeScript hub prototype.
+  domain: development
+  name: EventStreamer
+  related_entities:
+  - MockBus
+  - HubEvent
+  - Hub Prototype
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: module
+- &id149
+  definition: A TypeScript interface defining the structure for events with correlation IDs, origins, timestamps, and payload
+    data.
+  domain: development
+  name: HubEvent
+  related_entities:
+  - MockBus
+  - EventStreamer
+  - Hub Prototype
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: framework
+- &id150
+  definition: A system that scans for tools with manifest.json files to enable tool discovery and registration.
+  domain: development
+  name: Tool Registry
+  related_entities:
+  - Hub Prototype
+  - Tool Manifests
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: feature
+- &id151
+  definition: JSON configuration files (manifest.json) that define tool metadata for registration in the tool registry system.
+  domain: development
+  name: Tool Manifests
+  related_entities:
+  - Tool Registry
+  - Hub Prototype
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: framework
+- &id152
+  definition: A logging mechanism that persists events in JSON Lines format with append-only behavior for temporal replay
+    and filtering.
+  domain: development
+  name: JSONL Event Persistence
+  related_entities:
+  - MockBus
+  - EventStreamer
+  - HubEvent
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: feature
+- &id153
+  definition: A background task system used in the Python Hub for async operations and task status events.
+  domain: development
+  name: Celery
+  related_entities:
+  - Python Hub
+  - SQLAlchemy
+  - Redis
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: active
+  type: technology
+- &id154
+  definition: A database ORM used in the Python Hub for managing project metadata storage.
+  domain: development
+  name: SQLAlchemy
+  related_entities:
+  - Python Hub
+  - PostgreSQL
+  - Celery
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: active
+  type: technology
+- &id155
+  definition: The API protocol used by the TypeScript hub prototype for communication, running on port 5055.
+  domain: development
+  name: JSON-RPC 2.0
+  related_entities:
+  - Hub Prototype
+  - Fastify
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: framework
+- &id156
+  definition: An extracted bundle containing event schema, correlation tracking, and streaming implementation components for
+    the hub system.
+  domain: development
+  name: Phase 2-3 Bundle
+  related_entities:
+  - HubEvent
+  - EventStreamer
+  - MockBus
+  - Hub Prototype
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: module
+- &id157
+  definition: A system for tracking related events through correlation IDs and origin metadata for request traceability.
+  domain: development
+  name: Correlation Tracking
+  related_entities:
+  - HubEvent
+  - Phase 2-3 Bundle
+  - MockBus
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: feature
+- &id158
+  definition: A Next.js 14 web UI that provides a dashboard for listing registered tools, showing recent events, and health
+    monitoring.
+  domain: development
+  name: Hub Console
+  related_entities:
+  - Hub Prototype
+  - Next.js
+  - Tool Registry
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  type: product
+- &id159
+  definition: A recommendations system stub within the TypeScript hub prototype for tool operations management.
+  domain: development
+  name: ToolOps
+  related_entities:
+  - Hub Prototype
+  - Tool Registry
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  type: framework
+- &id204
+  definition: A centralized R&D management platform designed to help technology teams track research activities, evaluate
+    emerging technologies, and build a knowledge base using AI-powered semantic search.
+  domain: development
+  name: CommandCenter
+  related_entities:
+  - Technology Radar
+  - Research Hub
+  - Knowledge Base
+  - GitHub Integration
+  source_doc: docs/PRD.md
+  status: proposed
+  type: platform
+- &id205
+  definition: Visual tracking system for technologies across their evaluation lifecycle, categorized by domain and tracked
+    through stages from discovery to integration.
+  domain: development
+  name: Technology Radar
+  related_entities:
+  - CommandCenter
+  - Technology
+  - Research Hub
+  source_doc: docs/PRD.md
+  status: proposed
+  type: feature
+- &id206
+  definition: Task management system for research activities where engineers create research tasks, upload documents, track
+    progress, and document findings.
+  domain: development
+  name: Research Hub
+  related_entities:
+  - CommandCenter
+  - Technology
+  - Knowledge Base
+  - Research Task
+  source_doc: docs/PRD.md
+  status: proposed
+  type: feature
+- &id207
+  definition: AI-powered semantic search across all uploaded documentation using RAG (Retrieval-Augmented Generation) with
+    ChromaDB vector database and Docling for document processing.
+  domain: development
+  name: Knowledge Base
+  related_entities:
+  - CommandCenter
+  - RAG
+  - ChromaDB
+  - Docling
+  - Research Hub
+  source_doc: docs/PRD.md
+  status: proposed
+  type: feature
+- &id208
+  definition: Automatic repository tracking, technology detection, and webhook support for keeping repository data synchronized
+    with CommandCenter platform.
+  domain: development
+  name: GitHub Integration
+  related_entities:
+  - CommandCenter
+  - Repository
+  - Webhook
+  - Technology
+  source_doc: docs/PRD.md
+  status: proposed
+  type: integration
+- &id209
+  definition: Retrieval-Augmented Generation - AI technique combining semantic search with LLM generation for knowledge base
+    functionality.
+  domain: development
+  name: RAG
+  related_entities:
+  - Knowledge Base
+  - ChromaDB
+  - AI-powered semantic search
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id210
+  definition: Vector database for storing and searching document embeddings used in the knowledge base semantic search functionality.
+  domain: development
+  name: ChromaDB
+  related_entities:
+  - Knowledge Base
+  - RAG
+  - semantic search
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id211
+  definition: Document processing library for extracting structured content from PDFs, used to process uploaded documents
+    for indexing.
+  domain: development
+  name: Docling
+  related_entities:
+  - Knowledge Base
+  - document processing
+  - Research Hub
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id212
+  definition: Entity representing technologies being evaluated, with lifecycle tracking across stages like Discovery, Research,
+    Evaluation, Implementation, Integration, and Archived.
+  domain: development
+  name: Technology
+  related_entities:
+  - Technology Radar
+  - Research Task
+  - Knowledge Entry
+  source_doc: docs/PRD.md
+  status: proposed
+  type: module
+- &id213
+  definition: Task management entity for research activities including status tracking, document uploads, findings documentation,
+    and progress monitoring.
+  domain: development
+  name: Research Task
+  related_entities:
+  - Research Hub
+  - Technology
+  - Repository
+  - Knowledge Entry
+  source_doc: docs/PRD.md
+  status: proposed
+  type: module
+- &id214
+  definition: GitHub repository tracking entity with metadata, technology detection, webhook support, and integration with
+    research activities.
+  domain: development
+  name: Repository
+  related_entities:
+  - GitHub Integration
+  - Research Task
+  - Technology
+  - Webhook
+  source_doc: docs/PRD.md
+  status: proposed
+  type: module
+- &id215
+  definition: Database records for indexed documents with semantic search capabilities, linking to technologies and providing
+    content discovery.
+  domain: development
+  name: Knowledge Entry
+  related_entities:
+  - Knowledge Base
+  - Technology
+  - ChromaDB
+  - Research Task
+  source_doc: docs/PRD.md
+  status: proposed
+  type: module
+- &id216
+  definition: GitHub webhook integration for automatic repository synchronization and event handling to keep repository data
+    updated.
+  domain: development
+  name: Webhook
+  related_entities:
+  - GitHub Integration
+  - Repository
+  - GitHub API
+  source_doc: docs/PRD.md
+  status: proposed
+  type: integration
+- &id217
+  definition: JSON Web Token standard for secure authentication tokens with 30-minute access tokens and 7-day refresh tokens.
+  domain: development
+  name: JWT
+  related_entities:
+  - Authentication
+  - Security
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id218
+  definition: Password-Based Key Derivation Function 2 used for secure password hashing and GitHub token encryption.
+  domain: development
+  name: PBKDF2
+  related_entities:
+  - Security
+  - Authentication
+  - GitHub Integration
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id219
+  definition: Python web framework used as the backend API framework for CommandCenter platform.
+  domain: development
+  name: FastAPI
+  related_entities:
+  - CommandCenter
+  - API
+  - Backend
+  source_doc: docs/PRD.md
+  status: proposed
+  type: framework
+- &id220
+  definition: Python SQL toolkit and Object Relational Mapping (ORM) library used for database operations with async support.
+  domain: development
+  name: SQLAlchemy
+  related_entities:
+  - Database
+  - PostgreSQL
+  - Backend
+  source_doc: docs/PRD.md
+  status: proposed
+  type: framework
+- &id221
+  definition: Relational database system used as the primary data store for CommandCenter application data.
+  domain: development
+  name: PostgreSQL
+  related_entities:
+  - Database
+  - SQLAlchemy
+  - Backend
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id222
+  definition: In-memory data structure store used for caching GitHub API responses with 90% reduction in API calls.
+  domain: development
+  name: Redis
+  related_entities:
+  - Caching
+  - GitHub Integration
+  - Performance
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id223
+  definition: JavaScript library for building user interfaces, used as the frontend framework for CommandCenter.
+  domain: development
+  name: React
+  related_entities:
+  - Frontend
+  - UI/UX
+  - TypeScript
+  source_doc: docs/PRD.md
+  status: proposed
+  type: framework
+- &id224
+  definition: Typed superset of JavaScript used in the frontend development for better code quality and developer experience.
+  domain: development
+  name: TypeScript
+  related_entities:
+  - Frontend
+  - React
+  - Development
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id225
+  definition: Monitoring system used for collecting metrics including HTTP request rates, latency, errors, and system performance.
+  domain: development
+  name: Prometheus
+  related_entities:
+  - Monitoring
+  - Metrics
+  - Observability
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id226
+  definition: Analytics and monitoring platform used for creating dashboards to visualize system health and performance metrics.
+  domain: development
+  name: Grafana
+  related_entities:
+  - Dashboards
+  - Monitoring
+  - Prometheus
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id227
+  definition: GitHub's REST API providing 15+ endpoints for repository operations, issue tracking, PR management, and webhook
+    configuration.
+  domain: development
+  name: GitHub API
+  related_entities:
+  - GitHub Integration
+  - Repository
+  - Webhook
+  source_doc: docs/PRD.md
+  status: active
+  type: integration
+- &id228
+  definition: Overview interface showing key metrics, recent activity, and actionable insights including repository counts,
+    task status, and activity feeds.
+  domain: development
+  name: Dashboard
+  related_entities:
+  - CommandCenter
+  - Analytics
+  - UI/UX
+  source_doc: docs/PRD.md
+  status: proposed
+  type: feature
+- &id229
+  definition: Database migration tool used with SQLAlchemy for managing database schema changes and versioning.
+  domain: development
+  name: Alembic
+  related_entities:
+  - Database
+  - SQLAlchemy
+  - PostgreSQL
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id230
+  definition: Frontend build tool used for fast development and optimized production builds of the React application.
+  domain: development
+  name: Vite
+  related_entities:
+  - Frontend
+  - React
+  - Build Tool
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id231
+  definition: Data fetching library for React used to manage server state, caching, and synchronization in the frontend.
+  domain: development
+  name: TanStack Query
+  related_entities:
+  - Frontend
+  - React
+  - Data Fetching
+  source_doc: docs/PRD.md
+  status: proposed
+  type: technology
+- &id232
+  definition: Utility-first CSS framework used for styling the frontend user interface with responsive design patterns.
+  domain: development
+  name: Tailwind CSS
+  related_entities:
+  - Frontend
+  - UI/UX
+  - Styling
+  source_doc: docs/PRD.md
+  status: proposed
   type: framework
 all_requirements:
-- &id011
+- &id015
   id: REQ-001
   priority: high
-  source_concept: test pyramid
+  source_concept: Test Pyramid
   source_doc: docs/TESTING_STRATEGY.md
-  status: implemented
-  text: System must follow test pyramid principle with 75% unit tests, 15% integration tests, and 10% E2E tests
+  status: proposed
+  text: System must follow the test pyramid principle with many unit tests, some integration tests, and few E2E tests
   type: constraint
-- &id012
+- &id016
   id: REQ-002
   priority: medium
-  source_concept: test distribution
+  source_concept: Test Pyramid
   source_doc: docs/TESTING_STRATEGY.md
   status: implemented
-  text: System must maintain approximately 290 unit tests (75% of test suite)
-  type: non-functional
-- &id013
+  text: System must maintain 75% unit tests, 15% integration tests, and 10% E2E tests in the test distribution
+  type: constraint
+- &id017
   id: REQ-003
-  priority: medium
-  source_concept: test distribution
+  priority: high
+  source_concept: Unit Tests
   source_doc: docs/TESTING_STRATEGY.md
-  status: implemented
-  text: System must maintain approximately 58 integration tests (15% of test suite)
+  status: proposed
+  text: System must have unit tests execute in less than 1ms each
   type: non-functional
-- &id014
+- &id018
   id: REQ-004
-  priority: medium
-  source_concept: test distribution
+  priority: high
+  source_concept: Unit Tests
   source_doc: docs/TESTING_STRATEGY.md
-  status: implemented
-  text: System must maintain approximately 40 E2E tests (10% of test suite)
-  type: non-functional
-- &id015
+  status: proposed
+  text: System must ensure unit tests have no external dependencies
+  type: constraint
+- &id019
   id: REQ-005
   priority: high
-  source_concept: unit test performance
+  source_concept: Unit Tests
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must execute unit tests in less than 1 millisecond each
-  type: non-functional
-- &id016
+  text: System must mock all external components in unit tests
+  type: constraint
+- &id020
   id: REQ-006
-  priority: high
-  source_concept: integration test performance
+  priority: medium
+  source_concept: Integration Tests
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must execute integration tests in approximately 100 milliseconds each
+  text: System must execute integration tests in approximately 100ms each
   type: non-functional
-- &id017
+- &id021
   id: REQ-007
+  priority: high
+  source_concept: Integration Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must use real database and services for integration tests
+  type: constraint
+- &id022
+  id: REQ-008
   priority: medium
-  source_concept: E2E test performance
+  source_concept: E2E Tests
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must execute E2E tests in 5-10 seconds each
   type: non-functional
-- &id018
-  id: REQ-008
-  priority: critical
-  source_concept: unit test isolation
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must isolate unit tests with no external dependencies
-  type: constraint
-- &id019
-  id: REQ-009
-  priority: critical
-  source_concept: unit test mocking
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must mock all external dependencies in unit tests
-  type: constraint
-- &id020
-  id: REQ-010
-  priority: high
-  source_concept: backend coverage
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must achieve 80% or higher backend code coverage
-  type: constraint
-- &id021
-  id: REQ-011
-  priority: high
-  source_concept: frontend coverage
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must achieve 60% or higher frontend code coverage
-  type: constraint
-- &id022
-  id: REQ-012
-  priority: high
-  source_concept: CI coverage enforcement
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must enforce coverage targets in CI pipeline
-  type: constraint
 - &id023
-  id: REQ-013
+  id: REQ-009
   priority: high
-  source_concept: service coverage
+  source_concept: E2E Tests
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must achieve 90% or higher coverage for service components
+  text: System must use browser automation for E2E tests
   type: constraint
 - &id024
-  id: REQ-014
-  priority: high
-  source_concept: model coverage
+  id: REQ-010
+  priority: critical
+  source_concept: Coverage Goals
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must achieve 85% or higher coverage for model components
+  text: System must maintain 80% or greater code coverage for backend
   type: constraint
 - &id025
-  id: REQ-015
+  id: REQ-011
   priority: high
-  source_concept: router coverage
+  source_concept: Coverage Goals
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must achieve 80% or higher coverage for router components
+  text: System must maintain 60% or greater code coverage for frontend
   type: constraint
 - &id026
-  id: REQ-016
+  id: REQ-012
   priority: high
-  source_concept: utility coverage
+  source_concept: Coverage Goals
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must achieve 95% or higher coverage for utility components
+  text: System must achieve 90% or greater coverage for backend services
   type: constraint
 - &id027
-  id: REQ-017
+  id: REQ-013
+  priority: high
+  source_concept: Coverage Goals
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 85% or greater coverage for backend models
+  type: constraint
+- &id028
+  id: REQ-014
   priority: critical
-  source_concept: critical path coverage
+  source_concept: Coverage Goals
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must achieve 100% coverage for critical paths
   type: constraint
-- &id028
-  id: REQ-018
-  priority: critical
-  source_concept: project isolation testing
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must implement mandatory project isolation security tests
-  type: functional
 - &id029
-  id: REQ-019
+  id: REQ-015
   priority: critical
-  source_concept: project isolation
+  source_concept: Critical Paths
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must block cross-project data access
-  type: functional
+  text: System must have both integration and E2E coverage for critical paths
+  type: constraint
 - &id030
-  id: REQ-020
+  id: REQ-016
   priority: critical
-  source_concept: JWT security testing
+  source_concept: Security Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must implement mandatory JWT validation security tests
+  text: System must implement project isolation security tests to prevent cross-project data access
   type: functional
 - &id031
-  id: REQ-021
+  id: REQ-017
   priority: critical
-  source_concept: JWT validation
+  source_concept: Security Testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must implement JWT validation security tests
+  type: functional
+- &id032
+  id: REQ-018
+  priority: critical
+  source_concept: JWT Validation
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must reject tampered JWT tokens
   type: functional
-- &id032
-  id: REQ-022
+- &id033
+  id: REQ-019
   priority: critical
-  source_concept: JWT validation
+  source_concept: JWT Validation
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must reject expired JWT tokens
   type: functional
-- &id033
-  id: REQ-023
+- &id034
+  id: REQ-020
   priority: critical
-  source_concept: SQL injection prevention
+  source_concept: JWT Validation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must reject invalid format JWT tokens
+  type: functional
+- &id035
+  id: REQ-021
+  priority: critical
+  source_concept: Security Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must prevent SQL injection attacks
   type: functional
-- &id034
-  id: REQ-024
+- &id036
+  id: REQ-022
   priority: critical
-  source_concept: XSS protection
+  source_concept: Security Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must provide XSS protection
   type: functional
-- &id035
-  id: REQ-025
-  priority: critical
-  source_concept: RBAC testing
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must implement RBAC permission checks
-  type: functional
-- &id036
-  id: REQ-026
-  priority: high
-  source_concept: N+1 query detection
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must detect and prevent N+1 query problems
-  type: non-functional
 - &id037
-  id: REQ-027
-  priority: medium
-  source_concept: query performance
+  id: REQ-023
+  priority: high
+  source_concept: Security Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must limit database queries to 3 or fewer per test when using query counter
-  type: constraint
+  text: System must implement CSRF token validation
+  type: functional
 - &id038
-  id: REQ-028
+  id: REQ-024
   priority: high
-  source_concept: API performance
+  source_concept: Security Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must respond to GET endpoints in less than 500ms
-  type: non-functional
+  text: System must implement role-based access control testing
+  type: functional
 - &id039
-  id: REQ-029
-  priority: high
-  source_concept: API performance
+  id: REQ-025
+  priority: medium
+  source_concept: Performance Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must respond to POST endpoints in less than 300ms
+  text: System must detect N+1 database query problems
   type: non-functional
 - &id040
-  id: REQ-030
+  id: REQ-026
   priority: medium
-  source_concept: query performance
+  source_concept: Performance Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must execute complex queries in less than 1500ms
-  type: non-functional
+  text: System must assert database query count is less than or equal to threshold
+  type: constraint
 - &id041
-  id: REQ-031
-  priority: high
-  source_concept: CI pipeline performance
+  id: REQ-027
+  priority: medium
+  source_concept: Performance Testing
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must complete CI pipeline smoke tests in less than 5 minutes
+  text: System must ensure GET endpoints respond in less than 500ms
   type: non-functional
 - &id042
+  id: REQ-028
+  priority: medium
+  source_concept: Performance Testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must ensure POST endpoints respond in less than 300ms
+  type: non-functional
+- &id043
+  id: REQ-029
+  priority: medium
+  source_concept: Performance Testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must ensure complex queries respond in less than 1500ms
+  type: non-functional
+- &id044
+  id: REQ-030
+  priority: high
+  source_concept: CI Pipeline
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must run smoke tests in less than 5 minutes
+  type: non-functional
+- &id045
+  id: REQ-031
+  priority: medium
+  source_concept: Test Sharding
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must support test sharding for E2E tests with 4-way parallel execution
+  type: non-functional
+- &id046
   id: REQ-032
   priority: medium
-  source_concept: E2E test sharding
+  source_concept: Test Sharding
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must run E2E tests in 4-way parallel sharding
-  type: constraint
-- &id043
-  id: REQ-033
-  priority: medium
-  source_concept: integration test sharding
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must shard integration tests by category (api, services, db)
-  type: constraint
-- &id044
-  id: REQ-034
-  priority: high
-  source_concept: coverage enforcement
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must fail CI builds when coverage drops below target thresholds
-  type: constraint
-- &id045
-  id: REQ-035
-  priority: medium
-  source_concept: Codecov configuration
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must configure Codecov with 80% project target and 1% threshold
-  type: constraint
-- &id046
-  id: REQ-036
-  priority: high
-  source_concept: patch coverage
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must require 70% coverage for new code in patches
-  type: constraint
+  text: System must support test sharding for integration tests by category
+  type: non-functional
 - &id047
-  id: REQ-037
-  priority: medium
-  source_concept: coverage exclusions
+  id: REQ-033
+  priority: critical
+  source_concept: Coverage Enforcement
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must exclude migration files, test files, and build artifacts from coverage
+  text: System must enforce coverage targets and fail builds below thresholds
   type: constraint
 - &id048
-  id: REQ-038
+  id: REQ-034
   priority: critical
-  source_concept: PR requirements
+  source_concept: Codecov Configuration
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must require all tests to pass for PR approval
+  text: System must have overall project coverage target of 80%
   type: constraint
 - &id049
-  id: REQ-039
-  priority: critical
-  source_concept: security test enforcement
+  id: REQ-035
+  priority: high
+  source_concept: Codecov Configuration
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must not allow skipping of security tests
+  text: System must require 70% coverage for new code in pull requests
   type: constraint
 - &id050
-  id: REQ-040
+  id: REQ-036
+  priority: medium
+  source_concept: Codecov Configuration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must allow maximum 1% coverage drop for project
+  type: constraint
+- &id051
+  id: REQ-037
   priority: high
-  source_concept: test independence
+  source_concept: Codecov Configuration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must not allow any coverage drop for patches
+  type: constraint
+- &id052
+  id: REQ-038
+  priority: low
+  source_concept: Codecov Configuration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must exclude migration files from coverage calculation
+  type: constraint
+- &id053
+  id: REQ-039
+  priority: low
+  source_concept: Codecov Configuration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must exclude test files from coverage calculation
+  type: constraint
+- &id054
+  id: REQ-040
+  priority: critical
+  source_concept: PR Requirements
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must require all tests to pass before pull request approval
+  type: constraint
+- &id055
+  id: REQ-041
+  priority: high
+  source_concept: Test Quality Standards
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must ensure tests are independent and can run in any order
   type: constraint
-- &id051
-  id: REQ-041
+- &id056
+  id: REQ-042
   priority: high
-  source_concept: test repeatability
+  source_concept: Test Quality Standards
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must ensure tests are repeatable with same results every time
   type: constraint
-- &id052
-  id: REQ-042
+- &id057
+  id: REQ-043
   priority: high
-  source_concept: test isolation
+  source_concept: Test Quality Standards
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
   text: System must ensure tests are isolated with no shared state
   type: constraint
-- &id053
-  id: REQ-043
-  priority: high
-  source_concept: unit test suite performance
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must complete unit test suite in less than 30 seconds total
-  type: non-functional
-- &id054
+- &id058
   id: REQ-044
   priority: high
-  source_concept: integration test suite performance
+  source_concept: Performance Best Practices
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must complete integration test suite in less than 5 minutes total
+  text: System must ensure unit test suite completes in less than 30 seconds total
   type: non-functional
-- &id055
+- &id059
   id: REQ-045
-  priority: medium
-  source_concept: E2E test suite performance
+  priority: high
+  source_concept: Performance Best Practices
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must complete E2E test suite in less than 10 minutes total with sharding
+  text: System must ensure integration test suite completes in less than 5 minutes total
   type: non-functional
-- &id056
+- &id060
   id: REQ-046
   priority: high
-  source_concept: CI pipeline performance
+  source_concept: Performance Best Practices
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must complete full CI pipeline in less than 25 minutes total
+  text: System must ensure E2E test suite completes in less than 10 minutes total with sharding
   type: non-functional
-- &id057
+- &id061
   id: REQ-047
-  priority: critical
-  source_concept: critical path testing
+  priority: high
+  source_concept: Performance Best Practices
   source_doc: docs/TESTING_STRATEGY.md
   status: proposed
-  text: System must provide both integration and E2E coverage for critical paths
+  text: System must ensure full CI pipeline completes in less than 25 minutes total
+  type: non-functional
+- &id077
+  id: REQ-001
+  priority: critical
+  source_concept: Development Environment Parity
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide zero environment mismatches between development and production
+  type: non-functional
+- &id078
+  id: REQ-002
+  priority: critical
+  source_concept: Development Environment Parity
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must ensure identical behavior in development and production environments
+  type: non-functional
+- &id079
+  id: REQ-003
+  priority: high
+  source_concept: Cross-platform Compatibility
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must work consistently on any machine (Mac, Linux, Windows)
+  type: non-functional
+- &id080
+  id: REQ-004
+  priority: high
+  source_concept: Team Development Consistency
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide consistent environment for all team members
+  type: non-functional
+- &id081
+  id: REQ-005
+  priority: medium
+  source_concept: Dependency Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must prevent local dependency conflicts
+  type: non-functional
+- &id082
+  id: REQ-006
+  priority: high
+  source_concept: Service Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must allow starting all services with a single command
+  type: functional
+- &id083
+  id: REQ-007
+  priority: critical
+  source_concept: Database Migration Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support database migration operations within containers
+  type: functional
+- &id084
+  id: REQ-008
+  priority: high
+  source_concept: Database Migration Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support automated migration generation from model changes
+  type: functional
+- &id085
+  id: REQ-009
+  priority: medium
+  source_concept: Database Migration Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support migration rollback functionality
+  type: functional
+- &id086
+  id: REQ-010
+  priority: high
+  source_concept: Testing Infrastructure
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support test execution within containers
+  type: functional
+- &id087
+  id: REQ-011
+  priority: medium
+  source_concept: Testing Infrastructure
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support test coverage reporting
+  type: functional
+- &id088
+  id: REQ-012
+  priority: medium
+  source_concept: Code Quality Tools
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support code formatting with Black
+  type: functional
+- &id089
+  id: REQ-013
+  priority: medium
+  source_concept: Code Quality Tools
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support linting with flake8
+  type: functional
+- &id090
+  id: REQ-014
+  priority: medium
+  source_concept: Code Quality Tools
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support type checking with mypy
+  type: functional
+- &id091
+  id: REQ-015
+  priority: medium
+  source_concept: Development Tools
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide Python shell access with application context
+  type: functional
+- &id092
+  id: REQ-016
+  priority: medium
+  source_concept: Logging and Monitoring
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide log viewing capabilities for all services
+  type: functional
+- &id093
+  id: REQ-017
+  priority: medium
+  source_concept: Database Access
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide direct database access through PostgreSQL shell
+  type: functional
+- &id094
+  id: REQ-018
+  priority: high
+  source_concept: Dependency Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support rebuilding after dependency changes
+  type: functional
+- &id095
+  id: REQ-019
+  priority: medium
+  source_concept: Build Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support clean rebuild without cache
+  type: functional
+- &id096
+  id: REQ-020
+  priority: high
+  source_concept: Team Onboarding
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must allow team onboarding with single clone and compose command
+  type: functional
+- &id097
+  id: REQ-021
+  priority: critical
+  source_concept: Version Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must maintain consistent Python version across environments
   type: constraint
-- &id058
+- &id098
+  id: REQ-022
+  priority: critical
+  source_concept: Dependency Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must lock dependencies in Dockerfile for consistency
+  type: constraint
+- &id099
+  id: REQ-023
+  priority: high
+  source_concept: Database Migration Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support copying migration files from container to host
+  type: functional
+- &id100
+  id: REQ-024
+  priority: low
+  source_concept: Container Execution
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must provide TTY allocation control for script execution
+  type: functional
+- &id101
+  id: REQ-025
+  priority: medium
+  source_concept: Service Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support checking service health status
+  type: functional
+- &id102
+  id: REQ-026
+  priority: medium
+  source_concept: Service Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support service restart functionality
+  type: functional
+- &id103
+  id: REQ-027
+  priority: medium
+  source_concept: Port Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support configurable ports to avoid conflicts
+  type: functional
+- &id104
+  id: REQ-028
+  priority: medium
+  source_concept: File Permissions
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must handle permission issues when copying files
+  type: functional
+- &id105
+  id: REQ-029
+  priority: medium
+  source_concept: Database Access
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support database connection verification from backend
+  type: functional
+- &id106
+  id: REQ-030
+  priority: medium
+  source_concept: Environment Management
+  source_doc: docs/DOCKER_DEVELOPMENT.md
+  status: proposed
+  text: System must support complete environment cleanup with single command
+  type: functional
+- &id117
+  id: REQ-001
+  priority: high
+  source_concept: Hub orchestration
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must use Dagger SDK for orchestration instead of docker-compose subprocess calls
+  type: functional
+- &id118
+  id: REQ-002
+  priority: critical
+  source_concept: Hub health monitoring
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must maintain health check endpoint that returns status as healthy
+  type: functional
+- &id119
+  id: REQ-003
+  priority: high
+  source_concept: Hub project management
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must provide Projects API functionality
+  type: functional
+- &id120
+  id: REQ-004
+  priority: medium
+  source_concept: Template versioning
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must provide template version endpoint
+  type: functional
+- &id121
+  id: REQ-005
+  priority: high
+  source_concept: Frontend interface
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must load frontend correctly
+  type: functional
+- &id122
+  id: REQ-006
+  priority: medium
+  source_concept: Backend architecture
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must implement BaseRepository pattern for code reuse
+  type: non-functional
+- &id123
+  id: REQ-007
+  priority: critical
+  source_concept: Database management
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must handle async database sessions properly to prevent data loss
+  type: functional
+- &id124
+  id: REQ-008
+  priority: high
+  source_concept: Docker deployment
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must build successfully with Docker for both backend and frontend
+  type: non-functional
+- &id125
+  id: REQ-009
+  priority: critical
+  source_concept: Quality assurance
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must pass all Hub tests (9 out of 9 tests)
+  type: non-functional
+- &id126
+  id: REQ-010
+  priority: critical
+  source_concept: Code quality
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must compile without errors
+  type: constraint
+- &id127
+  id: REQ-011
+  priority: high
+  source_concept: Project creation workflow
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must support project creation with Dagger SDK
+  type: functional
+- &id128
+  id: REQ-012
+  priority: medium
+  source_concept: Deployment testing
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must deploy CommandCenter instances to test projects
+  type: functional
+- &id129
+  id: REQ-013
+  priority: medium
+  source_concept: Agent CLI interface
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must integrate CLI interface with Rich TUI and Textual framework
+  type: functional
+- &id130
+  id: REQ-014
+  priority: medium
+  source_concept: Agent CLI interface
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must support Click-based command structure
+  type: functional
+- &id131
+  id: REQ-015
+  priority: low
+  source_concept: Agent CLI interface
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must provide watch mode for live updates
+  type: functional
+- &id132
+  id: REQ-016
+  priority: medium
+  source_concept: Agent MCP infrastructure
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must implement Model Context Protocol provider functionality
+  type: functional
+- &id133
+  id: REQ-017
+  priority: medium
+  source_concept: Agent MCP infrastructure
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must integrate with CommandCenter for AI tool access
+  type: functional
+- &id134
+  id: REQ-018
+  priority: medium
+  source_concept: Agent MCP infrastructure
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must support provider authentication and routing
+  type: functional
+- &id135
+  id: REQ-019
+  priority: medium
+  source_concept: Project analyzer service
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must provide automated project analysis service
+  type: functional
+- &id136
+  id: REQ-020
+  priority: medium
+  source_concept: Project analyzer service
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must detect technology stack automatically
+  type: functional
+- &id137
+  id: REQ-021
+  priority: medium
+  source_concept: Project analyzer service
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must perform dependency scanning and gap analysis
+  type: functional
+- &id138
+  id: REQ-022
+  priority: high
+  source_concept: Repository state management
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must maintain clean working tree without regressions
+  type: constraint
+- &id139
+  id: REQ-023
+  priority: high
+  source_concept: Backup and recovery
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: implemented
+  text: System must provide rollback capability to backup tag if needed
+  type: non-functional
+- &id140
+  id: REQ-024
+  priority: critical
+  source_concept: Integration sequencing
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: unknown
+  text: System must complete core feature stabilization before agent service integration
+  type: dependency
+- &id141
+  id: REQ-025
+  priority: medium
+  source_concept: Agent service dependencies
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: unknown
+  text: System must integrate MCP core infrastructure before Project Analyzer service
+  type: dependency
+- &id142
+  id: REQ-026
+  priority: medium
+  source_concept: Template management
+  source_doc: docs/CONSOLIDATION_REPORT.md
+  status: proposed
+  text: System must validate template version tracking functionality
+  type: functional
+- &id160
+  id: REQ-001
+  priority: critical
+  source_concept: Integration Planning
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must conduct comprehensive review of all phase documents before proceeding with integration
+  type: constraint
+- &id161
+  id: REQ-002
+  priority: critical
+  source_concept: Python Hub
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must manage multiple CommandCenter deployments
+  type: functional
+- &id162
+  id: REQ-003
+  priority: critical
+  source_concept: Python Hub
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide Dagger SDK for type-safe container orchestration
+  type: functional
+- &id163
+  id: REQ-004
+  priority: high
+  source_concept: Python Hub
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must use SQLAlchemy database for project metadata storage
+  type: functional
+- &id164
+  id: REQ-005
+  priority: high
+  source_concept: Python Hub
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support Celery background tasks for async operations
+  type: functional
+- &id165
+  id: REQ-006
+  priority: medium
+  source_concept: Python Hub
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide React frontend with project cards
+  type: functional
+- &id166
+  id: REQ-007
+  priority: critical
+  source_concept: Python Hub Phase 1
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must implement project CRUD operations
+  type: functional
+- &id167
+  id: REQ-008
+  priority: high
+  source_concept: Python Hub Phase 3/4
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support background tasks and monitoring
+  type: functional
+- &id168
+  id: REQ-009
+  priority: high
+  source_concept: Python Hub Phase A
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide Dagger production hardening
+  type: non-functional
+- &id169
+  id: REQ-010
+  priority: medium
+  source_concept: Python Hub Tech Stack
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must run on Python 3.11 with FastAPI framework
+  type: constraint
+- &id170
+  id: REQ-011
+  priority: medium
+  source_concept: Python Hub Infrastructure
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must use PostgreSQL and Redis for data storage
+  type: constraint
+- &id171
+  id: REQ-012
+  priority: medium
+  source_concept: TypeScript Hub Prototype
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide lightweight local-only hub for tool discovery
+  type: functional
+- &id172
+  id: REQ-013
+  priority: medium
+  source_concept: TypeScript Hub Core
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must run Fastify server with JSON-RPC endpoint on port 5055
+  type: functional
+- &id173
+  id: REQ-014
+  priority: medium
+  source_concept: TypeScript Hub Core
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must implement MockBus for event publishing
+  type: functional
+- &id174
+  id: REQ-015
+  priority: medium
+  source_concept: TypeScript Hub Core
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide tool registry system that scans tools/*/manifest.json
+  type: functional
+- &id175
+  id: REQ-016
+  priority: medium
+  source_concept: TypeScript Hub Core
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must persist events in JSONL format at snapshots/hub/events/YYYYMMDD/HH.events.jsonl
+  type: functional
+- &id176
+  id: REQ-017
+  priority: medium
+  source_concept: TypeScript Hub Core
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide audit logging at snapshots/hub/audit/YYYY/MM/DD/hub.log
+  type: functional
+- &id177
+  id: REQ-018
+  priority: medium
+  source_concept: TypeScript Hub Console
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide Next.js 14 web UI for hub console
+  type: functional
+- &id178
+  id: REQ-019
+  priority: medium
+  source_concept: TypeScript Hub Console
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must list registered tools in web interface
+  type: functional
+- &id179
+  id: REQ-020
+  priority: medium
+  source_concept: TypeScript Hub Console
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must show recent events in web interface
+  type: functional
+- &id180
+  id: REQ-021
+  priority: medium
+  source_concept: TypeScript Hub Console
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide health dashboard
+  type: functional
+- &id181
+  id: REQ-022
+  priority: medium
+  source_concept: TypeScript Hub Tech Stack
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must run on Node.js 20+ with pnpm package manager
+  type: constraint
+- &id182
+  id: REQ-023
+  priority: high
+  source_concept: Phase 2-3 Bundle
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support event origin and correlation tracking
+  type: functional
+- &id183
+  id: REQ-024
+  priority: medium
+  source_concept: Phase 2-3 Bundle
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must implement EventStreamer for live event tailing
+  type: functional
+- &id184
+  id: REQ-025
+  priority: medium
+  source_concept: Phase 2-3 Bundle
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide replay service for event history
+  type: functional
+- &id185
+  id: REQ-026
+  priority: high
+  source_concept: Phase 2-3 Event Schema
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must include correlationId and origin fields in HubEvent schema
+  type: functional
+- &id186
+  id: REQ-027
+  priority: medium
+  source_concept: Phase 2-3 Event Schema
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must use UUID format for event IDs and correlation IDs
+  type: constraint
+- &id187
+  id: REQ-028
+  priority: medium
+  source_concept: Phase 2-3 Event Schema
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must use ISO 8601 format for timestamps
+  type: constraint
+- &id188
+  id: REQ-029
+  priority: medium
+  source_concept: Phase 2-3 Event Schema
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support event origin types of 'tool' and 'project'
+  type: functional
+- &id189
+  id: REQ-030
+  priority: medium
+  source_concept: Phase 2-3 Features
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must implement append-only JSONL event logging
+  type: functional
+- &id190
+  id: REQ-031
+  priority: medium
+  source_concept: Phase 2-3 Features
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must provide real-time file watching using fs.watch
+  type: functional
+- &id191
+  id: REQ-032
+  priority: medium
+  source_concept: Phase 2-3 Features
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support temporal replay filtering by timestamp
+  type: functional
+- &id192
+  id: REQ-033
+  priority: medium
+  source_concept: Phase 2-3 Features
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: implemented
+  text: System must support origin filtering by tool or project
+  type: functional
+- &id193
+  id: REQ-034
+  priority: critical
+  source_concept: Next Steps Required
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must read Phase_2&3_prompt.md to understand original intent and context
+  type: constraint
+- &id194
+  id: REQ-035
+  priority: critical
+  source_concept: Next Steps Required
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must read Phase_4_prompt.md for next phase requirements
+  type: constraint
+- &id195
+  id: REQ-036
+  priority: critical
+  source_concept: Next Steps Required
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must read Phase_5_prompt.md and Phase_6_prompt.md
+  type: constraint
+- &id196
+  id: REQ-037
+  priority: critical
+  source_concept: Next Steps Required
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must extract and review Phase 4, 5, 6 bundles
+  type: constraint
+- &id197
+  id: REQ-038
+  priority: high
+  source_concept: Next Steps Required
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must review Phases 7-12 blueprints for architecture vision
+  type: constraint
+- &id198
+  id: REQ-039
+  priority: critical
+  source_concept: Understanding Vision
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must determine end-state architecture vision
+  type: constraint
+- &id199
+  id: REQ-040
+  priority: critical
+  source_concept: Understanding Vision
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must clarify relationship between hub-prototype and target system
+  type: constraint
+- &id200
+  id: REQ-041
+  priority: high
+  source_concept: Understanding Vision
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must define relationship between projects and tools
+  type: constraint
+- &id201
+  id: REQ-042
+  priority: high
+  source_concept: Integration Points Mapping
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must identify integration points if systems are to be integrated
+  type: constraint
+- &id202
+  id: REQ-043
+  priority: high
+  source_concept: Integration Points Mapping
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must define communication protocol if systems operate separately
+  type: constraint
+- &id203
+  id: REQ-044
+  priority: medium
+  source_concept: Integration Points Mapping
+  source_doc: docs/HUB_PROTOTYPE_ANALYSIS.md
+  status: proposed
+  text: System must determine where Python Hub needs event correlation if integrating
+  type: constraint
+- &id233
+  id: REQ-001
+  priority: critical
+  source_concept: CommandCenter Platform
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must provide a centralized R&D management platform for technology teams to track research activities, evaluate
+    emerging technologies, and build a knowledge base using AI-powered semantic search
+  type: functional
+- &id234
+  id: REQ-002
+  priority: critical
+  source_concept: Technology Radar
+  source_doc: docs/PRD.md
+  status: implemented
+  text: 'System must track technologies across lifecycle stages: Discovery, Research, Evaluation, Implementation, Integrated,
+    Archived'
+  type: functional
+- &id235
+  id: REQ-003
+  priority: critical
+  source_concept: Technology Radar Visualization
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide a visual Technology Radar displaying technologies grouped by domain categories
+  type: functional
+- &id236
+  id: REQ-004
+  priority: high
+  source_concept: Technology Management
+  source_doc: docs/PRD.md
+  status: implemented
+  text: 'System must support technology domains: Audio DSP, AI/ML, Music Theory, Performance, UI/UX, Infrastructure, Other'
+  type: functional
+- &id237
+  id: REQ-005
+  priority: medium
+  source_concept: Technology Attributes
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must allow tracking relevance score (0-100) and priority (1-5) for each technology
+  type: functional
+- &id238
+  id: REQ-006
+  priority: critical
+  source_concept: Research Hub
+  source_doc: docs/PRD.md
+  status: implemented
+  text: 'System must provide research task management with statuses: Pending, In Progress, Blocked, Completed, Cancelled'
+  type: functional
+- &id239
+  id: REQ-007
+  priority: critical
+  source_concept: Document Management
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must support document uploads (PDF, Markdown, text files) to research tasks
+  type: functional
+- &id240
+  id: REQ-008
+  priority: critical
+  source_concept: Document Processing
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must process uploaded documents using Docling service to extract text, tables, and structure
+  type: functional
+- &id241
+  id: REQ-009
+  priority: critical
+  source_concept: Knowledge Base RAG
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide AI-powered semantic search across all uploaded documentation using ChromaDB vector database
+  type: functional
+- &id242
+  id: REQ-010
+  priority: high
+  source_concept: Semantic Search
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must return search results with relevance scores and source context including file, page number, and chunk
+    information
+  type: functional
+- &id243
+  id: REQ-011
+  priority: medium
+  source_concept: Multi-Collection Support
+  source_doc: docs/PRD.md
+  status: implemented
+  text: 'System must support multiple knowledge base collections: default, performia_docs, research, technical'
+  type: functional
+- &id244
+  id: REQ-012
+  priority: high
+  source_concept: GitHub Integration
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must integrate with GitHub repositories through URL-based addition and encrypted token storage
+  type: functional
+- &id245
+  id: REQ-013
+  priority: high
+  source_concept: Technology Detection
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must automatically detect technologies in GitHub repositories by analyzing languages and frameworks
+  type: functional
+- &id246
+  id: REQ-014
+  priority: medium
+  source_concept: Webhook Support
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must support GitHub webhook events (push, PR, issues) to keep repository data synchronized
+  type: functional
+- &id247
+  id: REQ-015
+  priority: critical
+  source_concept: Authentication
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide user authentication using JWT tokens with 30-minute access token expiry and 7-day refresh token
+    expiry
+  type: functional
+- &id248
+  id: REQ-016
+  priority: critical
+  source_concept: Data Security
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must use PBKDF2 for secure password hashing and encrypted storage of GitHub tokens
+  type: non-functional
+- &id249
+  id: REQ-017
+  priority: high
+  source_concept: Rate Limiting
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must implement rate limiting of 100 requests per minute per user
+  type: non-functional
+- &id250
+  id: REQ-018
+  priority: high
+  source_concept: Dashboard Analytics
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide a dashboard showing overview metrics including total repositories, active research tasks, technologies
+    tracked, and knowledge base documents
+  type: functional
+- &id251
+  id: REQ-019
+  priority: medium
+  source_concept: Progress Tracking
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must track progress percentage (0-100) for research tasks
+  type: functional
+- &id252
+  id: REQ-020
+  priority: medium
+  source_concept: Effort Tracking
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must support estimated vs actual hours tracking for research tasks
+  type: functional
+- &id253
+  id: REQ-021
+  priority: high
+  source_concept: Technology Relationships
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must allow linking technologies to research tasks and repositories
+  type: functional
+- &id254
+  id: REQ-022
+  priority: high
+  source_concept: Findings Documentation
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must store user notes and findings fields for research tasks
+  type: functional
+- &id255
+  id: REQ-023
+  priority: medium
+  source_concept: Technology Filtering
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide filtering capabilities for technologies by domain, status, and tags
+  type: functional
+- &id256
+  id: REQ-024
+  priority: medium
+  source_concept: Task Filtering
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide filtering capabilities for research tasks by status, technology, repository, and assignee
+  type: functional
+- &id257
+  id: REQ-025
+  priority: high
+  source_concept: Performance
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must achieve page load times under 2 seconds for initial load and under 500ms for subsequent navigation
+  type: non-functional
+- &id258
+  id: REQ-026
+  priority: high
+  source_concept: Search Performance
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must provide knowledge base search responses within 1 second
+  type: non-functional
+- &id259
+  id: REQ-027
+  priority: high
+  source_concept: Scalability
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must support 1000+ technologies, 10,000+ knowledge entries, and 100+ concurrent users
+  type: non-functional
+- &id260
+  id: REQ-028
+  priority: high
+  source_concept: Reliability
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must achieve 99.9% uptime target
+  type: non-functional
+- &id261
+  id: REQ-029
+  priority: high
+  source_concept: Security Headers
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must implement security headers including HSTS, CSP, X-Frame-Options, and X-Content-Type-Options
+  type: non-functional
+- &id262
+  id: REQ-030
+  priority: critical
+  source_concept: Technology Stack
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must use PostgreSQL 16 as the primary database
+  type: constraint
+- &id263
+  id: REQ-031
+  priority: critical
+  source_concept: Technology Stack
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must use Python 3.13 and FastAPI 0.110+ for the backend
+  type: constraint
+- &id264
+  id: REQ-032
+  priority: critical
+  source_concept: Technology Stack
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must use React 18 and TypeScript 5 for the frontend
+  type: constraint
+- &id265
+  id: REQ-033
+  priority: critical
+  source_concept: Technology Stack
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must use ChromaDB as the vector database for semantic search
+  type: constraint
+- &id266
+  id: REQ-034
+  priority: high
+  source_concept: API Design
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide API endpoints following RESTful conventions with base URL /api/v1
+  type: functional
+- &id267
+  id: REQ-035
+  priority: medium
+  source_concept: API Pagination
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide pagination support with skip and limit parameters for list endpoints
+  type: functional
+- &id268
+  id: REQ-036
+  priority: high
+  source_concept: Authorization
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must implement role-based access control for API endpoints
+  type: functional
+- &id269
+  id: REQ-037
+  priority: medium
+  source_concept: GitHub API Caching
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must cache GitHub API responses using Redis to achieve 90% reduction in API calls
+  type: non-functional
+- &id270
+  id: REQ-038
+  priority: medium
+  source_concept: Rate Limit Tracking
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must track GitHub API rate limits and provide warnings
+  type: functional
+- &id271
+  id: REQ-039
+  priority: medium
+  source_concept: Responsive Design
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must use responsive design with breakpoints for mobile (<640px), tablet (640px-1024px), and desktop (>1024px)
+  type: non-functional
+- &id272
+  id: REQ-040
+  priority: medium
+  source_concept: Accessibility
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must comply with WCAG 2.1 AA accessibility standards
+  type: non-functional
+- &id273
+  id: REQ-041
+  priority: medium
+  source_concept: Monitoring
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must provide Prometheus metrics for HTTP requests, database queries, and cache performance
+  type: non-functional
+- &id274
+  id: REQ-042
+  priority: medium
+  source_concept: Logging
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must provide structured JSON logging with correlation IDs
+  type: non-functional
+- &id275
+  id: REQ-043
+  priority: high
+  source_concept: Data Integrity
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must implement database transactions for critical operations to ensure data integrity
+  type: non-functional
+- &id276
+  id: REQ-044
+  priority: high
+  source_concept: Reliability
+  source_doc: docs/PRD.md
+  status: proposed
+  text: System must provide graceful degradation when services fail
+  type: non-functional
+- &id277
+  id: REQ-045
+  priority: low
+  source_concept: Custom Metadata
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must support custom metadata fields for research tasks using JSON storage
+  type: functional
+- &id278
+  id: REQ-046
+  priority: medium
+  source_concept: Document Tracking
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must track document upload timestamps and processing status
+  type: functional
+- &id279
+  id: REQ-047
+  priority: medium
+  source_concept: Technology Tags
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must support tagging technologies for enhanced filtering and organization
+  type: functional
+- &id280
   id: REQ-048
-  priority: critical
-  source_concept: authentication testing
-  source_doc: docs/TESTING_STRATEGY.md
-  status: proposed
-  text: System must test user authentication as a critical path
+  priority: low
+  source_concept: Knowledge Statistics
+  source_doc: docs/PRD.md
+  status: implemented
+  text: System must provide statistics about knowledge base including document counts by category and collection
   type: functional
-- &id059
+- &id281
   id: REQ-049
-  priority: critical
-  source_concept: CRUD testing
-  source_doc: docs/TESTING_STRATEGY.md
+  priority: high
+  source_concept: Success Metrics
+  source_doc: docs/PRD.md
   status: proposed
-  text: System must test data CRUD operations as critical paths
-  type: functional
-- &id060
+  text: System must achieve 80% user adoption within R&D team within 3 months
+  type: non-functional
+- &id282
   id: REQ-050
-  priority: critical
-  source_concept: security boundary testing
-  source_doc: docs/TESTING_STRATEGY.md
+  priority: high
+  source_concept: Success Metrics
+  source_doc: docs/PRD.md
   status: proposed
-  text: System must test security boundaries as critical paths
-  type: functional
+  text: System must reduce time to find documentation by 50%
+  type: non-functional
 documents:
 - classification:
     action: keep
     key_topics:
     - test-pyramid
     - coverage-goals
-    - performance-testing
     - security-testing
-    - ci-cd-integration
-    staleness_score: 15
+    - performance-testing
+    - ci-integration
+    staleness_score: 5
     status: active
     subtype: testing-strategy
     type: guide
@@ -526,14 +2555,14 @@ documents:
   - *id008
   - *id009
   - *id010
-  extracted_at: '2025-12-31T20:23:03.016838'
-  filename: TESTING_STRATEGY.md
-  path: docs/TESTING_STRATEGY.md
-  requirements:
   - *id011
   - *id012
   - *id013
   - *id014
+  extracted_at: '2025-12-31T21:28:56.064030'
+  filename: TESTING_STRATEGY.md
+  path: docs/TESTING_STRATEGY.md
+  requirements:
   - *id015
   - *id016
   - *id017
@@ -580,9 +2609,307 @@ documents:
   - *id058
   - *id059
   - *id060
+  - *id061
   size_bytes: 16008
+- classification:
+    action: keep
+    key_topics:
+    - docker-development
+    - database-migrations
+    - testing-workflow
+    - environment-parity
+    - troubleshooting
+    staleness_score: 5
+    status: active
+    subtype: developer-workflow
+    type: guide
+    value: high
+  concepts:
+  - *id062
+  - *id063
+  - *id064
+  - *id065
+  - *id066
+  - *id067
+  - *id068
+  - *id069
+  - *id070
+  - *id071
+  - *id072
+  - *id073
+  - *id074
+  - *id075
+  - *id076
+  extracted_at: '2025-12-31T21:29:54.990481'
+  filename: DOCKER_DEVELOPMENT.md
+  path: docs/DOCKER_DEVELOPMENT.md
+  requirements:
+  - *id077
+  - *id078
+  - *id079
+  - *id080
+  - *id081
+  - *id082
+  - *id083
+  - *id084
+  - *id085
+  - *id086
+  - *id087
+  - *id088
+  - *id089
+  - *id090
+  - *id091
+  - *id092
+  - *id093
+  - *id094
+  - *id095
+  - *id096
+  - *id097
+  - *id098
+  - *id099
+  - *id100
+  - *id101
+  - *id102
+  - *id103
+  - *id104
+  - *id105
+  - *id106
+  size_bytes: 6003
+- classification:
+    action: keep
+    key_topics:
+    - branch-consolidation
+    - dagger-orchestration
+    - backend-refactor
+    - agent-services
+    - repository-management
+    staleness_score: 0
+    status: completed
+    subtype: consolidation-report
+    type: report
+    value: high
+  concepts:
+  - *id107
+  - *id108
+  - *id109
+  - *id110
+  - *id111
+  - *id112
+  - *id113
+  - *id114
+  - *id115
+  - *id116
+  extracted_at: '2025-12-31T21:30:39.773315'
+  filename: CONSOLIDATION_REPORT.md
+  path: docs/CONSOLIDATION_REPORT.md
+  requirements:
+  - *id117
+  - *id118
+  - *id119
+  - *id120
+  - *id121
+  - *id122
+  - *id123
+  - *id124
+  - *id125
+  - *id126
+  - *id127
+  - *id128
+  - *id129
+  - *id130
+  - *id131
+  - *id132
+  - *id133
+  - *id134
+  - *id135
+  - *id136
+  - *id137
+  - *id138
+  - *id139
+  - *id140
+  - *id141
+  - *id142
+  size_bytes: 7834
+- classification:
+    action: keep
+    key_topics:
+    - hub-prototype-analysis
+    - python-hub-integration
+    - phase-document-review
+    - architecture-comparison
+    - event-correlation
+    staleness_score: 5
+    status: active
+    subtype: analysis-integration
+    type: report
+    value: high
+  concepts:
+  - *id143
+  - *id144
+  - *id145
+  - *id146
+  - *id147
+  - *id148
+  - *id149
+  - *id150
+  - *id151
+  - *id152
+  - *id153
+  - *id154
+  - *id155
+  - *id156
+  - *id157
+  - *id158
+  - *id159
+  extracted_at: '2025-12-31T21:31:20.656636'
+  filename: HUB_PROTOTYPE_ANALYSIS.md
+  path: docs/HUB_PROTOTYPE_ANALYSIS.md
+  requirements:
+  - *id160
+  - *id161
+  - *id162
+  - *id163
+  - *id164
+  - *id165
+  - *id166
+  - *id167
+  - *id168
+  - *id169
+  - *id170
+  - *id171
+  - *id172
+  - *id173
+  - *id174
+  - *id175
+  - *id176
+  - *id177
+  - *id178
+  - *id179
+  - *id180
+  - *id181
+  - *id182
+  - *id183
+  - *id184
+  - *id185
+  - *id186
+  - *id187
+  - *id188
+  - *id189
+  - *id190
+  - *id191
+  - *id192
+  - *id193
+  - *id194
+  - *id195
+  - *id196
+  - *id197
+  - *id198
+  - *id199
+  - *id200
+  - *id201
+  - *id202
+  - *id203
+  size_bytes: 6289
+- classification:
+    action: keep
+    key_topics:
+    - product-requirements
+    - r&d-management
+    - rag-knowledge-base
+    - technology-tracking
+    - implementation-roadmap
+    staleness_score: 15
+    status: active
+    subtype: product-requirements
+    type: plan
+    value: high
+  concepts:
+  - *id204
+  - *id205
+  - *id206
+  - *id207
+  - *id208
+  - *id209
+  - *id210
+  - *id211
+  - *id212
+  - *id213
+  - *id214
+  - *id215
+  - *id216
+  - *id217
+  - *id218
+  - *id219
+  - *id220
+  - *id221
+  - *id222
+  - *id223
+  - *id224
+  - *id225
+  - *id226
+  - *id227
+  - *id228
+  - *id229
+  - *id230
+  - *id231
+  - *id232
+  extracted_at: '2025-12-31T21:32:22.300440'
+  filename: PRD.md
+  path: docs/PRD.md
+  requirements:
+  - *id233
+  - *id234
+  - *id235
+  - *id236
+  - *id237
+  - *id238
+  - *id239
+  - *id240
+  - *id241
+  - *id242
+  - *id243
+  - *id244
+  - *id245
+  - *id246
+  - *id247
+  - *id248
+  - *id249
+  - *id250
+  - *id251
+  - *id252
+  - *id253
+  - *id254
+  - *id255
+  - *id256
+  - *id257
+  - *id258
+  - *id259
+  - *id260
+  - *id261
+  - *id262
+  - *id263
+  - *id264
+  - *id265
+  - *id266
+  - *id267
+  - *id268
+  - *id269
+  - *id270
+  - *id271
+  - *id272
+  - *id273
+  - *id274
+  - *id275
+  - *id276
+  - *id277
+  - *id278
+  - *id279
+  - *id280
+  - *id281
+  - *id282
+  size_bytes: 49723
 metadata:
   documents_failed: 0
-  documents_processed: 1
-  extraction_date: '2025-12-31T20:23:03.007174'
+  documents_processed: 5
+  extraction_date: '2025-12-31T21:28:56.055005'
   model: claude-sonnet-4-20250514

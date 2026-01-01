@@ -1,0 +1,330 @@
+documents:
+- concepts:
+  - definition: A system that manages tools with manifests and snapshots
+    name: CommandCenter
+    status: implemented
+    type: product
+  - definition: Configuration file for tools located in tools/<id>/ directory
+    name: manifest.json
+    status: implemented
+    type: feature
+  - definition: Data files stored under snapshots/<env>/<tool>/<kind>/<YYYY>/<MM>/<DD>/
+      structure
+    name: snapshot JSON
+    status: implemented
+    type: feature
+  - definition: Script for validating schemas
+    name: verify-schemas.sh
+    status: implemented
+    type: capability
+  - definition: Continuous integration gate script
+    name: cc-ci-gate.sh
+    status: implemented
+    type: capability
+  file: CHECKLIST.md
+  requirements:
+  - id: REQ-001
+    priority: high
+    text: System must replace template manifest if present by creating tools/<id>/manifest.json
+      and deleting tools/_TEMPLATE_
+  - id: REQ-002
+    priority: high
+    text: System must add at least one snapshot JSON under snapshots/<env>/<tool>/<kind>/<YYYY>/<MM>/<DD>/
+  - id: REQ-003
+    priority: high
+    text: System must make scripts executable with chmod +x on verify-schemas.sh and
+      cc-ci-gate.sh
+  - id: REQ-004
+    priority: high
+    text: System must run verify-schemas.sh script
+  - id: REQ-005
+    priority: high
+    text: System must run cc-ci-gate.sh script
+- concepts:
+  - definition: Component with setInterval timer for loading research data every 10
+      seconds
+    name: ResearchSummary
+    status: implemented
+    type: feature
+  - definition: Component with timer-related functionality for managing research tasks
+    name: ResearchTaskList
+    status: implemented
+    type: feature
+  - definition: Code quality tool configuration for enforcing TypeScript type safety
+    name: ESLint type safety
+    status: implemented
+    type: capability
+  - definition: Test setup using vitest mocking with fake timers for component testing
+    name: Mock configuration
+    status: implemented
+    type: capability
+  - definition: API module containing getResearchSummary and other research-related
+      endpoints
+    name: Research API
+    status: implemented
+    type: module
+  file: KNOWN_ISSUES.md
+  requirements:
+  - id: REQ-001
+    priority: high
+    text: Cannot merge to main until test failures are fixed
+  - id: REQ-002
+    priority: high
+    text: Must fix 28 failing frontend tests due to mock configuration issues
+  - id: REQ-003
+    priority: high
+    text: Must resolve infinite loop issues with vi.runAllTimersAsync() and setInterval
+  - id: REQ-004
+    priority: medium
+    text: Should maintain ESLint clean status with 0 warnings
+  - id: REQ-005
+    priority: medium
+    text: Should maintain type safety improvements
+  - id: REQ-006
+    priority: low
+    text: Could refactor components to make intervals more testable
+  - id: REQ-007
+    priority: low
+    text: Could extract interval logic for better test configuration
+- concepts:
+  - definition: Multi-project R&D management and knowledge base system
+    name: CommandCenter
+    status: implemented
+    type: product
+  - definition: Vendored package migrated to monorepo for RAG functionality
+    name: KnowledgeBeast
+    status: implemented
+    type: module
+  - definition: Technology tracking and visualization
+    name: Tech Radar
+    status: implemented
+    type: feature
+  - definition: Retrieval-Augmented Generation powered knowledge base using KnowledgeBeast
+      + PostgreSQL/pgvector
+    name: RAG functionality
+    status: implemented
+    type: capability
+  - definition: Integration and sync with GitHub repositories
+    name: GitHub repository integration
+    status: implemented
+    type: feature
+  - definition: Repository structure with libs/ directory for vendored packages
+    name: Monorepo structure
+    status: implemented
+    type: capability
+  - definition: Database backend for RAG functionality
+    name: PostgreSQL + pgvector backend
+    status: implemented
+    type: module
+  - definition: Backend API implementation using FastAPI
+    name: FastAPI backend
+    status: implemented
+    type: module
+  - definition: Frontend implementation using React and TypeScript
+    name: React/TypeScript frontend
+    status: implemented
+    type: module
+  - definition: Containerized deployment using Docker Compose
+    name: Docker Compose deployment
+    status: implemented
+    type: capability
+  - definition: Architecture supporting multi-instance deployments with isolated data
+    name: Data isolation architecture
+    status: implemented
+    type: capability
+  - definition: Management system for research tasks
+    name: Research task management
+    status: implemented
+    type: feature
+  file: CHANGELOG.md
+  requirements: []
+- concepts:
+  - definition: Main product split into service folders including backend, frontend,
+      and hub components
+    name: CommandCenter
+    status: implemented
+    type: product
+  - definition: FastAPI API service with Alembic migrations and CLI
+    name: backend/app
+    status: implemented
+    type: module
+  - definition: React + Vite UI module
+    name: frontend/src
+    status: implemented
+    type: module
+  - definition: Multi-tenant portal module
+    name: hub
+    status: implemented
+    type: module
+  - definition: Shared Python packages
+    name: libs/knowledgebeast
+    status: implemented
+    type: module
+  - definition: Build system using Docker and Make for consistency across development
+      tasks
+    name: Docker-driven Make targets
+    status: implemented
+    type: capability
+  - definition: Development feature enabled through dev overrides for real-time code
+      changes
+    name: Hot reload
+    status: implemented
+    type: feature
+  - definition: End-to-end testing framework for UI scenarios
+    name: Playwright testing
+    status: implemented
+    type: capability
+  - definition: Python code formatter with 88 character limit and 4-space indentation
+    name: Black code formatting
+    status: implemented
+    type: capability
+  - definition: Python linter enforcing import order and unused code checks
+    name: Flake8 linting
+    status: implemented
+    type: capability
+  - definition: React development approach using TypeScript with specific naming conventions
+    name: TypeScript-first React
+    status: implemented
+    type: capability
+  - definition: CSS framework with utility classes grouped by layout, color, and state
+    name: Tailwind CSS
+    status: implemented
+    type: capability
+  - definition: Commit message format standard for code work
+    name: Conventional Commits
+    status: implemented
+    type: capability
+  file: AGENTS.md
+  requirements:
+  - id: REQ-001
+    priority: high
+    text: Python modules must follow Black defaults with 88 character limit and 4-space
+      indent
+  - id: REQ-002
+    priority: high
+    text: Backend coverage must be ≥80% before merging
+  - id: REQ-003
+    priority: high
+    text: Frontend coverage must be ≥60% before merging
+  - id: REQ-004
+    priority: medium
+    text: Python test files must be named test_<feature>.py
+  - id: REQ-005
+    priority: medium
+    text: React components must use PascalCase naming
+  - id: REQ-006
+    priority: medium
+    text: React hooks must be prefixed with 'use'
+  - id: REQ-007
+    priority: medium
+    text: Commits should follow Conventional Commits format for code work
+  - id: REQ-008
+    priority: medium
+    text: Each PR must include concise summary and linked issue
+  - id: REQ-009
+    priority: high
+    text: PR must confirm make lint and targeted tests passed
+  - id: REQ-010
+    priority: high
+    text: Must never reuse .env files across client deployments
+  - id: REQ-011
+    priority: high
+    text: Must set unique COMPOSE_PROJECT_NAME per instance
+  - id: REQ-012
+    priority: high
+    text: Must avoid committing generated backups from backups/ directory
+  - id: REQ-013
+    priority: medium
+    text: Should run make check-ports before starting services
+  - id: REQ-014
+    priority: medium
+    text: Should update docs/ or in-app copy alongside behavioral changes
+  - id: REQ-015
+    priority: low
+    text: Should avoid anonymous default exports for stable hot reload
+- concepts:
+  - definition: Main system with core backend, frontend, AI Arena, and various services
+    name: CommandCenter
+    status: implemented
+    type: product
+  - definition: FastAPI + SQLAlchemy + PostgreSQL backend infrastructure
+    name: Core Backend
+    status: implemented
+    type: module
+  - definition: React + TypeScript + Vite frontend application
+    name: Main Frontend
+    status: implemented
+    type: module
+  - definition: React + TypeScript + Vite hub interface
+    name: Hub Frontend
+    status: implemented
+    type: module
+  - definition: Hypothesis validation via multi-agent debate system
+    name: AI Arena
+    status: implemented
+    type: feature
+  - definition: Dynamic provider config with encrypted API keys
+    name: Settings/Providers
+    status: implemented
+    type: feature
+  - definition: Multi-provider with DB-backed registry + cost tracking
+    name: LLM Gateway
+    status: implemented
+    type: module
+  - definition: RSS, webhooks, file watchers for data ingestion
+    name: Knowledge Ingestion
+    status: implemented
+    type: feature
+  - definition: NATS + JetStream + SSE event streaming
+    name: Event System
+    status: implemented
+    type: module
+  - definition: Graph data management service
+    name: Graph Service
+    status: proposed
+    type: module
+  - definition: Federated system architecture
+    name: Federation
+    status: proposed
+    type: capability
+  - definition: Marketing module imported from standalone project
+    name: MRKTZR Module
+    status: proposed
+    type: module
+  - definition: Visualization frontend module
+    name: VISLZR Frontend
+    status: proposed
+    type: module
+  file: CAPABILITIES.md
+  requirements:
+  - id: REQ-001
+    priority: high
+    text: System must consolidate session docs by merging NEXT_SESSION*.md and CURRENT_*.md
+      into .claude/memory.md
+  - id: REQ-002
+    priority: high
+    text: System must archive hub-prototype to docs/archive/hub-prototype-legacy
+  - id: REQ-003
+    priority: high
+    text: System must clean worktrees by running git worktree list and removing stale
+      worktrees
+  - id: REQ-004
+    priority: medium
+    text: System must remove duplicate docs while keeping README.md, ARCHITECTURE.md,
+      CLAUDE.md, PROJECT.md
+  - id: REQ-005
+    priority: medium
+    text: System should implement Graph Service frontend visualization
+  - id: REQ-006
+    priority: medium
+    text: System should complete VISLZR integration
+  - id: REQ-007
+    priority: low
+    text: MRKTZR module should remove auth system and simplify to prototype
+  - id: REQ-008
+    priority: low
+    text: System could implement NATS Bridge (Phase 4)
+  - id: REQ-009
+    priority: low
+    text: System could implement Federation Prep (Phase 5)
+extracted_at: '2025-12-31T21:33:05.224398'

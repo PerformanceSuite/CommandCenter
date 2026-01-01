@@ -1,27 +1,41 @@
 concept_types:
-  capability: 2
-  feature: 1
-  framework: 3
-  integration: 1
-  module: 2
-  product: 1
+  capability: 3
+  feature: 10
+  framework: 17
+  integration: 3
+  module: 10
+  platform: 4
+  process: 3
+  product: 7
+  technology: 28
 failed_documents: 0
 requirement_priorities:
-  critical: 17
-  high: 22
-  medium: 11
+  critical: 46
+  high: 65
+  low: 6
+  medium: 80
 top_concepts:
-- Codecov
-- Technology
-- Playwright
-- Technology Radar
-- Project Isolation
-- Test Pyramid
+- GraphRepo
+- EventStreamer
+- Correlation Tracking
+- PostgreSQL
 - CommandCenter
+- Knowledge Base
+- Webhook
+- Dashboard
+- Prometheus
+- Tailwind CSS
 - TechnologyService
+- Tool Registry
+- ChromaDB
+- TanStack Query
+- Project Isolation
+- Repository
 - JWT Validation
-- RBAC
-total_concepts: 10
-total_documents: 1
-total_requirements: 50
-unique_concepts: 10
+- Docker-First Development Workflow
+- Dagger SDK
+- ToolOps
+total_concepts: 85
+total_documents: 5
+total_requirements: 197
+unique_concepts: 75
