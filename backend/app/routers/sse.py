@@ -9,12 +9,14 @@ Reference: hub/backend/app/streaming/sse.py
 import asyncio
 import json
 import logging
+import uuid
 from typing import AsyncIterator, Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
 from app.nats_client import NATSClient, get_nats_client
+from app.services.subscription_manager import get_subscription_manager
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,7 @@ async def graph_event_generator(
     project_id: int,
     subjects: list[str],
     nats_client: NATSClient,
+    connection_id: str,
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted event stream from NATS.
 
@@ -68,12 +71,24 @@ async def graph_event_generator(
         project_id: Project ID to filter events
         subjects: List of NATS subject patterns to subscribe
         nats_client: Connected NATS client
+        connection_id: Unique ID for this connection (for tracking)
 
     Yields:
         SSE-formatted strings
     """
+    manager = get_subscription_manager()
+
+    # Register connection with manager
+    await manager.register(project_id, subjects, connection_id)
+
     # Send initial connection event
-    connected_data = json.dumps({"project_id": project_id, "subjects": subjects})
+    connected_data = json.dumps(
+        {
+            "project_id": project_id,
+            "subjects": subjects,
+            "connection_id": connection_id,
+        }
+    )
     yield f"event: connected\ndata: {connected_data}\n\n"
 
     # Create message queue for async handling
@@ -106,6 +121,7 @@ async def graph_event_generator(
         logger.error(f"SSE: Failed to subscribe to NATS: {e}")
         error_data = json.dumps({"error": f"Failed to subscribe: {e}"})
         yield f"event: error\ndata: {error_data}\n\n"
+        await manager.unregister(connection_id)
         return
 
     try:
@@ -116,6 +132,9 @@ async def graph_event_generator(
                 event_data = json.dumps(data)
                 subject = data.get("_subject", "graph.event")
                 yield f"event: {subject}\ndata: {event_data}\n\n"
+
+                # Record event in metrics
+                await manager.record_event(connection_id)
             except asyncio.TimeoutError:
                 # Send keepalive comment
                 yield ": keepalive\n\n"
@@ -126,15 +145,32 @@ async def graph_event_generator(
         logger.error(f"SSE: Stream error: {e}", exc_info=True)
         error_data = json.dumps({"error": str(e)})
         yield f"event: error\ndata: {error_data}\n\n"
+    finally:
+        # Always unregister on disconnect
+        await manager.unregister(connection_id)
 
 
-async def fallback_generator(project_id: int) -> AsyncIterator[str]:
+async def fallback_generator(
+    project_id: int,
+    subjects: list[str],
+    connection_id: str,
+) -> AsyncIterator[str]:
     """Fallback generator when NATS is not available.
 
     Sends keepalives to maintain connection.
     """
+    manager = get_subscription_manager()
+
+    # Register connection (even in fallback mode for tracking)
+    await manager.register(project_id, subjects, connection_id)
+
     connected_data = json.dumps(
-        {"project_id": project_id, "warning": "NATS not connected - no live updates available"}
+        {
+            "project_id": project_id,
+            "subjects": subjects,
+            "connection_id": connection_id,
+            "warning": "NATS not connected - no live updates available",
+        }
     )
     yield f"event: connected\ndata: {connected_data}\n\n"
 
@@ -144,6 +180,8 @@ async def fallback_generator(project_id: int) -> AsyncIterator[str]:
             yield ": keepalive\n\n"
     except asyncio.CancelledError:
         logger.info(f"SSE: Fallback client disconnected (project {project_id})")
+    finally:
+        await manager.unregister(connection_id)
 
 
 @router.get("/stream")
@@ -177,14 +215,17 @@ async def stream_graph_events(
     # Parse subjects
     subject_list = [s.strip() for s in subjects.split(",")] if subjects else ["graph.*"]
 
+    # Generate unique connection ID for tracking
+    connection_id = str(uuid.uuid4())
+
     # Get NATS client
     nats_client = await get_nats_client()
 
     if nats_client and nats_client.nc:
-        generator = graph_event_generator(project_id, subject_list, nats_client)
+        generator = graph_event_generator(project_id, subject_list, nats_client, connection_id)
     else:
         logger.warning(f"SSE: NATS not available, using fallback for project {project_id}")
-        generator = fallback_generator(project_id)
+        generator = fallback_generator(project_id, subject_list, connection_id)
 
     return StreamingResponse(
         generator,
@@ -201,12 +242,15 @@ async def stream_graph_events(
 async def events_health():
     """Check SSE endpoint health and NATS connectivity."""
     nats_client = await get_nats_client()
+    manager = get_subscription_manager()
 
     nats_connected = bool(nats_client and nats_client.nc)
+    metrics = manager.get_metrics()
 
     return {
         "status": "healthy" if nats_connected else "degraded",
         "nats_connected": nats_connected,
+        "active_connections": metrics.active_connections,
         "supported_subjects": [
             "graph.node.created",
             "graph.node.updated",
@@ -215,4 +259,30 @@ async def events_health():
             "graph.edge.deleted",
             "graph.invalidated",
         ],
+    }
+
+
+@router.get("/metrics")
+async def get_subscription_metrics(
+    detailed: bool = Query(False, description="Include per-connection details"),
+):
+    """Get subscription metrics and connection information.
+
+    Args:
+        detailed: If true, include per-connection details
+
+    Returns:
+        Subscription metrics including active connections and event counts
+    """
+    manager = get_subscription_manager()
+
+    if detailed:
+        return manager.get_detailed_metrics()
+
+    metrics = manager.get_metrics()
+    return {
+        "active_connections": metrics.active_connections,
+        "total_connections": metrics.total_connections,
+        "total_events_sent": metrics.total_events_sent,
+        "connections_by_project": dict(metrics.connections_by_project),
     }
