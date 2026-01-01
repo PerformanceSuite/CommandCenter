@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const InputSchema = z.object({
-  repositoryPath: z.string().describe('Path to repository to scan'),
+  target: z.string().describe('Path to repository to scan'),
   scanType: z.enum(['secrets', 'sql-injection', 'xss', 'all']).default('all'),
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
 });

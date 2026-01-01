@@ -8,7 +8,7 @@ export class SecurityScanner {
     const findings: Finding[] = [];
     let scannedFiles = 0;
 
-    const files = this.getFilesToScan(input.repositoryPath);
+    const files = this.getFilesToScan(input.target);
 
     for (const file of files) {
       scannedFiles++;
