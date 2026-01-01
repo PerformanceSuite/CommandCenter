@@ -118,3 +118,58 @@ class GraphUpdatedEvent(BaseModel):
     entity_id: int = Field(..., description="Updated entity ID")
     operation: str = Field(..., description="Operation type (created, updated, deleted)")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event creation time")
+
+
+# Sprint 4: Real-time Subscription Events
+
+
+class GraphNodeEvent(BaseModel):
+    """Event published when a graph node is created, updated, or deleted.
+
+    Subject: graph.node.{event_type} (created, updated, deleted)
+    Published by: GraphService mutation operations
+    Consumed by: SSE endpoint for real-time frontend updates
+    """
+
+    event_type: str = Field(..., description="Event type: created, updated, deleted")
+    project_id: int = Field(..., description="Project scope for filtering")
+    node_type: str = Field(
+        ..., description="Entity type: repo, file, symbol, service, task, spec, persona, execution"
+    )
+    node_id: str = Field(..., description="Node ID in format 'type:id' (e.g., 'task:123')")
+    label: Optional[str] = Field(None, description="Node display label")
+    changes: Optional[dict] = Field(None, description="Changed fields for updates")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event creation time")
+
+
+class GraphEdgeEvent(BaseModel):
+    """Event published when a graph edge is created or deleted.
+
+    Subject: graph.edge.{event_type} (created, deleted)
+    Published by: GraphService.link_entities(), create_cross_project_link()
+    Consumed by: SSE endpoint for real-time frontend updates
+    """
+
+    event_type: str = Field(..., description="Event type: created, deleted")
+    project_id: int = Field(..., description="Project scope for filtering")
+    from_node: str = Field(..., description="Source node ID in format 'type:id'")
+    to_node: str = Field(..., description="Target node ID in format 'type:id'")
+    edge_type: str = Field(..., description="Edge type: contains, imports, calls, implements, etc.")
+    weight: Optional[float] = Field(None, description="Edge weight/strength")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event creation time")
+
+
+class GraphInvalidatedEvent(BaseModel):
+    """Event published when graph needs full refresh (bulk operations).
+
+    Subject: graph.invalidated
+    Published by: Bulk import/export, re-indexing operations
+    Consumed by: SSE endpoint to trigger frontend full refresh
+    """
+
+    project_id: int = Field(..., description="Project scope for filtering")
+    reason: str = Field(..., description="Reason for invalidation (reindex, bulk_import, etc.)")
+    affected_types: Optional[list[str]] = Field(
+        None, description="Optional list of affected entity types"
+    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Event creation time")

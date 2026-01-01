@@ -44,7 +44,14 @@ from app.schemas.graph import (
     SearchResults,
     SpecFilters,
 )
-from app.schemas.graph_events import AuditRequestedEvent, AuditResultEvent, GraphTaskCreatedEvent
+from app.schemas.graph_events import (
+    AuditRequestedEvent,
+    AuditResultEvent,
+    GraphEdgeEvent,
+    GraphInvalidatedEvent,
+    GraphNodeEvent,
+    GraphTaskCreatedEvent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +61,122 @@ class GraphService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    # ========================================================================
+    # Event Publishing Helpers (Sprint 4)
+    # ========================================================================
+
+    async def _publish_node_event(
+        self,
+        event_type: str,
+        project_id: int,
+        node_type: str,
+        node_id: int,
+        label: Optional[str] = None,
+        changes: Optional[dict] = None,
+    ) -> None:
+        """Publish a graph node event to NATS.
+
+        Args:
+            event_type: 'created', 'updated', or 'deleted'
+            project_id: Project ID for filtering
+            node_type: Entity type (task, spec, service, etc.)
+            node_id: Entity database ID
+            label: Optional display label
+            changes: Optional dict of changed fields (for updates)
+        """
+        nats_client = await get_nats_client()
+        if not nats_client:
+            return
+
+        try:
+            event = GraphNodeEvent(
+                event_type=event_type,
+                project_id=project_id,
+                node_type=node_type,
+                node_id=f"{node_type}:{node_id}",
+                label=label,
+                changes=changes,
+            )
+            subject = f"graph.node.{event_type}"
+            await nats_client.publish(subject, event.model_dump(mode="json"))
+            logger.debug(f"Published {subject}: {node_type}:{node_id}")
+        except Exception as e:
+            logger.error(f"Failed to publish node event: {e}")
+
+    async def _publish_edge_event(
+        self,
+        event_type: str,
+        project_id: int,
+        from_entity: str,
+        from_id: int,
+        to_entity: str,
+        to_id: int,
+        edge_type: str,
+        weight: Optional[float] = None,
+    ) -> None:
+        """Publish a graph edge event to NATS.
+
+        Args:
+            event_type: 'created' or 'deleted'
+            project_id: Project ID for filtering
+            from_entity: Source entity type
+            from_id: Source entity ID
+            to_entity: Target entity type
+            to_id: Target entity ID
+            edge_type: Link type (contains, imports, implements, etc.)
+            weight: Optional edge weight
+        """
+        nats_client = await get_nats_client()
+        if not nats_client:
+            return
+
+        try:
+            # Normalize entity names (remove 'graph_' prefix if present)
+            from_type = from_entity.replace("graph_", "").rstrip("s")
+            to_type = to_entity.replace("graph_", "").rstrip("s")
+
+            event = GraphEdgeEvent(
+                event_type=event_type,
+                project_id=project_id,
+                from_node=f"{from_type}:{from_id}",
+                to_node=f"{to_type}:{to_id}",
+                edge_type=edge_type,
+                weight=weight,
+            )
+            subject = f"graph.edge.{event_type}"
+            await nats_client.publish(subject, event.model_dump(mode="json"))
+            logger.debug(f"Published {subject}: {from_type}:{from_id} -> {to_type}:{to_id}")
+        except Exception as e:
+            logger.error(f"Failed to publish edge event: {e}")
+
+    async def _publish_invalidated_event(
+        self,
+        project_id: int,
+        reason: str,
+        affected_types: Optional[List[str]] = None,
+    ) -> None:
+        """Publish a graph invalidation event to NATS.
+
+        Args:
+            project_id: Project ID for filtering
+            reason: Reason for invalidation
+            affected_types: Optional list of affected entity types
+        """
+        nats_client = await get_nats_client()
+        if not nats_client:
+            return
+
+        try:
+            event = GraphInvalidatedEvent(
+                project_id=project_id,
+                reason=reason,
+                affected_types=affected_types,
+            )
+            await nats_client.publish("graph.invalidated", event.model_dump(mode="json"))
+            logger.info(f"Published graph.invalidated for project {project_id}: {reason}")
+        except Exception as e:
+            logger.error(f"Failed to publish invalidation event: {e}")
 
     # ========================================================================
     # Query Operations
@@ -874,6 +997,30 @@ class GraphService:
             f"(projects {source_project_id} -> {target_project_id})"
         )
 
+        # Sprint 4: Publish edge events to both projects for real-time UI updates
+        await self._publish_edge_event(
+            event_type="created",
+            project_id=source_project_id,
+            from_entity=from_entity,
+            from_id=from_id,
+            to_entity=to_entity,
+            to_id=to_id,
+            edge_type=link_type.value,
+            weight=weight,
+        )
+        # Also notify target project
+        if target_project_id != source_project_id:
+            await self._publish_edge_event(
+                event_type="created",
+                project_id=target_project_id,
+                from_entity=from_entity,
+                from_id=from_id,
+                to_entity=to_entity,
+                to_id=to_id,
+                edge_type=link_type.value,
+                weight=weight,
+            )
+
         return link
 
     # ========================================================================
@@ -917,10 +1064,11 @@ class GraphService:
         await self.db.commit()
         await self.db.refresh(task)
 
-        # Publish task creation event
+        # Publish task creation events (legacy + Sprint 4 format)
         nats_client = await get_nats_client()
         if nats_client:
             try:
+                # Legacy event format
                 event = GraphTaskCreatedEvent(
                     task_id=task.id,
                     project_id=project_id,
@@ -932,6 +1080,15 @@ class GraphService:
                 logger.debug(f"Published task created event: task_id={task.id}")
             except Exception as e:
                 logger.error(f"Failed to publish task created event: {e}")
+
+        # Sprint 4: Publish node event for real-time UI updates
+        await self._publish_node_event(
+            event_type="created",
+            project_id=project_id,
+            node_type="task",
+            node_id=task.id,
+            label=title,
+        )
 
         return task
 
@@ -1005,6 +1162,7 @@ class GraphService:
         to_id: int,
         link_type: LinkType,
         weight: float = 1.0,
+        project_id: Optional[int] = None,
     ) -> GraphLink:
         """
         Create a typed link between two entities.
@@ -1016,6 +1174,7 @@ class GraphService:
             to_id: Target entity ID
             link_type: Link type
             weight: Link weight/strength
+            project_id: Optional project ID for event filtering
 
         Returns:
             Created GraphLink instance
@@ -1032,6 +1191,19 @@ class GraphService:
         self.db.add(link)
         await self.db.commit()
         await self.db.refresh(link)
+
+        # Sprint 4: Publish edge event for real-time UI updates
+        if project_id is not None:
+            await self._publish_edge_event(
+                event_type="created",
+                project_id=project_id,
+                from_entity=from_entity,
+                from_id=from_id,
+                to_entity=to_entity,
+                to_id=to_id,
+                edge_type=link_type.value,
+                weight=weight,
+            )
 
         return link
 
