@@ -16,7 +16,7 @@ export type EntityType =
   | 'service'
   | 'task'
   | 'spec'
-  | 'project';
+  | 'project'
   | 'persona'
   | 'workflow'
   | 'execution';

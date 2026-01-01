@@ -14,6 +14,9 @@ import {
   CheckSquare,
   FileText,
   Folder,
+  User,
+  Workflow,
+  Play,
 } from 'lucide-react';
 
 // ============================================================================
@@ -28,6 +31,9 @@ const ENTITY_ICONS: Record<EntityType, React.ElementType> = {
   service: Server,
   task: CheckSquare,
   spec: FileText,
+  persona: User,
+  workflow: Workflow,
+  execution: Play,
 };
 
 // ============================================================================

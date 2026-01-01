@@ -6,11 +6,11 @@ export { useAffordances } from './useAffordances';
 export type { UseAffordancesReturn } from './useAffordances';
 
 export { useDashboard } from './useDashboard';
-export { 
-  useProjectGraph, 
-  useGraphSearch, 
-  useFederationQuery, 
-  useSymbolDependencies 
+export {
+  useProjectGraph,
+  useGraphSearch,
+  useFederationQuery,
+  useSymbolDependencies
 } from './useGraph';
 export type {
   UseProjectGraphResult,
@@ -28,3 +28,8 @@ export { useResearchTaskList } from './useResearchTaskList';
 export { useResearchTasks } from './useResearchTasks';
 export { useTechnologies } from './useTechnologies';
 export { useWebSocket } from './useWebSocket';
+export { useGraphSubscription } from './useGraphSubscription';
+export type {
+  UseGraphSubscriptionOptions,
+  UseGraphSubscriptionReturn,
+} from '../types/graphEvents';

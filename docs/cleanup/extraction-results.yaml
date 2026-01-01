@@ -1,0 +1,588 @@
+all_concepts:
+- &id001
+  definition: Main application being tested with a comprehensive testing strategy and philosophy.
+  domain: development
+  name: CommandCenter
+  related_entities:
+  - Test Pyramid
+  - Testing Strategy
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: product
+- &id002
+  definition: Testing principle with many unit tests (75%), some integration tests (15%), and few E2E tests (10%).
+  domain: development
+  name: Test Pyramid
+  related_entities:
+  - Unit Tests
+  - Integration Tests
+  - E2E Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  type: framework
+- &id003
+  definition: Service component that provides business logic for technology-related operations including relevance scoring.
+  domain: development
+  name: TechnologyService
+  related_entities:
+  - Technology
+  - Unit Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: module
+- &id004
+  definition: Model class representing technology entities with properties like title, domain, vendor, status, and relevance.
+  domain: development
+  name: Technology
+  related_entities:
+  - TechnologyService
+  - Technology Radar
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: module
+- &id005
+  definition: User interface feature that allows users to view and create technology entries in a radar chart visualization.
+  domain: development
+  name: Technology Radar
+  related_entities:
+  - Technology
+  - E2E Tests
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: feature
+- &id006
+  definition: Code coverage tracking service with configuration for project and patch coverage targets.
+  domain: development
+  name: Codecov
+  related_entities:
+  - Coverage Goals
+  - CI/CD Integration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  type: integration
+- &id007
+  definition: Browser automation framework used for E2E testing with support for complete user journey testing.
+  domain: development
+  name: Playwright
+  related_entities:
+  - E2E Tests
+  - Performance Testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: framework
+- &id008
+  definition: Security testing capability that ensures tampered, expired, and invalid format tokens are properly rejected.
+  domain: security
+  name: JWT Validation
+  related_entities:
+  - Security Testing
+  - RBAC
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: capability
+- &id009
+  definition: Mandatory security feature ensuring users cannot access other users' data with database filtering by project_id.
+  domain: security
+  name: Project Isolation
+  related_entities:
+  - Security Testing
+  - RBAC
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: capability
+- &id010
+  definition: Role-Based Access Control system with permission checks, owner vs member access, and admin capabilities.
+  domain: security
+  name: RBAC
+  related_entities:
+  - JWT Validation
+  - Project Isolation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: active
+  type: framework
+all_requirements:
+- &id011
+  id: REQ-001
+  priority: high
+  source_concept: test pyramid
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  text: System must follow test pyramid principle with 75% unit tests, 15% integration tests, and 10% E2E tests
+  type: constraint
+- &id012
+  id: REQ-002
+  priority: medium
+  source_concept: test distribution
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  text: System must maintain approximately 290 unit tests (75% of test suite)
+  type: non-functional
+- &id013
+  id: REQ-003
+  priority: medium
+  source_concept: test distribution
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  text: System must maintain approximately 58 integration tests (15% of test suite)
+  type: non-functional
+- &id014
+  id: REQ-004
+  priority: medium
+  source_concept: test distribution
+  source_doc: docs/TESTING_STRATEGY.md
+  status: implemented
+  text: System must maintain approximately 40 E2E tests (10% of test suite)
+  type: non-functional
+- &id015
+  id: REQ-005
+  priority: high
+  source_concept: unit test performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must execute unit tests in less than 1 millisecond each
+  type: non-functional
+- &id016
+  id: REQ-006
+  priority: high
+  source_concept: integration test performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must execute integration tests in approximately 100 milliseconds each
+  type: non-functional
+- &id017
+  id: REQ-007
+  priority: medium
+  source_concept: E2E test performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must execute E2E tests in 5-10 seconds each
+  type: non-functional
+- &id018
+  id: REQ-008
+  priority: critical
+  source_concept: unit test isolation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must isolate unit tests with no external dependencies
+  type: constraint
+- &id019
+  id: REQ-009
+  priority: critical
+  source_concept: unit test mocking
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must mock all external dependencies in unit tests
+  type: constraint
+- &id020
+  id: REQ-010
+  priority: high
+  source_concept: backend coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 80% or higher backend code coverage
+  type: constraint
+- &id021
+  id: REQ-011
+  priority: high
+  source_concept: frontend coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 60% or higher frontend code coverage
+  type: constraint
+- &id022
+  id: REQ-012
+  priority: high
+  source_concept: CI coverage enforcement
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must enforce coverage targets in CI pipeline
+  type: constraint
+- &id023
+  id: REQ-013
+  priority: high
+  source_concept: service coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 90% or higher coverage for service components
+  type: constraint
+- &id024
+  id: REQ-014
+  priority: high
+  source_concept: model coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 85% or higher coverage for model components
+  type: constraint
+- &id025
+  id: REQ-015
+  priority: high
+  source_concept: router coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 80% or higher coverage for router components
+  type: constraint
+- &id026
+  id: REQ-016
+  priority: high
+  source_concept: utility coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 95% or higher coverage for utility components
+  type: constraint
+- &id027
+  id: REQ-017
+  priority: critical
+  source_concept: critical path coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must achieve 100% coverage for critical paths
+  type: constraint
+- &id028
+  id: REQ-018
+  priority: critical
+  source_concept: project isolation testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must implement mandatory project isolation security tests
+  type: functional
+- &id029
+  id: REQ-019
+  priority: critical
+  source_concept: project isolation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must block cross-project data access
+  type: functional
+- &id030
+  id: REQ-020
+  priority: critical
+  source_concept: JWT security testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must implement mandatory JWT validation security tests
+  type: functional
+- &id031
+  id: REQ-021
+  priority: critical
+  source_concept: JWT validation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must reject tampered JWT tokens
+  type: functional
+- &id032
+  id: REQ-022
+  priority: critical
+  source_concept: JWT validation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must reject expired JWT tokens
+  type: functional
+- &id033
+  id: REQ-023
+  priority: critical
+  source_concept: SQL injection prevention
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must prevent SQL injection attacks
+  type: functional
+- &id034
+  id: REQ-024
+  priority: critical
+  source_concept: XSS protection
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must provide XSS protection
+  type: functional
+- &id035
+  id: REQ-025
+  priority: critical
+  source_concept: RBAC testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must implement RBAC permission checks
+  type: functional
+- &id036
+  id: REQ-026
+  priority: high
+  source_concept: N+1 query detection
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must detect and prevent N+1 query problems
+  type: non-functional
+- &id037
+  id: REQ-027
+  priority: medium
+  source_concept: query performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must limit database queries to 3 or fewer per test when using query counter
+  type: constraint
+- &id038
+  id: REQ-028
+  priority: high
+  source_concept: API performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must respond to GET endpoints in less than 500ms
+  type: non-functional
+- &id039
+  id: REQ-029
+  priority: high
+  source_concept: API performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must respond to POST endpoints in less than 300ms
+  type: non-functional
+- &id040
+  id: REQ-030
+  priority: medium
+  source_concept: query performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must execute complex queries in less than 1500ms
+  type: non-functional
+- &id041
+  id: REQ-031
+  priority: high
+  source_concept: CI pipeline performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must complete CI pipeline smoke tests in less than 5 minutes
+  type: non-functional
+- &id042
+  id: REQ-032
+  priority: medium
+  source_concept: E2E test sharding
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must run E2E tests in 4-way parallel sharding
+  type: constraint
+- &id043
+  id: REQ-033
+  priority: medium
+  source_concept: integration test sharding
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must shard integration tests by category (api, services, db)
+  type: constraint
+- &id044
+  id: REQ-034
+  priority: high
+  source_concept: coverage enforcement
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must fail CI builds when coverage drops below target thresholds
+  type: constraint
+- &id045
+  id: REQ-035
+  priority: medium
+  source_concept: Codecov configuration
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must configure Codecov with 80% project target and 1% threshold
+  type: constraint
+- &id046
+  id: REQ-036
+  priority: high
+  source_concept: patch coverage
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must require 70% coverage for new code in patches
+  type: constraint
+- &id047
+  id: REQ-037
+  priority: medium
+  source_concept: coverage exclusions
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must exclude migration files, test files, and build artifacts from coverage
+  type: constraint
+- &id048
+  id: REQ-038
+  priority: critical
+  source_concept: PR requirements
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must require all tests to pass for PR approval
+  type: constraint
+- &id049
+  id: REQ-039
+  priority: critical
+  source_concept: security test enforcement
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must not allow skipping of security tests
+  type: constraint
+- &id050
+  id: REQ-040
+  priority: high
+  source_concept: test independence
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must ensure tests are independent and can run in any order
+  type: constraint
+- &id051
+  id: REQ-041
+  priority: high
+  source_concept: test repeatability
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must ensure tests are repeatable with same results every time
+  type: constraint
+- &id052
+  id: REQ-042
+  priority: high
+  source_concept: test isolation
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must ensure tests are isolated with no shared state
+  type: constraint
+- &id053
+  id: REQ-043
+  priority: high
+  source_concept: unit test suite performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must complete unit test suite in less than 30 seconds total
+  type: non-functional
+- &id054
+  id: REQ-044
+  priority: high
+  source_concept: integration test suite performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must complete integration test suite in less than 5 minutes total
+  type: non-functional
+- &id055
+  id: REQ-045
+  priority: medium
+  source_concept: E2E test suite performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must complete E2E test suite in less than 10 minutes total with sharding
+  type: non-functional
+- &id056
+  id: REQ-046
+  priority: high
+  source_concept: CI pipeline performance
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must complete full CI pipeline in less than 25 minutes total
+  type: non-functional
+- &id057
+  id: REQ-047
+  priority: critical
+  source_concept: critical path testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must provide both integration and E2E coverage for critical paths
+  type: constraint
+- &id058
+  id: REQ-048
+  priority: critical
+  source_concept: authentication testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must test user authentication as a critical path
+  type: functional
+- &id059
+  id: REQ-049
+  priority: critical
+  source_concept: CRUD testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must test data CRUD operations as critical paths
+  type: functional
+- &id060
+  id: REQ-050
+  priority: critical
+  source_concept: security boundary testing
+  source_doc: docs/TESTING_STRATEGY.md
+  status: proposed
+  text: System must test security boundaries as critical paths
+  type: functional
+documents:
+- classification:
+    action: keep
+    key_topics:
+    - test-pyramid
+    - coverage-goals
+    - performance-testing
+    - security-testing
+    - ci-cd-integration
+    staleness_score: 15
+    status: active
+    subtype: testing-strategy
+    type: guide
+    value: high
+  concepts:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id006
+  - *id007
+  - *id008
+  - *id009
+  - *id010
+  extracted_at: '2025-12-31T20:23:03.016838'
+  filename: TESTING_STRATEGY.md
+  path: docs/TESTING_STRATEGY.md
+  requirements:
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - *id015
+  - *id016
+  - *id017
+  - *id018
+  - *id019
+  - *id020
+  - *id021
+  - *id022
+  - *id023
+  - *id024
+  - *id025
+  - *id026
+  - *id027
+  - *id028
+  - *id029
+  - *id030
+  - *id031
+  - *id032
+  - *id033
+  - *id034
+  - *id035
+  - *id036
+  - *id037
+  - *id038
+  - *id039
+  - *id040
+  - *id041
+  - *id042
+  - *id043
+  - *id044
+  - *id045
+  - *id046
+  - *id047
+  - *id048
+  - *id049
+  - *id050
+  - *id051
+  - *id052
+  - *id053
+  - *id054
+  - *id055
+  - *id056
+  - *id057
+  - *id058
+  - *id059
+  - *id060
+  size_bytes: 16008
+metadata:
+  documents_failed: 0
+  documents_processed: 1
+  extraction_date: '2025-12-31T20:23:03.007174'
+  model: claude-sonnet-4-20250514
