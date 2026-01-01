@@ -11,6 +11,7 @@ from uuid import uuid4
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.agent_execution import AgentExecution
 from app.models.graph import (
     AuditKind,
     AuditStatus,
@@ -30,7 +31,6 @@ from app.models.graph import (
     TaskKind,
 )
 from app.nats_client import get_nats_client
-from app.models.agent_execution import AgentExecution
 from app.schemas.graph import (
     CrossProjectLinkResponse,
     DependencyGraph,
@@ -635,14 +635,18 @@ class GraphService:
         # Search personas (Sprint 3 Task 7)
         if "personas" in scope:
             from app.models.agent_persona import AgentPersona
-            
-            persona_stmt = select(AgentPersona).filter(
-                or_(
-                    AgentPersona.name.ilike(search_pattern),
-                    AgentPersona.display_name.ilike(search_pattern),
-                    AgentPersona.description.ilike(search_pattern),
+
+            persona_stmt = (
+                select(AgentPersona)
+                .filter(
+                    or_(
+                        AgentPersona.name.ilike(search_pattern),
+                        AgentPersona.display_name.ilike(search_pattern),
+                        AgentPersona.description.ilike(search_pattern),
+                    )
                 )
-            ).limit(50)
+                .limit(50)
+            )
             result = await self.db.execute(persona_stmt)
             personas = result.scalars().all()
 
@@ -663,12 +667,16 @@ class GraphService:
 
         # Search executions (Sprint 3 Task 7)
         if "executions" in scope:
-            execution_stmt = select(AgentExecution).filter(
-                or_(
-                    AgentExecution.persona_name.ilike(search_pattern),
-                    AgentExecution.execution_id.ilike(search_pattern),
+            execution_stmt = (
+                select(AgentExecution)
+                .filter(
+                    or_(
+                        AgentExecution.persona_name.ilike(search_pattern),
+                        AgentExecution.execution_id.ilike(search_pattern),
+                    )
                 )
-            ).limit(50)
+                .limit(50)
+            )
             result = await self.db.execute(execution_stmt)
             executions = result.scalars().all()
 
@@ -1069,7 +1077,6 @@ class GraphService:
         logger.info(f"Updated audit {audit_id} with status={status}, score={score}")
         return audit
 
-    async def start_audit_result_consumer(self) -> None:
     # ========================================================================
     # Agent Execution Operations (Sprint 3 Task 6)
     # ========================================================================
@@ -1091,8 +1098,6 @@ class GraphService:
         Returns:
             Created AgentExecution instance
         """
-        from datetime import datetime
-
         execution = AgentExecution(
             persona_name=persona_name,
             status="pending",
@@ -1204,6 +1209,7 @@ class GraphService:
 
         return execution
 
+    async def start_audit_result_consumer(self) -> None:
         """
         Start consuming audit.result.* events from NATS.
 
