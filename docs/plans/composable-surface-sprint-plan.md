@@ -32,7 +32,7 @@ This document tracks the sprint breakdown for implementing the **Composable Comm
 | 1 | Foundation | ✅ Complete | Pre-Dec 2025 | (Undocumented) |
 | 2 | Query Layer | ✅ Complete | Pre-Dec 2025 | (Undocumented) |
 | 3 | Agent Parity | ✅ Complete | Dec 31 - Jan 1 | [Sprint 3 Completion](./2025-12-31-sprint3-completion.md) |
-| 4 | Real-time Subscriptions | 📋 Planned | Jan 2026 | [Sprint 4 Plan](./2026-01-01-sprint4-realtime-subscriptions.md) |
+| 4 | Real-time Subscriptions | ✅ Complete | Dec 31, 2025 | [Sprint 4 Plan](./2026-01-01-sprint4-realtime-subscriptions.md) |
 | 5 | Advanced Features | 📋 Future | TBD | — |
 | 6 | Document Intelligence | 🔄 In Progress | Jan 2026 | [Doc Intel Agents](./2026-01-01-document-intelligence-agents.md) |
 
@@ -107,7 +107,7 @@ This document tracks the sprint breakdown for implementing the **Composable Comm
 
 ---
 
-### Sprint 4: Real-time Subscriptions 📋
+### Sprint 4: Real-time Subscriptions ✅
 
 **Goal:** Enable live graph updates via SSE bridged from NATS
 
@@ -116,12 +116,20 @@ This document tracks the sprint breakdown for implementing the **Composable Comm
 **Execution Plan:** [`2026-01-01-sprint4-execution-plan.md`](./2026-01-01-sprint4-execution-plan.md)
 
 **Deliverables:**
-- [ ] Backend SSE Endpoint - `GET /api/v1/events/stream`
-- [ ] Graph Event Publisher - NATS events on graph mutations
-- [ ] Frontend SSE Hook - `useGraphSubscription()`
-- [ ] Graph State Manager - `useRealtimeGraph()` with delta updates
-- [ ] UI Integration - Live updates in GraphPage
-- [ ] Subscription Manager - Connection tracking and metrics
+- [x] Backend SSE Endpoint - `GET /api/v1/events/stream`
+- [x] Graph Event Publisher - NATS events on graph mutations
+- [x] Frontend SSE Hook - `useGraphSubscription()`
+- [x] Graph State Manager - `useRealtimeGraph()` with delta updates
+- [x] UI Integration - Live updates in GraphDemoView
+- [x] Subscription Manager - Connection tracking and metrics
+
+**Key Files Created:**
+- `backend/app/routers/sse.py` - SSE streaming endpoint
+- `backend/app/schemas/graph_events.py` - Event schemas
+- `backend/app/services/subscription_manager.py` - Connection tracking
+- `frontend/src/hooks/useGraphSubscription.ts` - SSE hook
+- `frontend/src/hooks/useRealtimeGraph.ts` - Real-time state manager
+- `frontend/src/types/graphEvents.ts` - Event types
 
 **Architecture Decision:** SSE over WebSocket (one-way, simpler, auto-reconnect)
 

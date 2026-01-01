@@ -1,7 +1,8 @@
 # Sprint 4: Real-time Subscriptions
 
-**Status:** In Progress
+**Status:** Complete ✅
 **Start Date:** January 1, 2026
+**Completed:** December 31, 2025
 **Approach:** SSE with delta updates (individual node/edge changes applied incrementally)
 
 ## Overview
@@ -28,9 +29,9 @@ Enable real-time graph updates via Server-Sent Events (SSE) bridged from NATS. T
 | 1 | Backend SSE Endpoint | `backend/app/routers/sse.py`, `main.py` | ✅ |
 | 2 | Graph Event Publisher | `backend/app/services/graph_service.py`, `schemas/graph_events.py` | ✅ |
 | 3 | Frontend SSE Hook | `frontend/src/hooks/useGraphSubscription.ts`, `types/graphEvents.ts` | ✅ |
-| 4 | Graph State Manager | `frontend/src/hooks/useRealtimeGraph.ts` | ❌ |
-| 5 | UI Integration | `frontend/src/pages/GraphPage.tsx` | ❌ |
-| 6 | Subscription Manager | `backend/app/services/subscription_manager.py` | ❌ |
+| 4 | Graph State Manager | `frontend/src/hooks/useRealtimeGraph.ts` | ✅ |
+| 5 | UI Integration | `frontend/src/components/GraphDemo/GraphDemoView.tsx` | ✅ |
+| 6 | Subscription Manager | `backend/app/services/subscription_manager.py` | ✅ |
 
 ## Task Details
 
