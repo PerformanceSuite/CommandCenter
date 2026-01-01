@@ -33,3 +33,8 @@ export type {
   UseGraphSubscriptionOptions,
   UseGraphSubscriptionReturn,
 } from '../types/graphEvents';
+export { useRealtimeGraph } from './useRealtimeGraph';
+export type {
+  UseRealtimeGraphOptions,
+  UseRealtimeGraphReturn,
+} from './useRealtimeGraph';
