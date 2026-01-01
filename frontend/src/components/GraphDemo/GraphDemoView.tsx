@@ -8,9 +8,9 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Network, Layers, GitBranch, RefreshCw, Info } from 'lucide-react';
+import { Network, Layers, GitBranch, RefreshCw, Info, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { GraphCanvas } from '../Graph/GraphCanvas';
-import { useProjectGraph } from '../../hooks/useGraph';
+import { useRealtimeGraph } from '../../hooks/useRealtimeGraph';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { GraphNode, GraphEdge, EntityType } from '../../types/graph';
 
@@ -55,11 +55,18 @@ export const GraphDemoView: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [filterEntityType, setFilterEntityType] = useState<EntityType | 'all'>('all');
 
-  // Fetch real project graph data
-  const { nodes: apiNodes, edges: apiEdges, loading, error, refresh } = useProjectGraph(
-    useDemo ? null : projectId,
-    { depth: 2 }
-  );
+  // Fetch real-time project graph data
+  const {
+    nodes: apiNodes,
+    edges: apiEdges,
+    loading,
+    error,
+    isConnected,
+    isStale,
+    updateCount,
+    refresh,
+    reconnect,
+  } = useRealtimeGraph(useDemo ? null : projectId);
 
   // Use demo data or API data
   const rawNodes = useDemo ? DEMO_NODES : apiNodes;
@@ -99,6 +106,31 @@ export const GraphDemoView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Connection status indicator (only when using live data) */}
+          {!useDemo && (
+            <div className="flex items-center gap-2">
+              {isConnected ? (
+                <span className="flex items-center gap-1.5 px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                  <Wifi className="w-3 h-3" />
+                  Live
+                </span>
+              ) : (
+                <button
+                  onClick={reconnect}
+                  className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full hover:bg-red-500/30 transition-colors"
+                >
+                  <WifiOff className="w-3 h-3" />
+                  Disconnected
+                </button>
+              )}
+              {updateCount > 0 && (
+                <span className="text-xs text-gray-500">
+                  {updateCount} update{updateCount !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Data source toggle */}
           <label className="flex items-center gap-2 text-sm text-gray-300">
             <input
@@ -165,6 +197,21 @@ export const GraphDemoView: React.FC = () => {
           <span>{edges.length} edges</span>
         </div>
       </div>
+
+      {/* Stale data warning banner */}
+      {isStale && !useDemo && (
+        <div className="flex items-center gap-3 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <span className="text-sm text-amber-300">Graph data may be outdated.</span>
+          <button
+            onClick={refresh}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1 bg-amber-500/30 hover:bg-amber-500/40 rounded text-sm text-amber-200 transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Refresh
+          </button>
+        </div>
+      )}
 
       {/* Graph Container */}
       <div className="flex-1 bg-gray-800/30 rounded-lg overflow-hidden relative">
