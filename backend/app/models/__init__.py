@@ -50,6 +50,7 @@ from app.models.schedule import Schedule, ScheduleFrequency
 
 # Settings models
 from app.models.agent_persona import AgentPersona
+from app.models.agent_execution import AgentExecution
 from app.models.settings import AgentConfig, Provider
 from app.models.technology import (
     Technology,
@@ -131,4 +132,5 @@ __all__ = [
     "Provider",
     "AgentConfig",
     "AgentPersona",
+    "AgentExecution",
 ]

@@ -58,7 +58,7 @@ class GraphNode(BaseModel):
     id: str = Field(..., description="Unique node ID (entity_type:entity_id)")
     entity_type: str = Field(
         ...,
-        description="Entity type (repo, file, symbol, service, task, spec)",
+        description="Entity type (repo, file, symbol, service, task, spec, persona, workflow, execution)",
     )
     entity_id: int = Field(..., description="Database entity ID")
     label: str = Field(..., description="Display label for the node")
@@ -172,7 +172,7 @@ class GraphSearchRequest(BaseModel):
     """Request for graph search"""
 
     query: str = Field(..., min_length=1)
-    scope: List[Literal["symbols", "files", "tasks"]] = Field(default=["symbols", "files", "tasks"])
+    scope: List[Literal["symbols", "files", "tasks", "personas", "executions"]] = Field(default=["symbols", "files", "tasks"])
 
 
 # ============================================================================

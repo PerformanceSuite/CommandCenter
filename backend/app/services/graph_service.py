@@ -30,6 +30,7 @@ from app.models.graph import (
     TaskKind,
 )
 from app.nats_client import get_nats_client
+from app.models.agent_execution import AgentExecution
 from app.schemas.graph import (
     CrossProjectLinkResponse,
     DependencyGraph,
@@ -630,6 +631,63 @@ class GraphService:
                 )
 
         results.total = len(results.symbols) + len(results.files) + len(results.tasks)
+
+        # Search personas (Sprint 3 Task 7)
+        if "personas" in scope:
+            from app.models.agent_persona import AgentPersona
+            
+            persona_stmt = select(AgentPersona).filter(
+                or_(
+                    AgentPersona.name.ilike(search_pattern),
+                    AgentPersona.display_name.ilike(search_pattern),
+                    AgentPersona.description.ilike(search_pattern),
+                )
+            ).limit(50)
+            result = await self.db.execute(persona_stmt)
+            personas = result.scalars().all()
+
+            for persona in personas:
+                results.symbols.append(  # Reuse symbols list or add personas list to SearchResults
+                    GraphNode(
+                        id=f"persona:{persona.id}",
+                        entity_type="persona",
+                        entity_id=persona.id,
+                        label=persona.display_name,
+                        metadata={
+                            "name": persona.name,
+                            "category": persona.category,
+                            "model": persona.model,
+                        },
+                    )
+                )
+
+        # Search executions (Sprint 3 Task 7)
+        if "executions" in scope:
+            execution_stmt = select(AgentExecution).filter(
+                or_(
+                    AgentExecution.persona_name.ilike(search_pattern),
+                    AgentExecution.execution_id.ilike(search_pattern),
+                )
+            ).limit(50)
+            result = await self.db.execute(execution_stmt)
+            executions = result.scalars().all()
+
+            for execution in executions:
+                results.symbols.append(  # Reuse symbols list or add executions list to SearchResults
+                    GraphNode(
+                        id=f"execution:{execution.id}",
+                        entity_type="execution",
+                        entity_id=execution.id,
+                        label=f"{execution.persona_name} - {execution.execution_id[:8]}",
+                        metadata={
+                            "status": execution.status,
+                            "execution_id": execution.execution_id,
+                            "persona_name": execution.persona_name,
+                            "created_at": execution.created_at.isoformat(),
+                        },
+                    )
+                )
+
         return results
 
     # ========================================================================
@@ -1012,6 +1070,140 @@ class GraphService:
         return audit
 
     async def start_audit_result_consumer(self) -> None:
+    # ========================================================================
+    # Agent Execution Operations (Sprint 3 Task 6)
+    # ========================================================================
+
+    async def create_agent_execution(
+        self,
+        persona_name: str,
+        execution_id: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> AgentExecution:
+        """
+        Create a new agent execution record and emit NATS event.
+
+        Args:
+            persona_name: Name of the agent persona being executed
+            execution_id: Optional execution ID (auto-generated if not provided)
+            metadata: Optional metadata dict
+
+        Returns:
+            Created AgentExecution instance
+        """
+        from datetime import datetime
+
+        execution = AgentExecution(
+            persona_name=persona_name,
+            status="pending",
+            metadata_=metadata,
+        )
+
+        if execution_id:
+            execution.execution_id = execution_id
+
+        self.db.add(execution)
+        await self.db.commit()
+        await self.db.refresh(execution)
+
+        # Publish NATS event for agent execution created
+        nats_client = await get_nats_client()
+        if nats_client:
+            try:
+                event_data = {
+                    "execution_id": execution.execution_id,
+                    "persona_name": persona_name,
+                    "status": "pending",
+                    "created_at": execution.created_at.isoformat(),
+                }
+                await nats_client.publish("agent.execution.created", event_data)
+                logger.info(
+                    f"Published agent execution created event: execution_id={execution.execution_id}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to publish agent execution created event: {e}")
+
+        return execution
+
+    async def update_agent_execution(
+        self,
+        execution_id: str,
+        status: Optional[str] = None,
+        files_changed: Optional[list] = None,
+        pr_url: Optional[str] = None,
+        duration_seconds: Optional[float] = None,
+        cost_usd: Optional[float] = None,
+        error_message: Optional[str] = None,
+    ) -> AgentExecution:
+        """
+        Update agent execution status and emit NATS event.
+
+        Args:
+            execution_id: Execution ID to update
+            status: New status (pending, running, completed, failed, cancelled)
+            files_changed: List of files changed during execution
+            pr_url: Pull request URL if created
+            duration_seconds: Execution duration in seconds
+            cost_usd: Execution cost in USD
+            error_message: Error message if failed
+
+        Returns:
+            Updated AgentExecution instance
+        """
+        from datetime import datetime
+
+        stmt = select(AgentExecution).filter(AgentExecution.execution_id == execution_id)
+        result = await self.db.execute(stmt)
+        execution = result.scalar_one_or_none()
+
+        if not execution:
+            raise ValueError(f"Agent execution {execution_id} not found")
+
+        # Update fields
+        if status:
+            execution.status = status
+            if status == "running" and not execution.started_at:
+                execution.started_at = datetime.utcnow()
+            elif status in ["completed", "failed", "cancelled"] and not execution.completed_at:
+                execution.completed_at = datetime.utcnow()
+
+        if files_changed is not None:
+            execution.files_changed = files_changed
+        if pr_url is not None:
+            execution.pr_url = pr_url
+        if duration_seconds is not None:
+            execution.duration_seconds = duration_seconds
+        if cost_usd is not None:
+            execution.cost_usd = cost_usd
+        if error_message is not None:
+            execution.error_message = error_message
+
+        await self.db.commit()
+        await self.db.refresh(execution)
+
+        # Publish NATS event for agent execution updated
+        nats_client = await get_nats_client()
+        if nats_client:
+            try:
+                event_data = {
+                    "execution_id": execution.execution_id,
+                    "persona_name": execution.persona_name,
+                    "status": execution.status,
+                    "files_changed": execution.files_changed,
+                    "pr_url": execution.pr_url,
+                    "duration_seconds": execution.duration_seconds,
+                    "cost_usd": execution.cost_usd,
+                    "updated_at": execution.updated_at.isoformat(),
+                }
+                await nats_client.publish(f"agent.execution.{status}", event_data)
+                logger.info(
+                    f"Published agent execution event: execution_id={execution.execution_id}, status={status}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to publish agent execution event: {e}")
+
+        return execution
+
         """
         Start consuming audit.result.* events from NATS.
 
