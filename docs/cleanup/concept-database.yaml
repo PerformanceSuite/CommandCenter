@@ -1,0 +1,411 @@
+# CommandCenter Concept Database
+# Auto-generated from Document Intelligence extraction
+# Last Updated: 2026-01-01
+# Documents Processed: 10/154
+
+---
+
+# =============================================================================
+# PRODUCTS & PLATFORMS
+# =============================================================================
+
+products:
+  - id: PROD-001
+    name: CommandCenter
+    type: product
+    status: active
+    domain: development
+    definition: "Multi-project R&D management and knowledge base system that tracks technologies, manages research tasks, and provides RAG-powered search"
+    related_entities: [CommandCenter Hub, KnowledgeBeast, Veria, MRKTZR, ROLLIZR, Performia, Fractlzr]
+    source_docs: [docs/CLAUDE.md, docs/PRD.md]
+    extracted_date: 2026-01-01
+
+  - id: PROD-002
+    name: CommandCenter Hub
+    type: product
+    status: active
+    domain: operations
+    definition: "Companion application for managing multiple CommandCenter instances across different projects using Dagger SDK for container orchestration"
+    related_entities: [CommandCenter, Dagger SDK]
+    source_docs: [docs/CLAUDE.md]
+    extracted_date: 2026-01-01
+
+  - id: PROD-003
+    name: Veria
+    type: product
+    status: active
+    domain: compliance
+    definition: "AI-Native Compliance and Distribution Platform that automates trust and compliance for tokenized real-world assets"
+    modules: [TrustLayer, ComplianceEngine, AssetTokenizer, DistributionAPIs, AuditGraph]
+    related_entities: [MRKTZR, ROLLIZR, CommandCenter, Performia, Fractlzr]
+    source_docs: [docs/concepts/Veria.md]
+    extracted_date: 2026-01-01
+
+  - id: PROD-004
+    name: MRKTZR
+    type: product
+    status: active
+    domain: marketing
+    definition: "AI Marketing and Partnership Intelligence platform"
+    modules: [CampaignMesh, MarketGraph, InteractiveOutreachEngine, PartnershipStreamliner, ComplianceBridge]
+    related_entities: [Veria, ROLLIZR, CommandCenter]
+    source_docs: [docs/concepts/MRKTZR.md]
+    extracted_date: 2026-01-01
+
+  - id: PROD-005
+    name: ROLLIZR
+    type: product
+    status: active
+    domain: finance
+    definition: "Industry Rollup & Consolidation Intelligence platform"
+    modules: [FragmentationIndexer, OpportunityScanner, SynergyEngine, IntegrationValidator, SmartDealComposer]
+    related_entities: [Veria, MRKTZR, CommandCenter]
+    source_docs: [docs/concepts/ROLLIZR.md]
+    extracted_date: 2026-01-01
+
+  - id: PROD-006
+    name: Performia
+    type: product
+    status: referenced
+    domain: content
+    definition: "Creative content platform (referenced but no concept file exists)"
+    related_entities: [Veria, MRKTZR, CommandCenter]
+    source_docs: [docs/concepts/Veria.md, docs/concepts/MRKTZR.md]
+    gap: true
+    extracted_date: 2026-01-01
+
+  - id: PROD-007
+    name: Fractlzr
+    type: product
+    status: experimental
+    domain: security
+    definition: "Fractal-Based Secure Encoding system"
+    modules: [FractalCodec, AdaptiveEncoder, TokenLayer, IntegrityWatcher]
+    related_entities: [Veria, CommandCenter]
+    source_docs: [docs/concepts/Fractlzr.md]
+    extracted_date: 2026-01-01
+
+# =============================================================================
+# MODULES & COMPONENTS
+# =============================================================================
+
+modules:
+  # Veria Modules
+  - id: MOD-V001
+    name: TrustLayer
+    parent: Veria
+    type: module
+    status: proposed
+    definition: "AI-driven KYC/AML and regulatory validation"
+    source_docs: [docs/concepts/Veria.md]
+
+  - id: MOD-V002
+    name: ComplianceEngine
+    parent: Veria
+    type: module
+    status: proposed
+    definition: "Dynamic rule synthesis across jurisdictions"
+    source_docs: [docs/concepts/Veria.md]
+
+  - id: MOD-V003
+    name: AssetTokenizer
+    parent: Veria
+    type: module
+    status: proposed
+    definition: "Treasury/MMF wrapper issuance with built-in custody flow"
+    source_docs: [docs/concepts/Veria.md]
+
+  - id: MOD-V004
+    name: DistributionAPIs
+    parent: Veria
+    type: module
+    status: proposed
+    definition: "White-label endpoints for partners"
+    source_docs: [docs/concepts/Veria.md]
+
+  - id: MOD-V005
+    name: AuditGraph
+    parent: Veria
+    type: module
+    status: proposed
+    definition: "Immutable compliance ledger for regulatory audits"
+    source_docs: [docs/concepts/Veria.md]
+
+  # CommandCenter Modules
+  - id: MOD-CC001
+    name: KnowledgeBeast
+    parent: CommandCenter
+    type: module
+    status: implemented
+    definition: "RAG system with PostgreSQL + pgvector backend for semantic search"
+    source_docs: [docs/CLAUDE.md]
+
+  - id: MOD-CC002
+    name: RAGService
+    parent: CommandCenter
+    type: module
+    status: implemented
+    definition: "Hybrid search service with vector similarity + keyword search using RRF"
+    source_docs: [docs/CLAUDE.md]
+
+  - id: MOD-CC003
+    name: Graph-Service
+    parent: CommandCenter
+    type: module
+    status: implemented
+    definition: "Entity graph and relationship management service"
+    source_docs: [docs/plans/composable-surface-sprint-plan.md]
+
+  # Reputation Check Modules
+  - id: MOD-REP001
+    name: ReputationChecker
+    parent: CommandCenter
+    type: module
+    status: proposed
+    definition: "Core class for checking domain reputation across multiple services"
+    source_docs: [docs/global-reputation-check-automation-spec.md]
+
+  - id: MOD-REP002
+    name: ReputationMonitor
+    parent: CommandCenter
+    type: module
+    status: proposed
+    definition: "Scheduled monitoring service with daily and weekly automated checks"
+    source_docs: [docs/global-reputation-check-automation-spec.md]
+
+# =============================================================================
+# CAPABILITIES & FEATURES
+# =============================================================================
+
+capabilities:
+  - id: CAP-001
+    name: Data Isolation Architecture
+    type: architecture
+    status: implemented
+    domain: security
+    definition: "Multi-instance security pattern where each project has isolated CommandCenter instance with separate volumes and secrets"
+    source_docs: [docs/CLAUDE.md]
+
+  - id: CAP-002
+    name: Global Reputation Check System
+    type: feature
+    status: proposed
+    domain: compliance
+    definition: "Automated domain reputation monitoring system checking 20+ security and reputation services"
+    source_docs: [docs/global-reputation-check-automation-spec.md]
+
+  - id: CAP-003
+    name: Proactive Intelligence Layer
+    type: architecture
+    status: planned
+    domain: platform
+    definition: "Continuously scouts technologies, business signals, operational risks"
+    source_docs: [docs/plans/2025-10-29-ecosystem-integration-roadmap.md]
+
+  - id: CAP-004
+    name: Living Briefs
+    type: capability
+    status: planned
+    domain: knowledge
+    definition: "Auto-generate dynamic summaries per technology/repository with KPIs, research findings, business news"
+    source_docs: [docs/plans/2025-10-29-ecosystem-integration-roadmap.md]
+
+  - id: CAP-005
+    name: Fleet Automation
+    type: capability
+    status: planned
+    domain: operations
+    definition: "Push global config updates with staged rollout/rollback support"
+    source_docs: [docs/plans/2025-10-29-ecosystem-integration-roadmap.md]
+
+  - id: CAP-006
+    name: Cross-Project Semantic Search
+    type: capability
+    status: planned
+    domain: knowledge
+    definition: "Federated search across Knowledge Bases with project-level isolation"
+    source_docs: [docs/plans/2025-10-29-ecosystem-integration-roadmap.md]
+
+  - id: CAP-007
+    name: Habit Coach
+    type: capability
+    status: proposed
+    domain: developer-experience
+    definition: "Monitors developer workflows, correlates with best practices, delivers actionable nudges"
+    source_docs: [docs/plans/2025-10-29-commandcenter-habit-coach-feature-request.md]
+
+  - id: CAP-008
+    name: Context API
+    type: capability
+    status: planned
+    domain: developer-experience
+    definition: "Real-time context snapshots for LLM agents (recent docs, alerts, tasks)"
+    source_docs: [docs/plans/2025-10-29-ecosystem-integration-roadmap.md]
+
+# =============================================================================
+# INTEGRATIONS
+# =============================================================================
+
+integrations:
+  - id: INT-001
+    name: CommandCenter × Solana Integration
+    type: integration
+    status: proposed
+    domain: blockchain
+    definition: "Integration of Solana as high-speed execution layer within CommandCenter"
+    related_entities: [Veria, CommandCenter, Solana]
+    source_docs: [docs/commandcenter-solana-v1/README.md]
+    notes: "References undefined Mesh-Bus and TaskGraph - needs clarification"
+
+# =============================================================================
+# TECHNOLOGIES
+# =============================================================================
+
+technologies:
+  - id: TECH-001
+    name: Dagger SDK
+    type: technology
+    status: implemented
+    domain: infrastructure
+    definition: "Python SDK for type-safe container orchestration, eliminates need for docker-compose"
+    source_docs: [docs/CLAUDE.md]
+
+  - id: TECH-002
+    name: pgvector
+    type: technology
+    status: implemented
+    domain: database
+    definition: "PostgreSQL extension for vector similarity search"
+    source_docs: [docs/CLAUDE.md]
+
+# =============================================================================
+# REQUIREMENTS INDEX
+# =============================================================================
+
+requirements:
+  # Critical Requirements
+  critical:
+    - id: REQ-CL001
+      text: "Each project MUST have isolated CommandCenter instance"
+      source_concept: Data Isolation Architecture
+      status: implemented
+
+    - id: REQ-CL002
+      text: "Never share instances across projects due to sensitive data"
+      source_concept: Data Isolation Architecture
+      status: implemented
+
+    - id: REQ-HC001
+      text: "Capture user/system habits with explicit consent"
+      source_concept: Habit Coach
+      status: proposed
+
+  # High Priority Requirements
+  high:
+    - id: REQ-CL003
+      text: "Support PostgreSQL + pgvector for RAG"
+      source_concept: KnowledgeBeast
+      status: implemented
+
+    - id: REQ-CL004
+      text: "Hybrid search (vector + keyword with RRF)"
+      source_concept: RAGService
+      status: implemented
+
+    - id: REQ-REP001
+      text: "Check 15+ reputation services automatically"
+      source_concept: Global Reputation Check
+      status: proposed
+
+    - id: REQ-REP002
+      text: "Daily monitoring with <5 min runtime"
+      source_concept: ReputationMonitor
+      status: proposed
+
+    - id: REQ-REP007
+      text: "99.9% uptime for monitoring service"
+      source_concept: ReputationMonitor
+      status: proposed
+
+    - id: REQ-ECO001
+      text: "Unify CommandCenter instances under proactive intelligence layer"
+      source_concept: Proactive Intelligence Layer
+      status: planned
+
+    - id: REQ-ECO009
+      text: "Federated search across Knowledge Bases"
+      source_concept: Cross-Project Semantic Search
+      status: planned
+
+  # See docs/cleanup/2026-01-01-document-extraction-*.md for full requirement list
+
+# =============================================================================
+# GAPS & UNDEFINED REFERENCES
+# =============================================================================
+
+gaps:
+  - id: GAP-001
+    type: missing_document
+    name: "Performia.md"
+    description: "Referenced 3 times but no concept file exists"
+    referenced_in: [docs/concepts/Veria.md, docs/concepts/MRKTZR.md, docs/concepts/ROLLIZR.md]
+
+  - id: GAP-002
+    type: undefined_concept
+    name: "Mesh-Bus"
+    description: "Referenced in Solana docs but not defined elsewhere"
+    referenced_in: [docs/commandcenter-solana-v1/README.md]
+    possible_mapping: "May be NATS event bus"
+
+  - id: GAP-003
+    type: undefined_concept
+    name: "TaskGraph"
+    description: "Referenced in Solana docs but not defined elsewhere"
+    referenced_in: [docs/commandcenter-solana-v1/README.md]
+    possible_mapping: "May be Graph-Service"
+
+# =============================================================================
+# ECOSYSTEM INTERPLAY
+# =============================================================================
+
+ecosystem_map:
+  veria:
+    receives: [compliance_research, partnership_pipeline, mrktzr_feeds, rollizr_intel]
+    contributes: [trust_layer, compliance_apis, audit_artifacts, regulatory_insights]
+
+  mrktzr:
+    receives: [scheduling, knowledge_hygiene, partner_scoring, veria_assets]
+    contributes: [campaign_mesh_outputs, marketgraph_data, partnership_intelligence]
+
+  rollizr:
+    receives: [research_orchestration, opportunity_validation, compliance_hooks]
+    contributes: [fragmentation_scans, synergy_scoring, deal_blueprints]
+
+  performia:
+    receives: [creative_briefs, knowledge_search, marketing_alignment]
+    contributes: [experience_layers, educational_content]
+
+  fractlzr:
+    receives: [integration_sandbox, watermarking]
+    contributes: [secure_visual_signatures]
+
+# =============================================================================
+# METADATA
+# =============================================================================
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2026-01-01"
+  documents_processed: 10
+  documents_total: 154
+  extraction_complete: false
+
+  stats:
+    products: 7
+    modules: 12
+    capabilities: 8
+    integrations: 1
+    technologies: 2
+    requirements_critical: 3
+    requirements_high: 9
+    gaps: 3

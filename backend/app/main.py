@@ -47,7 +47,7 @@ from app.routers import (
     schedules,
 )
 from app.routers import settings as settings_router
-from app.routers import technologies, webhooks, webhooks_ingestion
+from app.routers import sse, technologies, webhooks, webhooks_ingestion
 from app.services import redis_service
 from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
@@ -269,6 +269,7 @@ app.include_router(settings_router.router, prefix=settings.api_v1_prefix)  # Set
 app.include_router(agents.router, prefix=settings.api_v1_prefix)  # Agent persona management
 app.include_router(alerts.router)  # AlertManager webhook integration
 app.include_router(prompts.router)  # Prompt analysis and improvement API
+app.include_router(sse.router)  # Sprint 4: SSE streaming for real-time graph updates
 
 
 # Test endpoints for observability (only in dev/test environments)
