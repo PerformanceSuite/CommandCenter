@@ -1,41 +1,54 @@
 concept_types:
-  capability: 3
-  feature: 10
-  framework: 17
-  integration: 3
-  module: 10
-  platform: 4
-  process: 3
-  product: 7
-  technology: 28
+  capability: 237
+  component: 2
+  configuration: 1
+  feature: 351
+  fixture: 4
+  framework: 236
+  frontend: 1
+  function: 1
+  infrastructure: 1
+  integration: 55
+  module: 511
+  monitoring: 1
+  platform: 148
+  process: 232
+  product: 214
+  project: 2
+  protocol: 1
+  service: 6
+  technique: 1
+  technology: 558
+  tool: 2
 failed_documents: 0
 requirement_priorities:
-  critical: 46
-  high: 65
-  low: 6
-  medium: 80
+  critical: 1079
+  high: 1919
+  low: 212
+  medium: 1792
+  unknown: 4
 top_concepts:
-- GraphRepo
-- EventStreamer
-- Correlation Tracking
-- PostgreSQL
-- CommandCenter
-- Knowledge Base
-- Webhook
-- Dashboard
-- Prometheus
-- Tailwind CSS
-- TechnologyService
-- Tool Registry
-- ChromaDB
-- TanStack Query
-- Project Isolation
-- Repository
-- JWT Validation
-- Docker-First Development Workflow
-- Dagger SDK
-- ToolOps
-total_concepts: 85
-total_documents: 5
-total_requirements: 197
-unique_concepts: 75
+- model.query
+- Export API
+- RAG Service
+- MockBus
+- BaseRepository
+- SQLAlchemy ORM
+- ServiceHealthCard
+- ESLint type safety issues
+- E2B SDK
+- Backend Integration Test Sharding
+- cross-project federation
+- get_db
+- Flower
+- useAffordances.ts
+- MRKTZR
+- query comment integration
+- rich
+- ProjectCard Component
+- Context API
+- Action Execution
+total_concepts: 2565
+total_documents: 159
+total_requirements: 5006
+unique_concepts: 1456
