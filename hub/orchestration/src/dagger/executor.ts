@@ -154,7 +154,13 @@ export class DaggerAgentExecutor {
           container = container.withExec(['npm', 'install', '-g', 'tsx']);
         }
 
-        // 5. Execute agent with timeout
+        // 5. Pass input via environment variable (avoids shell escaping issues)
+        container = container.withEnvVariable(
+          'AGENT_INPUT',
+          JSON.stringify(input)
+        );
+
+        // 6. Execute agent with timeout
         const runtime = isTypeScript ? 'tsx' : 'node';
         result = await container
           .withExec([
@@ -162,7 +168,6 @@ export class DaggerAgentExecutor {
             config.timeoutSeconds.toString(),
             runtime,
             agentPath,
-            JSON.stringify(input),
           ])
           .stdout();
       });

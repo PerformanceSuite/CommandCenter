@@ -5,9 +5,10 @@ import { InputSchema, OutputSchema } from './schemas';
 
 async function main() {
   try {
-    const inputJson = process.argv[2];
+    // Read input from environment variable (preferred) or command line argument (fallback)
+    const inputJson = process.env.AGENT_INPUT || process.argv[2];
     if (!inputJson) {
-      throw new Error('No input provided');
+      throw new Error('No input provided. Set AGENT_INPUT env var or pass as CLI argument.');
     }
 
     const input = JSON.parse(inputJson);

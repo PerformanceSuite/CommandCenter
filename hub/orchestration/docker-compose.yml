@@ -1,0 +1,70 @@
+# Docker Compose for CommandCenter Orchestration Service
+# Includes all required infrastructure: PostgreSQL, NATS, and Dagger Engine
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: orchestration-postgres
+    environment:
+      POSTGRES_USER: orchestration
+      POSTGRES_PASSWORD: orchestration
+      POSTGRES_DB: orchestration
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orchestration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NATS Message Broker
+  nats:
+    image: nats:2.10-alpine
+    container_name: orchestration-nats
+    ports:
+      - "4222:4222"   # Client connections
+      - "8222:8222"   # HTTP monitoring
+    command: ["--http_port", "8222"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Dagger Engine (required for agent execution)
+  # See: https://docs.dagger.io/
+  dagger-engine:
+    image: registry.dagger.io/engine:v0.19.3
+    container_name: orchestration-dagger
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dagger_data:/var/lib/dagger
+    environment:
+      - _EXPERIMENTAL_DAGGER_RUNNER_HOST=unix:///var/run/buildkit/buildkitd.sock
+    healthcheck:
+      test: ["CMD", "dagger", "version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  dagger_data:
+
+# Usage:
+#   docker compose up -d           # Start all services
+#   docker compose ps              # Check status
+#   docker compose logs -f         # Follow logs
+#   docker compose down            # Stop all services
+#   docker compose down -v         # Stop and remove volumes
+
+# After starting services, run the orchestration service:
+#   cd hub/orchestration
+#   npm run dev
