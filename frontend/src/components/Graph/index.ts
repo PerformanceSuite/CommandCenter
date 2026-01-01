@@ -4,6 +4,7 @@
 
 export { GraphCanvas } from './GraphCanvas';
 export { GraphNodeTooltip } from './GraphNodeTooltip';
+export { QueryBar } from './QueryBar';
 
 // Re-export types for convenience
 export type {
