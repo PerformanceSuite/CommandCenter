@@ -9,15 +9,17 @@ Tests the 5 immediate-priority security fixes:
 5. Secure token storage
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
+from cli.config import Config
 
-# Test 1: Session Fixation Prevention
+# Test imports - grouped here to satisfy E402
 from app.mcp.connection import MCPConnectionManager, MCPSession
+from app.mcp.protocol import MCPProtocolHandler
+from app.routers.projects import validate_project_path
 
 
 class TestSessionFixationPrevention:
@@ -61,9 +63,6 @@ class TestSessionFixationPrevention:
 
 
 # Test 2: Error Message Sanitization
-from app.mcp.protocol import JSONRPCRequest, MCPProtocolHandler
-
-
 class TestErrorMessageSanitization:
     """Test that exception details are not leaked to clients."""
 
@@ -118,9 +117,6 @@ class TestErrorMessageSanitization:
 
 
 # Test 3: Path Traversal Protection
-from app.routers.projects import validate_project_path
-
-
 class TestPathTraversalProtection:
     """Test that path traversal attacks are prevented."""
 
@@ -185,12 +181,14 @@ class TestPathTraversalProtection:
             from app.routers import projects
 
             original_dirs = projects.ALLOWED_ANALYSIS_DIRS
+            tmpdir_path = Path(tmpdir).resolve()
 
             try:
-                projects.ALLOWED_ANALYSIS_DIRS = [Path(tmpdir)]
+                # Set the allowed dir to the resolved temp directory
+                projects.ALLOWED_ANALYSIS_DIRS = [tmpdir_path]
 
                 # Create a valid project directory
-                project_dir = Path(tmpdir) / "my-project"
+                project_dir = tmpdir_path / "my-project"
                 project_dir.mkdir()
 
                 # Should not raise
@@ -231,9 +229,6 @@ class TestCLISetup:
 
 
 # Test 5: Secure Token Storage
-from cli.config import AuthConfig, Config
-
-
 class TestSecureTokenStorage:
     """Test that tokens are stored securely in system keyring."""
 
@@ -269,7 +264,7 @@ class TestSecureTokenStorage:
         config = Config()
 
         # Delete token
-        result = config.delete_token()
+        config.delete_token()
 
         # Should call keyring.delete_password
         mock_delete.assert_called_once_with("commandcenter", "api_token")

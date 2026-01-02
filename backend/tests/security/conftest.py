@@ -44,8 +44,9 @@ def jwt_token_factory():
     """Factory for creating test JWT tokens.
 
     Args:
-        user_id: User ID to encode in token
+        user_or_id: User object or user ID string to encode in token
         expires_delta: Token expiration time (default: 30 minutes)
+        expired: If True, create an already-expired token
         tampered: Whether to tamper with token
         tamper_type: Type of tampering ("signature" or "payload")
 
@@ -54,12 +55,22 @@ def jwt_token_factory():
     """
 
     def _create_token(
-        user_id: str,
+        user_or_id,
         expires_delta: timedelta = None,
+        expired: bool = False,
         tampered: bool = False,
         tamper_type: str = "signature",
     ):
-        if expires_delta is None:
+        # Handle both User objects and string IDs
+        if hasattr(user_or_id, "id"):
+            user_id = str(user_or_id.id)
+        else:
+            user_id = str(user_or_id)
+
+        if expired:
+            # Create token that expired 1 hour ago
+            expires_delta = timedelta(hours=-1)
+        elif expires_delta is None:
             expires_delta = timedelta(minutes=30)
 
         token = create_access_token(data={"sub": user_id}, expires_delta=expires_delta)
@@ -91,7 +102,7 @@ def auth_headers_factory(jwt_token_factory):
     """
 
     def _create_headers(user):
-        token = jwt_token_factory(user_id=str(user.id))
+        token = jwt_token_factory(user)  # jwt_token_factory now handles User objects
         return {"Authorization": f"Bearer {token}"}
 
     return _create_headers
