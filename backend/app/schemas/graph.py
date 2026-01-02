@@ -656,3 +656,46 @@ class BatchIngestResponse(BaseModel):
     created: int = Field(..., description="Number of entities created")
     updated: int = Field(..., description="Number of entities updated")
     errors: List[str] = Field(default_factory=list, description="Any errors encountered")
+
+
+class IngestDocumentIntelligenceRequest(BaseModel):
+    """Request to ingest Document Intelligence pipeline output.
+
+    Accepts the combined output from all Document Intelligence personas:
+    - Documents from doc-classifier
+    - Concepts from doc-concept-extractor
+    - Requirements from doc-requirement-miner
+
+    Documents are processed first to establish IDs, then concepts and
+    requirements are linked to their source documents by path.
+    """
+
+    documents: List[CreateDocumentRequest] = Field(
+        default_factory=list,
+        description="Classified documents from doc-classifier",
+    )
+    concepts: List[CreateConceptRequest] = Field(
+        default_factory=list,
+        description="Extracted concepts from doc-concept-extractor",
+    )
+    requirements: List[CreateRequirementRequest] = Field(
+        default_factory=list,
+        description="Mined requirements from doc-requirement-miner",
+    )
+
+
+class IngestDocumentIntelligenceResponse(BaseModel):
+    """Response for Document Intelligence ingestion."""
+
+    documents_created: int = Field(0, description="Documents created")
+    documents_updated: int = Field(0, description="Documents updated (by path)")
+    concepts_created: int = Field(0, description="Concepts created")
+    concepts_updated: int = Field(0, description="Concepts updated (by name)")
+    requirements_created: int = Field(0, description="Requirements created")
+    requirements_updated: int = Field(0, description="Requirements updated (by req_id)")
+    links_created: int = Field(0, description="Links created between entities")
+    errors: List[str] = Field(default_factory=list, description="Errors encountered")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional metadata (processing time, etc.)",
+    )

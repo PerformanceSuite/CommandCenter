@@ -17,10 +17,13 @@ from app.models.graph import (
     AuditStatus,
     CrossProjectLink,
     GraphAudit,
+    GraphConcept,
     GraphDependency,
+    GraphDocument,
     GraphFile,
     GraphLink,
     GraphRepo,
+    GraphRequirement,
 )
 from app.models.graph import GraphService as GraphServiceModel
 from app.models.graph import (
@@ -33,6 +36,9 @@ from app.models.graph import (
 )
 from app.nats_client import get_nats_client
 from app.schemas.graph import (
+    CreateConceptRequest,
+    CreateDocumentRequest,
+    CreateRequirementRequest,
     CrossProjectLinkResponse,
     DependencyGraph,
     FederationQueryRequest,
@@ -41,6 +47,8 @@ from app.schemas.graph import (
     GraphEdge,
     GraphFilters,
     GraphNode,
+    IngestDocumentIntelligenceRequest,
+    IngestDocumentIntelligenceResponse,
     ProjectGraphResponse,
     SearchResults,
     SpecFilters,
@@ -1481,3 +1489,397 @@ class GraphService:
 
         await nats_client.subscribe("audit.result.*", handle_audit_result)
         logger.info("Started audit result consumer (subscribed to audit.result.*)")
+
+    # ========================================================================
+    # Document Intelligence Operations (Sprint 6)
+    # ========================================================================
+
+    async def ingest_document_intelligence(
+        self,
+        project_id: int,
+        request: IngestDocumentIntelligenceRequest,
+    ) -> IngestDocumentIntelligenceResponse:
+        """
+        Ingest Document Intelligence pipeline output into the graph.
+
+        Processes documents, concepts, and requirements from Document Intelligence
+        personas (doc-classifier, doc-concept-extractor, doc-requirement-miner).
+
+        Documents are upserted first (by path), establishing IDs that concepts
+        and requirements can reference. Concepts and requirements are then
+        upserted (by name/req_id) and linked to their source documents.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Combined output from Document Intelligence pipeline
+
+        Returns:
+            IngestDocumentIntelligenceResponse with counts and any errors
+        """
+        import time
+
+        start_time = time.time()
+        response = IngestDocumentIntelligenceResponse()
+        path_to_doc_id: dict[str, int] = {}
+
+        # Phase 1: Upsert documents (by path)
+        for doc_req in request.documents:
+            try:
+                doc, created = await self._upsert_document(project_id, doc_req)
+                path_to_doc_id[doc.path] = doc.id
+
+                if created:
+                    response.documents_created += 1
+                    await self._publish_node_event(
+                        event_type="created",
+                        project_id=project_id,
+                        node_type="document",
+                        node_id=doc.id,
+                        label=doc.title or doc.path,
+                    )
+                else:
+                    response.documents_updated += 1
+                    await self._publish_node_event(
+                        event_type="updated",
+                        project_id=project_id,
+                        node_type="document",
+                        node_id=doc.id,
+                        label=doc.title or doc.path,
+                    )
+            except Exception as e:
+                response.errors.append(f"Document '{doc_req.path}': {str(e)}")
+                logger.error(f"Error upserting document {doc_req.path}: {e}")
+
+        # Phase 2: Upsert concepts (by name) and link to source documents
+        for concept_req in request.concepts:
+            try:
+                concept, created = await self._upsert_concept(project_id, concept_req)
+
+                if created:
+                    response.concepts_created += 1
+                    await self._publish_node_event(
+                        event_type="created",
+                        project_id=project_id,
+                        node_type="concept",
+                        node_id=concept.id,
+                        label=concept.name,
+                    )
+                else:
+                    response.concepts_updated += 1
+                    await self._publish_node_event(
+                        event_type="updated",
+                        project_id=project_id,
+                        node_type="concept",
+                        node_id=concept.id,
+                        label=concept.name,
+                    )
+
+                # Create link from source document if we have it
+                if concept.source_document_id:
+                    link = await self._ensure_link(
+                        from_entity="graph_documents",
+                        from_id=concept.source_document_id,
+                        to_entity="graph_concepts",
+                        to_id=concept.id,
+                        link_type=LinkType.EXTRACTS_FROM,
+                        project_id=project_id,
+                    )
+                    if link:
+                        response.links_created += 1
+            except Exception as e:
+                response.errors.append(f"Concept '{concept_req.name}': {str(e)}")
+                logger.error(f"Error upserting concept {concept_req.name}: {e}")
+
+        # Phase 3: Upsert requirements (by req_id) and link to source documents
+        for req_req in request.requirements:
+            try:
+                requirement, created = await self._upsert_requirement(project_id, req_req)
+
+                if created:
+                    response.requirements_created += 1
+                    await self._publish_node_event(
+                        event_type="created",
+                        project_id=project_id,
+                        node_type="requirement",
+                        node_id=requirement.id,
+                        label=requirement.req_id,
+                    )
+                else:
+                    response.requirements_updated += 1
+                    await self._publish_node_event(
+                        event_type="updated",
+                        project_id=project_id,
+                        node_type="requirement",
+                        node_id=requirement.id,
+                        label=requirement.req_id,
+                    )
+
+                # Create link from source document if we have it
+                if requirement.source_document_id:
+                    link = await self._ensure_link(
+                        from_entity="graph_documents",
+                        from_id=requirement.source_document_id,
+                        to_entity="graph_requirements",
+                        to_id=requirement.id,
+                        link_type=LinkType.EXTRACTS_FROM,
+                        project_id=project_id,
+                    )
+                    if link:
+                        response.links_created += 1
+            except Exception as e:
+                response.errors.append(f"Requirement '{req_req.req_id}': {str(e)}")
+                logger.error(f"Error upserting requirement {req_req.req_id}: {e}")
+
+        # Finalize
+        elapsed_ms = (time.time() - start_time) * 1000
+        response.metadata = {
+            "processing_time_ms": round(elapsed_ms, 2),
+            "documents_processed": len(request.documents),
+            "concepts_processed": len(request.concepts),
+            "requirements_processed": len(request.requirements),
+        }
+
+        logger.info(
+            f"Document Intelligence ingestion complete for project {project_id}: "
+            f"docs={response.documents_created}/{response.documents_updated}, "
+            f"concepts={response.concepts_created}/{response.concepts_updated}, "
+            f"reqs={response.requirements_created}/{response.requirements_updated}, "
+            f"links={response.links_created}, errors={len(response.errors)}"
+        )
+
+        return response
+
+    async def _upsert_document(
+        self,
+        project_id: int,
+        req: CreateDocumentRequest,
+    ) -> tuple[GraphDocument, bool]:
+        """
+        Upsert a document by path within a project.
+
+        Returns:
+            Tuple of (document, created) where created is True if new
+        """
+        # Try to find existing document by path
+        stmt = select(GraphDocument).filter(
+            and_(
+                GraphDocument.project_id == project_id,
+                GraphDocument.path == req.path,
+            )
+        )
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            # Update existing document
+            existing.title = req.title
+            existing.doc_type = req.doc_type
+            existing.subtype = req.subtype
+            existing.status = req.status
+            existing.audience = req.audience
+            existing.value_assessment = req.value_assessment
+            existing.word_count = req.word_count
+            existing.content_hash = req.content_hash
+            existing.staleness_score = req.staleness_score
+            existing.last_meaningful_date = req.last_meaningful_date
+            existing.recommended_action = req.recommended_action
+            existing.target_location = req.target_location
+            existing.metadata_ = req.metadata
+            from datetime import datetime
+
+            existing.last_analyzed_at = datetime.utcnow()
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing, False
+        else:
+            # Create new document
+            doc = GraphDocument(
+                project_id=project_id,
+                path=req.path,
+                title=req.title,
+                doc_type=req.doc_type,
+                subtype=req.subtype,
+                status=req.status,
+                audience=req.audience,
+                value_assessment=req.value_assessment,
+                word_count=req.word_count,
+                content_hash=req.content_hash,
+                staleness_score=req.staleness_score,
+                last_meaningful_date=req.last_meaningful_date,
+                recommended_action=req.recommended_action,
+                target_location=req.target_location,
+                metadata_=req.metadata,
+            )
+            self.db.add(doc)
+            await self.db.commit()
+            await self.db.refresh(doc)
+            return doc, True
+
+    async def _upsert_concept(
+        self,
+        project_id: int,
+        req: CreateConceptRequest,
+    ) -> tuple[GraphConcept, bool]:
+        """
+        Upsert a concept by name within a project.
+
+        Returns:
+            Tuple of (concept, created) where created is True if new
+        """
+        # Try to find existing concept by name
+        stmt = select(GraphConcept).filter(
+            and_(
+                GraphConcept.project_id == project_id,
+                GraphConcept.name == req.name,
+            )
+        )
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            # Update existing concept
+            existing.concept_type = req.concept_type
+            existing.source_document_id = req.source_document_id
+            existing.definition = req.definition
+            existing.status = req.status
+            existing.domain = req.domain
+            existing.source_quote = req.source_quote
+            existing.confidence = req.confidence
+            existing.related_entities = req.related_entities
+            existing.metadata_ = req.metadata
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing, False
+        else:
+            # Create new concept
+            concept = GraphConcept(
+                project_id=project_id,
+                name=req.name,
+                concept_type=req.concept_type,
+                source_document_id=req.source_document_id,
+                definition=req.definition,
+                status=req.status,
+                domain=req.domain,
+                source_quote=req.source_quote,
+                confidence=req.confidence,
+                related_entities=req.related_entities,
+                metadata_=req.metadata,
+            )
+            self.db.add(concept)
+            await self.db.commit()
+            await self.db.refresh(concept)
+            return concept, True
+
+    async def _upsert_requirement(
+        self,
+        project_id: int,
+        req: CreateRequirementRequest,
+    ) -> tuple[GraphRequirement, bool]:
+        """
+        Upsert a requirement by req_id within a project.
+
+        Returns:
+            Tuple of (requirement, created) where created is True if new
+        """
+        # Try to find existing requirement by req_id
+        stmt = select(GraphRequirement).filter(
+            and_(
+                GraphRequirement.project_id == project_id,
+                GraphRequirement.req_id == req.req_id,
+            )
+        )
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            # Update existing requirement
+            existing.text = req.text
+            existing.req_type = req.req_type
+            existing.source_document_id = req.source_document_id
+            existing.priority = req.priority
+            existing.status = req.status
+            existing.source_concept = req.source_concept
+            existing.source_quote = req.source_quote
+            existing.verification = req.verification
+            existing.metadata_ = req.metadata
+            await self.db.commit()
+            await self.db.refresh(existing)
+            return existing, False
+        else:
+            # Create new requirement
+            requirement = GraphRequirement(
+                project_id=project_id,
+                req_id=req.req_id,
+                text=req.text,
+                req_type=req.req_type,
+                source_document_id=req.source_document_id,
+                priority=req.priority,
+                status=req.status,
+                source_concept=req.source_concept,
+                source_quote=req.source_quote,
+                verification=req.verification,
+                metadata_=req.metadata,
+            )
+            self.db.add(requirement)
+            await self.db.commit()
+            await self.db.refresh(requirement)
+            return requirement, True
+
+    async def _ensure_link(
+        self,
+        from_entity: str,
+        from_id: int,
+        to_entity: str,
+        to_id: int,
+        link_type: LinkType,
+        project_id: int,
+        weight: float = 1.0,
+    ) -> Optional[GraphLink]:
+        """
+        Create a link if it doesn't already exist.
+
+        Returns:
+            Created GraphLink or None if it already exists
+        """
+        # Check for existing link
+        stmt = select(GraphLink).filter(
+            and_(
+                GraphLink.from_entity == from_entity,
+                GraphLink.from_id == from_id,
+                GraphLink.to_entity == to_entity,
+                GraphLink.to_id == to_id,
+                GraphLink.type == link_type,
+            )
+        )
+        result = await self.db.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            return None  # Link already exists
+
+        # Create new link
+        link = GraphLink(
+            from_entity=from_entity,
+            from_id=from_id,
+            to_entity=to_entity,
+            to_id=to_id,
+            type=link_type,
+            weight=weight,
+        )
+        self.db.add(link)
+        await self.db.commit()
+        await self.db.refresh(link)
+
+        # Publish edge event
+        await self._publish_edge_event(
+            event_type="created",
+            project_id=project_id,
+            from_entity=from_entity,
+            from_id=from_id,
+            to_entity=to_entity,
+            to_id=to_id,
+            edge_type=link_type.value,
+            weight=weight,
+        )
+
+        return link
