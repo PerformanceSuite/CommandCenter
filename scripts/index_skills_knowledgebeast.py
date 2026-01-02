@@ -6,10 +6,15 @@ Skills are indexed into a global collection (project_id=0) so they're
 available across all projects.
 
 Usage:
-    docker compose exec backend python scripts/index_skills_knowledgebeast.py
+    # Inside Docker container:
+    cat scripts/index_skills_knowledgebeast.py | docker compose exec -T backend python -
+
+    # Or locally (set DATABASE_URL):
+    DATABASE_URL=postgresql+asyncpg://... python scripts/index_skills_knowledgebeast.py
 """
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -27,18 +32,33 @@ async def index_skills():
     from sqlalchemy import text
 
     try:
-        from app.services.knowledgebeast_service import KnowledgeBeastService, KNOWLEDGEBEAST_AVAILABLE
+        from app.services.knowledgebeast_service import (
+            KnowledgeBeastService,
+            KNOWLEDGEBEAST_AVAILABLE,
+        )
     except ImportError:
-        logger.error("KnowledgeBeast not available. Install with: pip install knowledgebeast>=2.3.2")
+        logger.error(
+            "KnowledgeBeast not available. Install with: pip install knowledgebeast>=2.3.2"
+        )
         return
 
     if not KNOWLEDGEBEAST_AVAILABLE:
         logger.error("KnowledgeBeast module not installed")
         return
 
-    # Connect to database
-    DATABASE_URL = "postgresql+asyncpg://commandcenter:commandcenter@localhost:5432/commandcenter"
-    engine = create_async_engine(DATABASE_URL, echo=False)
+    # Get DATABASE_URL from environment (same as backend uses)
+    # Convert postgres:// to postgresql+asyncpg:// if needed
+    database_url = os.environ.get("DATABASE_URL", "")
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif not database_url:
+        logger.error("DATABASE_URL environment variable not set")
+        return
+
+    logger.info(f"Connecting to database...")
+    engine = create_async_engine(database_url, echo=False)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     # Initialize KnowledgeBeast with project_id=0 for global skills
@@ -64,16 +84,7 @@ async def index_skills():
             skill_id, slug, name, category, description, content = skill
 
             # Build searchable content
-            full_content = f"""# {name}
-
-Category: {category}
-
-## Description
-{description or 'No description'}
-
-## Content
-{content or 'No content'}
-"""
+            full_content = f"# {name}\n\nCategory: {category}\n\n## Description\n{description or 'No description'}\n\n## Content\n{content or 'No content'}\n"
 
             metadata = {
                 "title": name,
@@ -88,7 +99,7 @@ Category: {category}
                 chunks = await kb_service.add_document(
                     content=full_content,
                     metadata=metadata,
-                    chunk_size=1500  # Skills are smaller, use larger chunks
+                    chunk_size=1500,
                 )
                 logger.info(f"  ✓ {slug} ({chunks} chunks)")
                 indexed += 1

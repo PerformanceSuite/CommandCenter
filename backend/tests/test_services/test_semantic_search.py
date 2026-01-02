@@ -91,7 +91,7 @@ class TestSemanticSearchService:
     @pytest.mark.asyncio
     async def test_search_returns_results(self, mock_rag_service):
         """Test that search returns formatted results."""
-        with patch(
+        with patch("app.services.semantic_search.RAG_AVAILABLE", True), patch(
             "app.services.semantic_search.RAGService",
             return_value=mock_rag_service,
         ):
@@ -109,7 +109,7 @@ class TestSemanticSearchService:
     @pytest.mark.asyncio
     async def test_search_applies_threshold(self, mock_rag_service):
         """Test that threshold filters low-score results."""
-        with patch(
+        with patch("app.services.semantic_search.RAG_AVAILABLE", True), patch(
             "app.services.semantic_search.RAGService",
             return_value=mock_rag_service,
         ):
@@ -138,7 +138,7 @@ class TestSemanticSearchService:
             ]
         )
 
-        with patch(
+        with patch("app.services.semantic_search.RAG_AVAILABLE", True), patch(
             "app.services.semantic_search.RAGService",
             return_value=mock_rag_service,
         ):
@@ -159,7 +159,7 @@ class TestSemanticSearchService:
     @pytest.mark.asyncio
     async def test_convert_to_entities(self, mock_rag_service):
         """Test conversion of semantic results to entity format."""
-        with patch(
+        with patch("app.services.semantic_search.RAG_AVAILABLE", True), patch(
             "app.services.semantic_search.RAGService",
             return_value=mock_rag_service,
         ):
@@ -179,7 +179,7 @@ class TestSemanticSearchService:
         """Test handling of empty search results."""
         mock_rag_service.query = AsyncMock(return_value=[])
 
-        with patch(
+        with patch("app.services.semantic_search.RAG_AVAILABLE", True), patch(
             "app.services.semantic_search.RAGService",
             return_value=mock_rag_service,
         ):

@@ -4,6 +4,9 @@
 
 ## Active Concepts
 
+### System Architecture
+- [Unified Architecture](./UnifiedArchitecture.md) - **START HERE** - How all components work together as one AI OS
+
 ### Design Principles
 - [Intent-Aware Agents](./IntentAware.md) - Framework for reliable agent intent (crystallization, disambiguation, verification)
 

@@ -1,0 +1,25 @@
+  backend:
+    build:
+      context: .  # Build from repo root to access libs/
+      dockerfile: backend/Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-commandcenter}_backend
+    env_file: .env.docker
+    volumes:
+      - rag_storage:/app/rag_storage
+      - ./backend/output:/app/output
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+--
+      backend:
+        condition: service_healthy
+    healthcheck:

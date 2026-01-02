@@ -76,15 +76,16 @@ class TestProviderCRUD:
 class TestAgentConfig:
     def test_get_agent_config(self, service):
         service.create_provider(alias="gemini", model_id="gemini/flash")
-        service.set_agent_provider("analyst", "gemini")
+        service.set_agent_model("analyst", "google", "gemini/flash")
 
         config = service.get_agent_config("analyst")
-        assert config.provider_alias == "gemini"
+        assert config.provider == "google"
+        assert config.model_id == "gemini/flash"
 
     def test_list_agent_configs(self, service):
         service.create_provider(alias="p1", model_id="m1")
-        service.set_agent_provider("analyst", "p1")
-        service.set_agent_provider("critic", "p1")
+        service.set_agent_model("analyst", "provider1", "m1")
+        service.set_agent_model("critic", "provider1", "m1")
 
         configs = service.list_agent_configs()
         assert len(configs) == 2

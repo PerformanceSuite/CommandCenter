@@ -1,8 +1,9 @@
 """
 Skill Retriever - Fetches relevant skills from CommandCenter for agent prompts.
 
-Queries the Skills API to find relevant patterns, architectures, and methodologies
-that can help agents complete their tasks more effectively.
+Queries the Skills API for keyword search, and optionally KnowledgeBeast for
+semantic search to find patterns, architectures, and methodologies that can
+help agents complete their tasks more effectively.
 """
 
 from __future__ import annotations
@@ -17,6 +18,9 @@ logger = structlog.get_logger(__name__)
 
 # Default API base URL - can be overridden via environment
 DEFAULT_API_BASE = "http://localhost:8000/api/v1"
+
+# Global project ID for skills in KnowledgeBeast
+GLOBAL_PROJECT_ID = 0
 
 
 @dataclass
@@ -41,31 +45,47 @@ class RetrievedSkill:
 
 class SkillRetriever:
     """
-    Retrieves relevant skills from CommandCenter's Skills API.
+    Retrieves relevant skills from CommandCenter's Skills API and KnowledgeBeast.
+
+    Supports two search modes:
+    - API search: Keyword-based search via /api/v1/skills/search
+    - Semantic search: Vector similarity search via KnowledgeBeast (if available)
 
     Example:
         retriever = SkillRetriever()
 
+        # Keyword search (default)
         skills = await retriever.find_relevant(
             task="Implement WebSocket subscriptions",
             categories=["pattern", "architecture"],
             limit=3
         )
 
-        for skill in skills:
-            print(skill.name, skill.effectiveness_score)
+        # Semantic search (requires KnowledgeBeast indexing)
+        skills = await retriever.find_relevant_semantic(
+            task="How do I handle real-time updates?",
+            limit=5
+        )
     """
 
-    def __init__(self, api_base: str = DEFAULT_API_BASE, timeout: float = 10.0):
+    def __init__(
+        self,
+        api_base: str = DEFAULT_API_BASE,
+        timeout: float = 10.0,
+        enable_semantic: bool = True,
+    ):
         """
         Initialize skill retriever.
 
         Args:
             api_base: Base URL for Skills API
             timeout: Request timeout in seconds
+            enable_semantic: Whether to use KnowledgeBeast for semantic search
         """
         self.api_base = api_base.rstrip("/")
         self.timeout = timeout
+        self.enable_semantic = enable_semantic
+        self._kb_service = None
 
     async def find_relevant(
         self,
@@ -76,7 +96,7 @@ class SkillRetriever:
         min_effectiveness: float = 0.0,
     ) -> list[RetrievedSkill]:
         """
-        Find skills relevant to a task.
+        Find skills relevant to a task using keyword search.
 
         Args:
             task: Task description to match against
@@ -90,7 +110,6 @@ class SkillRetriever:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                # Search skills
                 response = await client.post(
                     f"{self.api_base}/skills/search",
                     json={
@@ -143,6 +162,88 @@ class SkillRetriever:
             return []
         except Exception as e:
             logger.warning("skill_retrieval_error", error=str(e))
+            return []
+
+    async def find_relevant_semantic(
+        self,
+        task: str,
+        limit: int = 5,
+        mode: str = "hybrid",
+    ) -> list[RetrievedSkill]:
+        """
+        Find skills using semantic search via KnowledgeBeast.
+
+        This uses vector embeddings to find skills by meaning, not just keywords.
+        Requires skills to be indexed in KnowledgeBeast first.
+
+        Args:
+            task: Task description to match against
+            limit: Maximum skills to return
+            mode: Search mode ('vector', 'keyword', 'hybrid')
+
+        Returns:
+            List of relevant skills, sorted by semantic similarity
+        """
+        if not self.enable_semantic:
+            logger.debug("semantic_search_disabled")
+            return []
+
+        try:
+            # Lazy import and init KnowledgeBeast
+            if self._kb_service is None:
+                try:
+                    from app.services.knowledgebeast_service import (
+                        KNOWLEDGEBEAST_AVAILABLE,
+                        KnowledgeBeastService,
+                    )
+
+                    if not KNOWLEDGEBEAST_AVAILABLE:
+                        logger.warning("knowledgebeast_not_available")
+                        self.enable_semantic = False
+                        return []
+                    self._kb_service = KnowledgeBeastService(project_id=GLOBAL_PROJECT_ID)
+                except ImportError:
+                    logger.warning("knowledgebeast_import_failed")
+                    self.enable_semantic = False
+                    return []
+
+            # Query KnowledgeBeast
+            results = await self._kb_service.query(
+                question=task,
+                category=None,
+                k=limit,
+                mode=mode,
+            )
+
+            # Convert to RetrievedSkill objects
+            skills = []
+            for result in results:
+                metadata = result.get("metadata", {})
+                if metadata.get("type") != "skill":
+                    continue
+
+                skills.append(
+                    RetrievedSkill(
+                        slug=metadata.get("slug", "unknown"),
+                        name=result.get("title", "Unknown Skill"),
+                        category=metadata.get("category", "unknown").replace("skill-", ""),
+                        description=result.get("content", "")[:200],
+                        content=result.get("content", ""),
+                        effectiveness_score=result.get("score", 0.0),
+                    )
+                )
+
+            logger.info(
+                "semantic_skills_retrieved",
+                task_preview=task[:50],
+                count=len(skills),
+                mode=mode,
+            )
+
+            return skills
+
+        except Exception as e:
+            logger.warning("semantic_search_error", error=str(e))
             return []
 
     async def get_by_slug(self, slug: str) -> Optional[RetrievedSkill]:
@@ -234,6 +335,6 @@ def format_skills_for_prompt(skills: list[RetrievedSkill]) -> str:
 
     for skill in skills:
         sections.append(skill.to_prompt_section())
-        sections.append("")  # Blank line between skills
+        sections.append("")
 
     return "\n".join(sections)

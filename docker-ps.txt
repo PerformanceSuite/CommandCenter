@@ -1,0 +1,13 @@
+NAME                              IMAGE                                          COMMAND                  SERVICE             CREATED          STATUS                    PORTS
+commandcenter-redis-test-1        redis:7-alpine                                 "docker-entrypoint.s…"   redis-test          2 hours ago      Up 2 hours (healthy)      0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp
+commandcenter_alertmanager        prom/alertmanager:v0.27.0                      "/bin/alertmanager -…"   alertmanager        5 hours ago      Up 2 hours                0.0.0.0:9093->9093/tcp, [::]:9093->9093/tcp
+commandcenter_backend             commandcenter-backend                          "/app/scripts/startu…"   backend             47 seconds ago   Up 45 seconds (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+commandcenter_celery_beat         commandcenter-celery-beat                      "celery -A app.tasks…"   celery-beat         2 hours ago      Up 2 hours (unhealthy)    8000/tcp
+commandcenter_celery_worker       commandcenter-celery-worker                    "celery -A app.tasks…"   celery-worker       2 hours ago      Up 2 hours (unhealthy)    8000/tcp
+commandcenter_db                  commandcenter-postgres:latest                  "docker-entrypoint.s…"   postgres            5 hours ago      Up 2 hours (healthy)      0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+commandcenter_flower              commandcenter-flower                           "celery -A app.tasks…"   flower              5 hours ago      Up 2 hours (unhealthy)    0.0.0.0:5555->5555/tcp, [::]:5555->5555/tcp, 8000/tcp
+commandcenter_frontend            commandcenter-frontend                         "/docker-entrypoint.…"   frontend            5 hours ago      Up 2 hours (healthy)      0.0.0.0:3000->80/tcp, [::]:3000->80/tcp
+commandcenter_nats                nats:2.10-alpine                               "docker-entrypoint.s…"   nats                5 hours ago      Up 2 hours                0.0.0.0:4222->4222/tcp, [::]:4222->4222/tcp, 0.0.0.0:8222->8222/tcp, [::]:8222->8222/tcp, 6222/tcp
+commandcenter_orchestration       commandcenter-orchestration                    "docker-entrypoint.s…"   orchestration       5 hours ago      Up 2 hours (unhealthy)    0.0.0.0:9002->9002/tcp, [::]:9002->9002/tcp
+commandcenter_postgres_exporter   prometheuscommunity/postgres-exporter:latest   "/bin/postgres_expor…"   postgres-exporter   2 months ago     Up 2 hours (healthy)      0.0.0.0:9287->9187/tcp, [::]:9287->9187/tcp
+commandcenter_redis               redis:7-alpine                                 "docker-entrypoint.s…"   redis               5 hours ago      Up 2 hours (healthy)      0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp

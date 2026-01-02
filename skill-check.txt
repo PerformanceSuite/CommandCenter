@@ -1,0 +1,10 @@
+"""add_skills_and_skill_usages_tables
+
+Revision ID: sk1lls00001a
+Revises: c1d2e3f4a5b6
+Create Date: 2026-01-01 12:00:00.000000
+
+"""
+from typing import Sequence, Union
+
+import sqlalchemy as sa

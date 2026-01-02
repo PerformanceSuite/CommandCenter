@@ -153,12 +153,12 @@ class TestWebhookDelivery:
     @pytest.mark.asyncio
     async def test_successful_delivery(self, webhook_service, webhook_config, db_session):
         """Test successful webhook delivery."""
-        # Create delivery
-        payload = {"event_type": "test.event", "data": "test"}
+        # Create delivery (use allowed event type from fixture)
+        payload = {"event_type": "analysis.complete", "data": "test"}
         delivery = await webhook_service.create_delivery(
             config_id=webhook_config.id,
             project_id=webhook_config.project_id,
-            event_type="test.event",
+            event_type="analysis.complete",
             payload=payload,
         )
 
@@ -187,11 +187,11 @@ class TestWebhookDelivery:
     @pytest.mark.asyncio
     async def test_delivery_with_signature(self, webhook_service, webhook_config, db_session):
         """Test that delivery includes HMAC signature."""
-        payload = {"event_type": "test.event"}
+        payload = {"event_type": "analysis.complete"}
         delivery = await webhook_service.create_delivery(
             config_id=webhook_config.id,
             project_id=webhook_config.project_id,
-            event_type="test.event",
+            event_type="analysis.complete",
             payload=payload,
         )
 
@@ -213,11 +213,11 @@ class TestWebhookDelivery:
     @pytest.mark.asyncio
     async def test_delivery_failure_with_retry(self, webhook_service, webhook_config, db_session):
         """Test delivery failure triggers retry."""
-        payload = {"event_type": "test.event"}
+        payload = {"event_type": "export.complete"}
         delivery = await webhook_service.create_delivery(
             config_id=webhook_config.id,
             project_id=webhook_config.project_id,
-            event_type="test.event",
+            event_type="export.complete",
             payload=payload,
         )
 
@@ -242,11 +242,11 @@ class TestWebhookDelivery:
     @pytest.mark.asyncio
     async def test_delivery_exhausts_retries(self, webhook_service, webhook_config, db_session):
         """Test delivery exhausts all retries."""
-        payload = {"event_type": "test.event"}
+        payload = {"event_type": "analysis.complete"}
         delivery = await webhook_service.create_delivery(
             config_id=webhook_config.id,
             project_id=webhook_config.project_id,
-            event_type="test.event",
+            event_type="analysis.complete",
             payload=payload,
         )
 
@@ -271,11 +271,11 @@ class TestWebhookDelivery:
     @pytest.mark.asyncio
     async def test_delivery_timeout(self, webhook_service, webhook_config, db_session):
         """Test delivery timeout handling."""
-        payload = {"event_type": "test.event"}
+        payload = {"event_type": "export.complete"}
         delivery = await webhook_service.create_delivery(
             config_id=webhook_config.id,
             project_id=webhook_config.project_id,
-            event_type="test.event",
+            event_type="export.complete",
             payload=payload,
         )
 
