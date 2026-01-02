@@ -1,0 +1,202 @@
+{
+  "extraction_date": "2026-01-02",
+  "batch": 9,
+  "source_documents": [
+    "docs/PRD.md",
+    "docs/CAPABILITIES.md"
+  ],
+  "skills": [
+    {
+      "id": "commandcenter-prd",
+      "name": "CommandCenter Product Requirements",
+      "type": "reference",
+      "domain": "product",
+      "description": "Complete product requirements for CommandCenter R&D management platform including vision, personas, features, data models, APIs, and UX.",
+      "vision": "Empower R&D teams to make informed technology decisions through centralized research management, AI-powered knowledge discovery, and comprehensive technology tracking",
+      "personas": [
+        {"name": "R&D Manager", "role": "Primary", "goals": ["Track activities", "Understand evaluations", "Data-driven decisions"]},
+        {"name": "Research Engineer", "role": "Primary", "goals": ["Document findings", "Find past research", "Track progress"]},
+        {"name": "Software Architect", "role": "Secondary", "goals": ["Evaluate technologies", "Review findings", "Track stacks"]}
+      ],
+      "core_features": [
+        {"name": "Technology Tracking & Radar", "priority": "P0", "description": "Visual tracking across lifecycle stages"},
+        {"name": "Research Hub", "priority": "P0", "description": "Task management with document uploads"},
+        {"name": "Knowledge Base (RAG)", "priority": "P0", "description": "Semantic search via ChromaDB + Docling"},
+        {"name": "GitHub Integration", "priority": "P1", "description": "Repo tracking, tech detection, webhooks"},
+        {"name": "Dashboard & Analytics", "priority": "P1", "description": "Metrics, activity feed, quick actions"},
+        {"name": "Authentication & Security", "priority": "P0", "description": "JWT, encryption, rate limiting"}
+      ],
+      "technology_lifecycle": ["Discovery", "Research", "Evaluation", "Implementation", "Integrated", "Archived"],
+      "task_statuses": ["Pending", "In Progress", "Blocked", "Completed", "Cancelled"],
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "data-model-reference",
+      "name": "Core Data Models Reference",
+      "type": "reference",
+      "domain": "development",
+      "description": "Complete data model specifications for CommandCenter entities.",
+      "models": {
+        "Technology": {
+          "fields": ["id", "title", "vendor", "domain", "status", "relevance_score", "priority", "description", "notes", "use_cases", "documentation_url", "repository_url", "website_url", "tags"],
+          "relationships": ["research_tasks", "knowledge_entries"]
+        },
+        "ResearchTask": {
+          "fields": ["id", "technology_id", "repository_id", "title", "description", "status", "uploaded_documents", "user_notes", "findings", "assigned_to", "due_date", "progress_percentage", "estimated_hours", "actual_hours", "metadata"],
+          "relationships": ["technology", "repository"]
+        },
+        "KnowledgeEntry": {
+          "fields": ["id", "technology_id", "title", "content", "category", "source_file", "source_url", "source_type", "vector_db_id", "embedding_model", "page_number", "chunk_index", "confidence_score", "relevance_score"],
+          "relationships": ["technology"]
+        },
+        "Repository": {
+          "fields": ["id", "name", "full_name", "description", "url", "language", "stars", "forks", "access_token", "is_active", "technologies"],
+          "relationships": ["research_tasks", "webhooks"]
+        }
+      },
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "api-specification-reference",
+      "name": "API Specification Reference",
+      "type": "reference",
+      "domain": "development",
+      "description": "Complete REST API specifications for CommandCenter endpoints.",
+      "base_url": "http://localhost:8000/api/v1",
+      "authentication": "JWT Bearer token",
+      "endpoint_groups": [
+        {"path": "/technologies", "operations": ["GET (list)", "GET /{id}", "POST", "PATCH /{id}", "DELETE /{id}"]},
+        {"path": "/research-tasks", "operations": ["GET (list)", "GET /{id}", "POST", "PATCH /{id}", "POST /{id}/documents"]},
+        {"path": "/knowledge", "operations": ["POST /query", "POST /documents", "GET /statistics", "GET /collections", "GET /categories"]},
+        {"path": "/repositories", "operations": ["GET (list)", "GET /{id}", "POST", "PATCH /{id}"]},
+        {"path": "/auth", "operations": ["POST /register", "POST /login"]}
+      ],
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "ui-ux-requirements",
+      "name": "UI/UX Requirements",
+      "type": "reference",
+      "domain": "frontend",
+      "description": "Design system and UX requirements for CommandCenter interface.",
+      "design_principles": ["Clarity First", "Progressive Disclosure", "Consistent Patterns", "Responsive Design", "Accessibility (WCAG 2.1 AA)"],
+      "navigation": ["Dashboard", "Repos", "Radar", "Research", "Knowledge", "Settings"],
+      "color_palette": {
+        "primary": "#3b82f6",
+        "success": "#10b981",
+        "warning": "#f59e0b",
+        "error": "#ef4444",
+        "info": "#3b82f6",
+        "purple": "#8b5cf6"
+      },
+      "typography": {"headings": "Inter", "body": "system-ui", "code": "Fira Code"},
+      "breakpoints": {"mobile": "<640px", "tablet": "640-1024px", "desktop": ">1024px"},
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "capability-audit-pattern",
+      "name": "Capability Audit Pattern",
+      "type": "methodology",
+      "domain": "assessment",
+      "description": "Systematic audit methodology for tracking system capabilities: what works, what's broken, what's planned.",
+      "status_categories": [
+        {"emoji": "🟢", "status": "Working", "meaning": "Tested, usable in production"},
+        {"emoji": "🟡", "status": "Partial", "meaning": "Code exists, not fully integrated"},
+        {"emoji": "🔴", "status": "Broken/Stale", "meaning": "Deprecated or non-functional"}
+      ],
+      "audit_structure": {
+        "quick_reference": "Table with Category, Status, Notes",
+        "working_section": "Components with Location, Port, Key Features",
+        "partial_section": "Current state, gaps, recommendations",
+        "broken_section": "Deprecated items with archive actions"
+      },
+      "source": "docs/CAPABILITIES.md"
+    },
+    {
+      "id": "implementation-roadmap-pattern",
+      "name": "Implementation Roadmap Pattern",
+      "type": "methodology",
+      "domain": "development",
+      "description": "Multi-phase implementation planning with clear goals and feature lists per phase.",
+      "phases": [
+        {"phase": 1, "name": "MVP", "weeks": "1-4", "goal": "Core functionality with basic UI"},
+        {"phase": 2, "name": "Integration", "weeks": "5-6", "goal": "Connect external systems"},
+        {"phase": 3, "name": "Enhanced UX", "weeks": "7-8", "goal": "Improve usability and polish"},
+        {"phase": 4, "name": "Analytics", "weeks": "9-10", "goal": "Insights and reporting"},
+        {"phase": 5, "name": "Collaboration", "weeks": "11-12", "goal": "Team features"}
+      ],
+      "phase_structure": ["Goal statement", "Feature checklist", "Infrastructure requirements"],
+      "source": "docs/PRD.md"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "technology-domain",
+      "name": "TechnologyDomain",
+      "type": "enum",
+      "domain": "product",
+      "description": "Categorization for technologies: audio-dsp, ai-ml, music-theory, performance, ui-ux, infrastructure, other",
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "technology-status",
+      "name": "TechnologyStatus",
+      "type": "enum",
+      "domain": "product",
+      "description": "Lifecycle stages: discovery, research, evaluation, implementation, integrated, archived",
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "task-status",
+      "name": "TaskStatus",
+      "type": "enum",
+      "domain": "product",
+      "description": "Research task states: pending, in_progress, blocked, completed, cancelled",
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "success-metrics",
+      "name": "Success Metrics",
+      "type": "metric",
+      "domain": "product",
+      "description": "Key product metrics: 50% reduction in search time, 90% of tasks documented, 80% search relevance, 99.9% uptime, <200ms p95 response time",
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "technical-stack-reference",
+      "name": "Technical Stack Reference",
+      "type": "reference",
+      "domain": "infrastructure",
+      "description": "Full technology stack: Python 3.13, FastAPI 0.110+, SQLAlchemy 2.0+, PostgreSQL 16, Redis 7, ChromaDB, Docling, React 18, TypeScript 5, Vite 5, TailwindCSS 3",
+      "source": "docs/PRD.md"
+    },
+    {
+      "id": "capability-status-legend",
+      "name": "Capability Status Legend",
+      "type": "taxonomy",
+      "domain": "assessment",
+      "description": "Traffic light system for capability status: 🟢 Working (tested, usable), 🟡 Partial (code exists, not integrated), 🔴 Broken/Stale (deprecated)",
+      "source": "docs/CAPABILITIES.md"
+    }
+  ],
+  "relationships": [
+    {
+      "from": "commandcenter-prd",
+      "to": "commandcenter-architecture",
+      "type": "implements",
+      "description": "Architecture implements PRD requirements"
+    },
+    {
+      "from": "capability-audit-pattern",
+      "to": "multi-agent-assessment",
+      "type": "complements",
+      "description": "Manual capability audit complements automated multi-agent assessment"
+    },
+    {
+      "from": "data-model-reference",
+      "to": "api-specification-reference",
+      "type": "defines",
+      "description": "Data models define API request/response shapes"
+    }
+  ]
+}

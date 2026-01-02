@@ -1,0 +1,295 @@
+{
+  "extraction_date": "2026-01-02",
+  "batch": 8,
+  "source_documents": [
+    "docs/ARCHITECTURE.md",
+    "docs/AI_ARENA.md",
+    "docs/AGENTS.md",
+    "docs/HUB_DESIGN.md"
+  ],
+  "skills": [
+    {
+      "id": "commandcenter-architecture",
+      "name": "CommandCenter System Architecture",
+      "type": "architecture",
+      "domain": "infrastructure",
+      "description": "Full-stack platform architecture for AI-driven knowledge work combining Agent Orchestration (Dagger workflows), Code Intelligence (graph-based analysis), Knowledge Base (RAG+pgvector), Federation (NATS JetStream), and Observability (Grafana/Prometheus/Loki/Tempo).",
+      "components": {
+        "hub_frontend": {
+          "port": 3000,
+          "tech": "React 18 + TypeScript 5 + Vite 5 + TailwindCSS + React Flow",
+          "purpose": "Workflow management, builder, execution monitor, approval interface, dashboard"
+        },
+        "orchestration_service": {
+          "port": 9002,
+          "tech": "Node.js + TypeScript + Express.js + Prisma + Dagger SDK",
+          "purpose": "Agent registry, workflow engine, DAG execution, approval system, NATS event bridge"
+        },
+        "hub_backend": {
+          "port": 9001,
+          "tech": "Python 3.11 + FastAPI + SQLAlchemy 2.0 + Alembic + NATS.py",
+          "purpose": "Event service, Graph service, RAG service, Federation bridge"
+        },
+        "federation_service": {
+          "port": 8001,
+          "tech": "Python 3.11 + FastAPI + PostgreSQL + NATS JetStream",
+          "purpose": "Project catalog, health aggregation, cross-project coordination"
+        }
+      },
+      "agent_pool": [
+        {"name": "security-scanner", "risk": "AUTO", "purpose": "Scan for secrets, SQL injection, XSS"},
+        {"name": "notifier", "risk": "AUTO", "purpose": "Send alerts (Slack, Discord, console)"},
+        {"name": "compliance-checker", "risk": "AUTO", "purpose": "License + security header validation"},
+        {"name": "patcher", "risk": "APPROVAL_REQUIRED", "purpose": "Dependency updates, code patches"},
+        {"name": "code-reviewer", "risk": "AUTO", "purpose": "Quality + complexity analysis"}
+      ],
+      "source": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "ai-arena-system",
+      "name": "AI Arena Multi-Model Debate System",
+      "type": "architecture",
+      "domain": "research",
+      "description": "Multi-model debate system for strategic research and hypothesis validation using Claude, Gemini, and GPT models with structured rounds until consensus.",
+      "components": {
+        "llm_gateway": {
+          "location": "libs/llm_gateway/",
+          "files": ["gateway.py", "providers.py", "metrics.py"],
+          "providers": ["claude", "gpt", "gpt-mini", "gemini"]
+        },
+        "ai_arena_core": {
+          "location": "libs/ai_arena/",
+          "modules": ["agents/", "debate/", "hypothesis/"]
+        },
+        "hypothesis_module": {
+          "location": "libs/ai_arena/hypothesis/",
+          "files": ["schema.py", "registry.py", "validator.py"]
+        }
+      },
+      "debate_flow": [
+        "Question posed to all agents",
+        "Each agent provides independent response",
+        "Agents review each other's responses",
+        "Process repeats until consensus or max rounds",
+        "Final synthesis with dissenting views preserved"
+      ],
+      "api_endpoints": [
+        "GET /hypotheses/ - List with filtering",
+        "GET /hypotheses/stats - Dashboard statistics",
+        "GET /hypotheses/costs - LLM cost tracking",
+        "POST /hypotheses/{id}/validate - Start async validation",
+        "GET /hypotheses/validation/{task_id}/debate - Full debate result"
+      ],
+      "source": "docs/AI_ARENA.md"
+    },
+    {
+      "id": "hub-multi-project-design",
+      "name": "Hub Multi-Project Management",
+      "type": "architecture",
+      "domain": "infrastructure",
+      "description": "Multi-project launcher and management interface. Lists projects, shows status, starts/stops instances, creates new projects with wizard, manages ports/resources automatically.",
+      "architecture": {
+        "frontend": {"port": 9000, "tech": "React", "purpose": "Project list dashboard, create wizard, direct links"},
+        "backend": {"port": 9001, "tech": "FastAPI", "purpose": "Project CRUD, Dagger orchestration, health checks, port allocation"},
+        "registry": {"tech": "SQLite", "purpose": "Project metadata, ports, status, stats"}
+      },
+      "project_model": {
+        "fields": ["id", "name", "slug", "path", "backend_port", "frontend_port", "postgres_port", "redis_port", "status", "health", "repo_count", "tech_count", "task_count"]
+      },
+      "api_endpoints": [
+        "GET /api/projects - List all",
+        "POST /api/projects - Create new",
+        "POST /api/projects/{id}/start - Start instance",
+        "POST /api/projects/{id}/stop - Stop instance",
+        "GET /api/projects/{id}/health - Health check",
+        "GET /api/ports/available - Get next available port set"
+      ],
+      "phases": [
+        "Phase 1: MVP (Launch & Manage)",
+        "Phase 2: Project Creation wizard",
+        "Phase 3: Advanced Management (logs, resources)",
+        "Phase 4: Import/export, alerts, Traefik"
+      ],
+      "source": "docs/HUB_DESIGN.md"
+    },
+    {
+      "id": "development-guidelines",
+      "name": "Development Guidelines & Standards",
+      "type": "reference",
+      "domain": "development",
+      "description": "Repository conventions for CommandCenter development covering structure, commands, style, testing, and commits.",
+      "structure": {
+        "backend": "backend/app (FastAPI, Alembic, CLI)",
+        "frontend": "frontend/src (React + Vite)",
+        "hub": "hub/** (multi-tenant portal)",
+        "libs": "libs/knowledgebeast (shared packages)",
+        "tests": "backend/tests, frontend/src/__tests__, e2e/tests"
+      },
+      "commands": {
+        "setup": "make setup - seeds .env",
+        "start": "make start - boots stack",
+        "dev": "make dev - hot reload",
+        "test": "make test - backend + frontend unit",
+        "test_e2e": "make test-e2e - Playwright",
+        "lint": "make lint",
+        "format": "make format"
+      },
+      "style": {
+        "python": "Black defaults (88 chars, 4-space), Flake8, typed Pydantic",
+        "react": "TypeScript-first, PascalCase components, use* hooks, camelCase utils",
+        "tailwind": "Layout → Color → State ordering"
+      },
+      "testing": {
+        "backend_coverage": "≥80%",
+        "frontend_coverage": "≥60%",
+        "python_naming": "test_<feature>.py",
+        "fixtures": "backend/tests/conftest.py"
+      },
+      "commits": "Conventional Commits (feat(api): add X (#123)), squash WIP",
+      "source": "docs/AGENTS.md"
+    },
+    {
+      "id": "workflow-execution-pattern",
+      "name": "Workflow Execution Pattern",
+      "type": "pattern",
+      "domain": "agents",
+      "description": "DAG-based workflow execution with human-in-the-loop approvals for high-risk operations.",
+      "flow": [
+        "User triggers workflow via UI",
+        "Orchestration creates WorkflowRun record (PostgreSQL)",
+        "Publishes workflow.started (NATS)",
+        "For each agent in DAG order: resolve input templates, execute via Dagger",
+        "If APPROVAL_REQUIRED: pause, create approval request, wait for human decision",
+        "Update AgentRun status",
+        "Complete workflow, publish workflow.completed"
+      ],
+      "template_resolution": "{{node.output.field}} syntax for passing data between nodes",
+      "risk_levels": {
+        "AUTO": "Execute without pause",
+        "APPROVAL_REQUIRED": "Pause and wait for human decision"
+      },
+      "events": ["workflow.started", "workflow.completed", "approval.required"],
+      "source": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "multi-tenant-security-model",
+      "name": "Multi-Tenant Security Model",
+      "type": "pattern",
+      "domain": "security",
+      "description": "Data isolation enforced at service layer. All queries filter by project_id, no hardcoded references, explicit project_id required.",
+      "principles": [
+        "All queries filter by project_id",
+        "No hardcoded project references",
+        "Service methods require explicit project_id parameter",
+        "Agent sandboxing via Dagger containers",
+        "Secrets injected via environment variables"
+      ],
+      "agent_isolation": [
+        "Agents run in ephemeral containers",
+        "No host filesystem access",
+        "No inter-container communication",
+        "Resource limits enforced"
+      ],
+      "authentication": {
+        "orchestration_api": "API Key (implemented)",
+        "federation_api": "API Key + JWT (implemented)",
+        "hub_backend": "Session-based (needs hardening)",
+        "veria_integration": "JWT (planned)"
+      },
+      "audit_doc": "docs/MULTI_TENANT_ISOLATION_AUDIT_2025-11-18.md",
+      "source": "docs/ARCHITECTURE.md"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "hypothesis-schema",
+      "name": "Hypothesis",
+      "type": "schema",
+      "domain": "research",
+      "description": "Lean Startup-inspired hypothesis for validation. Fields: statement, category (customer/problem/solution/revenue), impact, risk, testability, status (untested/validating/validated/invalidated), success_criteria, evidence[], priority (calculated from impact × risk × testability).",
+      "source": "docs/AI_ARENA.md"
+    },
+    {
+      "id": "hypothesis-evidence",
+      "name": "HypothesisEvidence",
+      "type": "schema",
+      "domain": "research",
+      "description": "Evidence supporting or contradicting a hypothesis. Collected from agent responses during debates. Includes source type, confidence level, supporting/contradicting flag.",
+      "source": "docs/AI_ARENA.md"
+    },
+    {
+      "id": "llm-gateway",
+      "name": "LLMGateway",
+      "type": "module",
+      "domain": "infrastructure",
+      "description": "Unified interface for multiple LLM providers using LiteLLM. Supports Claude, GPT, GPT-mini, Gemini. Includes Prometheus metrics for cost tracking. Location: libs/llm_gateway/",
+      "source": "docs/AI_ARENA.md"
+    },
+    {
+      "id": "specialist-agents",
+      "name": "Specialist Agents",
+      "type": "module",
+      "domain": "research",
+      "description": "AI Arena debate participants: Analyst (deep analysis), Researcher (evidence gathering), Critic (challenge assumptions), Synthesizer (consolidate findings). Each provides independent response then reviews others.",
+      "source": "docs/AI_ARENA.md"
+    },
+    {
+      "id": "project-registry",
+      "name": "Project Registry",
+      "type": "module",
+      "domain": "infrastructure",
+      "description": "SQLite database storing project metadata for Hub. Tracks name, slug, path, ports (backend/frontend/postgres/redis), status, health, counts, timestamps.",
+      "source": "docs/HUB_DESIGN.md"
+    },
+    {
+      "id": "port-allocation-service",
+      "name": "Port Allocation Service",
+      "type": "module",
+      "domain": "infrastructure",
+      "description": "Automatic port management for multi-project Hub. Allocates unique port sets per project (backend, frontend, postgres, redis). Prevents conflicts via check before allocation.",
+      "source": "docs/HUB_DESIGN.md"
+    },
+    {
+      "id": "knowledgebeast-rag",
+      "name": "KnowledgeBeast RAG Engine",
+      "type": "module",
+      "domain": "infrastructure",
+      "description": "Hybrid search combining vector + keyword retrieval. PostgresBackend with pgvector for embeddings, BM25 with RRF fusion, multi-tenant project-scoped collections, Docling integration. Location: libs/knowledgebeast/",
+      "source": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "observability-stack",
+      "name": "Observability Stack",
+      "type": "module",
+      "domain": "infrastructure",
+      "description": "Full monitoring stack: Prometheus (metrics), Grafana (dashboards), Loki (logs), Tempo (traces), AlertManager (alerts). Ports: Prometheus 9090, Grafana 3001.",
+      "source": "docs/ARCHITECTURE.md"
+    }
+  ],
+  "relationships": [
+    {
+      "from": "ai-arena-system",
+      "to": "ai-arena-debate",
+      "type": "implements",
+      "description": "AI Arena system implements the debate methodology"
+    },
+    {
+      "from": "hub-multi-project-design",
+      "to": "dagger-agent-orchestration",
+      "type": "uses",
+      "description": "Hub uses Dagger SDK for project orchestration"
+    },
+    {
+      "from": "workflow-execution-pattern",
+      "to": "unified-agent-framework",
+      "type": "extends",
+      "description": "Workflow execution extends unified agent framework with DAG support"
+    },
+    {
+      "from": "hypothesis-schema",
+      "to": "hypothesis-dashboard-pattern",
+      "type": "visualized_by",
+      "description": "Hypothesis schema visualized in dashboard UI"
+    }
+  ]
+}

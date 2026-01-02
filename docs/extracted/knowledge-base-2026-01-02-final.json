@@ -1,14 +1,14 @@
 {
   "extraction_date": "2026-01-02",
   "extractor": "doc-intelligence-sprint6",
-  "version": "2.0",
+  "version": "3.0",
 
   "summary": {
-    "documents_processed": 24,
-    "total_skills": 42,
-    "total_concepts": 52,
-    "domains_covered": 16,
-    "batches_completed": 7
+    "documents_processed": 30,
+    "total_skills": 54,
+    "total_concepts": 66,
+    "domains_covered": 18,
+    "batches_completed": 9
   },
 
   "skills_by_category": {
@@ -22,7 +22,9 @@
       "tdd-task-execution",
       "sprint-planning-pattern",
       "multi-agent-assessment",
-      "architecture-review-pattern"
+      "architecture-review-pattern",
+      "capability-audit-pattern",
+      "implementation-roadmap-pattern"
     ],
     "patterns": [
       "agent-persona-management",
@@ -38,7 +40,9 @@
       "websocket-subscription-pattern",
       "hypothesis-dashboard-pattern",
       "research-arena-integration",
-      "structured-agent-outputs"
+      "structured-agent-outputs",
+      "workflow-execution-pattern",
+      "multi-tenant-security-model"
     ],
     "architectures": [
       "composable-query-layer",
@@ -51,7 +55,10 @@
       "health-service-discovery",
       "agent-observability-design",
       "automated-qa-pipeline",
-      "task-inbox-pattern"
+      "task-inbox-pattern",
+      "commandcenter-architecture",
+      "ai-arena-system",
+      "hub-multi-project-design"
     ],
     "schemas": [
       "concept-extraction-schema",
@@ -62,7 +69,12 @@
     ],
     "references": [
       "anti-pattern-catalog",
-      "production-readiness-checklist"
+      "production-readiness-checklist",
+      "development-guidelines",
+      "commandcenter-prd",
+      "data-model-reference",
+      "api-specification-reference",
+      "ui-ux-requirements"
     ],
     "strategies": [
       "agentic-shift-roadmap",
@@ -87,7 +99,13 @@
       "CatalogService",
       "Health Check Worker",
       "Service Discovery Registry",
-      "OTEL Collector"
+      "OTEL Collector",
+      "LLMGateway",
+      "Specialist Agents",
+      "Project Registry",
+      "Port Allocation Service",
+      "KnowledgeBeast RAG Engine",
+      "Observability Stack"
     ],
     "schemas": [
       "SynthesisResult",
@@ -95,7 +113,9 @@
       "WorkflowApproval",
       "ValidationModal",
       "Proactivity Profile",
-      "QA Report"
+      "QA Report",
+      "Hypothesis",
+      "HypothesisEvidence"
     ],
     "features": [
       "Document Intelligence",
@@ -106,10 +126,20 @@
     ],
     "metrics": [
       "Health Score",
-      "Quick Win"
+      "Quick Win",
+      "Success Metrics"
+    ],
+    "enums": [
+      "TechnologyDomain",
+      "TechnologyStatus",
+      "TaskStatus",
+      "Capability Status Legend"
     ],
     "artifacts": [
       "ADR (Architecture Decision Record)"
+    ],
+    "references": [
+      "Technical Stack Reference"
     ],
     "query_types": [
       "VISLZR",
@@ -134,7 +164,9 @@
     "prompt-engineering",
     "ml",
     "assessment",
-    "architecture"
+    "architecture",
+    "product",
+    "ui-ux"
   ],
 
   "key_relationships": [
@@ -143,7 +175,11 @@
     {"source": "federation-heartbeat-protocol", "target": "CatalogService", "type": "updates"},
     {"source": "opentelemetry-observability", "target": "dagger-agent-orchestration", "type": "instruments"},
     {"source": "automated-qa-pipeline", "target": "ai-arena-debate", "type": "extends"},
-    {"source": "multi-agent-assessment", "target": "parallel-agent-execution", "type": "uses"}
+    {"source": "multi-agent-assessment", "target": "parallel-agent-execution", "type": "uses"},
+    {"source": "ai-arena-system", "target": "ai-arena-debate", "type": "implements"},
+    {"source": "hub-multi-project-design", "target": "dagger-agent-orchestration", "type": "uses"},
+    {"source": "commandcenter-prd", "target": "commandcenter-architecture", "type": "defines"},
+    {"source": "data-model-reference", "target": "api-specification-reference", "type": "defines"}
   ],
 
   "roadmap_alignment": {
@@ -162,6 +198,8 @@
     "batch4": ["phase-7-graph-service-implementation.md", "phase-10-agent-orchestration-design.md", "phase-9-federation-service-design.md", "phase-10-phase-5-observability-design.md"],
     "batch5": ["agentic-shift-analysis.md", "composable-commandcenter-execution.md", "composable-surface-sprint-plan.md"],
     "batch6": ["hypothesis-dashboard-design.md", "ai-arena-research-hub-integration.md", "phase-6-health-service-discovery-plan.md"],
-    "batch7": ["COMPREHENSIVE-HEALTH-REPORT.md", "ARCHITECTURE_REVIEW_2025-12-04.md"]
+    "batch7": ["COMPREHENSIVE-HEALTH-REPORT.md", "ARCHITECTURE_REVIEW_2025-12-04.md"],
+    "batch8": ["ARCHITECTURE.md", "AI_ARENA.md", "AGENTS.md", "HUB_DESIGN.md"],
+    "batch9": ["PRD.md", "CAPABILITIES.md"]
   }
 }
