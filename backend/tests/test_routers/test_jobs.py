@@ -15,12 +15,12 @@ from app.models import Job, JobStatus, JobType
 class TestJobsRouter:
     """Test cases for Jobs API endpoints."""
 
-    async def test_list_jobs_empty(self, client, mock_db):
+    async def test_list_jobs_empty(self, api_client):
         """Test listing jobs when none exist."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.list_jobs = AsyncMock(return_value=[])
 
-            response = await client.get("/api/v1/jobs")
+            response = await api_client.get("/jobs")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -29,12 +29,12 @@ class TestJobsRouter:
             assert data["skip"] == 0
             assert data["limit"] == 100
 
-    async def test_list_jobs_with_data(self, client, mock_db, sample_job):
+    async def test_list_jobs_with_data(self, api_client, sample_job):
         """Test listing jobs with data."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.list_jobs = AsyncMock(return_value=[sample_job])
 
-            response = await client.get("/api/v1/jobs")
+            response = await api_client.get("/jobs")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -43,13 +43,13 @@ class TestJobsRouter:
             assert data["jobs"][0]["job_type"] == sample_job.job_type
             assert data["jobs"][0]["status"] == sample_job.status
 
-    async def test_list_jobs_with_filters(self, client, mock_db, sample_job):
+    async def test_list_jobs_with_filters(self, api_client, sample_job):
         """Test listing jobs with filters."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.list_jobs = AsyncMock(return_value=[sample_job])
 
-            response = await client.get(
-                "/api/v1/jobs",
+            response = await api_client.get(
+                "/jobs",
                 params={
                     "project_id": 1,
                     "status_filter": "running",
@@ -66,20 +66,20 @@ class TestJobsRouter:
                 limit=100,
             )
 
-    async def test_list_jobs_pagination(self, client, mock_db, sample_job):
+    async def test_list_jobs_pagination(self, api_client, sample_job):
         """Test listing jobs with pagination."""
         jobs = [sample_job for _ in range(5)]
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.list_jobs = AsyncMock(return_value=jobs)
 
-            response = await client.get("/api/v1/jobs", params={"skip": 10, "limit": 50})
+            response = await api_client.get("/jobs", params={"skip": 10, "limit": 50})
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["skip"] == 10
             assert data["limit"] == 50
 
-    async def test_create_job(self, client, mock_db, sample_job):
+    async def test_create_job(self, api_client, sample_job):
         """Test creating a new job."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.create_job = AsyncMock(return_value=sample_job)
@@ -91,7 +91,7 @@ class TestJobsRouter:
                 "tags": {"priority": "high"},
             }
 
-            response = await client.post("/api/v1/jobs", json=job_data)
+            response = await api_client.post("/jobs", json=job_data)
 
             assert response.status_code == status.HTTP_201_CREATED
             data = response.json()
@@ -99,30 +99,30 @@ class TestJobsRouter:
             assert data["job_type"] == sample_job.job_type
             assert data["status"] == sample_job.status
 
-    async def test_create_job_minimal(self, client, mock_db, sample_job):
+    async def test_create_job_minimal(self, api_client, sample_job):
         """Test creating a job with minimal data."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.create_job = AsyncMock(return_value=sample_job)
 
             job_data = {"project_id": 1, "job_type": "analysis"}
 
-            response = await client.post("/api/v1/jobs", json=job_data)
+            response = await api_client.post("/jobs", json=job_data)
 
             assert response.status_code == status.HTTP_201_CREATED
 
-    async def test_get_job_found(self, client, mock_db, sample_job):
+    async def test_get_job_found(self, api_client, sample_job):
         """Test getting a job by ID."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_job = AsyncMock(return_value=sample_job)
 
-            response = await client.get(f"/api/v1/jobs/{sample_job.id}")
+            response = await api_client.get(f"/jobs/{sample_job.id}")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["id"] == sample_job.id
             assert data["job_type"] == sample_job.job_type
 
-    async def test_get_job_not_found(self, client, mock_db):
+    async def test_get_job_not_found(self, api_client):
         """Test getting a non-existent job."""
         from fastapi import HTTPException
 
@@ -131,11 +131,11 @@ class TestJobsRouter:
                 side_effect=HTTPException(status_code=404, detail="Job not found")
             )
 
-            response = await client.get("/api/v1/jobs/999")
+            response = await api_client.get("/jobs/999")
 
             assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    async def test_update_job_status(self, client, mock_db, sample_job):
+    async def test_update_job_status(self, api_client, sample_job):
         """Test updating job status."""
         updated_job = sample_job
         updated_job.status = JobStatus.RUNNING
@@ -146,14 +146,14 @@ class TestJobsRouter:
 
             update_data = {"status": "running", "progress": 50}
 
-            response = await client.patch(f"/api/v1/jobs/{sample_job.id}", json=update_data)
+            response = await api_client.patch(f"/jobs/{sample_job.id}", json=update_data)
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "running"
             assert data["progress"] == 50
 
-    async def test_update_job_progress(self, client, mock_db, sample_job):
+    async def test_update_job_progress(self, api_client, sample_job):
         """Test updating job progress."""
         updated_job = sample_job
         updated_job.progress = 75
@@ -164,14 +164,14 @@ class TestJobsRouter:
 
             update_data = {"progress": 75, "current_step": "Processing files"}
 
-            response = await client.patch(f"/api/v1/jobs/{sample_job.id}", json=update_data)
+            response = await api_client.patch(f"/jobs/{sample_job.id}", json=update_data)
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["progress"] == 75
             assert data["current_step"] == "Processing files"
 
-    async def test_update_job_result(self, client, mock_db, sample_job):
+    async def test_update_job_result(self, api_client, sample_job):
         """Test updating job with result."""
         updated_job = sample_job
         updated_job.status = JobStatus.COMPLETED
@@ -187,14 +187,14 @@ class TestJobsRouter:
                 "result": {"files_processed": 42},
             }
 
-            response = await client.patch(f"/api/v1/jobs/{sample_job.id}", json=update_data)
+            response = await api_client.patch(f"/jobs/{sample_job.id}", json=update_data)
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "completed"
             assert data["result"]["files_processed"] == 42
 
-    async def test_update_job_error(self, client, mock_db, sample_job):
+    async def test_update_job_error(self, api_client, sample_job):
         """Test updating job with error."""
         updated_job = sample_job
         updated_job.status = JobStatus.FAILED
@@ -205,23 +205,23 @@ class TestJobsRouter:
 
             update_data = {"status": "failed", "error": "Connection timeout"}
 
-            response = await client.patch(f"/api/v1/jobs/{sample_job.id}", json=update_data)
+            response = await api_client.patch(f"/jobs/{sample_job.id}", json=update_data)
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "failed"
             assert data["error"] == "Connection timeout"
 
-    async def test_delete_job(self, client, mock_db):
+    async def test_delete_job(self, api_client):
         """Test deleting a job."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.delete_job = AsyncMock()
 
-            response = await client.delete("/api/v1/jobs/1")
+            response = await api_client.delete("/jobs/1")
 
             assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    async def test_delete_job_not_found(self, client, mock_db):
+    async def test_delete_job_not_found(self, api_client):
         """Test deleting a non-existent job."""
         from fastapi import HTTPException
 
@@ -230,11 +230,11 @@ class TestJobsRouter:
                 side_effect=HTTPException(status_code=404, detail="Job not found")
             )
 
-            response = await client.delete("/api/v1/jobs/999")
+            response = await api_client.delete("/jobs/999")
 
             assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    async def test_cancel_job(self, client, mock_db, sample_job):
+    async def test_cancel_job(self, api_client, sample_job):
         """Test cancelling a job."""
         cancelled_job = sample_job
         cancelled_job.status = JobStatus.CANCELLED
@@ -242,13 +242,13 @@ class TestJobsRouter:
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.cancel_job = AsyncMock(return_value=cancelled_job)
 
-            response = await client.post(f"/api/v1/jobs/{sample_job.id}/cancel")
+            response = await api_client.post(f"/jobs/{sample_job.id}/cancel")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["status"] == "cancelled"
 
-    async def test_cancel_completed_job(self, client, mock_db, sample_job):
+    async def test_cancel_completed_job(self, api_client, sample_job):
         """Test cancelling an already completed job."""
         from fastapi import HTTPException
 
@@ -257,11 +257,11 @@ class TestJobsRouter:
                 side_effect=HTTPException(status_code=400, detail="Cannot cancel completed job")
             )
 
-            response = await client.post(f"/api/v1/jobs/{sample_job.id}/cancel")
+            response = await api_client.post(f"/jobs/{sample_job.id}/cancel")
 
             assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    async def test_get_job_progress(self, client, mock_db):
+    async def test_get_job_progress(self, api_client):
         """Test getting job progress information."""
         progress_data = {
             "job_id": 1,
@@ -279,7 +279,7 @@ class TestJobsRouter:
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_job_progress = AsyncMock(return_value=progress_data)
 
-            response = await client.get("/api/v1/jobs/1/progress")
+            response = await api_client.get("/jobs/1/progress")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -287,7 +287,7 @@ class TestJobsRouter:
             assert data["progress"] == 65
             assert data["is_active"] is True
 
-    async def test_list_active_jobs(self, client, mock_db, sample_job):
+    async def test_list_active_jobs(self, api_client, sample_job):
         """Test listing active jobs."""
         active_job = sample_job
         active_job.status = JobStatus.RUNNING
@@ -295,24 +295,24 @@ class TestJobsRouter:
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_active_jobs = AsyncMock(return_value=[active_job])
 
-            response = await client.get("/api/v1/jobs/active/list")
+            response = await api_client.get("/jobs/active/list")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert len(data["jobs"]) == 1
             assert data["jobs"][0]["status"] in ["pending", "running"]
 
-    async def test_list_active_jobs_with_project_filter(self, client, mock_db, sample_job):
+    async def test_list_active_jobs_with_project_filter(self, api_client, sample_job):
         """Test listing active jobs filtered by project."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_active_jobs = AsyncMock(return_value=[sample_job])
 
-            response = await client.get("/api/v1/jobs/active/list", params={"project_id": 1})
+            response = await api_client.get("/jobs/active/list", params={"project_id": 1})
 
             assert response.status_code == status.HTTP_200_OK
             mock_service.return_value.get_active_jobs.assert_called_with(project_id=1)
 
-    async def test_get_job_statistics(self, client, mock_db):
+    async def test_get_job_statistics(self, api_client):
         """Test getting job statistics."""
         stats_data = {
             "total": 100,
@@ -331,7 +331,7 @@ class TestJobsRouter:
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_statistics = AsyncMock(return_value=stats_data)
 
-            response = await client.get("/api/v1/jobs/statistics/summary")
+            response = await api_client.get("/jobs/statistics/summary")
 
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -339,14 +339,14 @@ class TestJobsRouter:
             assert data["success_rate"] == 88.89
             assert data["active_jobs"] == 8
 
-    async def test_get_job_statistics_with_project_filter(self, client, mock_db):
+    async def test_get_job_statistics_with_project_filter(self, api_client):
         """Test getting job statistics filtered by project."""
         with patch("app.routers.jobs.JobService") as mock_service:
             mock_service.return_value.get_statistics = AsyncMock(
                 return_value={"total": 10, "by_status": {}, "active_jobs": 2}
             )
 
-            response = await client.get("/api/v1/jobs/statistics/summary", params={"project_id": 1})
+            response = await api_client.get("/jobs/statistics/summary", params={"project_id": 1})
 
             assert response.status_code == status.HTTP_200_OK
             mock_service.return_value.get_statistics.assert_called_with(project_id=1)

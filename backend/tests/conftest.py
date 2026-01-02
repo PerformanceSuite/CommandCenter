@@ -19,9 +19,14 @@ from app.main import app
 
 # Set test environment variables
 os.environ["ENVIRONMENT"] = "test"
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test.db"
-os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only-min-32-chars"
-os.environ["GITHUB_TOKEN"] = "test_github_token"
+# Only set DATABASE_URL if not already set (e.g., by docker-compose)
+if "DATABASE_URL" not in os.environ or not os.environ["DATABASE_URL"].startswith("postgresql"):
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///./test.db"
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only-min-32-chars")
+os.environ.setdefault("GITHUB_TOKEN", "test_github_token")
+
+# Detect if we're using PostgreSQL
+USE_POSTGRES = os.environ.get("DATABASE_URL", "").startswith("postgresql")
 
 
 @pytest.fixture(scope="session")
@@ -36,12 +41,23 @@ def event_loop() -> Generator:
 @pytest.fixture(scope="function")
 async def async_engine():
     """Create async engine for testing"""
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
-    )
+    database_url = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+    if database_url.startswith("postgresql"):
+        # Use PostgreSQL (supports UUID natively)
+        engine = create_async_engine(
+            database_url,
+            echo=False,
+            pool_pre_ping=True,
+        )
+    else:
+        # Use SQLite for local testing
+        engine = create_async_engine(
+            "sqlite+aiosqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            echo=False,
+        )
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

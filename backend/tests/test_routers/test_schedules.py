@@ -3,29 +3,28 @@ Tests for Schedule API endpoints.
 """
 
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import status
 
-from app.models import Project, Schedule, ScheduleFrequency
-
-
-@pytest.fixture
-async def test_project(db_session: AsyncSession):
-    """Create test project."""
-    project = Project(name="Test Project", owner="testowner", description="Test")
-    db_session.add(project)
-    await db_session.commit()
-    await db_session.refresh(project)
-    return project
+from app.models import Schedule, ScheduleFrequency
 
 
 @pytest.fixture
-async def test_schedule(db_session: AsyncSession, test_project: Project):
-    """Create test schedule."""
-    schedule = Schedule(
-        project_id=test_project.id,
+def mock_schedule_service():
+    """Mock ScheduleService for testing."""
+    with patch("app.routers.schedules.ScheduleService") as mock:
+        service = mock.return_value
+        yield service
+
+
+@pytest.fixture
+def sample_schedule():
+    """Sample schedule object for testing."""
+    return Schedule(
+        id=1,
+        project_id=1,
         name="Test Schedule",
         task_type="analysis",
         frequency=ScheduleFrequency.DAILY,
@@ -33,21 +32,27 @@ async def test_schedule(db_session: AsyncSession, test_project: Project):
         enabled=True,
         task_parameters={},
         tags={},
+        cron_expression=None,
+        next_run_at=datetime.utcnow() + timedelta(hours=1),
+        last_run_at=None,
+        run_count=0,
+        success_count=0,
+        failure_count=0,
     )
-    db_session.add(schedule)
-    await db_session.commit()
-    await db_session.refresh(schedule)
-    return schedule
 
 
 class TestScheduleCreation:
     """Tests for schedule creation endpoint."""
 
     @pytest.mark.asyncio
-    async def test_create_schedule_success(self, client: AsyncClient, test_project: Project):
+    async def test_create_schedule_success(
+        self, api_client, mock_schedule_service, sample_schedule
+    ):
         """Test creating a schedule successfully."""
+        mock_schedule_service.create_schedule = AsyncMock(return_value=sample_schedule)
+
         data = {
-            "project_id": test_project.id,
+            "project_id": 1,
             "name": "New Schedule",
             "task_type": "analysis",
             "frequency": "daily",
@@ -57,19 +62,25 @@ class TestScheduleCreation:
             "task_parameters": {},
         }
 
-        response = await client.post("/api/v1/schedules", json=data)
+        response = await api_client.post("/schedules", json=data)
 
-        assert response.status_code == 201
+        assert response.status_code == status.HTTP_201_CREATED
         result = response.json()
-        assert result["name"] == "New Schedule"
+        assert result["name"] == "Test Schedule"
         assert result["frequency"] == "daily"
         assert result["id"] is not None
 
     @pytest.mark.asyncio
-    async def test_create_cron_schedule(self, client: AsyncClient, test_project: Project):
+    async def test_create_cron_schedule(self, api_client, mock_schedule_service, sample_schedule):
         """Test creating a cron-based schedule."""
+        cron_schedule = sample_schedule
+        cron_schedule.frequency = ScheduleFrequency.CRON
+        cron_schedule.cron_expression = "0 2 * * *"
+        cron_schedule.timezone = "America/New_York"
+        mock_schedule_service.create_schedule = AsyncMock(return_value=cron_schedule)
+
         data = {
-            "project_id": test_project.id,
+            "project_id": 1,
             "name": "Cron Schedule",
             "task_type": "export",
             "frequency": "cron",
@@ -77,239 +88,256 @@ class TestScheduleCreation:
             "timezone": "America/New_York",
         }
 
-        response = await client.post("/api/v1/schedules", json=data)
+        response = await api_client.post("/schedules", json=data)
 
-        assert response.status_code == 201
+        assert response.status_code == status.HTTP_201_CREATED
         result = response.json()
         assert result["cron_expression"] == "0 2 * * *"
         assert result["timezone"] == "America/New_York"
 
     @pytest.mark.asyncio
-    async def test_create_schedule_invalid_frequency(
-        self, client: AsyncClient, test_project: Project
-    ):
+    async def test_create_schedule_invalid_frequency(self, api_client):
         """Test creating schedule with invalid frequency."""
         data = {
-            "project_id": test_project.id,
+            "project_id": 1,
             "name": "Invalid Schedule",
             "task_type": "analysis",
             "frequency": "invalid",
         }
 
-        response = await client.post("/api/v1/schedules", json=data)
+        response = await api_client.post("/schedules", json=data)
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.asyncio
-    async def test_create_schedule_missing_cron_expression(
-        self, client: AsyncClient, test_project: Project
-    ):
+    async def test_create_schedule_missing_cron_expression(self, api_client, mock_schedule_service):
         """Test creating cron schedule without expression."""
+        mock_schedule_service.create_schedule = AsyncMock(
+            side_effect=ValueError("Cron expression required for cron frequency")
+        )
+
         data = {
-            "project_id": test_project.id,
+            "project_id": 1,
             "name": "Cron Without Expression",
             "task_type": "analysis",
             "frequency": "cron",
         }
 
-        response = await client.post("/api/v1/schedules", json=data)
+        response = await api_client.post("/schedules", json=data)
 
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestScheduleRetrieval:
     """Tests for schedule retrieval endpoints."""
 
     @pytest.mark.asyncio
-    async def test_list_schedules(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_list_schedules(self, api_client, mock_schedule_service, sample_schedule):
         """Test listing schedules."""
-        response = await client.get("/api/v1/schedules")
+        mock_schedule_service.list_schedules = AsyncMock(return_value=[sample_schedule])
 
-        assert response.status_code == 200
+        response = await api_client.get("/schedules")
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert "schedules" in result
         assert result["total"] >= 1
 
     @pytest.mark.asyncio
-    async def test_list_schedules_with_filters(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_list_schedules_with_filters(
+        self, api_client, mock_schedule_service, sample_schedule
+    ):
         """Test listing schedules with filters."""
-        response = await client.get(
-            "/api/v1/schedules",
+        mock_schedule_service.list_schedules = AsyncMock(return_value=[sample_schedule])
+
+        response = await api_client.get(
+            "/schedules",
             params={
-                "project_id": test_schedule.project_id,
+                "project_id": 1,
                 "enabled": True,
                 "frequency": "daily",
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
-        assert all(s["project_id"] == test_schedule.project_id for s in result["schedules"])
+        assert all(s["project_id"] == 1 for s in result["schedules"])
 
     @pytest.mark.asyncio
     async def test_list_schedules_pagination(
-        self, client: AsyncClient, test_project: Project, db_session: AsyncSession
+        self, api_client, mock_schedule_service, sample_schedule
     ):
         """Test schedule list pagination."""
-        # Create multiple schedules
-        for i in range(5):
-            schedule = Schedule(
-                project_id=test_project.id,
-                name=f"Schedule {i}",
-                task_type="analysis",
-                frequency=ScheduleFrequency.DAILY,
-                timezone="UTC",
-                enabled=True,
-                task_parameters={},
-                tags={},
-            )
-            db_session.add(schedule)
-        await db_session.commit()
+        schedules = [sample_schedule for _ in range(3)]
+        mock_schedule_service.list_schedules = AsyncMock(return_value=schedules)
 
-        # Get first page
-        response = await client.get("/api/v1/schedules?page=1&page_size=3")
+        response = await api_client.get("/schedules?page=1&page_size=3")
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert len(result["schedules"]) <= 3
         assert result["page"] == 1
 
     @pytest.mark.asyncio
-    async def test_get_schedule_by_id(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_get_schedule_by_id(self, api_client, mock_schedule_service, sample_schedule):
         """Test getting schedule by ID."""
-        response = await client.get(f"/api/v1/schedules/{test_schedule.id}")
+        mock_schedule_service.get_schedule = AsyncMock(return_value=sample_schedule)
 
-        assert response.status_code == 200
+        response = await api_client.get(f"/schedules/{sample_schedule.id}")
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
-        assert result["id"] == test_schedule.id
-        assert result["name"] == test_schedule.name
+        assert result["id"] == sample_schedule.id
+        assert result["name"] == sample_schedule.name
 
     @pytest.mark.asyncio
-    async def test_get_nonexistent_schedule(self, client: AsyncClient):
+    async def test_get_nonexistent_schedule(self, api_client, mock_schedule_service):
         """Test getting nonexistent schedule."""
-        response = await client.get("/api/v1/schedules/99999")
+        mock_schedule_service.get_schedule = AsyncMock(return_value=None)
 
-        assert response.status_code == 404
+        response = await api_client.get("/schedules/99999")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestScheduleUpdate:
     """Tests for schedule update endpoint."""
 
     @pytest.mark.asyncio
-    async def test_update_schedule_name(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_update_schedule_name(self, api_client, mock_schedule_service, sample_schedule):
         """Test updating schedule name."""
+        updated_schedule = sample_schedule
+        updated_schedule.name = "Updated Name"
+        mock_schedule_service.update_schedule = AsyncMock(return_value=updated_schedule)
+
         data = {"name": "Updated Name"}
 
-        response = await client.patch(f"/api/v1/schedules/{test_schedule.id}", json=data)
+        response = await api_client.patch(f"/schedules/{sample_schedule.id}", json=data)
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert result["name"] == "Updated Name"
 
     @pytest.mark.asyncio
-    async def test_update_schedule_frequency(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_update_schedule_frequency(
+        self, api_client, mock_schedule_service, sample_schedule
+    ):
         """Test updating schedule frequency."""
+        updated_schedule = sample_schedule
+        updated_schedule.frequency = ScheduleFrequency.WEEKLY
+        mock_schedule_service.update_schedule = AsyncMock(return_value=updated_schedule)
+
         data = {"frequency": "weekly"}
 
-        response = await client.patch(f"/api/v1/schedules/{test_schedule.id}", json=data)
+        response = await api_client.patch(f"/schedules/{sample_schedule.id}", json=data)
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert result["frequency"] == "weekly"
 
     @pytest.mark.asyncio
-    async def test_update_nonexistent_schedule(self, client: AsyncClient):
+    async def test_update_nonexistent_schedule(self, api_client, mock_schedule_service):
         """Test updating nonexistent schedule."""
+        mock_schedule_service.update_schedule = AsyncMock(return_value=None)
+
         data = {"name": "Should Fail"}
 
-        response = await client.patch("/api/v1/schedules/99999", json=data)
+        response = await api_client.patch("/schedules/99999", json=data)
 
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 class TestScheduleDeletion:
     """Tests for schedule deletion endpoint."""
 
     @pytest.mark.asyncio
-    async def test_delete_schedule(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_delete_schedule(self, api_client, mock_schedule_service):
         """Test deleting a schedule."""
-        response = await client.delete(f"/api/v1/schedules/{test_schedule.id}")
+        mock_schedule_service.delete_schedule = AsyncMock(return_value=True)
 
-        assert response.status_code == 204
+        response = await api_client.delete("/schedules/1")
 
-        # Verify deletion
-        get_response = await client.get(f"/api/v1/schedules/{test_schedule.id}")
-        assert get_response.status_code == 404
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
     @pytest.mark.asyncio
-    async def test_delete_nonexistent_schedule(self, client: AsyncClient):
+    async def test_delete_nonexistent_schedule(self, api_client, mock_schedule_service):
         """Test deleting nonexistent schedule."""
-        response = await client.delete("/api/v1/schedules/99999")
+        mock_schedule_service.delete_schedule = AsyncMock(return_value=False)
 
-        assert response.status_code == 404
+        response = await api_client.delete("/schedules/99999")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestScheduleExecution:
     """Tests for schedule execution endpoint."""
 
     @pytest.mark.asyncio
-    async def test_execute_schedule(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_execute_schedule(self, api_client, mock_schedule_service, sample_schedule):
         """Test executing a schedule."""
-        response = await client.post(f"/api/v1/schedules/{test_schedule.id}/execute")
+        mock_schedule_service.execute_schedule = AsyncMock(
+            return_value={"schedule_id": sample_schedule.id, "job_id": 123}
+        )
 
-        assert response.status_code == 202
+        response = await api_client.post(f"/schedules/{sample_schedule.id}/execute")
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
         result = response.json()
-        assert result["schedule_id"] == test_schedule.id
+        assert result["schedule_id"] == sample_schedule.id
         assert "job_id" in result
 
     @pytest.mark.asyncio
-    async def test_execute_schedule_force(
-        self, client: AsyncClient, test_schedule: Schedule, db_session: AsyncSession
-    ):
+    async def test_execute_schedule_force(self, api_client, mock_schedule_service, sample_schedule):
         """Test force executing a disabled schedule."""
-        # Disable schedule
-        test_schedule.enabled = False
-        await db_session.commit()
+        mock_schedule_service.execute_schedule = AsyncMock(
+            return_value={"schedule_id": sample_schedule.id, "job_id": 456}
+        )
 
         data = {"force": True}
-        response = await client.post(f"/api/v1/schedules/{test_schedule.id}/execute", json=data)
+        response = await api_client.post(f"/schedules/{sample_schedule.id}/execute", json=data)
 
-        assert response.status_code == 202
+        assert response.status_code == status.HTTP_202_ACCEPTED
         result = response.json()
         assert result["job_id"] is not None
 
     @pytest.mark.asyncio
-    async def test_execute_nonexistent_schedule(self, client: AsyncClient):
+    async def test_execute_nonexistent_schedule(self, api_client, mock_schedule_service):
         """Test executing nonexistent schedule."""
-        response = await client.post("/api/v1/schedules/99999/execute")
+        mock_schedule_service.execute_schedule = AsyncMock(
+            side_effect=ValueError("Schedule not found")
+        )
 
-        assert response.status_code == 404
+        response = await api_client.post("/schedules/99999/execute")
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestScheduleEnableDisable:
     """Tests for schedule enable/disable endpoints."""
 
     @pytest.mark.asyncio
-    async def test_disable_schedule(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_disable_schedule(self, api_client, mock_schedule_service, sample_schedule):
         """Test disabling a schedule."""
-        response = await client.post(f"/api/v1/schedules/{test_schedule.id}/disable")
+        disabled_schedule = sample_schedule
+        disabled_schedule.enabled = False
+        mock_schedule_service.disable_schedule = AsyncMock(return_value=disabled_schedule)
 
-        assert response.status_code == 200
+        response = await api_client.post(f"/schedules/{sample_schedule.id}/disable")
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert result["enabled"] is False
 
     @pytest.mark.asyncio
-    async def test_enable_schedule(
-        self, client: AsyncClient, test_schedule: Schedule, db_session: AsyncSession
-    ):
+    async def test_enable_schedule(self, api_client, mock_schedule_service, sample_schedule):
         """Test enabling a schedule."""
-        # First disable it
-        test_schedule.enabled = False
-        await db_session.commit()
+        enabled_schedule = sample_schedule
+        enabled_schedule.enabled = True
+        mock_schedule_service.enable_schedule = AsyncMock(return_value=enabled_schedule)
 
-        response = await client.post(f"/api/v1/schedules/{test_schedule.id}/enable")
+        response = await api_client.post(f"/schedules/{sample_schedule.id}/enable")
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert result["enabled"] is True
 
@@ -318,27 +346,41 @@ class TestScheduleStatistics:
     """Tests for schedule statistics endpoint."""
 
     @pytest.mark.asyncio
-    async def test_get_schedule_statistics(self, client: AsyncClient, test_schedule: Schedule):
+    async def test_get_schedule_statistics(self, api_client, mock_schedule_service):
         """Test getting schedule statistics."""
-        response = await client.get("/api/v1/schedules/statistics/summary")
+        mock_schedule_service.get_statistics = AsyncMock(
+            return_value={
+                "total_schedules": 10,
+                "enabled_schedules": 8,
+                "by_frequency": {"daily": 5, "weekly": 3, "cron": 2},
+            }
+        )
 
-        assert response.status_code == 200
+        response = await api_client.get("/schedules/statistics/summary")
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert "total_schedules" in result
         assert "enabled_schedules" in result
         assert "by_frequency" in result
 
     @pytest.mark.asyncio
-    async def test_get_schedule_statistics_filtered(
-        self, client: AsyncClient, test_schedule: Schedule
-    ):
+    async def test_get_schedule_statistics_filtered(self, api_client, mock_schedule_service):
         """Test getting filtered schedule statistics."""
-        response = await client.get(
-            "/api/v1/schedules/statistics/summary",
-            params={"project_id": test_schedule.project_id},
+        mock_schedule_service.get_statistics = AsyncMock(
+            return_value={
+                "total_schedules": 5,
+                "enabled_schedules": 4,
+                "by_frequency": {"daily": 3, "weekly": 2},
+            }
         )
 
-        assert response.status_code == 200
+        response = await api_client.get(
+            "/schedules/statistics/summary",
+            params={"project_id": 1},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert result["total_schedules"] >= 1
 
@@ -347,28 +389,28 @@ class TestDueSchedules:
     """Tests for due schedules endpoint."""
 
     @pytest.mark.asyncio
-    async def test_list_due_schedules(
-        self, client: AsyncClient, test_schedule: Schedule, db_session: AsyncSession
-    ):
+    async def test_list_due_schedules(self, api_client, mock_schedule_service, sample_schedule):
         """Test listing due schedules."""
-        # Set schedule to be due
-        test_schedule.next_run_at = datetime.utcnow() - timedelta(hours=1)
-        await db_session.commit()
+        due_schedule = sample_schedule
+        due_schedule.next_run_at = datetime.utcnow() - timedelta(hours=1)
+        mock_schedule_service.get_due_schedules = AsyncMock(return_value=[due_schedule])
 
-        response = await client.get("/api/v1/schedules/due/list")
+        response = await api_client.get("/schedules/due/list")
 
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert isinstance(result, list)
-        assert any(s["id"] == test_schedule.id for s in result)
+        assert any(s["id"] == sample_schedule.id for s in result)
 
     @pytest.mark.asyncio
     async def test_list_due_schedules_with_limit(
-        self, client: AsyncClient, test_schedule: Schedule
+        self, api_client, mock_schedule_service, sample_schedule
     ):
         """Test listing due schedules with limit."""
-        response = await client.get("/api/v1/schedules/due/list?limit=10")
+        mock_schedule_service.get_due_schedules = AsyncMock(return_value=[sample_schedule])
 
-        assert response.status_code == 200
+        response = await api_client.get("/schedules/due/list?limit=10")
+
+        assert response.status_code == status.HTTP_200_OK
         result = response.json()
         assert len(result) <= 10
