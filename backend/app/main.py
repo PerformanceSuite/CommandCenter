@@ -9,7 +9,7 @@ import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_client import make_asgi_app
@@ -52,6 +52,7 @@ from app.services import redis_service
 from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
 from app.utils.metrics import error_counter, setup_custom_metrics
+from app.websocket import manager as ws_manager
 
 
 @asynccontextmanager
@@ -270,6 +271,45 @@ app.include_router(agents.router, prefix=settings.api_v1_prefix)  # Agent person
 app.include_router(alerts.router)  # AlertManager webhook integration
 app.include_router(prompts.router)  # Prompt analysis and improvement API
 app.include_router(sse.router)  # Sprint 4: SSE streaming for real-time graph updates
+
+
+# WebSocket endpoint for real-time graph updates
+@app.websocket("/ws/graph")
+async def websocket_graph_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time graph updates.
+
+    Clients can connect to this endpoint and subscribe to topics to receive
+    real-time updates when graph entities change.
+
+    Message Protocol:
+        Client -> Server:
+            {"action": "subscribe", "topic": "entity:updated:proj123"}
+            {"action": "unsubscribe", "topic": "entity:updated:proj123"}
+
+        Server -> Client:
+            {"type": "connected", "session_id": "..."}
+            {"type": "subscribed", "topic": "..."}
+            {"type": "unsubscribed", "topic": "..."}
+            {"type": "update", "data": {...}}  # Broadcast messages
+    """
+    session_id = await ws_manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            action = data.get("action")
+
+            if action == "subscribe":
+                topic = data.get("topic")
+                if topic:
+                    await ws_manager.subscribe(session_id, topic, websocket)
+
+            elif action == "unsubscribe":
+                topic = data.get("topic")
+                if topic:
+                    await ws_manager.unsubscribe(session_id, topic, websocket)
+
+    except WebSocketDisconnect:
+        ws_manager.disconnect(session_id)
 
 
 # Test endpoints for observability (only in dev/test environments)
