@@ -5,7 +5,8 @@
 ## Active Concepts
 
 ### System Architecture
-- [Unified Architecture](./UnifiedArchitecture.md) - **START HERE** - How all components work together as one AI OS
+- [The Loop](./TheLoop.md) - Self-improving intelligence substrate (DISCOVER → VALIDATE → IMPROVE)
+- [Unified Architecture](./UnifiedArchitecture.md) - How all components work together as one AI OS
 
 ### Design Principles
 - [Intent-Aware Agents](./IntentAware.md) - Framework for reliable agent intent (crystallization, disambiguation, verification)
@@ -110,6 +111,7 @@ Compounding: Better models → Better signals → Better trades → More revenue
 
 | Document | Status | Last Updated |
 |----------|--------|--------------|
+| TheLoop.md | ✅ Complete | 2026-01-02 |
 | IntentAware.md | ✅ Complete | 2026-01-02 |
 | Wander.md | ✅ Complete | 2026-01-02 |
 | Wander-TechSpec.md | ✅ Complete | 2026-01-02 |

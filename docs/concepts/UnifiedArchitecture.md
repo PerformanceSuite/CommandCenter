@@ -3,6 +3,8 @@
 **Status**: Design Vision
 **Created**: 2026-01-02
 
+**See also**: [The Loop](./TheLoop.md) - The self-improving cycle that this architecture enables
+
 ---
 
 ## Core Thesis
