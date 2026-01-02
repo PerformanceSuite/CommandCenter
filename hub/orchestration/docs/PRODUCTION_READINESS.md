@@ -567,18 +567,26 @@ brew install dagger/tap/dagger
 
 **Engineering**: ✅ System tested and operational
 **Security**: ✅ Audit complete, 0 critical issues
-**Operations**: ✅ All 5 smoke tests passed (2025-12-31)
+**Operations**: ✅ All 5 smoke tests passed (2026-01-01)
 **Product**: ⏳ Pending production deployment approval
+
+**Smoke Test Re-validation (2026-01-01)**:
+All smoke tests re-validated with fixed agent scripts:
+- ✅ Test 1: Single agent (security-scanner)
+- ✅ Test 2: Sequential workflow (scanner → notifier)
+- ✅ Test 3: Approval workflow (patcher with WAITING_APPROVAL)
+- ✅ Test 4: Diamond pattern (scanner → compliance + reviewer → notifier)
+- ✅ Test 5: Rate limiting (100 req/min enforced)
 
 **Next Steps**:
 1. ~~Execute smoke tests (all 5 tests must pass)~~ ✅ COMPLETE
 2. ~~Update this document with smoke test results~~ ✅ COMPLETE
-3. Fix agent TypeScript scripts (JSON input parsing issue)
+3. ~~Fix agent TypeScript scripts (JSON input parsing issue)~~ ✅ COMPLETE
 4. Obtain final deployment approval
 5. Deploy to production
 
 ---
 
-*Last Updated*: 2025-12-31 23:15 PST
+*Last Updated*: 2026-01-01 18:45 PST
 *Prepared By*: Orchestration Team
 *Phase*: 10.6 - Production Readiness
