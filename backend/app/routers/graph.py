@@ -46,6 +46,9 @@ router = APIRouter(prefix="/api/v1/graph", tags=["graph"])
 @router.post("/query", response_model=QueryResult)
 async def execute_composed_query(
     query: ComposedQuery,
+    include_affordances: bool = Query(
+        False, description="Include agent affordances for returned entities"
+    ),
     db: AsyncSession = Depends(get_db),
     current_project_id: int = Depends(get_current_project_id),
 ):
@@ -74,6 +77,10 @@ async def execute_composed_query(
     - `direction`: inbound, outbound, or both
     - `depth`: Traversal depth (1-10)
 
+    **Agent Parity (Phase 3):**
+    Set `include_affordances=true` to get available actions for each entity.
+    Affordances enable agents to take the same actions available in the UI.
+
     **Example request:**
     ```json
     {
@@ -85,7 +92,9 @@ async def execute_composed_query(
     ```
     """
     executor = QueryExecutor(db)
-    return await executor.execute(query, project_id=current_project_id)
+    return await executor.execute(
+        query, project_id=current_project_id, include_affordances=include_affordances
+    )
 
 
 class ParseQueryRequest(BaseModel):
@@ -97,6 +106,9 @@ class ParseQueryRequest(BaseModel):
 @router.post("/query/parse", response_model=QueryResult)
 async def parse_and_execute_query(
     request: ParseQueryRequest,
+    include_affordances: bool = Query(
+        False, description="Include agent affordances for returned entities"
+    ),
     db: AsyncSession = Depends(get_db),
     current_project_id: int = Depends(get_current_project_id),
 ):
@@ -121,12 +133,19 @@ async def parse_and_execute_query(
       }
     }
     ```
+
+    **Agent Parity (Phase 3):**
+    Set `include_affordances=true` to get available actions for each entity.
     """
     parser = IntentParser()
     composed_query = parser.parse(request.query)
 
     executor = QueryExecutor(db)
-    return await executor.execute(composed_query, project_id=current_project_id)
+    return await executor.execute(
+        composed_query,
+        project_id=current_project_id,
+        include_affordances=include_affordances,
+    )
 
 
 # ============================================================================

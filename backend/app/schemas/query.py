@@ -1,5 +1,5 @@
 """
-Pydantic schemas for Composable Query Language (Task 2.1)
+Pydantic schemas for Composable Query Language (Tasks 2.1, 3.1)
 
 Defines the ComposedQuery model that enables:
 - Entity selection with type and scope
@@ -8,12 +8,67 @@ Defines the ComposedQuery model that enables:
 - Time range filtering
 - Presentation hints
 - Optional aggregations
+- Affordances for agent parity (Phase 3)
 """
 
 from datetime import datetime
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
+
+# =============================================================================
+# Affordance Schemas (Phase 3, Task 3.1)
+# =============================================================================
+
+
+class EntityRef(BaseModel):
+    """Reference to a specific entity.
+
+    Used in affordances to identify the target of an action.
+
+    Examples:
+        EntityRef(type="symbol", id="123")
+        EntityRef(type="file", id="456")
+    """
+
+    type: str = Field(..., description="Entity type (symbol, file, service, etc.)")
+    id: str = Field(..., description="Entity ID")
+
+
+class Affordance(BaseModel):
+    """An action that can be taken on an entity.
+
+    Affordances enable agent parity - any action a user can take
+    in the UI, an agent can also take via the API.
+
+    Examples:
+        Affordance(
+            action="trigger_audit",
+            target=EntityRef(type="symbol", id="123"),
+            description="Run security audit on this function",
+            parameters={"audit_type": "security"}
+        )
+    """
+
+    action: Literal[
+        "trigger_audit",
+        "create_task",
+        "open_in_editor",
+        "drill_down",
+        "run_indexer",
+        "view_dependencies",
+        "view_callers",
+    ] = Field(..., description="Action type")
+    target: EntityRef = Field(..., description="Target entity for the action")
+    description: str = Field(..., description="Human-readable description of the action")
+    parameters: Optional[dict[str, Any]] = Field(
+        None, description="Optional action-specific parameters"
+    )
+
+
+# =============================================================================
+# Query Schemas (Phase 2)
+# =============================================================================
 
 
 class EntitySelector(BaseModel):
@@ -194,7 +249,8 @@ class ComposedQuery(BaseModel):
 class QueryResult(BaseModel):
     """Result of executing a ComposedQuery.
 
-    Contains matched entities, traversed relationships, and optional aggregations.
+    Contains matched entities, traversed relationships, optional aggregations,
+    and affordances for agent parity.
     """
 
     entities: list[dict[str, Any]] = Field(
@@ -208,6 +264,10 @@ class QueryResult(BaseModel):
     aggregations: Optional[dict[str, Any]] = Field(
         None,
         description="Computed aggregation results",
+    )
+    affordances: Optional[list[Affordance]] = Field(
+        None,
+        description="Available actions for the returned entities (Phase 3)",
     )
     total: int = Field(
         0,

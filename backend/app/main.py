@@ -24,6 +24,7 @@ from app.middleware import LoggingMiddleware, add_security_headers, limiter
 from app.middleware.correlation import CorrelationIDMiddleware
 from app.nats_client import init_nats_client, shutdown_nats_client
 from app.routers import (
+    actions,
     agents,
     alerts,
     auth,
@@ -47,7 +48,7 @@ from app.routers import (
     schedules,
 )
 from app.routers import settings as settings_router
-from app.routers import sse, technologies, webhooks, webhooks_ingestion
+from app.routers import skills, sse, technologies, webhooks, webhooks_ingestion
 from app.services import redis_service
 from app.services.federation_heartbeat import FederationHeartbeat
 from app.utils.logging import setup_logging
@@ -263,6 +264,7 @@ app.include_router(export.router)  # Export API for analysis results (SARIF, HTM
 app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
+app.include_router(actions.router)  # Phase 3: Agent action execution
 app.include_router(hypotheses.router, prefix=settings.api_v1_prefix)  # AI Arena hypotheses (legacy)
 app.include_router(
     intelligence.router, prefix=settings.api_v1_prefix

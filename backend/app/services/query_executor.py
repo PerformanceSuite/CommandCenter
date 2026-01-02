@@ -27,6 +27,7 @@ from app.models.graph import (
     GraphTask,
 )
 from app.schemas.query import (
+    Affordance,
     ComposedQuery,
     EntitySelector,
     Filter,
@@ -34,6 +35,7 @@ from app.schemas.query import (
     RelationshipSpec,
     TimeRange,
 )
+from app.services.affordance_generator import AffordanceGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -74,20 +76,23 @@ class QueryExecutor:
             db: Async SQLAlchemy session
         """
         self.db = db
+        self.affordance_generator = AffordanceGenerator()
 
     async def execute(
         self,
         query: ComposedQuery,
         project_id: int,
+        include_affordances: bool = False,
     ) -> QueryResult:
         """Execute a ComposedQuery and return results.
 
         Args:
             query: The composed query to execute
             project_id: Current project ID for scoping
+            include_affordances: Whether to include affordances for agent parity
 
         Returns:
-            QueryResult with entities, relationships, and metadata
+            QueryResult with entities, relationships, optional affordances, and metadata
         """
         start_time = time.time()
 
@@ -123,18 +128,25 @@ class QueryExecutor:
                 project_id=project_id,
             )
 
+        # Generate affordances if requested (Phase 3, Task 3.3)
+        affordances: list[Affordance] | None = None
+        if include_affordances and entities:
+            affordances = self.affordance_generator.generate_for_entities(entities, max_entities=10)
+
         elapsed_ms = (time.time() - start_time) * 1000
 
         return QueryResult(
             entities=entities,
             relationships=relationships,
             aggregations=aggregations,
+            affordances=affordances,
             total=total,
             metadata={
                 "execution_time_ms": round(elapsed_ms, 2),
                 "entity_types_queried": [s.type for s in query.entities],
                 "filters_applied": len(query.filters) if query.filters else 0,
                 "relationships_traversed": len(query.relationships) if query.relationships else 0,
+                "affordances_generated": len(affordances) if affordances else 0,
             },
         )
 

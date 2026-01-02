@@ -199,6 +199,59 @@ class TestQueryEndpointIntentParsing:
             assert "relationships" in data
 
 
+class TestQueryAffordances:
+    """Tests for affordances in query results (Phase 3, Task 3.3)."""
+
+    @pytest.mark.asyncio
+    async def test_query_without_affordances_by_default(self, test_client_with_mocks):
+        """By default, queries do not include affordances."""
+        response = await test_client_with_mocks.post(
+            "/api/v1/graph/query", json={"entities": [{"type": "symbol"}]}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data.get("affordances") is None
+
+    @pytest.mark.asyncio
+    async def test_query_with_affordances_flag(self, test_client_with_mocks):
+        """Query with include_affordances=true includes affordances."""
+        response = await test_client_with_mocks.post(
+            "/api/v1/graph/query?include_affordances=true",
+            json={"entities": [{"type": "symbol"}]},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        # Affordances may be empty if no entities returned, but key should be present
+        assert "affordances" in data
+
+    @pytest.mark.asyncio
+    async def test_parse_query_with_affordances(self, test_client_with_mocks):
+        """Parse endpoint also supports affordances."""
+        response = await test_client_with_mocks.post(
+            "/api/v1/graph/query/parse?include_affordances=true",
+            json={"query": "show me all services"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "affordances" in data
+
+    @pytest.mark.asyncio
+    async def test_affordances_metadata(self, test_client_with_mocks):
+        """Metadata includes affordances_generated count."""
+        response = await test_client_with_mocks.post(
+            "/api/v1/graph/query?include_affordances=true",
+            json={"entities": [{"type": "symbol"}]},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "metadata" in data
+        assert "affordances_generated" in data["metadata"]
+
+
 # Fixtures
 
 
