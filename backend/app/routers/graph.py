@@ -7,6 +7,7 @@ Provides HTTP endpoints for querying and mutating the knowledge graph.
 from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.project_context import get_current_project_id
@@ -29,13 +30,107 @@ from app.schemas.graph import (
     SpecFilters,
     TriggerAuditRequest,
 )
+from app.schemas.query import ComposedQuery, QueryResult
 from app.services.graph_service import GraphService
+from app.services.intent_parser import IntentParser
+from app.services.query_executor import QueryExecutor
 
 router = APIRouter(prefix="/api/v1/graph", tags=["graph"])
 
 
 # ============================================================================
-# Query Endpoints
+# Composed Query Endpoints (Phase 2)
+# ============================================================================
+
+
+@router.post("/query", response_model=QueryResult)
+async def execute_composed_query(
+    query: ComposedQuery,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Execute a composed query against the graph database.
+
+    This endpoint accepts a ComposedQuery object with entity selectors,
+    filters, relationship specifications, and optional aggregations.
+
+    **Entity Types:**
+    - `symbol`: Code symbols (functions, classes, methods)
+    - `file`: Source files
+    - `service`: Running services
+    - `task`: Work items
+    - `spec`: Specification items
+    - `any`: All entity types
+
+    **Filters:**
+    - `eq`: Equals
+    - `ne`: Not equals
+    - `lt`, `gt`, `lte`, `gte`: Comparisons
+    - `contains`: Text search
+    - `in`: Value in list
+
+    **Relationships:**
+    - `direction`: inbound, outbound, or both
+    - `depth`: Traversal depth (1-10)
+
+    **Example request:**
+    ```json
+    {
+      "entities": [{"type": "symbol", "scope": "project:1"}],
+      "filters": [{"field": "name", "operator": "contains", "value": "auth"}],
+      "relationships": [{"type": "dependency", "direction": "outbound", "depth": 2}],
+      "limit": 50
+    }
+    ```
+    """
+    executor = QueryExecutor(db)
+    return await executor.execute(query, project_id=current_project_id)
+
+
+class ParseQueryRequest(BaseModel):
+    """Request for parsing a natural language or structured query."""
+
+    query: str | dict
+
+
+@router.post("/query/parse", response_model=QueryResult)
+async def parse_and_execute_query(
+    request: ParseQueryRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Parse a natural language or structured query and execute it.
+
+    This endpoint first parses the query using the IntentParser,
+    then executes the resulting ComposedQuery.
+
+    **Natural Language Examples:**
+    - "Show me all services with health below 100"
+    - "Find functions containing auth"
+    - "List all tasks"
+
+    **Structured Query Example:**
+    ```json
+    {
+      "query": {
+        "entity": "symbol:main",
+        "context": ["dependencies", "callers"],
+        "depth": 2
+      }
+    }
+    ```
+    """
+    parser = IntentParser()
+    composed_query = parser.parse(request.query)
+
+    executor = QueryExecutor(db)
+    return await executor.execute(composed_query, project_id=current_project_id)
+
+
+# ============================================================================
+# Legacy Query Endpoints
 # ============================================================================
 
 

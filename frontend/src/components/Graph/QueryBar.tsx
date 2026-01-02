@@ -1,19 +1,33 @@
 /**
- * QueryBar - Query control bar with preset management
- * 
+ * QueryBar - Query control bar with search and preset management
+ *
  * Provides UI for:
+ * - Executing composed queries via search input
  * - Loading saved presets via dropdown
  * - Saving current query as preset
  * - Clearing current query
+ *
+ * Phase 2: Enhanced with composed query execution support
  */
 
-import { useState } from 'react';
-import { Save, ChevronDown, Trash2, BookmarkPlus } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Save, ChevronDown, Trash2, BookmarkPlus, Search, Loader2 } from 'lucide-react';
 import { useQueryState } from '../../hooks/useQueryState';
 import { usePresets } from '../../hooks/usePresets';
 import { QueryPreset } from '../../types/query';
+import { queryApi, QueryResult } from '../../services/queryApi';
 
-export function QueryBar() {
+interface QueryBarProps {
+  /** Callback when query results are received */
+  onQueryResult?: (result: QueryResult) => void;
+  /** Current project ID for scoping queries */
+  projectId?: number;
+  /** Placeholder text for search input */
+  placeholder?: string;
+}
+
+export function QueryBar({ onQueryResult, projectId: _projectId, placeholder }: QueryBarProps) {
+  // Note: projectId is kept for future scoped query support
   const { query, setQuery, clearQuery, hasQuery } = useQueryState();
   const { presets, loading, savePreset, loadPreset, removePreset } = usePresets({
     onLoad: (loadedQuery) => {
@@ -26,6 +40,34 @@ export function QueryBar() {
   const [presetName, setPresetName] = useState('');
   const [presetDescription, setPresetDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Execute search query
+  const handleSearch = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    if (!searchText.trim()) {
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      // Use natural language parsing endpoint
+      const result = await queryApi.parseAndExecute(searchText);
+      onQueryResult?.(result);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError(error instanceof Error ? error.message : 'Search failed');
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchText, onQueryResult]);
 
   // Handle save preset
   const handleSavePreset = async () => {
@@ -65,18 +107,40 @@ export function QueryBar() {
   return (
     <div className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="flex items-center justify-between gap-4">
-        {/* Left side: Query info */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
-            {hasQuery ? (
-              <>
-                {query.entities.length} {query.entities.length === 1 ? 'entity' : 'entities'}
-                {query.filters.length > 0 && `, ${query.filters.length} ${query.filters.length === 1 ? 'filter' : 'filters'}`}
-              </>
-            ) : (
-              'No active query'
+        {/* Left side: Search input */}
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              {isSearching ? (
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4 text-gray-400" />
+              )}
+            </div>
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder={placeholder || 'Search symbols, files, services... (e.g., "functions with auth")'}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+              disabled={isSearching}
+            />
+            {searchError && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <span className="text-xs text-red-500" title={searchError}>Error</span>
+              </div>
             )}
-          </span>
+          </div>
+        </form>
+
+        {/* Query status */}
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          {hasQuery && (
+            <span>
+              {query.entities.length} {query.entities.length === 1 ? 'entity' : 'entities'}
+              {query.filters.length > 0 && `, ${query.filters.length} ${query.filters.length === 1 ? 'filter' : 'filters'}`}
+            </span>
+          )}
         </div>
 
         {/* Right side: Controls */}
@@ -161,7 +225,7 @@ export function QueryBar() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Save Query Preset</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label htmlFor="preset-name" className="block text-sm font-medium text-gray-700 mb-1">
