@@ -1,8 +1,21 @@
 # Document Intelligence Agent Personas
 
 **Date:** January 1, 2026
-**Status:** Ready for Implementation
+**Status:** Backend Complete, Agent Personas Pending
 **Purpose:** Agent personas for intelligent document analysis, concept extraction, and knowledge management.
+
+## Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Graph Entity Types | ✅ Complete | `GraphDocument`, `GraphConcept`, `GraphRequirement` in `app/models/graph.py` |
+| Ingestion API | ✅ Complete | `POST /api/v1/graph/document-intelligence/ingest` |
+| Database Migration | ✅ Complete | `doc1nt3ll001_add_document_intelligence_entities.py` |
+| Integration Tests | ✅ Complete | 15 tests in `tests/integration/test_document_intelligence_ingest.py` |
+| Pipeline Template | ✅ Complete | `libs/agent_framework/pipelines/document-intelligence.yaml` |
+| Agent Personas | 🔲 Pending | Need to create YAML files in `libs/agent_framework/personas/` |
+
+**Next Step:** Create the 5 agent persona YAML files defined below.
 
 ---
 

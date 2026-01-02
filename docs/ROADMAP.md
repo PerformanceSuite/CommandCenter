@@ -2,17 +2,22 @@
 
 ## Current Phase: Connect What Exists
 
-**Status**: 20% complete
+**Status**: 35% complete
 
 We're connecting existing components into a coherent system before building new features.
 
+### Active Work
+- [x] Document Intelligence backend (graph entities, ingestion API)
+- [ ] Document Intelligence agent personas (5 YAML files)
+- [ ] Sprint 4: Real-time Subscriptions (SSE)
+
 ### This Week
-- [ ] Wander Phase 0: Mind Map UI
-- [ ] Wire KnowledgeBeast → Wander queries
-- [ ] AI Arena results → KnowledgeBeast storage
+- [ ] Create Document Intelligence agent personas
+- [ ] Wire KnowledgeBeast → Document Intelligence pipeline
+- [ ] Sprint 4 Task 1: SSE endpoint for graph events
 
 ### This Month
-- [ ] Wander Phases 1-2: Basic dwelling, resonance detection
+- [ ] Complete Sprint 4: Real-time graph subscriptions
 - [ ] VISLZR Sprint 3: Agent parity
 - [ ] Voice input prototype
 
@@ -67,16 +72,21 @@ We're connecting existing components into a coherent system before building new 
 ## Technical Debt
 
 - [ ] Consolidate service/repository patterns
-- [ ] Complete test suite (currently 995 pass, 137 fail)
-- [ ] Graph Service completion
+- [ ] Complete test suite (currently 1700+ pass)
+- [x] Graph Service completion
 - [ ] Federation service activation
 
 ## Recently Completed
 
+- ✅ **Document Intelligence Pipeline** (Jan 2, 2026)
+  - Graph entity types: `GraphDocument`, `GraphConcept`, `GraphRequirement`
+  - Ingestion API: `POST /api/v1/graph/document-intelligence/ingest`
+  - 15 integration tests
+  - Pipeline template YAML
+- ✅ **Skills Integration** - Moved 6 skills into CommandCenter repo
+- ✅ **Linting Cleanup** - Fixed 49 linting errors across backend
+- ✅ **App Factory Refactor** - `create_app()` with comprehensive docstring
 - ✅ TheLoop architecture defined
 - ✅ AI Arena multi-model debate working
 - ✅ Settings and provider configuration
 - ✅ LLM Gateway with cost tracking
-- ✅ Celery test fixes (22 tests)
-- ✅ Router test auth fixes
-- ✅ Documentation consolidation (this!)
