@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import sqlalchemy as sa
 from fastapi import HTTPException, status
-from sqlalchemy import Integer, and_, func, select
+from sqlalchemy import Integer, and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Job, JobStatus
@@ -179,7 +179,7 @@ class OptimizedJobService:
             func.sum(func.cast(Job.status == JobStatus.FAILED, Integer)).label("failed"),
             func.sum(func.cast(Job.status == JobStatus.CANCELLED, Integer)).label("cancelled"),
             func.avg(
-                func.case(
+                case(
                     (
                         Job.status == JobStatus.COMPLETED,
                         func.extract("epoch", Job.completed_at - Job.started_at),

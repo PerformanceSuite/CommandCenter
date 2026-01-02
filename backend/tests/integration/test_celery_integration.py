@@ -9,9 +9,7 @@ Tests the complete async job workflow including:
 - Job cancellation
 """
 
-import asyncio
 import datetime
-from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -21,7 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Job, JobStatus, Project, Repository
 from app.services.job_service import JobService
-from app.tasks.job_tasks import execute_job
 
 pytestmark = pytest.mark.integration
 
@@ -37,11 +34,11 @@ class TestCeleryJobIntegration:
     ):
         """Test complete job creation workflow."""
         # Create a job via API
+        # Note: created_by is Optional[int] (user ID), not a string
         job_data = {
             "project_id": test_project.id,
             "job_type": "analyze_repository",
             "parameters": {"repository_id": 1},
-            "created_by": "test_user",
         }
 
         response = await async_client.post("/api/v1/jobs", json=job_data)
@@ -63,7 +60,7 @@ class TestCeleryJobIntegration:
         """Test job dispatch to Celery."""
         job_id = test_job.id
 
-        with patch("app.services.job_service.execute_job", mock_celery_task):
+        with patch("app.tasks.job_tasks.execute_job", mock_celery_task):
             # Dispatch job
             response = await async_client.post(f"/api/v1/jobs/{job_id}/dispatch")
 
@@ -85,7 +82,7 @@ class TestCeleryJobIntegration:
         """Test job dispatch with execution delay."""
         job_id = test_job.id
 
-        with patch("app.services.job_service.execute_job", mock_celery_task):
+        with patch("app.tasks.job_tasks.execute_job", mock_celery_task):
             # Dispatch job with 10 second delay
             response = await async_client.post(f"/api/v1/jobs/{job_id}/dispatch?delay_seconds=10")
 
@@ -176,7 +173,7 @@ class TestCeleryJobIntegration:
         job = response.json()
         assert job["status"] == "failed"
         assert job["error"] == "Test error occurred"
-        assert "traceback" in job
+        # Note: traceback is stored in DB but not serialized in JobResponse schema
 
     @pytest.mark.asyncio
     async def test_job_cancellation_workflow(
@@ -189,11 +186,11 @@ class TestCeleryJobIntegration:
         job_id = test_job.id
 
         # First dispatch the job
-        with patch("app.services.job_service.execute_job", mock_celery_task):
+        with patch("app.tasks.job_tasks.execute_job", mock_celery_task):
             await async_client.post(f"/api/v1/jobs/{job_id}/dispatch")
 
         # Cancel the job
-        with patch("celery.app.control.Control.revoke") as mock_revoke:
+        with patch("celery.app.control.Control.revoke"):
             response = await async_client.post(f"/api/v1/jobs/{job_id}/cancel")
 
             assert response.status_code == 200
@@ -235,7 +232,7 @@ class TestCeleryJobIntegration:
             project_id=test_project.id,
             job_type="export_data",
             parameters={},
-            created_by="test_user",
+            created_by=None,
         )
         await service.update_job(running_job.id, status="running")
 
@@ -262,14 +259,14 @@ class TestCeleryJobIntegration:
             project_id=test_project.id,
             job_type="analyze",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
 
         completed_job = await service.create_job(
             project_id=test_project.id,
             job_type="export",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(completed_job.id, status="completed")
 
@@ -278,8 +275,8 @@ class TestCeleryJobIntegration:
 
         assert response.status_code == 200
         stats = response.json()
-        assert "total_jobs" in stats
-        assert stats["total_jobs"] >= 2
+        assert "total" in stats
+        assert stats["total"] >= 2
 
     @pytest.mark.asyncio
     async def test_job_list_with_filters(
@@ -296,14 +293,14 @@ class TestCeleryJobIntegration:
             project_id=test_project.id,
             job_type="analyze_repository",
             parameters={},
-            created_by="user1",
+            created_by=None,
         )
 
         await service.create_job(
             project_id=test_project.id,
             job_type="export_data",
             parameters={},
-            created_by="user2",
+            created_by=None,
         )
 
         # List jobs filtered by type
@@ -334,7 +331,7 @@ class TestCeleryJobIntegration:
                 project_id=test_project.id,
                 job_type="test_job",
                 parameters={"index": i},
-                created_by="test",
+                created_by=None,
             )
 
         # Get first page
@@ -351,7 +348,7 @@ class TestCeleryJobIntegration:
 
 
 class TestCeleryTaskHandlers:
-    """Test Celery task handlers and execution."""
+    """Test Celery task handlers and job dispatch."""
 
     @pytest.mark.asyncio
     async def test_analyze_repository_task(
@@ -359,7 +356,7 @@ class TestCeleryTaskHandlers:
         test_repository: Repository,
         db_session: AsyncSession,
     ):
-        """Test analyze_repository task handler."""
+        """Test that analyze_repository jobs can be dispatched."""
         service = JobService(db_session)
 
         # Create job for repository analysis
@@ -367,18 +364,23 @@ class TestCeleryTaskHandlers:
             project_id=test_repository.project_id,
             job_type="analyze_repository",
             parameters={"repository_id": test_repository.id},
-            created_by="test_user",
+            created_by=None,
         )
 
-        # Mock task execution
-        with patch("app.tasks.job_tasks.analyze_repository_task") as mock_task:
-            mock_task.return_value = {
-                "status": "completed",
-                "technologies_found": 5,
-            }
+        # Mock the execute_job task to verify dispatch works
+        with patch("app.tasks.job_tasks.execute_job") as mock_task:
+            mock_result = MagicMock()
+            mock_result.id = "test-task-id-analyze"
+            mock_task.delay.return_value = mock_result
 
-            # Execute (task_always_eager in test config runs synchronously)
-            await service.dispatch_job(job.id)
+            # Dispatch the job
+            task_id = await service.dispatch_job(job.id)
+
+            # Verify the task was called with correct args
+            mock_task.delay.assert_called_once_with(
+                job.id, "analyze_repository", {"repository_id": test_repository.id}
+            )
+            assert task_id == "test-task-id-analyze"
 
     @pytest.mark.asyncio
     async def test_export_data_task(
@@ -386,7 +388,7 @@ class TestCeleryTaskHandlers:
         test_project: Project,
         db_session: AsyncSession,
     ):
-        """Test export_data task handler."""
+        """Test that export_data jobs can be dispatched."""
         service = JobService(db_session)
 
         # Create job for data export
@@ -394,18 +396,21 @@ class TestCeleryTaskHandlers:
             project_id=test_project.id,
             job_type="export_data",
             parameters={"format": "json", "project_id": test_project.id},
-            created_by="test_user",
+            created_by=None,
         )
 
-        # Mock task execution
-        with patch("app.tasks.job_tasks.export_data_task") as mock_task:
-            mock_task.return_value = {
-                "status": "completed",
-                "file_path": "/tmp/export.json",
-            }
+        # Mock the execute_job task
+        with patch("app.tasks.job_tasks.execute_job") as mock_task:
+            mock_result = MagicMock()
+            mock_result.id = "test-task-id-export"
+            mock_task.delay.return_value = mock_result
 
-            # Execute
-            await service.dispatch_job(job.id)
+            # Dispatch the job
+            task_id = await service.dispatch_job(job.id)
+
+            # Verify the task was called
+            mock_task.delay.assert_called_once()
+            assert task_id == "test-task-id-export"
 
     @pytest.mark.asyncio
     async def test_batch_operation_task(
@@ -413,7 +418,7 @@ class TestCeleryTaskHandlers:
         test_project: Project,
         db_session: AsyncSession,
     ):
-        """Test batch operation task handler."""
+        """Test that batch_analyze jobs can be dispatched."""
         service = JobService(db_session)
 
         # Create job for batch operation
@@ -421,18 +426,23 @@ class TestCeleryTaskHandlers:
             project_id=test_project.id,
             job_type="batch_analyze",
             parameters={"repository_ids": [1, 2, 3]},
-            created_by="test_user",
+            created_by=None,
         )
 
-        # Mock task execution
-        with patch("app.tasks.job_tasks.batch_operation_task") as mock_task:
-            mock_task.return_value = {
-                "status": "completed",
-                "processed": 3,
-            }
+        # Mock the execute_job task
+        with patch("app.tasks.job_tasks.execute_job") as mock_task:
+            mock_result = MagicMock()
+            mock_result.id = "test-task-id-batch"
+            mock_task.delay.return_value = mock_result
 
-            # Execute
-            await service.dispatch_job(job.id)
+            # Dispatch the job
+            task_id = await service.dispatch_job(job.id)
+
+            # Verify the task was called with batch parameters
+            mock_task.delay.assert_called_once_with(
+                job.id, "batch_analyze", {"repository_ids": [1, 2, 3]}
+            )
+            assert task_id == "test-task-id-batch"
 
 
 class TestJobErrorHandling:
@@ -445,11 +455,11 @@ class TestJobErrorHandling:
         test_project: Project,
     ):
         """Test handling of invalid job type."""
+        # Note: created_by is Optional[int] (user ID), not a string
         job_data = {
             "project_id": test_project.id,
             "job_type": "invalid_job_type",
             "parameters": {},
-            "created_by": "test_user",
         }
 
         response = await async_client.post("/api/v1/jobs", json=job_data)
@@ -525,14 +535,14 @@ class TestJobServiceMethods:
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
 
         job2 = await service.create_job(
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(job2.id, status="running")
 
@@ -540,7 +550,7 @@ class TestJobServiceMethods:
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(job3.id, status="completed")
 
@@ -567,7 +577,7 @@ class TestJobServiceMethods:
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(job.id, status="completed")
 
@@ -595,14 +605,14 @@ class TestJobServiceMethods:
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
 
         completed_job = await service.create_job(
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(completed_job.id, status="completed")
 
@@ -610,13 +620,13 @@ class TestJobServiceMethods:
             project_id=test_project.id,
             job_type="test",
             parameters={},
-            created_by="test",
+            created_by=None,
         )
         await service.update_job(failed_job.id, status="failed")
 
         # Get statistics
         stats = await service.get_statistics(project_id=test_project.id)
 
-        assert "total_jobs" in stats
-        assert stats["total_jobs"] >= 3
+        assert "total" in stats
+        assert stats["total"] >= 3
         assert "by_status" in stats

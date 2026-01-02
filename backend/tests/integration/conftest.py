@@ -79,7 +79,7 @@ async def test_job(db_session: AsyncSession, test_project: Project) -> Job:
         job_type="analyze_repository",
         status=JobStatus.PENDING,
         parameters={"repository_id": 1},
-        created_by="test_user",
+        created_by=None,  # created_by is Optional[int] (user ID), not string
         progress=0,
         current_step="Initializing",
     )
@@ -177,8 +177,12 @@ def celery_config() -> Dict[str, Any]:
 def mock_celery_task(mocker: Any):
     """Mock Celery task execution for testing."""
     mock_task = mocker.MagicMock()
-    mock_task.delay.return_value.id = "test-task-id-123"
-    mock_task.delay.return_value.state = "PENDING"
+    # Configure both delay() and apply_async() to return proper task IDs
+    mock_result = mocker.MagicMock()
+    mock_result.id = "test-task-id-123"
+    mock_result.state = "PENDING"
+    mock_task.delay.return_value = mock_result
+    mock_task.apply_async.return_value = mock_result
     return mock_task
 
 
