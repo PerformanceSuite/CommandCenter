@@ -226,6 +226,287 @@ CREATE INDEX idx_warm_memory_session ON wander_warm_memory(session_id);
 
 ---
 
+## Memory Interaction Architecture: Recursive Language Model Pattern
+
+Wander uses the **Recursive Language Model (RLM)** pattern for memory interaction. Instead of injecting context directly into LLM attention windows (where it degrades via "context rot"), we store context as variables in a persistent REPL environment that the LLM can query programmatically.
+
+### Why RLM?
+
+| Problem | Traditional Approach | RLM Approach |
+|---------|---------------------|---------------|
+| Context rot | Quality degrades as context grows | Context never enters attention |
+| Context limits | Hard cap at 128K-272K tokens | Effectively unlimited (10M+ tested) |
+| Token efficiency | Pay for entire context every call | Only load what's needed |
+| Memory management | Manual summarization/truncation | LLM decides what to access |
+| Auditability | Opaque attention patterns | Explicit code shows access patterns |
+
+**Research basis**: [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab - Dec 2025)
+- GPT-5-mini + RLM outperformed GPT-5 direct by 110% on 132K token tasks
+- Successfully handled 10M+ token contexts (100x beyond model window)
+- 2-3K tokens/query vs 95K+ for direct context injection
+
+### Core Architecture
+
+```
+Traditional:
+[272K tokens of context] + [query] → LLM → answer
+         ↓ context rot, token limits
+
+RLM Pattern:
+[query] → LLM → writes code → REPL executes → result
+                    ↓              ↑
+              llm_query()    context stored
+              (sub-LLM)      as variable
+```
+
+### REPL Environment Design
+
+```python
+class WanderREPL:
+    """Persistent REPL environment for Wander sessions."""
+
+    def __init__(self, session: WanderSession):
+        self.globals = {
+            # Core context - stored as variables, NOT in LLM context
+            'hot_memory': [],      # Recent loci (list of dicts)
+            'warm_memory': [],     # Compressed clusters
+            'resonances': {},      # Pattern tracker
+            'trace': [],           # Exploration path
+            'current_locus': None,
+
+            # Query functions available to dweller
+            'embed': self._embed,
+            'query_similar': self._query_similar,
+            'query_by_domain': self._query_by_domain,
+            'get_locus': self._get_locus,
+            'get_neighbors': self._get_neighbors,
+            'llm_query': self._llm_query,  # Spawn sub-LLM
+
+            # Standard library access
+            're': re,
+            'json': json,
+            'math': math,
+        }
+        self.session = session
+
+    async def _llm_query(self, prompt: str, context: str = "") -> str:
+        """Spawn a sub-LLM to process a chunk of context.
+
+        This is the key recursive primitive. The dweller LLM can call
+        this to analyze chunks without loading them into its own context.
+        """
+        # Use smaller/cheaper model for sub-queries
+        response = await self.session.sub_llm.complete(
+            system="You are a helpful assistant analyzing a chunk of context.",
+            prompt=f"{prompt}\n\nContext:\n{context}" if context else prompt,
+            max_tokens=2000
+        )
+        return response
+
+    async def _query_similar(self, embedding: List[float], k: int = 10) -> List[dict]:
+        """Find k most similar loci by embedding distance."""
+        return await self.session.vector_store.query(
+            embedding=embedding,
+            k=k,
+            filter={'session_id': self.session.id}
+        )
+
+    async def _query_by_domain(self, domain: str, limit: int = 20) -> List[dict]:
+        """Get loci in a specific domain."""
+        return [l for l in self.globals['hot_memory']
+                if domain in l.get('domains', [])]
+
+    def execute(self, code: str) -> dict:
+        """Execute Python code in the REPL environment."""
+        try:
+            # Capture stdout for print() statements
+            stdout_capture = io.StringIO()
+            with redirect_stdout(stdout_capture):
+                exec(code, self.globals)
+
+            return {
+                'success': True,
+                'stdout': stdout_capture.getvalue()[:10000],  # Truncate
+                'error': None
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'stdout': stdout_capture.getvalue()[:10000],
+                'error': str(e)
+            }
+```
+
+### Dweller System Prompt (RLM-Style)
+
+```python
+RLM_DWELLER_SYSTEM_PROMPT = """
+You are a Wander dweller exploring idea space. You have access to a REPL
+environment with the session's memory stored as variables.
+
+AVAILABLE VARIABLES:
+- hot_memory: {hot_count} recent loci (list of dicts with 'concept', 'embedding', 'domains')
+- warm_memory: {warm_count} compressed theme clusters
+- resonances: {resonance_count} detected patterns
+- trace: {trace_count} steps taken so far
+- current_locus: Your current position in idea space
+
+AVAILABLE FUNCTIONS:
+- embed(text) -> List[float]: Get embedding for text
+- query_similar(embedding, k=10) -> List[dict]: Find similar loci
+- query_by_domain(domain, limit=20) -> List[dict]: Get loci by domain
+- get_locus(id) -> dict: Get full locus details
+- get_neighbors(locus_id) -> List[dict]: Get connected loci
+- llm_query(prompt, context="") -> str: Spawn sub-LLM to analyze context
+
+IMPORTANT: Do NOT try to print or analyze large amounts of memory directly.
+Instead, use query functions to find relevant items, then use llm_query()
+to analyze specific chunks.
+
+EXAMPLE - Finding connections:
+```repl
+# Find loci related to current concept
+similar = query_similar(current_locus['embedding'], k=5)
+for locus in similar:
+    analysis = llm_query(
+        f"How does '{locus['concept']}' connect to '{current_locus['concept']}'?",
+        context=json.dumps(locus)
+    )
+    print(f"{locus['concept']}: {analysis}")
+```
+
+EXAMPLE - Analyzing patterns across memory:
+```repl
+# Check resonances for relevant patterns
+relevant_themes = [r for r in resonances.values()
+                   if any(t in current_locus['domains'] for t in r['themes'])]
+
+if relevant_themes:
+    pattern_analysis = llm_query(
+        "What patterns emerge from these resonances?",
+        context=json.dumps(relevant_themes[:5])
+    )
+    print(pattern_analysis)
+```
+
+When you want to execute code, wrap it in triple backticks with 'repl':
+```repl
+# Your Python code here
+```
+
+When ready to provide your dwelling output, use FINAL():
+FINAL({"connection": "...", "tension": "...", ...})
+"""
+```
+
+### Sub-LLM Strategy
+
+The dweller (root LLM) orchestrates; sub-LLMs do focused analysis:
+
+| Role | Model | Use Case |
+|------|-------|----------|
+| Root dweller | Claude Sonnet / GPT-5 | Orchestration, code generation, final synthesis |
+| Sub-LLM (cheap) | Claude Haiku / GPT-5-mini | Chunk analysis, classification, extraction |
+| Sub-LLM (semantic) | Local Llama 3.2 | Theme extraction, similarity judgments |
+| Crystallizer | Claude Opus | High-stakes insight validation |
+
+### Memory Access Patterns
+
+The RLM approach enables these patterns that would be impossible with direct context:
+
+**1. Selective Loading**
+```python
+# Instead of: load all 50K loci into context
+# Do: query for relevant subset
+relevant = query_similar(current_locus['embedding'], k=20)
+analysis = llm_query("Find the most interesting connection", json.dumps(relevant))
+```
+
+**2. Iterative Exploration**
+```python
+# Process large memory in chunks
+for i in range(0, len(hot_memory), 100):
+    chunk = hot_memory[i:i+100]
+    themes = llm_query("Extract main themes", json.dumps(chunk))
+    theme_buffer.append(themes)
+
+# Synthesize
+final = llm_query("What patterns emerge?", json.dumps(theme_buffer))
+```
+
+**3. Recursive Decomposition**
+```python
+# Break complex analysis into sub-problems
+domains = list(set(d for l in hot_memory for d in l['domains']))
+for domain in domains:
+    domain_loci = query_by_domain(domain)
+    domain_analysis = llm_query(f"Key insights in {domain}?", json.dumps(domain_loci))
+    domain_buffer[domain] = domain_analysis
+
+# Cross-domain synthesis
+bridges = llm_query("What bridges exist between domains?", json.dumps(domain_buffer))
+```
+
+**4. Answer Verification**
+```python
+# Use sub-LLM to verify findings
+candidate_insight = "Financial regulation patterns mirror..."
+verification = llm_query(
+    f"Does this insight hold? '{candidate_insight}'",
+    context=json.dumps(supporting_evidence)
+)
+```
+
+### Implementation References
+
+- **Paper**: [arXiv:2512.24601](https://arxiv.org/abs/2512.24601) - Recursive Language Models
+- **Reference impl**: [github.com/ysz/recursive-llm](https://github.com/ysz/recursive-llm)
+- **Prime Intellect environments**: [primeintellect.ai/blog/rlm](https://www.primeintellect.ai/blog/rlm)
+
+### Integration with Wander Memory Layers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    WANDER RLM ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  DWELLER (Root LLM)                                              │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Receives: query + REPL environment description            │ │
+│  │  Produces: Python code to explore memory                   │ │
+│  │  Can call: llm_query() for sub-analysis                    │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│  REPL ENVIRONMENT                                                │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Variables (context stored here, NOT in LLM):              │ │
+│  │  ├── hot_memory[]      ← Recent loci (full detail)         │ │
+│  │  ├── warm_memory[]     ← Compressed clusters               │ │
+│  │  ├── resonances{}      ← Pattern tracker                   │ │
+│  │  ├── trace[]           ← Exploration path                  │ │
+│  │  └── current_locus     ← Current position                  │ │
+│  │                                                             │ │
+│  │  Functions:                                                 │ │
+│  │  ├── query_similar()   ← Vector search                     │ │
+│  │  ├── query_by_domain() ← Filter by domain                  │ │
+│  │  ├── get_neighbors()   ← Graph traversal                   │ │
+│  │  └── llm_query()       ← Spawn sub-LLM                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│  BACKING STORES (never loaded fully into LLM context)            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│  │  PostgreSQL  │  │  pgvector    │  │  Redis       │           │
+│  │  (loci,      │  │  (embeddings,│  │  (hot cache, │           │
+│  │   traces)    │  │   similarity)│  │   sessions)  │           │
+│  └──────────────┘  └──────────────┘  └──────────────┘           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## API Endpoints
 
 ### Session Management
@@ -452,8 +733,13 @@ async def wander_step(session: WanderSession) -> WanderStepResult:
 
 ## Dweller Prompt Structure
 
+> **Note**: The prompt below is for simple/direct dwelling. For production use with
+> large memory, use the RLM-style prompt from the "Memory Interaction Architecture"
+> section, which enables programmatic memory access via REPL.
+
 ```python
-DWELLING_PROMPT = """You are dwelling at a point in idea space, reflecting on an encounter between two concepts.
+# Simple dwelling prompt (for small context / testing)
+SIMPLE_DWELLING_PROMPT = """You are dwelling at a point in idea space, reflecting on an encounter between two concepts.
 
 CURRENT LOCUS:
 {current_concept}
@@ -500,6 +786,14 @@ Respond in JSON format:
 ---
 
 ## Framework Integration Analysis
+
+### Tier 0: Core Pattern (Implement First)
+
+| Pattern | Source | Use For |
+|---------|--------|---------||
+| **RLM (Recursive Language Model)** | [arXiv:2512.24601](https://arxiv.org/abs/2512.24601) | Memory interaction, context management, sub-LLM orchestration |
+
+RLM is not a framework to integrate - it's the **core architectural pattern** for how Wander interacts with memory. See "Memory Interaction Architecture" section above.
 
 ### Tier 1: Most Relevant (Consider Forking/Integrating)
 
