@@ -4,6 +4,12 @@
 **Created**: 2026-01-02
 **Last Updated**: 2026-01-02
 
+**Related Documents**:
+- [Wander Technical Spec](./Wander-TechSpec.md) - Database, API, algorithms
+- [Real-Time Intelligence Engine](./RealTimeIntelligence.md) - Information sources, prediction markets
+- [Fractal Security](./FractalSecurity.md) - Perceptual access control
+- [Veria](./Veria.md) - Economic action on Wander crystals
+
 ---
 
 ## Executive Summary
