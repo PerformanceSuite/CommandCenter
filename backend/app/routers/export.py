@@ -15,7 +15,8 @@ from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.exporters.csv import export_to_csv, export_to_excel
@@ -78,7 +79,7 @@ def _get_analysis_data(analysis: ProjectAnalysis) -> dict:
 async def export_analysis_sarif(
     analysis_id: int,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Export analysis to SARIF 2.1.0 format.
@@ -103,7 +104,8 @@ async def export_analysis_sarif(
     """
     logger.info(f"SARIF export requested for analysis {analysis_id}")
 
-    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id))
+    analysis = result.scalar_one_or_none()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for SARIF export")
@@ -138,7 +140,7 @@ async def export_analysis_sarif(
 async def export_analysis_html(
     analysis_id: int,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse:
     """
     Export analysis to self-contained HTML report.
@@ -163,7 +165,8 @@ async def export_analysis_html(
     """
     logger.info(f"HTML export requested for analysis {analysis_id}")
 
-    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id))
+    analysis = result.scalar_one_or_none()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for HTML export")
@@ -197,7 +200,7 @@ async def export_analysis_csv(
     analysis_id: int,
     request: Request,
     export_type: CSVExportType = Query(CSVExportType.COMBINED, description="CSV type to generate"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> Response:
     """
     Export analysis to CSV format.
@@ -219,7 +222,8 @@ async def export_analysis_csv(
     """
     logger.info(f"CSV export ({export_type.value}) requested for analysis {analysis_id}")
 
-    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id))
+    analysis = result.scalar_one_or_none()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for CSV export")
@@ -253,7 +257,7 @@ async def export_analysis_csv(
 async def export_analysis_excel(
     analysis_id: int,
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> Response:
     """
     Export analysis to Excel (.xlsx) format.
@@ -281,7 +285,8 @@ async def export_analysis_excel(
     """
     logger.info(f"Excel export requested for analysis {analysis_id}")
 
-    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id))
+    analysis = result.scalar_one_or_none()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for Excel export")
@@ -322,7 +327,7 @@ async def export_analysis_json(
     analysis_id: int,
     request: Request,
     pretty: bool = Query(True, description="Pretty-print JSON"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Export analysis to JSON format.
@@ -344,7 +349,8 @@ async def export_analysis_json(
     """
     logger.info(f"JSON export requested for analysis {analysis_id}")
 
-    analysis = db.query(ProjectAnalysis).filter(ProjectAnalysis.id == analysis_id).first()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id == analysis_id))
+    analysis = result.scalar_one_or_none()
 
     if not analysis:
         logger.warning(f"Analysis {analysis_id} not found for JSON export")
@@ -469,7 +475,7 @@ async def export_batch_analyses(
     request: Request,
     analysis_ids: list[int],
     format: ExportFormatEnum = Query(ExportFormatEnum.JSON, description="Export format"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """
     Export multiple analyses in batch.
@@ -499,7 +505,8 @@ async def export_batch_analyses(
         )
 
     # Verify all analyses exist
-    analyses = db.query(ProjectAnalysis).filter(ProjectAnalysis.id.in_(analysis_ids)).all()
+    result = await db.execute(select(ProjectAnalysis).where(ProjectAnalysis.id.in_(analysis_ids)))
+    analyses = result.scalars().all()
     found_ids = {a.id for a in analyses}
     missing_ids = set(analysis_ids) - found_ids
 
