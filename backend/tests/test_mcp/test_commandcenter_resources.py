@@ -1,15 +1,15 @@
 """Comprehensive tests for CommandCenter Resource Provider."""
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.mcp.providers.base import Resource, ResourceContent
+from app.mcp.providers.base import Resource
 from app.mcp.providers.commandcenter_resources import CommandCenterResourceProvider
 from app.mcp.utils import ResourceNotFoundError
-from app.models import Job, Project, Repository, ResearchTask, Schedule, Technology
+from app.models import Job, Schedule
 
 
 @pytest.fixture
@@ -155,8 +155,8 @@ class TestReadProjectResources:
     @pytest.mark.asyncio
     async def test_read_all_projects(self, resource_provider, mock_db_session):
         """Test reading all projects."""
-        # Mock projects
-        project1 = MagicMock(spec=Project)
+        # Mock projects (no spec= so to_dict can be mocked)
+        project1 = MagicMock()
         project1.id = 1
         project1.name = "Project 1"
         project1.description = "Description 1"
@@ -167,7 +167,7 @@ class TestReadProjectResources:
             "description": "Description 1",
         }
 
-        project2 = MagicMock(spec=Project)
+        project2 = MagicMock()
         project2.id = 2
         project2.name = "Project 2"
         project2.description = "Description 2"
@@ -197,8 +197,8 @@ class TestReadProjectResources:
     @pytest.mark.asyncio
     async def test_read_single_project(self, resource_provider, mock_db_session):
         """Test reading single project by ID."""
-        # Mock project
-        project = MagicMock(spec=Project)
+        # Mock project (no spec= so to_dict can be mocked)
+        project = MagicMock()
         project.id = 1
         project.name = "Test Project"
         project.description = "Test Description"
@@ -241,8 +241,8 @@ class TestReadTechnologyResources:
     @pytest.mark.asyncio
     async def test_read_all_technologies(self, resource_provider, mock_db_session):
         """Test reading all technologies."""
-        # Mock technologies
-        tech1 = MagicMock(spec=Technology)
+        # Mock technologies (no spec= so to_dict can be mocked)
+        tech1 = MagicMock()
         tech1.to_dict.return_value = {
             "id": 1,
             "title": "Docker",
@@ -250,7 +250,7 @@ class TestReadTechnologyResources:
             "status": "adopt",
         }
 
-        tech2 = MagicMock(spec=Technology)
+        tech2 = MagicMock()
         tech2.to_dict.return_value = {
             "id": 2,
             "title": "Kubernetes",
@@ -273,7 +273,7 @@ class TestReadTechnologyResources:
     @pytest.mark.asyncio
     async def test_read_single_technology(self, resource_provider, mock_db_session):
         """Test reading single technology by ID."""
-        tech = MagicMock(spec=Technology)
+        tech = MagicMock()
         tech.to_dict.return_value = {
             "id": 1,
             "title": "FastAPI",
@@ -300,7 +300,7 @@ class TestReadResearchTaskResources:
     @pytest.mark.asyncio
     async def test_read_all_research_tasks(self, resource_provider, mock_db_session):
         """Test reading all research tasks."""
-        task1 = MagicMock(spec=ResearchTask)
+        task1 = MagicMock()
         task1.to_dict.return_value = {
             "id": 1,
             "title": "Evaluate Kubernetes",
@@ -308,7 +308,7 @@ class TestReadResearchTaskResources:
             "priority": "high",
         }
 
-        task2 = MagicMock(spec=ResearchTask)
+        task2 = MagicMock()
         task2.to_dict.return_value = {
             "id": 2,
             "title": "Test Docker Compose",
@@ -492,7 +492,7 @@ class TestResourceContentFormat:
     @pytest.mark.asyncio
     async def test_content_is_valid_json(self, resource_provider, mock_db_session):
         """Test that all resource content is valid JSON."""
-        project = MagicMock(spec=Project)
+        project = MagicMock()
         project.to_dict.return_value = {"id": 1, "name": "Test"}
 
         mock_result = MagicMock()
@@ -508,7 +508,7 @@ class TestResourceContentFormat:
     @pytest.mark.asyncio
     async def test_content_is_formatted_with_indentation(self, resource_provider, mock_db_session):
         """Test that JSON content is formatted with proper indentation."""
-        project = MagicMock(spec=Project)
+        project = MagicMock()
         project.to_dict.return_value = {"id": 1, "name": "Test"}
 
         mock_result = MagicMock()

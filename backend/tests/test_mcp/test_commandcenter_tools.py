@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.mcp.providers.base import Tool, ToolResult
 from app.mcp.providers.commandcenter_tools import CommandCenterToolProvider
 from app.mcp.utils import InvalidParamsError, ToolNotFoundError
-from app.models import Job, ResearchTask, Schedule, Technology
+from app.models import Job, ResearchTask, Schedule
 
 
 @pytest.fixture
@@ -145,16 +145,19 @@ class TestResearchTaskTools:
             "status": "todo",
         }
 
-        with patch.object(ResearchTask, "__init__", lambda x, **kwargs: None):
-            with patch.object(tool_provider.db, "add", new=AsyncMock()):
-                # Mock the task that gets added to the session
-                tool_provider.db.add = AsyncMock()
-                tool_provider.db.commit = AsyncMock()
-                tool_provider.db.refresh = AsyncMock(
-                    side_effect=lambda task: setattr(task, "id", 1)
-                )
+        # Create a mock task that will be returned when ResearchTask is instantiated
+        mock_task = MagicMock()
+        mock_task.id = 1
+        mock_task.title = "Test Task"
+        mock_task.status = "todo"
+        mock_task.priority = "high"
 
-                result = await tool_provider.call_tool("create_research_task", arguments)
+        with patch("app.mcp.providers.commandcenter_tools.ResearchTask", return_value=mock_task):
+            tool_provider.db.add = MagicMock()  # add is sync in SQLAlchemy
+            tool_provider.db.commit = AsyncMock()
+            tool_provider.db.refresh = AsyncMock()
+
+            result = await tool_provider.call_tool("create_research_task", arguments)
 
         assert result.success is True
         assert "task_id" in result.result
@@ -188,15 +191,17 @@ class TestResearchTaskTools:
             "title": "Minimal Task",
         }
 
-        mock_db_session = tool_provider.db
-        mock_db_session.add = AsyncMock()
-        mock_db_session.commit = AsyncMock()
-        mock_db_session.refresh = AsyncMock()
+        # Create a mock task with default values
+        mock_task = MagicMock()
+        mock_task.id = 1
+        mock_task.title = "Minimal Task"
+        mock_task.status = "todo"
+        mock_task.priority = "medium"
 
-        with patch.object(ResearchTask, "__init__", lambda x, **kwargs: None):
-            tool_provider.db.add = AsyncMock()
+        with patch("app.mcp.providers.commandcenter_tools.ResearchTask", return_value=mock_task):
+            tool_provider.db.add = MagicMock()
             tool_provider.db.commit = AsyncMock()
-            tool_provider.db.refresh = AsyncMock(side_effect=lambda task: setattr(task, "id", 1))
+            tool_provider.db.refresh = AsyncMock()
 
             result = await tool_provider.call_tool("create_research_task", arguments)
 
@@ -274,15 +279,17 @@ class TestTechnologyTools:
             "status": "adopt",
         }
 
-        mock_db_session = tool_provider.db
-        mock_db_session.add = AsyncMock()
-        mock_db_session.commit = AsyncMock()
-        mock_db_session.refresh = AsyncMock()
+        # Create a mock technology
+        mock_tech = MagicMock()
+        mock_tech.id = 1
+        mock_tech.title = "Docker"
+        mock_tech.domain = "Infrastructure"
+        mock_tech.status = "adopt"
 
-        with patch.object(Technology, "__init__", lambda x, **kwargs: None):
-            tool_provider.db.add = AsyncMock()
+        with patch("app.mcp.providers.commandcenter_tools.Technology", return_value=mock_tech):
+            tool_provider.db.add = MagicMock()
             tool_provider.db.commit = AsyncMock()
-            tool_provider.db.refresh = AsyncMock(side_effect=lambda tech: setattr(tech, "id", 1))
+            tool_provider.db.refresh = AsyncMock()
 
             result = await tool_provider.call_tool("add_technology", arguments)
 
@@ -310,10 +317,17 @@ class TestTechnologyTools:
             "domain": "Backend",
         }
 
-        with patch.object(Technology, "__init__", lambda x, **kwargs: None):
-            tool_provider.db.add = AsyncMock()
+        # Create a mock technology with default status
+        mock_tech = MagicMock()
+        mock_tech.id = 1
+        mock_tech.title = "New Tech"
+        mock_tech.domain = "Backend"
+        mock_tech.status = "assess"  # default status
+
+        with patch("app.mcp.providers.commandcenter_tools.Technology", return_value=mock_tech):
+            tool_provider.db.add = MagicMock()
             tool_provider.db.commit = AsyncMock()
-            tool_provider.db.refresh = AsyncMock(side_effect=lambda tech: setattr(tech, "id", 1))
+            tool_provider.db.refresh = AsyncMock()
 
             result = await tool_provider.call_tool("add_technology", arguments)
 
