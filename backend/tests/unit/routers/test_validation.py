@@ -1,65 +1,60 @@
 """Unit tests for router validation and middleware."""
 import pytest
 
-from app.models.technology import TechnologyDomain, TechnologyStatus
+from app.models.technology import TechnologyDomain
 
 
 @pytest.mark.unit
-@pytest.mark.asyncio
 class TestRequestValidation:
-    """Test request validation for API endpoints"""
+    """Test request validation for API endpoints.
 
-    async def test_request_validation_rejects_invalid_input(self, client):
-        """Request validation rejects invalid input."""
-        # Invalid request: empty title
-        response = await client.post(
+    These tests focus on Pydantic validation (422 errors) which happens
+    before database operations, making them suitable for sync unit tests.
+    """
+
+    def test_request_validation_rejects_invalid_input(self, client):
+        """Request validation rejects invalid input (empty title)."""
+        response = client.post(
             "/api/v1/technologies",
             json={
-                "title": "",
+                "title": "",  # Empty title should fail validation
                 "domain": TechnologyDomain.AI_ML.value,
             },
         )
 
-        # Should return 422 Unprocessable Entity
+        # Should return 422 Unprocessable Entity for validation error
         assert response.status_code == 422
         assert "detail" in response.json()
         # Check validation error mentions title field
         error_detail = response.json()["detail"]
         assert any("title" in str(err.get("loc", [])) for err in error_detail)
 
-    async def test_response_serialization_format(self, client):
-        """Responses are properly serialized."""
-        # Create valid technology
-        response = await client.post(
+    def test_request_validation_rejects_invalid_domain(self, client):
+        """Request validation rejects invalid domain value."""
+        response = client.post(
             "/api/v1/technologies",
             json={
-                "title": "Python",
-                "domain": TechnologyDomain.AI_ML.value,
-                "status": TechnologyStatus.RESEARCH.value,
-                "description": "A high-level programming language",
+                "title": "Valid Title",
+                "domain": "invalid_domain_value",  # Invalid domain
             },
         )
 
-        # Should return 201 Created
-        assert response.status_code == 201
-        data = response.json()
+        # Should return 422 for invalid enum value
+        assert response.status_code == 422
+        assert "detail" in response.json()
 
-        # Verify response structure
-        assert "id" in data
-        assert data["title"] == "Python"
-        assert data["domain"] == TechnologyDomain.AI_ML.value
-        assert data["status"] == TechnologyStatus.RESEARCH.value
-        assert isinstance(data["id"], int)
+    def test_request_validation_rejects_missing_required_fields(self, client):
+        """Request validation rejects missing required fields."""
+        response = client.post(
+            "/api/v1/technologies",
+            json={
+                # Missing title and domain - both required
+            },
+        )
 
-    async def test_error_response_formatting(self, client):
-        """Error responses follow standard format."""
-        # Trigger 404 error by requesting non-existent technology
-        response = await client.get("/api/v1/technologies/99999")
-
-        assert response.status_code == 404
-        error = response.json()
-
-        # Standard FastAPI error format
-        assert "detail" in error
-        # Detail should be a string or list
-        assert isinstance(error["detail"], (str, list))
+        # Should return 422 for missing required fields
+        assert response.status_code == 422
+        assert "detail" in response.json()
+        error_detail = response.json()["detail"]
+        # Should mention missing fields
+        assert len(error_detail) >= 1

@@ -6,6 +6,7 @@ from tests.utils.factories import (
     RepositoryFactory,
     ResearchTaskFactory,
     TechnologyFactory,
+    UserFactory,
 )
 
 
@@ -15,6 +16,22 @@ async def test_project(db_session):
     return await ProjectFactory.create(
         db_session, name="Performance Test Project", owner="perftest"
     )
+
+
+@pytest.fixture
+async def project_a(db_session):
+    """Create project A for performance tests."""
+    return await ProjectFactory.create(db_session, name="Performance Project A", owner="user_a")
+
+
+@pytest.fixture
+async def user_a(db_session, project_a):
+    """Create isolated user A with project for performance tests."""
+    user = await UserFactory.create(db_session, email="perf_user_a@test.com")
+    # Attach project reference for tests that need it
+    user.project = project_a
+    user.project_id = project_a.id
+    return user
 
 
 @pytest.fixture
@@ -105,6 +122,12 @@ def performance_threshold():
     Adjust based on production requirements.
     """
     return {
+        # Generic thresholds used by tests
+        "list": 500,  # List endpoints
+        "detail": 500,  # Detail endpoints
+        "bulk_create": 1500,  # Bulk operations
+        "rag_search": 1500,  # RAG query operations
+        # Specific endpoint thresholds (legacy)
         "technologies_list": 500,  # GET /api/v1/technologies
         "technologies_create": 300,  # POST /api/v1/technologies
         "research_list": 500,  # GET /api/v1/research

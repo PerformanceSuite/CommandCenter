@@ -119,15 +119,31 @@ class TestKnowledgeAPI:
 
     async def test_query_knowledge_base_validation_error(self, api_client: AsyncClient):
         """Test query validation errors"""
-        # Missing required fields
-        invalid_data = {
-            "repository_id": 1,
-            # Missing query field
-        }
+        from app.main import app
+        from app.routers.knowledge import get_rag_service
 
-        response = await api_client.post("/knowledge/query", json=invalid_data)
+        # Override the dependency to avoid RAGService instantiation
+        async def mock_get_rag_service(repository_id: int = 1):
+            mock_rag = AsyncMock()
+            mock_rag.initialize.return_value = None
+            mock_rag.query.return_value = []
+            return mock_rag
 
-        assert response.status_code == 422  # Validation error
+        app.dependency_overrides[get_rag_service] = mock_get_rag_service
+
+        try:
+            # Missing required fields
+            invalid_data = {
+                "repository_id": 1,
+                # Missing query field
+            }
+
+            response = await api_client.post("/knowledge/query", json=invalid_data)
+
+            assert response.status_code == 422  # Validation error
+        finally:
+            # Clean up the override
+            app.dependency_overrides.pop(get_rag_service, None)
 
     async def test_query_knowledge_base_nonexistent_repository(self, api_client: AsyncClient):
         """Test querying with nonexistent repository"""
