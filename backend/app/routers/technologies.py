@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.dependencies import get_current_user
 from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.models import Technology, TechnologyDomain, TechnologyStatus
@@ -18,7 +19,11 @@ from app.schemas import (
 )
 from app.services import TechnologyService
 
-router = APIRouter(prefix="/technologies", tags=["technologies"])
+router = APIRouter(
+    prefix="/technologies",
+    tags=["technologies"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def get_technology_service(db: AsyncSession = Depends(get_db)) -> TechnologyService:

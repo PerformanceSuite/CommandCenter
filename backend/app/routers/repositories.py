@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.dependencies import get_current_user
 from app.auth.project_context import get_current_project_id
 from app.database import get_db
 from app.models import Repository
@@ -19,7 +20,11 @@ from app.schemas import (
 )
 from app.services import RepositoryService
 
-router = APIRouter(prefix="/repositories", tags=["repositories"])
+router = APIRouter(
+    prefix="/repositories",
+    tags=["repositories"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def get_repository_service(db: AsyncSession = Depends(get_db)) -> RepositoryService:

@@ -1,19 +1,15 @@
 """Authentication and CSRF security tests."""
 import pytest
 
-# NOTE: These tests are expected to fail until authentication is enforced on all endpoints.
-# They document the security requirements that need to be implemented.
-
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Authentication not yet enforced on these endpoints")
 async def test_endpoints_require_authentication(client):
     """Protected endpoints reject requests without auth headers."""
     endpoints = [
         "/api/v1/technologies/",
         "/api/v1/repositories/",
         "/api/v1/research-tasks/",
-        "/api/v1/knowledge/",
+        "/api/v1/knowledge/statistics",  # knowledge has no list endpoint, use statistics
     ]
 
     for endpoint in endpoints:
@@ -25,7 +21,6 @@ async def test_endpoints_require_authentication(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Authentication not yet enforced on these endpoints")
 async def test_invalid_token_rejected(client):
     """Invalid JWT token is rejected."""
     headers = {"Authorization": "Bearer invalid-token-xyz"}
@@ -35,7 +30,6 @@ async def test_invalid_token_rejected(client):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Authentication not yet enforced on these endpoints")
 async def test_tampered_token_rejected(client, jwt_token_factory, user_a):
     """Tampered JWT token is rejected."""
     # Create valid token then tamper with it
@@ -49,7 +43,6 @@ async def test_tampered_token_rejected(client, jwt_token_factory, user_a):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Authentication not yet enforced on these endpoints")
 async def test_expired_token_rejected(client, jwt_token_factory, user_a):
     """Expired JWT token is rejected."""
     # Create token with past expiration

@@ -4,6 +4,27 @@ Prompt Improver - Analyzes and improves agent prompts.
 Provides:
 - quick_check: Fast local analysis (no API call)
 - analyze: Full AI-powered analysis with scores and improvement suggestions
+
+Evolution Path:
+--------------
+This module is the foundation for the Intent Engine described in the
+Unified Architecture (docs/concepts/UnifiedArchitecture.md). The Intent Engine
+applies Intent-Aware principles (docs/concepts/IntentAware.md):
+
+1. Current: Structural improvement (role, format, constraints)
+2. Next: Ambiguity detection → ask disambiguation questions
+3. Next: Intent extraction → explicit intent artifact (goals, constraints, risks)
+4. Next: Context enrichment → pull relevant Wander crystals, KnowledgeBeast
+5. Next: Consequence simulation → for high-stakes actions
+
+The key insight from Intent-Aware research:
+"Intent is not in the text the way context is" - it must be explicitly
+extracted and verified, not inferred from the prompt alone.
+
+See Also:
+- docs/concepts/IntentAware.md - Design principles
+- docs/concepts/UnifiedArchitecture.md - System integration
+- docs/concepts/Wander.md - Exploration for context enrichment
 """
 
 from __future__ import annotations
@@ -37,6 +58,38 @@ class PromptIssue:
 
 
 @dataclass
+class IntentArtifact:
+    """Explicit intent extracted from a prompt (Intent-Aware pattern).
+
+    This represents the "Explicit Intent Interface" from the Intent-Aware
+    framework - a separate artifact that documents goals, constraints,
+    failure modes, and trade-offs.
+
+    See: docs/concepts/IntentAware.md
+    """
+
+    goal: Optional[str] = None
+    constraints: list[str] = field(default_factory=list)
+    failure_modes: list[str] = field(default_factory=list)
+    trade_offs: list[str] = field(default_factory=list)
+    needs_clarification: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "goal": self.goal,
+            "constraints": self.constraints,
+            "failure_modes": self.failure_modes,
+            "trade_offs": self.trade_offs,
+            "needs_clarification": self.needs_clarification,
+        }
+
+    @property
+    def is_clear(self) -> bool:
+        """True if intent is clear enough to execute without clarification."""
+        return self.goal is not None and len(self.needs_clarification) == 0
+
+
+@dataclass
 class PromptAnalysis:
     """Complete analysis of a prompt."""
 
@@ -45,6 +98,7 @@ class PromptAnalysis:
     scores: dict[str, int] = field(default_factory=dict)
     improved: Optional[str] = None
     summary: str = ""
+    intent_artifact: Optional[IntentArtifact] = None
 
     def to_dict(self) -> dict:
         return {
@@ -52,7 +106,15 @@ class PromptAnalysis:
             "scores": self.scores,
             "improved": self.improved,
             "summary": self.summary,
+            "intent_artifact": self.intent_artifact.to_dict() if self.intent_artifact else None,
         }
+
+    @property
+    def needs_clarification(self) -> bool:
+        """True if intent is unclear and clarification is needed before execution."""
+        if self.intent_artifact:
+            return not self.intent_artifact.is_clear
+        return self.scores.get("intent_clarity", 0) < 70
 
 
 ANALYZE_PROMPT = """You are a Prompt Engineering Expert. Analyze this agent prompt for issues.
@@ -87,13 +149,20 @@ ANALYZE_PROMPT = """You are a Prompt Engineering Expert. Analyze this agent prom
 
 5. **Verbosity Check**: Can anything be more concise?
 
+6. **Intent Clarity**: (Intent-Aware Analysis)
+   - Can you identify the user's GOAL (what they want to achieve)?
+   - Are CONSTRAINTS explicit (what must NOT happen)?
+   - Are FAILURE MODES addressed (what would make this fail)?
+   - Are TRADE-OFFS stated (what to prioritize if conflicts arise)?
+   - Does the prompt allow the agent to ask clarifying questions?
+
 ## Output Format
 
 Return ONLY valid JSON (no markdown fences):
 {{
     "issues": [
         {{
-            "type": "conflict|ambiguity|missing_output|missing_constraints|verbosity|structure",
+            "type": "conflict|ambiguity|missing_output|missing_constraints|verbosity|structure|intent_unclear",
             "severity": "high|medium|low",
             "description": "What the issue is",
             "suggestion": "How to fix it"
@@ -103,7 +172,15 @@ Return ONLY valid JSON (no markdown fences):
         "clarity": 0-100,
         "structure": 0-100,
         "completeness": 0-100,
+        "intent_clarity": 0-100,
         "overall": 0-100
+    }},
+    "intent_artifact": {{
+        "goal": "Extracted goal or null if unclear",
+        "constraints": ["List of explicit constraints"],
+        "failure_modes": ["What would make this fail"],
+        "trade_offs": ["Stated priorities"],
+        "needs_clarification": ["Questions that should be asked before executing"]
     }},
     "summary": "Brief summary of main improvements needed",
     "improved_prompt": "Full improved version if overall score < 80, else null"

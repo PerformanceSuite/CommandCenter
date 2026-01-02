@@ -1,121 +1,82 @@
-# CommandCenter Roadmap
+# Roadmap
 
-**Last Updated**: 2026-01-02
+## Current Phase: Connect What Exists
 
----
+**Status**: 20% complete
 
-## North Star
-
-**[The Loop](./concepts/TheLoop.md)** is what CommandCenter IS.
-
-Everything we build serves one purpose: **closing the self-improving cycle**.
-
-```
-DISCOVER → VALIDATE → IMPROVE → DISCOVER...
-```
-
-Read [TheLoop.md](./concepts/TheLoop.md) first. It contains:
-- The philosophy (why we're building this)
-- The implementation phases (how we get there)
-- The current status (where we are)
-- The immediate priorities (what to do next)
-
----
-
-## Quick Reference
-
-### Current Phase: Connect What Exists
-
-```
-Phase 1: Connect What Exists     [▓▓░░░░░░░░] 20%
-Phase 2: Close the Loop          [░░░░░░░░░░] 0%
-Phase 3: Accelerate              [░░░░░░░░░░] 0%
-Phase 4: Economic Action         [░░░░░░░░░░] 0%
-Phase 5: Train the Substrate     [░░░░░░░░░░] 0%
-```
-
-### Active Tracks
-
-| Track | Component | Status | Next Step |
-|-------|-----------|--------|-----------|
-| **Discovery** | Wander | Design complete | Phase 0: Mind Map UI |
-| **Validation** | AI Arena | Functional | Store results in KB |
-| **Improvement** | Prompt Improver | Functional | Wire to Crystal signals |
-| **Query** | VISLZR | Sprint 3 | Agent parity |
-| **Knowledge** | KnowledgeBeast | Functional | Index skills, crystals |
+We're connecting existing components into a coherent system before building new features.
 
 ### This Week
-
-- [ ] Wander Phase 0: Mind map visualization
-- [ ] Wire KnowledgeBeast → Wander query functions
+- [ ] Wander Phase 0: Mind Map UI
+- [ ] Wire KnowledgeBeast → Wander queries
+- [ ] AI Arena results → KnowledgeBeast storage
 
 ### This Month
+- [ ] Wander Phases 1-2: Basic dwelling, resonance detection
+- [ ] VISLZR Sprint 3: Agent parity
+- [ ] Voice input prototype
 
-- [ ] Wander Phases 1-2: Foundation + Adjacency
-- [ ] AI Arena results → KnowledgeBeast storage
-- [ ] VISLZR Sprint 3 complete
+### This Quarter
+- [ ] Wander crystallization
+- [ ] MRKTZR CRM foundation
+- [ ] Veria Polymarket integration
 
----
+## Implementation Phases
 
-## Detailed Implementation
+### Phase 1: Connect What Exists (Current)
+- Wire existing modules together
+- Unified data flow through KnowledgeBeast
+- VISLZR as primary human interface
 
-For detailed phase breakdowns, see [The Loop - Implementation Phases](./concepts/TheLoop.md#implementation-phases).
+### Phase 2: Close the Loop (Q1-Q2 2026)
+- Wander → AI Arena → Prompt Improver flow
+- Automatic improvement from operation
+- Skills written back by agents
 
-For component-specific details:
+### Phase 3: Accelerate (Q2-Q3 2026)
+- Background operation (runs while you sleep)
+- Multi-agent coordination
+- Self-healing infrastructure
 
-| Component | Design Doc | Tech Spec |
-|-----------|------------|-----------|
-| Wander | [Wander.md](./concepts/Wander.md) | [Wander-TechSpec.md](./concepts/Wander-TechSpec.md) |
-| Intent Engine | [IntentAware.md](./concepts/IntentAware.md) | [UnifiedArchitecture.md](./concepts/UnifiedArchitecture.md) |
-| Economic Layer | [Veria.md](./concepts/Veria.md) | - |
-| Security | [FractalSecurity.md](./concepts/FractalSecurity.md) | - |
-| Intelligence | [RealTimeIntelligence.md](./concepts/RealTimeIntelligence.md) | - |
+### Phase 4: Economic Action (Q3-Q4 2026)
+- Veria trading live
+- MRKTZR campaigns autonomous
+- Revenue generation
 
-For implementation plans:
+### Phase 5: Train the Substrate (2026-2027)
+- Custom model training (nanochat-inspired)
+- The Loop trains the models it runs on
+- True self-improvement
 
-| Plan | Focus |
-|------|-------|
-| [Wander Mind Map](./plans/2026-01-02-wander-mindmap-implementation.md) | Phase 0 ReactFlow UI |
-| [Custom Model Training](./plans/2026-01-01-custom-model-training-roadmap.md) | Phase 5 nanochat integration |
+## Module Status
 
----
+| Module | Status | Priority |
+|--------|--------|----------|
+| KnowledgeBeast | ✅ Working | Maintenance |
+| AI Arena | ✅ Working | Maintenance |
+| Research Hub | ✅ Working | Maintenance |
+| Wander | 📋 Designed | **HIGH** |
+| VISLZR | 🔄 Partial | **HIGH** |
+| MRKTZR | 📋 Planned | Medium |
+| ROLLIZR | 📋 Planned | Medium |
+| Veria | 📋 Planned | Medium |
+| Fractlzr | 🧪 Experimental | Low |
 
-## Completed Work
+**Legend**: ✅ Working | 🔄 In Progress | 📋 Planned | 🧪 Experimental
 
-### Infrastructure (2025)
+## Technical Debt
 
-- ✅ Multi-project management (Projects, Tasks, Research Hub)
-- ✅ Graph service with NATS event streaming
-- ✅ KnowledgeBeast vector RAG system
-- ✅ Agent execution (E2B sandboxes)
-- ✅ Dual React frontends (main + hub)
-- ✅ Testing infrastructure (1,355+ tests)
-- ✅ Bootstrap agent framework (Prompt Improver, Personas, Executor)
+- [ ] Consolidate service/repository patterns
+- [ ] Complete test suite (currently 995 pass, 137 fail)
+- [ ] Graph Service completion
+- [ ] Federation service activation
 
-### Documentation (2026-01-02)
+## Recently Completed
 
-- ✅ The Loop (north star)
-- ✅ Intent-Aware Agents (design principles)
-- ✅ Wander system design (concept + tech spec + implementation plan)
-- ✅ RLM pattern (memory interaction architecture)
-- ✅ Real-Time Intelligence Engine
-- ✅ Unified Architecture
-- ✅ Concept Index
-
----
-
-## The Vision
-
-CommandCenter becomes a system that:
-
-1. **Discovers** patterns humans would miss
-2. **Validates** insights against reality (markets, tests, reviews)
-3. **Improves** its own capabilities from what it learns
-4. **Acts** on validated insights to generate value
-5. **Trains** better versions of itself
-
-This is not a tool that uses AI. This is AI that improves AI.
-
----
-
-*All roads lead to [The Loop](./concepts/TheLoop.md).*
+- ✅ TheLoop architecture defined
+- ✅ AI Arena multi-model debate working
+- ✅ Settings and provider configuration
+- ✅ LLM Gateway with cost tracking
+- ✅ Celery test fixes (22 tests)
+- ✅ Router test auth fixes
+- ✅ Documentation consolidation (this!)

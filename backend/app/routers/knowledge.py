@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.dependencies import get_current_user
 from app.config import settings
 from app.database import get_db
 from app.models.knowledge_entry import KnowledgeEntry
@@ -18,7 +19,11 @@ from app.services.cache_service import CacheService
 from app.services.docling_service import DoclingService
 from app.services.rag_service import RAGService
 
-router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+router = APIRouter(
+    prefix="/knowledge",
+    tags=["knowledge"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 # Dependency to get RAG service (KnowledgeBeast PostgresBackend)
