@@ -14,7 +14,6 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "doc1nt3ll001"
@@ -24,112 +23,92 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create new enum types
-    op.execute(
-        """
-        CREATE TYPE documenttype AS ENUM (
-            'plan', 'concept', 'guide', 'reference', 'report', 'session', 'archive'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE documentstatus AS ENUM (
-            'active', 'completed', 'superseded', 'abandoned', 'stale'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE concepttype AS ENUM (
-            'product', 'feature', 'module', 'process', 'technology', 'framework', 'methodology', 'other'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE conceptstatus AS ENUM (
-            'proposed', 'active', 'implemented', 'deprecated', 'unknown'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE requirementtype AS ENUM (
-            'functional', 'nonFunctional', 'constraint', 'dependency', 'outcome'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE requirementpriority AS ENUM (
-            'critical', 'high', 'medium', 'low', 'unknown'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE requirementstatus AS ENUM (
-            'proposed', 'accepted', 'implemented', 'verified', 'unknown'
-        )
-    """
-    )
-    op.execute(
-        """
-        CREATE TYPE confidencelevel AS ENUM (
-            'high', 'medium', 'low'
-        )
-    """
-    )
+    # Get dialect to handle PostgreSQL vs SQLite differences
+    bind = op.get_bind()
+    dialect = bind.dialect.name
 
-    # Add new values to linktype enum
-    op.execute(
+    if dialect == "postgresql":
+        # Create new enum types for PostgreSQL
+        op.execute(
+            """
+            CREATE TYPE documenttype AS ENUM (
+                'plan', 'concept', 'guide', 'reference', 'report', 'session', 'archive'
+            )
         """
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'integratesWith';
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'providesTo';
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'replaces';
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'similarTo';
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'supersedes';
-        ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'extractsFrom';
-    """
-    )
+        )
+        op.execute(
+            """
+            CREATE TYPE documentstatus AS ENUM (
+                'active', 'completed', 'superseded', 'abandoned', 'stale'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE concepttype AS ENUM (
+                'product', 'feature', 'module', 'process', 'technology', 'framework', 'methodology', 'other'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE conceptstatus AS ENUM (
+                'proposed', 'active', 'implemented', 'deprecated', 'unknown'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE requirementtype AS ENUM (
+                'functional', 'nonFunctional', 'constraint', 'dependency', 'outcome'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE requirementpriority AS ENUM (
+                'critical', 'high', 'medium', 'low', 'unknown'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE requirementstatus AS ENUM (
+                'proposed', 'accepted', 'implemented', 'verified', 'unknown'
+            )
+        """
+        )
+        op.execute(
+            """
+            CREATE TYPE confidencelevel AS ENUM (
+                'high', 'medium', 'low'
+            )
+        """
+        )
+
+        # Add new values to linktype enum
+        op.execute(
+            """
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'integratesWith';
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'providesTo';
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'replaces';
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'similarTo';
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'supersedes';
+            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'extractsFrom';
+        """
+        )
 
     # Create graph_documents table
+    # Use String for enum columns to support both SQLite and PostgreSQL
     op.create_table(
         "graph_documents",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("path", sa.String(length=1024), nullable=False),
         sa.Column("title", sa.String(length=512), nullable=True),
-        sa.Column(
-            "doc_type",
-            postgresql.ENUM(
-                "plan",
-                "concept",
-                "guide",
-                "reference",
-                "report",
-                "session",
-                "archive",
-                name="documenttype",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("doc_type", sa.String(length=50), nullable=False),
         sa.Column("subtype", sa.String(length=100), nullable=True),
-        sa.Column(
-            "status",
-            postgresql.ENUM(
-                "active",
-                "completed",
-                "superseded",
-                "abandoned",
-                "stale",
-                name="documentstatus",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("audience", sa.String(length=255), nullable=True),
         sa.Column("value_assessment", sa.String(length=20), nullable=True),
         sa.Column("word_count", sa.Integer(), nullable=False, server_default="0"),
@@ -157,43 +136,12 @@ def upgrade() -> None:
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("source_document_id", sa.Integer(), nullable=True),
         sa.Column("name", sa.String(length=255), nullable=False),
-        sa.Column(
-            "concept_type",
-            postgresql.ENUM(
-                "product",
-                "feature",
-                "module",
-                "process",
-                "technology",
-                "framework",
-                "methodology",
-                "other",
-                name="concepttype",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("concept_type", sa.String(length=50), nullable=False),
         sa.Column("definition", sa.Text(), nullable=True),
-        sa.Column(
-            "status",
-            postgresql.ENUM(
-                "proposed",
-                "active",
-                "implemented",
-                "deprecated",
-                "unknown",
-                name="conceptstatus",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("domain", sa.String(length=100), nullable=True),
         sa.Column("source_quote", sa.Text(), nullable=True),
-        sa.Column(
-            "confidence",
-            postgresql.ENUM("high", "medium", "low", name="confidencelevel", create_type=False),
-            nullable=False,
-        ),
+        sa.Column("confidence", sa.String(length=20), nullable=False),
         sa.Column("related_entities", sa.JSON(), nullable=True),
         sa.Column("metadata", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
@@ -220,45 +168,9 @@ def upgrade() -> None:
         sa.Column("source_document_id", sa.Integer(), nullable=True),
         sa.Column("req_id", sa.String(length=50), nullable=False),
         sa.Column("text", sa.Text(), nullable=False),
-        sa.Column(
-            "req_type",
-            postgresql.ENUM(
-                "functional",
-                "nonFunctional",
-                "constraint",
-                "dependency",
-                "outcome",
-                name="requirementtype",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "priority",
-            postgresql.ENUM(
-                "critical",
-                "high",
-                "medium",
-                "low",
-                "unknown",
-                name="requirementpriority",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "status",
-            postgresql.ENUM(
-                "proposed",
-                "accepted",
-                "implemented",
-                "verified",
-                "unknown",
-                name="requirementstatus",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
+        sa.Column("req_type", sa.String(length=50), nullable=False),
+        sa.Column("priority", sa.String(length=20), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("source_concept", sa.String(length=255), nullable=True),
         sa.Column("source_quote", sa.Text(), nullable=True),
         sa.Column("verification", sa.Text(), nullable=True),
@@ -287,15 +199,19 @@ def downgrade() -> None:
     op.drop_table("graph_concepts")
     op.drop_table("graph_documents")
 
-    # Drop enum types
-    op.execute("DROP TYPE IF EXISTS confidencelevel")
-    op.execute("DROP TYPE IF EXISTS requirementstatus")
-    op.execute("DROP TYPE IF EXISTS requirementpriority")
-    op.execute("DROP TYPE IF EXISTS requirementtype")
-    op.execute("DROP TYPE IF EXISTS conceptstatus")
-    op.execute("DROP TYPE IF EXISTS concepttype")
-    op.execute("DROP TYPE IF EXISTS documentstatus")
-    op.execute("DROP TYPE IF EXISTS documenttype")
+    # Drop enum types (PostgreSQL only)
+    bind = op.get_bind()
+    dialect = bind.dialect.name
+
+    if dialect == "postgresql":
+        op.execute("DROP TYPE IF EXISTS confidencelevel")
+        op.execute("DROP TYPE IF EXISTS requirementstatus")
+        op.execute("DROP TYPE IF EXISTS requirementpriority")
+        op.execute("DROP TYPE IF EXISTS requirementtype")
+        op.execute("DROP TYPE IF EXISTS conceptstatus")
+        op.execute("DROP TYPE IF EXISTS concepttype")
+        op.execute("DROP TYPE IF EXISTS documentstatus")
+        op.execute("DROP TYPE IF EXISTS documenttype")
 
     # Note: LinkType enum values cannot be easily removed in PostgreSQL
     # They will remain but won't affect functionality
