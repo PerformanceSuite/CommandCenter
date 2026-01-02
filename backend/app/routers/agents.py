@@ -136,9 +136,11 @@ async def create_persona(
         await db.commit()
         await db.refresh(persona)
         return persona
-    except IntegrityError as e:
+    except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=f"Persona with name '{persona_data.name}' already exists")
+        raise HTTPException(
+            status_code=400, detail=f"Persona with name '{persona_data.name}' already exists"
+        )
 
 
 @router.put("/personas/{name}", response_model=AgentPersonaResponse)
@@ -177,7 +179,7 @@ async def update_persona(
         await db.commit()
         await db.refresh(persona)
         return persona
-    except IntegrityError as e:
+    except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Failed to update persona")
 

@@ -1,12 +1,15 @@
 """Pydantic schemas for skills."""
+
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class SkillBase(BaseModel):
     """Base schema for skills."""
-    slug: str = Field(..., min_length=1, max_length=100, pattern=r'^[a-z0-9-]+$')
+
+    slug: str = Field(..., min_length=1, max_length=100, pattern=r"^[a-z0-9-]+$")
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     content: str
@@ -19,11 +22,13 @@ class SkillBase(BaseModel):
 
 class SkillCreate(SkillBase):
     """Schema for creating a skill."""
+
     project_id: Optional[int] = None
 
 
 class SkillUpdate(BaseModel):
     """Schema for updating a skill."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     content: Optional[str] = None
@@ -35,6 +40,7 @@ class SkillUpdate(BaseModel):
 
 class SkillResponse(SkillBase):
     """Schema for skill responses."""
+
     id: int
     project_id: Optional[int]
     usage_count: int
@@ -52,6 +58,7 @@ class SkillResponse(SkillBase):
 
 class SkillUsageCreate(BaseModel):
     """Schema for recording skill usage."""
+
     skill_id: int
     session_id: Optional[str] = None
     outcome: Optional[str] = None  # success, failure, neutral
@@ -60,6 +67,7 @@ class SkillUsageCreate(BaseModel):
 
 class SkillUsageResponse(BaseModel):
     """Schema for skill usage responses."""
+
     id: int
     skill_id: int
     project_id: Optional[int]
@@ -75,12 +83,14 @@ class SkillUsageResponse(BaseModel):
 
 class SkillImportRequest(BaseModel):
     """Schema for importing skills from filesystem."""
+
     path: str = Field(..., description="Path to skills directory (e.g., ~/.claude/skills)")
     overwrite: bool = Field(default=False, description="Overwrite existing skills with same slug")
 
 
 class SkillSearchRequest(BaseModel):
     """Schema for searching skills."""
+
     query: Optional[str] = None
     category: Optional[str] = None
     tags: Optional[List[str]] = None

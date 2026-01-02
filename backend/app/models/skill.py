@@ -1,8 +1,9 @@
 """Skill model for self-improving AI workflows."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, Boolean
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -19,11 +20,12 @@ class Skill(Base):
     - Global (project_id=None) - available across all projects
     - Project-specific - only available within a project
     """
+
     __tablename__ = "skills"
 
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    
+
     # Identification
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -31,10 +33,14 @@ class Skill(Base):
 
     # Content
     content: Mapped[str] = mapped_column(Text, nullable=False)  # The SKILL.md content
-    content_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)  # Optional: path to external file
+    content_path: Mapped[Optional[str]] = mapped_column(
+        String(500), nullable=True
+    )  # Optional: path to external file
 
     # Taxonomy
-    category: Mapped[str] = mapped_column(String(50), default="workflow")  # workflow, pattern, tool, methodology
+    category: Mapped[str] = mapped_column(
+        String(50), default="workflow"
+    )  # workflow, pattern, tool, methodology
     tags: Mapped[list] = mapped_column(JSON, default=list)  # ["multi-agent", "parallel", "e2b"]
 
     # Versioning
@@ -43,7 +49,9 @@ class Skill(Base):
     # Metadata
     author: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Effectiveness tracking
     usage_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -52,7 +60,9 @@ class Skill(Base):
     effectiveness_score: Mapped[float] = mapped_column(Float, default=0.0)
 
     # Multi-tenant
-    project_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    project_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("projects.id"), nullable=True
+    )
     is_public: Mapped[bool] = mapped_column(Boolean, default=True)  # Visible to other projects?
 
     # AI Arena validation
@@ -61,7 +71,9 @@ class Skill(Base):
 
     # Relationships
     project: Mapped[Optional["Project"]] = relationship("Project", back_populates="skills")
-    usages: Mapped[list["SkillUsage"]] = relationship("SkillUsage", back_populates="skill", cascade="all, delete-orphan")
+    usages: Mapped[list["SkillUsage"]] = relationship(
+        "SkillUsage", back_populates="skill", cascade="all, delete-orphan"
+    )
 
     def record_usage(self, success: Optional[bool] = None):
         """Record a usage of this skill."""
@@ -90,6 +102,7 @@ class Skill(Base):
 
 class SkillUsage(Base):
     """Track individual uses of skills for effectiveness measurement."""
+
     __tablename__ = "skill_usages"
 
     # Primary key
@@ -97,13 +110,19 @@ class SkillUsage(Base):
     skill_id: Mapped[int] = mapped_column(Integer, ForeignKey("skills.id"), nullable=False)
 
     # Context
-    project_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("projects.id"), nullable=True)
+    project_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("projects.id"), nullable=True
+    )
     user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    session_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # External session identifier
+    session_id: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )  # External session identifier
 
     # Outcome
     used_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    outcome: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # success, failure, neutral, pending
+    outcome: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # success, failure, neutral, pending
     outcome_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships

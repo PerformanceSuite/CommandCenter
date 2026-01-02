@@ -948,9 +948,9 @@ class GraphService:
                 "projects_involved": list(project_ids_involved),
                 "scope_type": request.scope.type,
                 "filters_applied": {
-                    "link_types": [lt.value for lt in request.link_types]
-                    if request.link_types
-                    else None,
+                    "link_types": (
+                        [lt.value for lt in request.link_types] if request.link_types else None
+                    ),
                     "entity_types": request.entity_types,
                 },
             },

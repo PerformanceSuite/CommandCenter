@@ -45,7 +45,7 @@ class AlertManagerWebhook(BaseModel):
 async def receive_alert(payload: AlertManagerWebhook, background_tasks: BackgroundTasks):
     """
     Receive alerts from AlertManager webhook.
-    
+
     This endpoint logs alerts and could be extended to:
     - Store in database
     - Send to Slack/Discord
@@ -60,13 +60,12 @@ async def receive_alert(payload: AlertManagerWebhook, background_tasks: Backgrou
             )
         else:
             logger.info(
-                f"✅ ALERT RESOLVED: {alert.labels.alertname} "
-                f"(service: {alert.labels.service})"
+                f"✅ ALERT RESOLVED: {alert.labels.alertname} " f"(service: {alert.labels.service})"
             )
-    
+
     # Could add background task for async processing
     # background_tasks.add_task(store_alerts, payload)
-    
+
     return {"status": "received", "alert_count": len(payload.alerts)}
 
 
@@ -76,5 +75,5 @@ async def alerts_health():
     return {
         "status": "healthy",
         "alertmanager_url": "http://alertmanager:9093",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }

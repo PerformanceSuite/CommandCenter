@@ -126,7 +126,7 @@ async def set_default_project(
 
     # Unset all other defaults for this user
     result = await db.execute(
-        select(UserProject).where(UserProject.user_id == user_id, UserProject.is_default == True)
+        select(UserProject).where(UserProject.user_id == user_id, UserProject.is_default.is_(True))
     )
     for up in result.scalars().all():
         up.is_default = False
@@ -140,9 +140,7 @@ async def set_default_project(
     return user_project
 
 
-async def remove_user_from_project(
-    db: AsyncSession, user_id: int, project_id: int
-) -> bool:
+async def remove_user_from_project(db: AsyncSession, user_id: int, project_id: int) -> bool:
     """
     Remove a user's access to a project.
 

@@ -129,7 +129,9 @@ async def list_hypotheses(
 
 
 @router.post("/", response_model=HypothesisDetailResponse, status_code=status.HTTP_201_CREATED)
-async def create_hypothesis(request: HypothesisCreateRequest | CreateHypothesisRequest) -> HypothesisDetailResponse:
+async def create_hypothesis(
+    request: HypothesisCreateRequest | CreateHypothesisRequest,
+) -> HypothesisDetailResponse:
     """Create a new hypothesis with either full or quick input."""
     # Check if it's a simple CreateHypothesisRequest (quick input)
     if isinstance(request, CreateHypothesisRequest):
@@ -138,7 +140,7 @@ async def create_hypothesis(request: HypothesisCreateRequest | CreateHypothesisR
             category_enum = HypothesisCategory(request.category)
         except ValueError:
             category_enum = HypothesisCategory.CUSTOMER  # Default fallback
-        
+
         # Use sensible defaults for quick input
         create_data = HypothesisCreate(
             statement=request.statement,
@@ -164,7 +166,7 @@ async def create_hypothesis(request: HypothesisCreateRequest | CreateHypothesisR
             tags=request.tags,
             metadata=request.metadata,
         )
-    
+
     hypothesis = await hypothesis_service.create_hypothesis(create_data)
     return _to_detail_response(hypothesis)
 
