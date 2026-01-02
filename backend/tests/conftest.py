@@ -98,20 +98,52 @@ async def client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]
     yield async_client
 
 
-# API client with /api/v1 prefix for integration tests
+# API client with /api/v1 prefix for integration tests (authenticated)
 @pytest.fixture(scope="function")
 async def api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Async client with /api/v1 prefix for testing API endpoints"""
+    """Authenticated async client with /api/v1 prefix for testing API endpoints"""
     from httpx import ASGITransport
+
+    from app.auth import get_password_hash
+    from app.auth.jwt import create_token_pair
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.user_project import UserProject
 
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
+    # Create test user and project for authentication
+    user = User(
+        email="apitest@example.com",
+        hashed_password=get_password_hash("testpassword"),
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    project = Project(
+        name="API Test Project", owner="testowner", description="Project for API testing"
+    )
+    db_session.add(project)
+    await db_session.commit()
+    await db_session.refresh(project)
+
+    user_project = UserProject(
+        user_id=user.id, project_id=project.id, is_default=True, role="member"
+    )
+    db_session.add(user_project)
+    await db_session.commit()
+
+    tokens = create_token_pair(user.id, user.email)
+
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test/api/v1"
     ) as client:
+        client.headers["Authorization"] = f"Bearer {tokens['access_token']}"
         yield client
 
     app.dependency_overrides.clear()

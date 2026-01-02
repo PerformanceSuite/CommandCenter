@@ -1,5 +1,5 @@
 """Tests for skill_retriever module."""
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from libs.agent_framework.skill_retriever import (
@@ -48,7 +48,8 @@ class TestSkillRetriever:
     async def test_find_relevant_success(self):
         retriever = SkillRetriever(api_base="http://test:8000/api/v1")
 
-        mock_response = AsyncMock()
+        # Use MagicMock for the response since httpx.Response methods like .json() are sync
+        mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = [
             {

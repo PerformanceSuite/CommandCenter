@@ -2,6 +2,8 @@
 Tests for authentication endpoints and JWT functionality
 """
 
+import asyncio
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -241,6 +243,10 @@ class TestAuthEndpoints:
         # Get initial tokens
         tokens = create_token_pair(user.id, user.email)
 
+        # Wait to ensure different timestamp for new tokens
+        # (JWT exp is second-precision, so tokens created in same second are identical)
+        await asyncio.sleep(1.1)
+
         # Refresh token
         refresh_data = {"refresh_token": tokens["refresh_token"]}
 
@@ -284,11 +290,19 @@ class TestTokenEncryption:
 
     async def test_token_encryption_decryption(self, db_session: AsyncSession):
         """Test that repository tokens are encrypted and decrypted correctly"""
+        from app.models.project import Project
         from app.models.repository import Repository
+
+        # Create a project first (repository requires project_id)
+        project = Project(name="Test Project", owner="testowner")
+        db_session.add(project)
+        await db_session.commit()
+        await db_session.refresh(project)
 
         # Create repository with access token
         plain_token = "ghp_test_token_123456789"
         repo = Repository(
+            project_id=project.id,
             owner="testowner",
             name="testrepo",
             full_name="testowner/testrepo",
@@ -308,11 +322,22 @@ class TestTokenEncryption:
 
     async def test_null_token_handling(self, db_session: AsyncSession):
         """Test that null tokens are handled correctly"""
+        from app.models.project import Project
         from app.models.repository import Repository
+
+        # Create a project first (repository requires project_id)
+        project = Project(name="Test Project", owner="testowner")
+        db_session.add(project)
+        await db_session.commit()
+        await db_session.refresh(project)
 
         # Create repository without access token
         repo = Repository(
-            owner="testowner", name="testrepo", full_name="testowner/testrepo", access_token=None
+            project_id=project.id,
+            owner="testowner",
+            name="testrepo",
+            full_name="testowner/testrepo2",  # Different full_name to avoid unique constraint
+            access_token=None,
         )
 
         db_session.add(repo)
