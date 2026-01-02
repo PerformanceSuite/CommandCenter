@@ -1,0 +1,199 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-skill-extractor",
+  "documents_processed": 4,
+  "batch": 4,
+
+  "skills": [
+    {
+      "name": "graph-service-architecture",
+      "type": "architecture",
+      "definition": "5-layer service stack: Models (SQLAlchemy) → GraphService (business logic) → REST API → Code Indexer CLI → NATS Integration → Audit System. Multi-tenant via project_id filtering.",
+      "status": "active",
+      "domain": "infrastructure",
+      "layers": [
+        "Layer 1: GraphService (query/mutation methods)",
+        "Layer 2: REST API endpoints (/api/v1/graph/*)",
+        "Layer 3: Code Indexer CLI (Python AST + tree-sitter)",
+        "Layer 4: NATS Integration (graph.ingest.*, audit.*)",
+        "Layer 5: Audit System (trigger → agent → result)"
+      ],
+      "entity_types": ["GraphRepo", "GraphFile", "GraphSymbol", "GraphDependency", "GraphService", "GraphTask", "GraphAudit", "GraphLink"],
+      "source": "docs/plans/2025-11-06-phase-7-graph-service-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "code-indexer-pipeline",
+      "type": "pattern",
+      "definition": "6-phase indexing: Scan (walk tree) → Hash (SHA-256 comparison) → Parse (AST/tree-sitter) → Extract (symbols, dependencies) → Upsert (batch 100 files) → Emit (NATS event).",
+      "status": "active",
+      "domain": "infrastructure",
+      "phases": [
+        "Scan: Walk directory, filter by extensions",
+        "Hash: Compare SHA-256 for incremental indexing",
+        "Parse: Python ast module, TypeScript tree-sitter",
+        "Extract: Symbols (class, function), dependencies, TODO/FIXME",
+        "Upsert: Batch INSERT ON CONFLICT UPDATE",
+        "Emit: Publish graph.ingest.completed to NATS"
+      ],
+      "performance_targets": {
+        "throughput": "~1000 files/minute",
+        "batch_size": "100 files per transaction",
+        "query_speed": "5000+ nodes in <1.5s"
+      },
+      "source": "docs/plans/2025-11-06-phase-7-graph-service-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "dagger-agent-orchestration",
+      "type": "architecture",
+      "definition": "Dagger SDK for sandboxed agent execution. Agents run in isolated containers with resource limits, reproducible environments, and type-safe orchestration.",
+      "status": "active",
+      "domain": "agents",
+      "benefits": ["Reproducible (same container = same results)", "Sandboxed (isolated from host)", "Parallel (Dagger handles DAG)", "Cached (layer caching)", "Type-safe (TypeScript SDK)"],
+      "resource_limits": {
+        "memory_default": "512MB",
+        "timeout_default": "5 minutes (max 30)",
+        "network": "Isolated by default",
+        "filesystem": "Read-only except /tmp"
+      },
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "workflow-dag-execution",
+      "type": "pattern",
+      "definition": "Topological sort for execution order. Nodes with no mutual dependencies run in parallel. Approval gates pause workflow until human decision.",
+      "status": "active",
+      "domain": "agents",
+      "workflow_status": ["PENDING", "RUNNING", "SUCCESS", "FAILED", "WAITING_APPROVAL"],
+      "node_features": ["dependsOn (DAG edges)", "approvalRequired (human gate)", "inputsJson (template with {{ context.* }})"],
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "risk-based-approval",
+      "type": "pattern",
+      "definition": "AUTO (no approval) for read-only ops, notifications, reporting. APPROVAL_REQUIRED for code mods, deployments, resource changes, external API writes.",
+      "status": "active",
+      "domain": "agents",
+      "auto_categories": ["Scanning", "Monitoring", "Notifications", "Reporting", "Tagging"],
+      "approval_categories": ["Code modifications", "Deployments", "Resource changes", "External API writes"],
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "federation-heartbeat-protocol",
+      "type": "pattern",
+      "definition": "Projects publish heartbeat to hub.presence.{slug} every 30s. Federation service subscribes, updates catalog. Stale after 90s → offline.",
+      "status": "active",
+      "domain": "infrastructure",
+      "heartbeat_payload": ["project_slug", "hub_url", "mesh_namespace", "timestamp", "version"],
+      "status_transitions": ["offline → online (heartbeat received)", "online → offline (no heartbeat 90s)"],
+      "source": "docs/plans/2025-11-18-phase-9-federation-service-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "opentelemetry-observability",
+      "type": "architecture",
+      "definition": "3 layers: Auto-instrumentation (HTTP, DB, Axios) → Custom spans (workflow/agent) → Custom metrics. OTEL Collector → Tempo + Prometheus + Loki → Grafana.",
+      "status": "active",
+      "domain": "infrastructure",
+      "instrumentation_layers": [
+        "Layer 1: Auto (Express, Prisma, HTTP, Axios)",
+        "Layer 2: Custom spans (workflow.execute, agent.execute)",
+        "Layer 3: Custom metrics (workflow.runs.total, agent.duration)"
+      ],
+      "dashboards": ["Workflow Overview", "Agent Performance", "System Health", "Cost Tracking"],
+      "alert_types": ["WorkflowFailureRate", "ServiceDown", "DatabaseConnectionLoss", "HighErrorRate"],
+      "source": "docs/plans/2025-11-19-phase-10-phase-5-observability-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "structured-agent-outputs",
+      "type": "pattern",
+      "definition": "Vercel-style pattern: All agents return Zod-validated JSON. InputSchema defines expectations, OutputSchema enforces structure. Enables reliable downstream processing.",
+      "status": "active",
+      "domain": "agents",
+      "schema_components": ["InputSchema (Zod)", "OutputSchema (Zod)", "Agent manifest (name, type, riskLevel, capabilities)"],
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "GraphService",
+      "type": "module",
+      "definition": "Business logic layer for graph queries (get_project_graph, get_dependencies, get_ghost_nodes, search_graph) and mutations (create_task, trigger_audit, link_entities).",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-11-06-phase-7-graph-service-implementation.md"
+    },
+    {
+      "name": "Ghost Node",
+      "type": "concept",
+      "definition": "SpecItem or Task without backing File/Symbol implementation. Represents planned work extracted from TODO/FIXME comments or manual spec creation.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-11-06-phase-7-graph-service-implementation.md"
+    },
+    {
+      "name": "WorkflowNode",
+      "type": "schema",
+      "definition": "Single step in workflow DAG: agentId, action, inputsJson (template), dependsOn (node IDs), approvalRequired.",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md"
+    },
+    {
+      "name": "WorkflowApproval",
+      "type": "schema",
+      "definition": "Human-in-the-loop gate: workflowRunId, nodeId, status (PENDING/APPROVED/REJECTED), requestedAt, respondedAt, respondedBy, notes.",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/plans/2025-11-18-phase-10-agent-orchestration-design.md"
+    },
+    {
+      "name": "Federation Service",
+      "type": "module",
+      "definition": "Separate service (port 8001) with own database (commandcenter_fed). Provides project catalog, heartbeat monitoring, cross-project queries.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-11-18-phase-9-federation-service-design.md"
+    },
+    {
+      "name": "CatalogService",
+      "type": "module",
+      "definition": "Core business logic for project catalog: register_project, update_heartbeat, get_projects, mark_stale_projects.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-11-18-phase-9-federation-service-design.md"
+    },
+    {
+      "name": "OTEL Collector",
+      "type": "technology",
+      "definition": "OpenTelemetry Collector receives OTLP data, processes/enriches spans, exports to Tempo (traces), Prometheus (metrics), Loki (logs).",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-11-19-phase-10-phase-5-observability-design.md"
+    }
+  ],
+
+  "relationships": [
+    {"source": "GraphService", "target": "Graph-Service", "type": "implements", "description": "GraphService is the business logic layer of Graph-Service"},
+    {"source": "code-indexer-pipeline", "target": "GraphService", "type": "populates", "description": "Indexer populates graph entities via GraphService"},
+    {"source": "dagger-agent-orchestration", "target": "unified-agent-framework", "type": "enables", "description": "Dagger provides sandboxed execution for agent framework"},
+    {"source": "workflow-dag-execution", "target": "dagger-agent-orchestration", "type": "uses", "description": "DAG runner uses Dagger for agent execution"},
+    {"source": "risk-based-approval", "target": "workflow-dag-execution", "type": "gates", "description": "Approval gates pause DAG execution"},
+    {"source": "Federation Service", "target": "CommandCenter", "type": "monitors", "description": "Federation tracks multiple CommandCenter instances"},
+    {"source": "opentelemetry-observability", "target": "dagger-agent-orchestration", "type": "instruments", "description": "OTEL provides visibility into agent execution"}
+  ],
+
+  "summary": {
+    "new_skills": 8,
+    "new_concepts": 7,
+    "new_relationships": 7,
+    "domains": ["infrastructure", "agents"]
+  }
+}
