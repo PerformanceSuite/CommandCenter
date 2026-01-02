@@ -4,6 +4,14 @@ import type { Technology, TechnologyCreate, TechnologyUpdate } from '../types/te
 import type { ResearchEntry } from '../types/research';
 import type { KnowledgeQueryResponse } from '../types/knowledge';
 import type { DashboardStats, DashboardActivity } from '../types/dashboard';
+import type {
+  ApprovalResponse,
+  ApproveConceptsRequest,
+  ApproveRequirementsRequest,
+  RejectionResponse,
+  ReviewQueueConceptsResponse,
+  ReviewQueueRequirementsResponse,
+} from '../types/review';
 
 // Use relative URL so it works with any port configuration
 // Nginx will proxy /api requests to the backend container
@@ -198,6 +206,45 @@ class ApiClient {
   async getDashboardActivity(limit: number = 10): Promise<DashboardActivity> {
     const response = await this.client.get<DashboardActivity>('/api/v1/dashboard/recent-activity', {
       params: { limit },
+    });
+    return response.data;
+  }
+
+  // Review Queue
+  async getConceptsForReview(params?: { limit?: number; statuses?: string }): Promise<ReviewQueueConceptsResponse> {
+    const response = await this.client.get<ReviewQueueConceptsResponse>('/api/v1/graph/review-queue/concepts', {
+      params,
+    });
+    return response.data;
+  }
+
+  async getRequirementsForReview(params?: { limit?: number; statuses?: string }): Promise<ReviewQueueRequirementsResponse> {
+    const response = await this.client.get<ReviewQueueRequirementsResponse>('/api/v1/graph/review-queue/requirements', {
+      params,
+    });
+    return response.data;
+  }
+
+  async approveConcepts(request: ApproveConceptsRequest): Promise<ApprovalResponse> {
+    const response = await this.client.post<ApprovalResponse>('/api/v1/graph/concepts/approve', request);
+    return response.data;
+  }
+
+  async approveRequirements(request: ApproveRequirementsRequest): Promise<ApprovalResponse> {
+    const response = await this.client.post<ApprovalResponse>('/api/v1/graph/requirements/approve', request);
+    return response.data;
+  }
+
+  async rejectConcepts(ids: number[]): Promise<RejectionResponse> {
+    const response = await this.client.delete<RejectionResponse>('/api/v1/graph/concepts/reject', {
+      data: { ids },
+    });
+    return response.data;
+  }
+
+  async rejectRequirements(ids: number[]): Promise<RejectionResponse> {
+    const response = await this.client.delete<RejectionResponse>('/api/v1/graph/requirements/reject', {
+      data: { ids },
     });
     return response.data;
   }
