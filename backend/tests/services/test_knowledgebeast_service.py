@@ -5,8 +5,7 @@ Tests the KnowledgeBeast service wrapper for CommandCenter integration.
 Mocks KnowledgeBeast components to test service logic in isolation.
 """
 
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -101,6 +100,7 @@ def mock_query_engine():
     """Mock HybridQueryEngine"""
     with patch("app.services.knowledgebeast_service.HybridQueryEngine") as mock:
         engine = Mock()
+        # search_keyword returns just a list (no degraded flag)
         engine.search_keyword = Mock(
             return_value=[
                 (
@@ -125,29 +125,61 @@ def mock_query_engine():
                 ),
             ]
         )
+        # search_vector returns tuple (results, degraded_flag)
+        engine.search_vector = Mock(
+            return_value=(
+                [
+                    (
+                        "doc1",
+                        {
+                            "content": "Machine learning is AI",
+                            "category": "ai",
+                            "source": "ml.txt",
+                            "title": "ML Intro",
+                        },
+                        0.2,
+                    ),
+                    (
+                        "doc2",
+                        {
+                            "content": "Deep learning is ML",
+                            "category": "ai",
+                            "source": "dl.txt",
+                            "title": "DL Basics",
+                        },
+                        0.3,
+                    ),
+                ],
+                False,  # degraded flag
+            )
+        )
+        # search_hybrid returns tuple (results, degraded_flag)
         engine.search_hybrid = Mock(
-            return_value=[
-                (
-                    "doc1",
-                    {
-                        "content": "Machine learning",
-                        "category": "ai",
-                        "source": "ml.txt",
-                        "title": "ML",
-                    },
-                    0.9,
-                ),
-                (
-                    "doc2",
-                    {
-                        "content": "Deep learning",
-                        "category": "ai",
-                        "source": "dl.txt",
-                        "title": "DL",
-                    },
-                    0.7,
-                ),
-            ]
+            return_value=(
+                [
+                    (
+                        "doc1",
+                        {
+                            "content": "Machine learning",
+                            "category": "ai",
+                            "source": "ml.txt",
+                            "title": "ML",
+                        },
+                        0.9,
+                    ),
+                    (
+                        "doc2",
+                        {
+                            "content": "Deep learning",
+                            "category": "ai",
+                            "source": "dl.txt",
+                            "title": "DL",
+                        },
+                        0.7,
+                    ),
+                ],
+                False,  # degraded flag
+            )
         )
         mock.return_value = engine
         yield engine
@@ -234,11 +266,12 @@ class TestQuery:
     @pytest.mark.asyncio
     async def test_query_with_category_filter(self, kb_service, mock_vector_store):
         """Test query with category filter"""
-        results = await kb_service.query(question="What is AI?", category="ai", mode="vector", k=5)
+        _results = await kb_service.query(question="What is AI?", category="ai", mode="vector", k=5)
 
         # Verify category filter was passed to vector store
         call_args = mock_vector_store.query.call_args
         assert call_args[1]["where"] == {"category": "ai"}
+        assert _results is not None  # Results should be returned
 
 
 class TestAddDocument:

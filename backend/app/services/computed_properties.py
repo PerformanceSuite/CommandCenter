@@ -349,14 +349,14 @@ class ComputedPropertiesService:
 
     async def _count_completed_tasks(self, project_id: int) -> int:
         """Count completed tasks in a project."""
-        from app.models.graph import TaskStatus
+        from app.models.graph import SpecItemStatus
 
         stmt = (
             select(func.count())
             .select_from(GraphTask)
             .filter(
                 GraphTask.project_id == project_id,
-                GraphTask.status == TaskStatus.DONE,
+                GraphTask.status == SpecItemStatus.DONE,
             )
         )
         result = await self.db.execute(stmt)
@@ -374,14 +374,14 @@ class ComputedPropertiesService:
 
     async def _count_healthy_services(self, project_id: int) -> int:
         """Count healthy services in a project."""
-        from app.models.graph import ServiceStatus
+        from app.models.graph import HealthStatus
 
         stmt = (
             select(func.count())
             .select_from(GraphService)
             .filter(
                 GraphService.project_id == project_id,
-                GraphService.status == ServiceStatus.HEALTHY,
+                GraphService.status == HealthStatus.UP,
             )
         )
         result = await self.db.execute(stmt)
