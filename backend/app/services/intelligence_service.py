@@ -65,10 +65,10 @@ class IntelligenceService:
     def __init__(self, db: AsyncSession):
         """Initialize with database session"""
         self.db = db
-        self.hypothesis_repo = HypothesisRepository()
-        self.evidence_repo = EvidenceRepository()
-        self.debate_repo = DebateRepository()
-        self.finding_repo = ResearchFindingRepository()
+        self.hypothesis_repo = HypothesisRepository(db)
+        self.evidence_repo = EvidenceRepository(db)
+        self.debate_repo = DebateRepository(db)
+        self.finding_repo = ResearchFindingRepository(db)
 
     async def suggest_evidence(
         self, hypothesis_id: int, limit: int = 10
@@ -176,8 +176,8 @@ class IntelligenceService:
         # Get parent task
         from app.repositories import ResearchTaskRepository
 
-        task_repo = ResearchTaskRepository(self.db)
-        task = await task_repo.get_by_id(hypothesis.research_task_id)
+        task_repo = ResearchTaskRepository()
+        task = await task_repo.get(self.db, hypothesis.research_task_id)
         if not task:
             return None
 
@@ -306,8 +306,8 @@ class IntelligenceService:
         # Get project_id from first finding's task
         from app.repositories import ResearchTaskRepository
 
-        task_repo = ResearchTaskRepository(self.db)
-        task = await task_repo.get_by_id(task_id)
+        task_repo = ResearchTaskRepository()
+        task = await task_repo.get(self.db, task_id)
         if not task:
             return 0
 
@@ -427,22 +427,23 @@ class IntelligenceService:
         # Create research task
         from app.repositories import ResearchTaskRepository
 
-        task_repo = ResearchTaskRepository(self.db)
+        task_repo = ResearchTaskRepository()
         task = await task_repo.create(
-            project_id=hypothesis.project_id,
-            title=suggestion.title,
-            description=suggestion.description,
-            status=TaskStatus.PENDING,
-            task_type="research",
-            metadata_={
-                "source": "gap_analysis",
-                "debate_id": debate_id,
-                "hypothesis_id": hypothesis.id,
+            self.db,
+            obj_in={
+                "project_id": hypothesis.project_id,
+                "title": suggestion.title,
+                "description": suggestion.description,
+                "status": TaskStatus.PENDING,
+                "task_type": "research",
+                "metadata_": {
+                    "source": "gap_analysis",
+                    "debate_id": debate_id,
+                    "hypothesis_id": hypothesis.id,
+                },
             },
         )
 
-        await self.db.commit()
-        await self.db.refresh(task)
         return task
 
     async def get_intelligence_summary(self, project_id: int) -> dict[str, Any]:

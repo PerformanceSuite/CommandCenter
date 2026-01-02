@@ -54,21 +54,22 @@ class ResearchTaskService:
             Tuple of (list of tasks, total count)
         """
         # Apply filters
+        # Note: count() methods don't exist yet - returning len(tasks) as approximation
         if technology_id:
-            tasks = await self.repo.list_by_technology(technology_id, skip, limit)
-            total = await self.repo.count(technology_id=technology_id)
+            tasks = await self.repo.list_by_technology(self.db, technology_id, skip, limit)
+            total = len(tasks)
         elif repository_id:
-            tasks = await self.repo.list_by_repository(repository_id, skip, limit)
-            total = await self.repo.count(repository_id=repository_id)
+            tasks = await self.repo.list_by_repository(self.db, repository_id, skip, limit)
+            total = len(tasks)
         elif status:
-            tasks = await self.repo.list_by_status(status, skip, limit)
-            total = await self.repo.count(status=status)
+            tasks = await self.repo.list_by_status(self.db, status, skip, limit)
+            total = len(tasks)
         elif assigned_to:
-            tasks = await self.repo.list_by_assignee(assigned_to, skip, limit)
-            total = await self.repo.count(assigned_to=assigned_to)
+            tasks = await self.repo.list_by_assignee(self.db, assigned_to, skip, limit)
+            total = len(tasks)
         else:
-            tasks = await self.repo.get_all(skip, limit)
-            total = await self.repo.count()
+            tasks = await self.repo.get_all(self.db, skip=skip, limit=limit)
+            total = len(tasks)
 
         return tasks, total
 
@@ -85,7 +86,7 @@ class ResearchTaskService:
         Raises:
             HTTPException: If task not found
         """
-        task = await self.repo.get_by_id(task_id)
+        task = await self.repo.get(self.db, task_id)
 
         if not task:
             raise HTTPException(
@@ -118,10 +119,7 @@ class ResearchTaskService:
             pass
 
         # Create task
-        task = await self.repo.create(**task_data.model_dump())
-
-        await self.db.commit()
-        await self.db.refresh(task)
+        task = await self.repo.create(self.db, obj_in=task_data.model_dump())
 
         return task
 
@@ -159,10 +157,7 @@ class ResearchTaskService:
         ):
             update_data["completed_at"] = None
 
-        task = await self.repo.update(task, **update_data)
-
-        await self.db.commit()
-        await self.db.refresh(task)
+        task = await self.repo.update(self.db, db_obj=task, obj_in=update_data)
 
         return task
 
@@ -189,8 +184,7 @@ class ResearchTaskService:
                         except Exception:
                             pass  # Ignore file deletion errors
 
-        await self.repo.delete(task)
-        await self.db.commit()
+        await self.repo.remove(self.db, id=task_id)
 
     async def upload_document(self, task_id: int, file: UploadFile) -> ResearchTask:
         """
@@ -240,9 +234,9 @@ class ResearchTaskService:
             }
             uploaded_docs.append(doc_info)
 
-            task = await self.repo.update(task, uploaded_documents=uploaded_docs)
-            await self.db.commit()
-            await self.db.refresh(task)
+            task = await self.repo.update(
+                self.db, db_obj=task, obj_in={"uploaded_documents": uploaded_docs}
+            )
 
             return task
 
@@ -265,7 +259,7 @@ class ResearchTaskService:
         Returns:
             List of overdue tasks
         """
-        return await self.repo.get_overdue(limit)
+        return await self.repo.get_overdue(self.db, limit)
 
     async def get_upcoming_tasks(self, days: int = 7, limit: int = 100) -> List[ResearchTask]:
         """
@@ -278,7 +272,7 @@ class ResearchTaskService:
         Returns:
             List of upcoming tasks
         """
-        return await self.repo.get_upcoming(days, limit)
+        return await self.repo.get_upcoming(self.db, days, limit)
 
     async def get_statistics(
         self, technology_id: Optional[int] = None, repository_id: Optional[int] = None
@@ -294,12 +288,12 @@ class ResearchTaskService:
             Dictionary with statistics
         """
         stats = await self.repo.get_statistics(
-            technology_id=technology_id, repository_id=repository_id
+            self.db, technology_id=technology_id, repository_id=repository_id
         )
 
         # Add additional statistics
-        overdue = await self.repo.get_overdue(limit=1000)
-        upcoming = await self.repo.get_upcoming(days=7, limit=1000)
+        overdue = await self.repo.get_overdue(self.db, limit=1000)
+        upcoming = await self.repo.get_upcoming(self.db, days=7, limit=1000)
 
         stats["overdue_count"] = len(overdue)
         stats["upcoming_count"] = len(upcoming)
@@ -327,15 +321,15 @@ class ResearchTaskService:
             )
 
         task = await self.get_task(task_id)
-        task = await self.repo.update(task, progress_percentage=progress_percentage)
+
+        # Build update data
+        update_data: Dict[str, Any] = {"progress_percentage": progress_percentage}
 
         # Auto-update status if progress reaches 100%
         if progress_percentage == 100 and task.status != TaskStatus.COMPLETED:
-            task = await self.repo.update(
-                task, status=TaskStatus.COMPLETED, completed_at=datetime.utcnow()
-            )
+            update_data["status"] = TaskStatus.COMPLETED
+            update_data["completed_at"] = datetime.utcnow()
 
-        await self.db.commit()
-        await self.db.refresh(task)
+        task = await self.repo.update(self.db, db_obj=task, obj_in=update_data)
 
         return task

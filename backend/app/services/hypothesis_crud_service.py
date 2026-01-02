@@ -63,9 +63,9 @@ class HypothesisCrudService:
     def __init__(self, db: AsyncSession):
         """Initialize with database session"""
         self.db = db
-        self.hypothesis_repo = HypothesisRepository()
-        self.evidence_repo = EvidenceRepository()
-        self.debate_repo = DebateRepository()
+        self.hypothesis_repo = HypothesisRepository(db)
+        self.evidence_repo = EvidenceRepository(db)
+        self.debate_repo = DebateRepository(db)
         self.task_repo = ResearchTaskRepository()
 
         # Track active validation tasks
@@ -227,7 +227,7 @@ class HypothesisCrudService:
             HTTPException: If task not found
         """
         # Verify task exists
-        task = await self.task_repo.get_by_id(task_id)
+        task = await self.task_repo.get(self.db, task_id)
         if not task:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -290,15 +290,15 @@ class HypothesisCrudService:
         task_description = data.context or "Auto-created task for hypothesis validation"
 
         task = await self.task_repo.create(
-            project_id=project_id,
-            title=task_title,
-            description=task_description,
-            status=TaskStatus.IN_PROGRESS,
-            task_type="ad_hoc_hypothesis",
+            self.db,
+            obj_in={
+                "project_id": project_id,
+                "title": task_title,
+                "description": task_description,
+                "status": TaskStatus.IN_PROGRESS,
+                "task_type": "ad_hoc_hypothesis",
+            },
         )
-
-        await self.db.commit()
-        await self.db.refresh(task)
 
         # Create hypothesis under the new task
         hypothesis_data = HypothesisCreate(
