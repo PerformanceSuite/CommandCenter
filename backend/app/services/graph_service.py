@@ -15,6 +15,7 @@ from app.models.agent_execution import AgentExecution
 from app.models.graph import (
     AuditKind,
     AuditStatus,
+    ConceptStatus,
     CrossProjectLink,
     GraphAudit,
     GraphConcept,
@@ -31,11 +32,16 @@ from app.models.graph import (
     GraphSymbol,
     GraphTask,
     LinkType,
+    RequirementStatus,
     SpecItemStatus,
     TaskKind,
 )
 from app.nats_client import get_nats_client
 from app.schemas.graph import (
+    ApprovalResponse,
+    ApproveConceptsRequest,
+    ApproveRequirementsRequest,
+    ConceptReviewItem,
     CreateConceptRequest,
     CreateDocumentRequest,
     CreateRequirementRequest,
@@ -50,6 +56,10 @@ from app.schemas.graph import (
     IngestDocumentIntelligenceRequest,
     IngestDocumentIntelligenceResponse,
     ProjectGraphResponse,
+    RejectionResponse,
+    RequirementReviewItem,
+    ReviewQueueConceptsResponse,
+    ReviewQueueRequirementsResponse,
     SearchResults,
     SpecFilters,
 )
@@ -1883,3 +1893,433 @@ class GraphService:
         )
 
         return link
+
+    # ========================================================================
+    # Review Queue & Approval Workflow
+    # ========================================================================
+
+    async def list_concepts_for_review(
+        self,
+        project_id: int,
+        statuses: Optional[List[ConceptStatus]] = None,
+        limit: int = 50,
+    ) -> ReviewQueueConceptsResponse:
+        """
+        List concepts pending review with source document paths.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            statuses: Statuses to filter (default: [UNKNOWN])
+            limit: Maximum items to return
+
+        Returns:
+            ReviewQueueConceptsResponse with items, total count, and has_more flag
+        """
+        if statuses is None:
+            statuses = [ConceptStatus.UNKNOWN]
+
+        # Build query with optional join to get document path
+        stmt = (
+            select(GraphConcept, GraphDocument.path)
+            .outerjoin(
+                GraphDocument,
+                GraphConcept.source_document_id == GraphDocument.id,
+            )
+            .filter(
+                and_(
+                    GraphConcept.project_id == project_id,
+                    GraphConcept.status.in_(statuses),
+                )
+            )
+            .order_by(GraphConcept.created_at.desc())
+            .limit(limit + 1)  # Fetch one extra to check has_more
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+
+        # Count total pending
+        count_stmt = select(GraphConcept).filter(
+            and_(
+                GraphConcept.project_id == project_id,
+                GraphConcept.status.in_(statuses),
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        total_pending = len(count_result.all())
+
+        # Build response items
+        items = []
+        for i, (concept, doc_path) in enumerate(rows):
+            if i >= limit:
+                break
+            items.append(
+                ConceptReviewItem(
+                    id=concept.id,
+                    project_id=concept.project_id,
+                    source_document_id=concept.source_document_id,
+                    source_document_path=doc_path,
+                    name=concept.name,
+                    concept_type=concept.concept_type,
+                    definition=concept.definition,
+                    status=concept.status,
+                    domain=concept.domain,
+                    source_quote=concept.source_quote,
+                    confidence=concept.confidence,
+                    related_entities=concept.related_entities,
+                    created_at=concept.created_at,
+                )
+            )
+
+        return ReviewQueueConceptsResponse(
+            items=items,
+            total_pending=total_pending,
+            has_more=len(rows) > limit,
+        )
+
+    async def list_requirements_for_review(
+        self,
+        project_id: int,
+        statuses: Optional[List[RequirementStatus]] = None,
+        limit: int = 50,
+    ) -> ReviewQueueRequirementsResponse:
+        """
+        List requirements pending review with source document paths.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            statuses: Statuses to filter (default: [PROPOSED])
+            limit: Maximum items to return
+
+        Returns:
+            ReviewQueueRequirementsResponse with items, total count, and has_more flag
+        """
+        if statuses is None:
+            statuses = [RequirementStatus.PROPOSED]
+
+        # Build query with optional join to get document path
+        stmt = (
+            select(GraphRequirement, GraphDocument.path)
+            .outerjoin(
+                GraphDocument,
+                GraphRequirement.source_document_id == GraphDocument.id,
+            )
+            .filter(
+                and_(
+                    GraphRequirement.project_id == project_id,
+                    GraphRequirement.status.in_(statuses),
+                )
+            )
+            .order_by(GraphRequirement.created_at.desc())
+            .limit(limit + 1)
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+
+        # Count total pending
+        count_stmt = select(GraphRequirement).filter(
+            and_(
+                GraphRequirement.project_id == project_id,
+                GraphRequirement.status.in_(statuses),
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        total_pending = len(count_result.all())
+
+        # Build response items
+        items = []
+        for i, (requirement, doc_path) in enumerate(rows):
+            if i >= limit:
+                break
+            items.append(
+                RequirementReviewItem(
+                    id=requirement.id,
+                    project_id=requirement.project_id,
+                    source_document_id=requirement.source_document_id,
+                    source_document_path=doc_path,
+                    req_id=requirement.req_id,
+                    text=requirement.text,
+                    req_type=requirement.req_type,
+                    priority=requirement.priority,
+                    status=requirement.status,
+                    source_concept=requirement.source_concept,
+                    source_quote=requirement.source_quote,
+                    created_at=requirement.created_at,
+                )
+            )
+
+        return ReviewQueueRequirementsResponse(
+            items=items,
+            total_pending=total_pending,
+            has_more=len(rows) > limit,
+        )
+
+    async def approve_concepts(
+        self,
+        project_id: int,
+        request: ApproveConceptsRequest,
+    ) -> ApprovalResponse:
+        """
+        Approve concepts by updating their status and optionally indexing to KB.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Approval request with IDs, status, and index_to_kb flag
+
+        Returns:
+            ApprovalResponse with counts
+        """
+        # Fetch concepts to approve (filtered by project for security)
+        stmt = select(GraphConcept).filter(
+            and_(
+                GraphConcept.project_id == project_id,
+                GraphConcept.id.in_(request.ids),
+            )
+        )
+        result = await self.db.execute(stmt)
+        concepts = list(result.scalars().all())
+
+        if not concepts:
+            return ApprovalResponse(approved=0, indexed_to_kb=0)
+
+        # Update status
+        for concept in concepts:
+            concept.status = request.status
+        await self.db.commit()
+
+        # Index to KnowledgeBeast if requested
+        indexed_count = 0
+        if request.index_to_kb:
+            indexed_count = await self._index_concepts_to_kb(project_id, concepts)
+
+        logger.info(
+            f"Approved {len(concepts)} concepts (project={project_id}, "
+            f"status={request.status.value}, indexed={indexed_count})"
+        )
+
+        return ApprovalResponse(approved=len(concepts), indexed_to_kb=indexed_count)
+
+    async def approve_requirements(
+        self,
+        project_id: int,
+        request: ApproveRequirementsRequest,
+    ) -> ApprovalResponse:
+        """
+        Approve requirements by updating their status and optionally indexing to KB.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Approval request with IDs, status, and index_to_kb flag
+
+        Returns:
+            ApprovalResponse with counts
+        """
+        # Fetch requirements to approve (filtered by project for security)
+        stmt = select(GraphRequirement).filter(
+            and_(
+                GraphRequirement.project_id == project_id,
+                GraphRequirement.id.in_(request.ids),
+            )
+        )
+        result = await self.db.execute(stmt)
+        requirements = list(result.scalars().all())
+
+        if not requirements:
+            return ApprovalResponse(approved=0, indexed_to_kb=0)
+
+        # Update status
+        for requirement in requirements:
+            requirement.status = request.status
+        await self.db.commit()
+
+        # Index to KnowledgeBeast if requested
+        indexed_count = 0
+        if request.index_to_kb:
+            indexed_count = await self._index_requirements_to_kb(project_id, requirements)
+
+        logger.info(
+            f"Approved {len(requirements)} requirements (project={project_id}, "
+            f"status={request.status.value}, indexed={indexed_count})"
+        )
+
+        return ApprovalResponse(approved=len(requirements), indexed_to_kb=indexed_count)
+
+    async def reject_concepts(
+        self,
+        project_id: int,
+        ids: List[int],
+    ) -> RejectionResponse:
+        """
+        Reject (delete) concepts from the graph.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            ids: Concept IDs to delete
+
+        Returns:
+            RejectionResponse with count
+        """
+        # Delete concepts (filtered by project for security)
+        stmt = select(GraphConcept).filter(
+            and_(
+                GraphConcept.project_id == project_id,
+                GraphConcept.id.in_(ids),
+            )
+        )
+        result = await self.db.execute(stmt)
+        concepts = list(result.scalars().all())
+
+        for concept in concepts:
+            await self.db.delete(concept)
+        await self.db.commit()
+
+        logger.info(f"Rejected (deleted) {len(concepts)} concepts (project={project_id})")
+
+        return RejectionResponse(deleted=len(concepts))
+
+    async def reject_requirements(
+        self,
+        project_id: int,
+        ids: List[int],
+    ) -> RejectionResponse:
+        """
+        Reject (delete) requirements from the graph.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            ids: Requirement IDs to delete
+
+        Returns:
+            RejectionResponse with count
+        """
+        # Delete requirements (filtered by project for security)
+        stmt = select(GraphRequirement).filter(
+            and_(
+                GraphRequirement.project_id == project_id,
+                GraphRequirement.id.in_(ids),
+            )
+        )
+        result = await self.db.execute(stmt)
+        requirements = list(result.scalars().all())
+
+        for requirement in requirements:
+            await self.db.delete(requirement)
+        await self.db.commit()
+
+        logger.info(f"Rejected (deleted) {len(requirements)} requirements (project={project_id})")
+
+        return RejectionResponse(deleted=len(requirements))
+
+    async def _index_concepts_to_kb(
+        self,
+        project_id: int,
+        concepts: List[GraphConcept],
+    ) -> int:
+        """
+        Index approved concepts to KnowledgeBeast.
+
+        Uses category='document_intelligence' metadata for filtering.
+        Future enhancement: Add dedicated collection for doc intel queries.
+
+        Args:
+            project_id: Project ID for collection naming
+            concepts: List of concepts to index
+
+        Returns:
+            Number of concepts indexed
+        """
+        # Import here to avoid circular imports
+        from app.services.rag_service import RAGService
+
+        try:
+            # Use project_id as repository_id for collection naming
+            rag_service = RAGService(repository_id=project_id)
+            await rag_service.initialize()
+            indexed = 0
+
+            for concept in concepts:
+                content = f"""Concept: {concept.name}
+Type: {concept.concept_type.value}
+Definition: {concept.definition or 'No definition provided'}
+Domain: {concept.domain or 'Unknown'}
+Status: {concept.status.value}
+Related Entities: {', '.join(concept.related_entities) if concept.related_entities else 'None'}
+"""
+
+                metadata = {
+                    "source": f"graph_concept_{concept.id}",
+                    "category": "document_intelligence",
+                    "entity_type": "concept",
+                    "entity_id": concept.id,
+                    "concept_type": concept.concept_type.value,
+                    "domain": concept.domain,
+                    "project_id": project_id,
+                }
+
+                await rag_service.add_document(content=content, metadata=metadata)
+                indexed += 1
+
+            await rag_service.close()
+            logger.info(f"Indexed {indexed} concepts to KnowledgeBeast (project={project_id})")
+            return indexed
+
+        except Exception as e:
+            logger.error(f"Failed to index concepts to KnowledgeBeast: {e}")
+            return 0
+
+    async def _index_requirements_to_kb(
+        self,
+        project_id: int,
+        requirements: List[GraphRequirement],
+    ) -> int:
+        """
+        Index approved requirements to KnowledgeBeast.
+
+        Uses category='document_intelligence' metadata for filtering.
+        Future enhancement: Add dedicated collection for doc intel queries.
+
+        Args:
+            project_id: Project ID for collection naming
+            requirements: List of requirements to index
+
+        Returns:
+            Number of requirements indexed
+        """
+        # Import here to avoid circular imports
+        from app.services.rag_service import RAGService
+
+        try:
+            # Use project_id as repository_id for collection naming
+            rag_service = RAGService(repository_id=project_id)
+            await rag_service.initialize()
+            indexed = 0
+
+            for req in requirements:
+                content = f"""Requirement: {req.req_id}
+Text: {req.text}
+Type: {req.req_type.value}
+Priority: {req.priority.value}
+Status: {req.status.value}
+Source Concept: {req.source_concept or 'None'}
+Verification: {req.verification or 'Not specified'}
+"""
+
+                metadata = {
+                    "source": f"graph_requirement_{req.id}",
+                    "category": "document_intelligence",
+                    "entity_type": "requirement",
+                    "entity_id": req.id,
+                    "req_type": req.req_type.value,
+                    "priority": req.priority.value,
+                    "project_id": project_id,
+                }
+
+                await rag_service.add_document(content=content, metadata=metadata)
+                indexed += 1
+
+            await rag_service.close()
+            logger.info(f"Indexed {indexed} requirements to KnowledgeBeast (project={project_id})")
+            return indexed
+
+        except Exception as e:
+            logger.error(f"Failed to index requirements to KnowledgeBeast: {e}")
+            return 0

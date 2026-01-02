@@ -699,3 +699,114 @@ class IngestDocumentIntelligenceResponse(BaseModel):
         default_factory=dict,
         description="Additional metadata (processing time, etc.)",
     )
+
+
+# ============================================================================
+# Review Queue & Approval Workflow
+# ============================================================================
+
+
+class ConceptReviewItem(BaseModel):
+    """Concept with source document path for review UI."""
+
+    id: int
+    project_id: int
+    source_document_id: Optional[int]
+    source_document_path: Optional[str] = Field(
+        None, description="Path of source document (joined from graph_documents)"
+    )
+    name: str
+    concept_type: ConceptType
+    definition: Optional[str]
+    status: ConceptStatus
+    domain: Optional[str]
+    source_quote: Optional[str]
+    confidence: ConfidenceLevel
+    related_entities: Optional[List[str]]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RequirementReviewItem(BaseModel):
+    """Requirement with source document path for review UI."""
+
+    id: int
+    project_id: int
+    source_document_id: Optional[int]
+    source_document_path: Optional[str] = Field(
+        None, description="Path of source document (joined from graph_documents)"
+    )
+    req_id: str
+    text: str
+    req_type: RequirementType
+    priority: RequirementPriority
+    status: RequirementStatus
+    source_concept: Optional[str]
+    source_quote: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ReviewQueueConceptsResponse(BaseModel):
+    """Response for concepts review queue."""
+
+    items: List[ConceptReviewItem]
+    total_pending: int = Field(..., description="Total items pending review")
+    has_more: bool = Field(..., description="Whether there are more items beyond limit")
+
+
+class ReviewQueueRequirementsResponse(BaseModel):
+    """Response for requirements review queue."""
+
+    items: List[RequirementReviewItem]
+    total_pending: int = Field(..., description="Total items pending review")
+    has_more: bool = Field(..., description="Whether there are more items beyond limit")
+
+
+class ApproveConceptsRequest(BaseModel):
+    """Request to approve concepts and optionally index to KnowledgeBeast."""
+
+    ids: List[int] = Field(..., min_length=1, description="Concept IDs to approve")
+    status: ConceptStatus = Field(
+        ConceptStatus.ACTIVE,
+        description="Status to set (active, implemented, deprecated)",
+    )
+    index_to_kb: bool = Field(
+        True, description="Whether to index approved concepts to KnowledgeBeast"
+    )
+
+
+class ApproveRequirementsRequest(BaseModel):
+    """Request to approve requirements and optionally index to KnowledgeBeast."""
+
+    ids: List[int] = Field(..., min_length=1, description="Requirement IDs to approve")
+    status: RequirementStatus = Field(
+        RequirementStatus.ACCEPTED,
+        description="Status to set (accepted, implemented, verified)",
+    )
+    index_to_kb: bool = Field(
+        True, description="Whether to index approved requirements to KnowledgeBeast"
+    )
+
+
+class RejectEntitiesRequest(BaseModel):
+    """Request to reject (delete) entities."""
+
+    ids: List[int] = Field(..., min_length=1, description="Entity IDs to delete")
+
+
+class ApprovalResponse(BaseModel):
+    """Response for approval operations."""
+
+    approved: int = Field(..., description="Number of items approved")
+    indexed_to_kb: int = Field(0, description="Number of items indexed to KnowledgeBeast")
+
+
+class RejectionResponse(BaseModel):
+    """Response for rejection (deletion) operations."""
+
+    deleted: int = Field(..., description="Number of items deleted")

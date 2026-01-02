@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.project_context import get_current_project_id
 from app.database import get_db
+from app.models.graph import ConceptStatus, RequirementStatus
 from app.schemas.graph import (
+    ApprovalResponse,
+    ApproveConceptsRequest,
+    ApproveRequirementsRequest,
     CreateTaskRequest,
     CrossProjectLinkResponse,
     DependencyGraph,
@@ -28,6 +32,10 @@ from app.schemas.graph import (
     IngestDocumentIntelligenceResponse,
     LinkEntitiesRequest,
     ProjectGraphResponse,
+    RejectEntitiesRequest,
+    RejectionResponse,
+    ReviewQueueConceptsResponse,
+    ReviewQueueRequirementsResponse,
     SearchResults,
     SpecFilters,
     TriggerAuditRequest,
@@ -664,6 +672,221 @@ async def ingest_document_intelligence(
     return await service.ingest_document_intelligence(
         project_id=current_project_id,
         request=request,
+    )
+
+
+# ============================================================================
+# Review Queue & Approval Workflow
+# ============================================================================
+
+
+@router.get(
+    "/review-queue/concepts",
+    response_model=ReviewQueueConceptsResponse,
+)
+async def get_concepts_for_review(
+    limit: int = Query(50, ge=1, le=200, description="Maximum items to return"),
+    statuses: Optional[str] = Query(
+        None,
+        description="Comma-separated statuses to filter (default: unknown)",
+    ),
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Get concepts pending review.
+
+    Returns concepts with status=UNKNOWN (or specified statuses) that need
+    human review before being indexed to KnowledgeBeast.
+
+    **Query Parameters:**
+    - `limit`: Maximum items to return (1-200, default: 50)
+    - `statuses`: Comma-separated list of statuses (default: "unknown")
+
+    **Response includes:**
+    - `items`: List of concepts with source document paths
+    - `total_pending`: Total count of pending items
+    - `has_more`: Whether there are more items beyond the limit
+    """
+    # Parse statuses
+    status_list = None
+    if statuses:
+        try:
+            status_list = [ConceptStatus(s.strip()) for s in statuses.split(",")]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status value: {e}",
+            )
+
+    service = GraphService(db)
+    return await service.list_concepts_for_review(
+        project_id=current_project_id,
+        statuses=status_list,
+        limit=limit,
+    )
+
+
+@router.get(
+    "/review-queue/requirements",
+    response_model=ReviewQueueRequirementsResponse,
+)
+async def get_requirements_for_review(
+    limit: int = Query(50, ge=1, le=200, description="Maximum items to return"),
+    statuses: Optional[str] = Query(
+        None,
+        description="Comma-separated statuses to filter (default: proposed)",
+    ),
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Get requirements pending review.
+
+    Returns requirements with status=PROPOSED (or specified statuses) that need
+    human review before being indexed to KnowledgeBeast.
+
+    **Query Parameters:**
+    - `limit`: Maximum items to return (1-200, default: 50)
+    - `statuses`: Comma-separated list of statuses (default: "proposed")
+
+    **Response includes:**
+    - `items`: List of requirements with source document paths
+    - `total_pending`: Total count of pending items
+    - `has_more`: Whether there are more items beyond the limit
+    """
+    # Parse statuses
+    status_list = None
+    if statuses:
+        try:
+            status_list = [RequirementStatus(s.strip()) for s in statuses.split(",")]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status value: {e}",
+            )
+
+    service = GraphService(db)
+    return await service.list_requirements_for_review(
+        project_id=current_project_id,
+        statuses=status_list,
+        limit=limit,
+    )
+
+
+@router.post(
+    "/concepts/approve",
+    response_model=ApprovalResponse,
+)
+async def approve_concepts(
+    request: ApproveConceptsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Approve concepts and optionally index to KnowledgeBeast.
+
+    Updates the status of specified concepts and indexes them to the knowledge
+    base if `index_to_kb=true`.
+
+    **Request Body:**
+    - `ids`: List of concept IDs to approve
+    - `status`: Target status (default: "active")
+    - `index_to_kb`: Whether to index to KnowledgeBeast (default: true)
+
+    **Response:**
+    - `approved`: Number of concepts approved
+    - `indexed_to_kb`: Number of concepts indexed to KnowledgeBeast
+    """
+    service = GraphService(db)
+    return await service.approve_concepts(
+        project_id=current_project_id,
+        request=request,
+    )
+
+
+@router.post(
+    "/requirements/approve",
+    response_model=ApprovalResponse,
+)
+async def approve_requirements(
+    request: ApproveRequirementsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Approve requirements and optionally index to KnowledgeBeast.
+
+    Updates the status of specified requirements and indexes them to the knowledge
+    base if `index_to_kb=true`.
+
+    **Request Body:**
+    - `ids`: List of requirement IDs to approve
+    - `status`: Target status (default: "accepted")
+    - `index_to_kb`: Whether to index to KnowledgeBeast (default: true)
+
+    **Response:**
+    - `approved`: Number of requirements approved
+    - `indexed_to_kb`: Number of requirements indexed to KnowledgeBeast
+    """
+    service = GraphService(db)
+    return await service.approve_requirements(
+        project_id=current_project_id,
+        request=request,
+    )
+
+
+@router.delete(
+    "/concepts/reject",
+    response_model=RejectionResponse,
+)
+async def reject_concepts(
+    request: RejectEntitiesRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Reject (delete) concepts from the graph.
+
+    Permanently removes the specified concepts. This action cannot be undone.
+
+    **Request Body:**
+    - `ids`: List of concept IDs to delete
+
+    **Response:**
+    - `deleted`: Number of concepts deleted
+    """
+    service = GraphService(db)
+    return await service.reject_concepts(
+        project_id=current_project_id,
+        ids=request.ids,
+    )
+
+
+@router.delete(
+    "/requirements/reject",
+    response_model=RejectionResponse,
+)
+async def reject_requirements(
+    request: RejectEntitiesRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Reject (delete) requirements from the graph.
+
+    Permanently removes the specified requirements. This action cannot be undone.
+
+    **Request Body:**
+    - `ids`: List of requirement IDs to delete
+
+    **Response:**
+    - `deleted`: Number of requirements deleted
+    """
+    service = GraphService(db)
+    return await service.reject_requirements(
+        project_id=current_project_id,
+        ids=request.ids,
     )
 
 
