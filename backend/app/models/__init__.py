@@ -54,6 +54,7 @@ from app.models.research_finding import FindingType, ResearchFinding
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.schedule import Schedule, ScheduleFrequency
 from app.models.settings import AgentConfig, Provider
+from app.models.skill import Skill, SkillUsage
 from app.models.technology import (
     Technology,
     TechnologyDomain,
@@ -136,4 +137,7 @@ __all__ = [
     "AgentConfig",
     "AgentPersona",
     "AgentExecution",
+    # Skills
+    "Skill",
+    "SkillUsage",
 ]

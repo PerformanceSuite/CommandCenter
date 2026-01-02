@@ -3,6 +3,7 @@ API routers for FastAPI endpoints
 """
 
 from app.routers import (
+    skills,
     auth,
     batch,
     dashboard,
