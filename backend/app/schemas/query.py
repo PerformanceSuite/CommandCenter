@@ -245,6 +245,52 @@ class Aggregation(BaseModel):
     )
 
 
+# =============================================================================
+# Semantic Search Schema (Phase 4, Task 4.2)
+# =============================================================================
+
+
+class SemanticSearchSpec(BaseModel):
+    """Specification for semantic/RAG-based search.
+
+    Integrates with KnowledgeBeast/RAG service to perform vector
+    similarity and hybrid (vector + keyword) search across the
+    knowledge base.
+
+    Examples:
+        SemanticSearchSpec(query="authentication flow")
+        SemanticSearchSpec(query="security best practices", threshold=0.7)
+        SemanticSearchSpec(query="database schema", categories=["docs", "code"])
+    """
+
+    query: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000,
+        description="Natural language search query",
+    )
+    limit: int = Field(
+        5,
+        ge=1,
+        le=50,
+        description="Maximum number of semantic results to return",
+    )
+    threshold: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Minimum similarity score threshold (0.0-1.0)",
+    )
+    categories: Optional[list[str]] = Field(
+        None,
+        description="Filter by knowledge base categories (e.g., 'docs', 'code')",
+    )
+    include_content: bool = Field(
+        True,
+        description="Include full content in results (vs. just metadata)",
+    )
+
+
 class ComposedQuery(BaseModel):
     """A composable query that can express complex graph traversals.
 
@@ -293,6 +339,10 @@ class ComposedQuery(BaseModel):
     aggregations: Optional[list[Aggregation]] = Field(
         None,
         description="Aggregations to compute on results",
+    )
+    semantic: Optional[SemanticSearchSpec] = Field(
+        None,
+        description="Semantic/RAG search specification (Phase 4, Task 4.2)",
     )
     limit: int = Field(
         100,

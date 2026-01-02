@@ -35,11 +35,22 @@ from app.schemas.query import (
     Filter,
     QueryResult,
     RelationshipSpec,
+    SemanticSearchSpec,
     TemporalAggregation,
     TimeRange,
 )
 from app.services.affordance_generator import AffordanceGenerator
 from app.services.temporal_resolver import TemporalResolver
+
+# Lazy import for semantic search (optional dependency)
+try:
+    from app.services.semantic_search import SemanticSearchService, get_semantic_search_service
+
+    SEMANTIC_AVAILABLE = True
+except ImportError:
+    SEMANTIC_AVAILABLE = False
+    SemanticSearchService = None  # type: ignore[misc, assignment]
+    get_semantic_search_service = None  # type: ignore[misc, assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +93,22 @@ class QueryExecutor:
         self.db = db
         self.affordance_generator = AffordanceGenerator()
         self.temporal_resolver = TemporalResolver()
+        self._semantic_service: Optional[SemanticSearchService] = None
+
+    def _get_semantic_service(self, repository_id: int) -> Optional[SemanticSearchService]:
+        """Get or create semantic search service.
+
+        Args:
+            repository_id: Repository ID for multi-tenant isolation.
+
+        Returns:
+            SemanticSearchService if available, None otherwise.
+        """
+        if not SEMANTIC_AVAILABLE or get_semantic_search_service is None:
+            logger.warning("Semantic search not available - RAG dependencies not installed")
+            return None
+
+        return get_semantic_search_service(repository_id)
 
     async def execute(
         self,
@@ -135,6 +162,26 @@ class QueryExecutor:
                 rels = await self._fetch_relationships(entity_ids, rel_spec)
                 relationships.extend(rels)
 
+        # Execute semantic search if specified (Phase 4, Task 4.2)
+        semantic_entities: list[dict[str, Any]] = []
+        semantic_query_used: Optional[str] = None
+        if query.semantic:
+            semantic_results = await self._execute_semantic_search(
+                spec=query.semantic,
+                project_id=project_id,
+            )
+            semantic_entities = semantic_results.get("entities", [])
+            semantic_query_used = query.semantic.query
+
+            # If querying for "knowledge" type, semantic results are primary
+            # Otherwise, append as additional context
+            knowledge_selector = any(s.type == "knowledge" for s in query.entities)
+            if knowledge_selector:
+                entities = semantic_entities + entities
+            else:
+                # Append semantic entities with lower priority
+                entities.extend(semantic_entities)
+
         # Compute aggregations if requested
         aggregations = None
         if query.aggregations:
@@ -165,6 +212,11 @@ class QueryExecutor:
             metadata["time_range_resolved"] = time_range_resolved
         if time_field_used:
             metadata["time_field_used"] = time_field_used
+
+        # Add semantic search metadata (Phase 4, Task 4.2)
+        if semantic_query_used:
+            metadata["semantic_query"] = semantic_query_used
+            metadata["semantic_results_count"] = len(semantic_entities)
 
         return QueryResult(
             entities=entities,
@@ -765,3 +817,40 @@ class QueryExecutor:
             serialized["metadata"] = entity.metadata_
 
         return serialized
+
+    async def _execute_semantic_search(
+        self,
+        spec: SemanticSearchSpec,
+        project_id: int,
+    ) -> dict[str, Any]:
+        """Execute semantic search and return results.
+
+        Uses SemanticSearchService to perform RAG-based search
+        on the knowledge base.
+
+        Args:
+            spec: Semantic search specification.
+            project_id: Project ID (used as repository ID for RAG).
+
+        Returns:
+            Dictionary with 'entities' list and search metadata.
+        """
+        if not SEMANTIC_AVAILABLE:
+            logger.warning("Semantic search requested but RAG dependencies not available")
+            return {"entities": [], "error": "RAG dependencies not installed"}
+
+        try:
+            service = self._get_semantic_service(project_id)
+            if service is None:
+                return {"entities": [], "error": "Semantic service unavailable"}
+
+            entities = await service.search_as_entities(spec)
+            return {
+                "entities": entities,
+                "query": spec.query,
+                "count": len(entities),
+            }
+
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            return {"entities": [], "error": str(e)}

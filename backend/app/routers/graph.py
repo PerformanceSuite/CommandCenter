@@ -105,6 +105,24 @@ async def execute_composed_query(
     Set `include_affordances=true` to get available actions for each entity.
     Affordances enable agents to take the same actions available in the UI.
 
+    **Semantic Search (Phase 4):**
+    Use `semantic` to perform RAG-based search across the knowledge base:
+    ```json
+    {
+      "entities": [{"type": "knowledge"}],
+      "semantic": {
+        "query": "authentication flow",
+        "limit": 10,
+        "threshold": 0.7,
+        "categories": ["docs", "code"]
+      }
+    }
+    ```
+    - `query`: Natural language search query (required)
+    - `limit`: Max results (default: 5, max: 50)
+    - `threshold`: Min similarity score (0.0-1.0)
+    - `categories`: Filter by knowledge base category
+
     **Example request:**
     ```json
     {
