@@ -30,8 +30,17 @@ def is_sqlite() -> bool:
     return conn.dialect.name == "sqlite"
 
 
+def table_exists(table_name: str) -> bool:
+    """Check if a table exists in the database."""
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    return table_name in inspector.get_table_names()
+
+
 def column_exists(table_name: str, column_name: str) -> bool:
     """Check if a column exists in a table."""
+    if not table_exists(table_name):
+        return False
     conn = op.get_bind()
     inspector = sa.inspect(conn)
     columns = [c["name"] for c in inspector.get_columns(table_name)]
@@ -47,6 +56,11 @@ def index_exists(table_name: str, index_name: str) -> bool:
 
 
 def upgrade() -> None:
+    # Skip if graph_links table doesn't exist yet (will be created by later migration)
+    if not table_exists("graph_links"):
+        print("graph_links table does not exist yet, skipping column additions")
+        return
+
     # Add source_project_id column with FK to projects table (idempotent)
     if not column_exists("graph_links", "source_project_id"):
         op.add_column(

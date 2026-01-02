@@ -51,6 +51,12 @@ class Settings(BaseSettings):
         description="Redis connection URL (e.g., redis://localhost:6379/0)",
     )
 
+    # NATS Configuration (Phase 7: Graph events, real-time subscriptions)
+    nats_url: str = Field(
+        default="nats://localhost:4222",
+        description="NATS server URL for event streaming",
+    )
+
     # RAG/Knowledge Base (Legacy)
     knowledge_base_path: str = Field(
         default="./docs/knowledge-base/chromadb",
