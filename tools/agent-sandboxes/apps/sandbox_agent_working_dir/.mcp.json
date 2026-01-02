@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "e2b-sandbox": {
+      "command": "/Users/danielconnolly/.local/bin/uv",
+      "args": ["--directory", "../sandbox_mcp", "run", "server.py"],
+      "env": {
+        "E2B_API_KEY": "e2b_8c49f932dc81f70f08b8d9b189fcced1262b5e97"
+      }
+    }
+  }
+}
