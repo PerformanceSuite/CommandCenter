@@ -60,7 +60,7 @@ def launch(ctx, workflow, max_concurrent, no_watch):
     max_concurrent = max_concurrent or config.agents.max_concurrent
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             console.print(f"[bold]Launching {workflow} workflow...[/bold]")
 
             orchestration = api.launch_agents(workflow=workflow, max_concurrent=max_concurrent)
@@ -130,7 +130,7 @@ def status(ctx, orchestration_id, watch):
     config = ctx.obj["config"]
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             if orchestration_id:
                 if watch:
                     # Watch mode - live updates
@@ -180,7 +180,7 @@ def stop(ctx, orchestration_id):
     config = ctx.obj["config"]
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             with create_progress_bar("Stopping orchestration...") as progress:
                 task = progress.add_task("Stopping...", total=None)
                 api.stop_orchestration(orchestration_id)
@@ -218,7 +218,7 @@ def logs(ctx, agent_id, follow):
     config = ctx.obj["config"]
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             if follow:
                 # Follow mode - poll for new logs
                 console.print(f"[bold]Following logs for {agent_id}...[/bold]\n")
@@ -265,7 +265,7 @@ def retry(ctx, agent_id):
     config = ctx.obj["config"]
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             with create_progress_bar("Retrying agent...") as progress:
                 task = progress.add_task("Retrying...", total=None)
                 api.retry_agent(agent_id)

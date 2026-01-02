@@ -16,7 +16,8 @@ def test_config_defaults():
     assert config.api.url == "http://localhost:8000"
     assert config.api.timeout == 30
     assert config.api.verify_ssl is True
-    assert config.auth.token is None
+    # Note: token is now stored in system keyring, not in config
+    # Use config.load_token() to retrieve it
     assert config.output.format == "table"
     assert config.output.verbose is False
     assert config.analysis.cache is True
@@ -41,13 +42,13 @@ def test_config_save_and_load():
         # Create and save config
         config = Config()
         config.api.url = "http://example.com:9000"
-        config.auth.token = "test-token"
+        # Note: tokens are stored in system keyring, not in config file
+        # Use config.save_token() / config.load_token() for token management
         config.save(config_path)
 
         # Load and verify
         loaded = Config.load(config_path)
         assert loaded.api.url == "http://example.com:9000"
-        assert loaded.auth.token == "test-token"
 
 
 def test_config_get_nested():

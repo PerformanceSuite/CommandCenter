@@ -150,7 +150,7 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
             def perform_analysis():
                 """Perform analysis with error handling and failure tracking."""
                 try:
-                    with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+                    with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
                         with create_progress_bar("Analyzing...") as progress:
                             task = progress.add_task(
                                 f"Analyzing {project_path.name}...", total=None
@@ -208,7 +208,7 @@ def project(ctx, path, github, export, output, watch, create_tasks, no_cache):
 
     # Normal (non-watch) mode
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             with create_progress_bar("Analyzing...") as progress:
                 if github:
                     task = progress.add_task(f"Analyzing {github}...", total=None)
@@ -257,7 +257,7 @@ def stats(ctx):
     config = ctx.obj["config"]
 
     try:
-        with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+        with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
             with create_progress_bar("Fetching statistics...") as progress:
                 task = progress.add_task("Loading...", total=None)
                 stats = api.get_analysis_statistics()

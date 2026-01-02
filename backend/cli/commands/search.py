@@ -58,7 +58,7 @@ def search(ctx, query, filter_type, limit, interactive, tui):
 
             app = SearchApp(
                 api_url=config.api.url,
-                auth_token=config.auth.token,
+                auth_token=config.load_token(),
                 timeout=config.api.timeout,
             )
             app.run()
@@ -76,7 +76,7 @@ def search(ctx, query, filter_type, limit, interactive, tui):
     def perform_search(search_query: str):
         """Execute a search query."""
         try:
-            with APIClient(config.api.url, config.auth.token, config.api.timeout) as api:
+            with APIClient(config.api.url, config.load_token(), config.api.timeout) as api:
                 with create_progress_bar("Searching...") as progress:
                     task = progress.add_task("Searching knowledge base...", total=None)
                     results = api.search_knowledge(
