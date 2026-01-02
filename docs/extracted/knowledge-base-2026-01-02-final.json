@@ -1,0 +1,167 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-intelligence-sprint6",
+  "version": "2.0",
+
+  "summary": {
+    "documents_processed": 24,
+    "total_skills": 42,
+    "total_concepts": 52,
+    "domains_covered": 16,
+    "batches_completed": 7
+  },
+
+  "skills_by_category": {
+    "methodologies": [
+      "bootstrap-development",
+      "verification-workflow",
+      "prompt-improvement",
+      "ai-arena-debate",
+      "agentic-tool-hierarchy",
+      "document-intelligence-pipeline",
+      "tdd-task-execution",
+      "sprint-planning-pattern",
+      "multi-agent-assessment",
+      "architecture-review-pattern"
+    ],
+    "patterns": [
+      "agent-persona-management",
+      "e2b-sandbox-integration",
+      "parallel-agent-execution",
+      "ralph-loop-autonomy",
+      "graph-service-federation",
+      "compute-gateway-pattern",
+      "synthesis-strategies",
+      "code-indexer-pipeline",
+      "risk-based-approval",
+      "federation-heartbeat-protocol",
+      "websocket-subscription-pattern",
+      "hypothesis-dashboard-pattern",
+      "research-arena-integration",
+      "structured-agent-outputs"
+    ],
+    "architectures": [
+      "composable-query-layer",
+      "primitive-library",
+      "unified-agent-framework",
+      "graph-service-architecture",
+      "dagger-agent-orchestration",
+      "workflow-dag-execution",
+      "opentelemetry-observability",
+      "health-service-discovery",
+      "agent-observability-design",
+      "automated-qa-pipeline",
+      "task-inbox-pattern"
+    ],
+    "schemas": [
+      "concept-extraction-schema",
+      "requirement-mining-schema"
+    ],
+    "taxonomies": [
+      "document-classification-taxonomy"
+    ],
+    "references": [
+      "anti-pattern-catalog",
+      "production-readiness-checklist"
+    ],
+    "strategies": [
+      "agentic-shift-roadmap",
+      "custom-model-training"
+    ]
+  },
+
+  "concepts_by_domain": {
+    "products": [
+      "CommandCenter",
+      "Veria",
+      "MRKTZR",
+      "ROLLIZR",
+      "Performia",
+      "Fractlzr"
+    ],
+    "modules": [
+      "AgentExecutor",
+      "ComputeGateway",
+      "UnifiedAgent",
+      "GraphService",
+      "CatalogService",
+      "Health Check Worker",
+      "Service Discovery Registry",
+      "OTEL Collector"
+    ],
+    "schemas": [
+      "SynthesisResult",
+      "WorkflowNode",
+      "WorkflowApproval",
+      "ValidationModal",
+      "Proactivity Profile",
+      "QA Report"
+    ],
+    "features": [
+      "Document Intelligence",
+      "Ghost Node",
+      "Federation Service",
+      "Learning Capture",
+      "Drift Event"
+    ],
+    "metrics": [
+      "Health Score",
+      "Quick Win"
+    ],
+    "artifacts": [
+      "ADR (Architecture Decision Record)"
+    ],
+    "query_types": [
+      "VISLZR",
+      "ComposedQuery",
+      "Affordance"
+    ]
+  },
+
+  "domains": [
+    "infrastructure",
+    "agents",
+    "research",
+    "document-intelligence",
+    "compliance",
+    "marketing",
+    "finance",
+    "security",
+    "creative",
+    "frontend",
+    "development",
+    "verification",
+    "prompt-engineering",
+    "ml",
+    "assessment",
+    "architecture"
+  ],
+
+  "key_relationships": [
+    {"source": "unified-agent-framework", "target": "dagger-agent-orchestration", "type": "uses"},
+    {"source": "document-intelligence-pipeline", "target": "Graph-Service", "type": "stores_to"},
+    {"source": "federation-heartbeat-protocol", "target": "CatalogService", "type": "updates"},
+    {"source": "opentelemetry-observability", "target": "dagger-agent-orchestration", "type": "instruments"},
+    {"source": "automated-qa-pipeline", "target": "ai-arena-debate", "type": "extends"},
+    {"source": "multi-agent-assessment", "target": "parallel-agent-execution", "type": "uses"}
+  ],
+
+  "roadmap_alignment": {
+    "sprint_3_complete": ["unified-agent-framework", "agent-persona-management", "parallel-agent-execution"],
+    "sprint_4_complete": ["websocket-subscription-pattern", "graph-service-federation"],
+    "sprint_6_in_progress": ["document-intelligence-pipeline", "concept-extraction-schema"],
+    "sprint_7_planned": ["agent-observability-design"],
+    "sprint_8_planned": ["automated-qa-pipeline"],
+    "sprint_9_planned": ["task-inbox-pattern"]
+  },
+
+  "batch_sources": {
+    "batch1": ["bootstrap-implementation.md", "e2b-full-integration.md", "verification-workflows-agent-management.md"],
+    "batch2": ["composable-commandcenter-design.md", "ai-arena-implementation.md", "Best_Practices_Ideas", "custom-model-training-roadmap.md"],
+    "batch3": ["unified-agent-framework.md", "document-intelligence-agents.md"],
+    "batch4": ["phase-7-graph-service-implementation.md", "phase-10-agent-orchestration-design.md", "phase-9-federation-service-design.md", "phase-10-phase-5-observability-design.md"],
+    "batch5": ["agentic-shift-analysis.md", "composable-commandcenter-execution.md", "composable-surface-sprint-plan.md"],
+    "batch6": ["hypothesis-dashboard-design.md", "ai-arena-research-hub-integration.md", "phase-6-health-service-discovery-plan.md"],
+    "batch7": ["COMPREHENSIVE-HEALTH-REPORT.md", "ARCHITECTURE_REVIEW_2025-12-04.md"]
+  }
+}

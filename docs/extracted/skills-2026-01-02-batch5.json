@@ -1,0 +1,129 @@
+{
+  "extraction_date": "2026-01-02",
+  "batch": 5,
+  "documents_processed": 3,
+
+  "skills": [
+    {
+      "name": "agentic-shift-roadmap",
+      "type": "strategy",
+      "definition": "Strategic response to 2026 AI predictions: Memory breakthrough (Graph-Service), Long-running agents (Ralph loop), AI reviewing AI (AI Arena for QA), Proactive AI (persistent monitors), Task inbox (async queue).",
+      "status": "active",
+      "domain": "strategy",
+      "gaps_identified": ["Week-long task monitoring", "Judge model QA pipeline", "Task inbox / async queue"],
+      "defensible_moats": ["Domain-specific primitives", "Cross-project federation", "Self-improving skills", "Business-specific graph memory"],
+      "source": "docs/plans/2026-01-01-agentic-shift-analysis.md",
+      "confidence": "high"
+    },
+    {
+      "name": "tdd-task-execution",
+      "type": "methodology",
+      "definition": "Test-Driven task execution: Write failing test → Run to verify failure → Implement → Run to verify pass → Commit. Each task independently committable with rollback plan.",
+      "status": "active",
+      "domain": "development",
+      "task_structure": ["Write failing test", "Verify failure", "Implement", "Verify pass", "Commit"],
+      "rollback": "git revert + alembic downgrade -1",
+      "source": "docs/plans/2026-01-01-composable-commandcenter-execution.md",
+      "confidence": "high"
+    },
+    {
+      "name": "websocket-subscription-pattern",
+      "type": "pattern",
+      "definition": "ConnectionManager tracks sessions, subscriptions by topic. NATS-to-WebSocket bridge converts subjects to topics. Auto-reconnect with exponential backoff.",
+      "status": "active",
+      "domain": "infrastructure",
+      "components": ["ConnectionManager", "NATSBridge", "useGraphSubscription hook"],
+      "nats_subject_map": {
+        "graph.entity.created": "entity:created",
+        "graph.entity.updated": "entity:updated",
+        "graph.health.changed": "health:changed"
+      },
+      "source": "docs/plans/2026-01-01-composable-commandcenter-execution.md",
+      "confidence": "high"
+    },
+    {
+      "name": "sprint-planning-pattern",
+      "type": "methodology",
+      "definition": "Sprint tracking with status table, detailed deliverables per sprint, key files created, dependencies mapped, success criteria defined.",
+      "status": "active",
+      "domain": "project-management",
+      "sprint_statuses": ["Complete", "In Progress", "Future"],
+      "sprint_sections": ["Goal", "Deliverables", "Key Files", "Dependencies", "Success Criteria"],
+      "source": "docs/plans/composable-surface-sprint-plan.md",
+      "confidence": "high"
+    },
+    {
+      "name": "agent-observability-design",
+      "type": "architecture",
+      "definition": "Monitor long-running agents: Progress timeline with checkpoints, drift detection (output divergence, repeated failures), resource burn tracking (tokens, time, cost), intervention triggers, one-click course correction.",
+      "status": "planned",
+      "domain": "agents",
+      "nats_subjects": ["agent.checkpoint.created", "agent.drift.detected", "agent.intervention.needed", "agent.stuck.detected"],
+      "source": "docs/plans/composable-surface-sprint-plan.md",
+      "confidence": "high"
+    },
+    {
+      "name": "automated-qa-pipeline",
+      "type": "architecture",
+      "definition": "AI reviewing AI: Judge model infrastructure with PolicyChecker, FactualityChecker, CompletenessChecker, DomainLinter. Pass → Auto-approve, Fail → Human review queue.",
+      "status": "planned",
+      "domain": "agents",
+      "checkers": ["PolicyChecker", "FactualityChecker", "CompletenessChecker", "DomainLinter"],
+      "workflow": "Agent Output → QA Pipeline → Judge Models → QA Report → Pass/Fail routing",
+      "source": "docs/plans/composable-surface-sprint-plan.md",
+      "confidence": "high"
+    },
+    {
+      "name": "task-inbox-pattern",
+      "type": "architecture",
+      "definition": "Async task queue: Email/Slack/API → Task Queue (priority) → Agent Pool (assignment) → Execution + QA → Result + Graph.",
+      "status": "planned",
+      "domain": "agents",
+      "input_channels": ["Email (task@commandcenter.io)", "Slack (/cc-task)", "API (POST /api/v1/tasks)"],
+      "lifecycle": ["pending", "assigned", "running", "review", "complete"],
+      "source": "docs/plans/composable-surface-sprint-plan.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "Proactivity Profile",
+      "type": "schema",
+      "definition": "User preferences for agent interruptions: interrupt_threshold (low/medium/high), preferred_channels, quiet_hours, domain-specific rules.",
+      "status": "planned",
+      "domain": "personalization",
+      "source": "docs/plans/composable-surface-sprint-plan.md"
+    },
+    {
+      "name": "Learning Capture",
+      "type": "feature",
+      "definition": "Track corrections for future skill improvement: original_output, human_correction, context, pattern_extracted, skill_update_suggested.",
+      "status": "planned",
+      "domain": "ml",
+      "source": "docs/plans/composable-surface-sprint-plan.md"
+    },
+    {
+      "name": "Drift Event",
+      "type": "schema",
+      "definition": "Detected deviation from expected agent behavior: execution_id, drift_type, severity. Triggers intervention workflow.",
+      "status": "planned",
+      "domain": "agents",
+      "source": "docs/plans/composable-surface-sprint-plan.md"
+    },
+    {
+      "name": "QA Report",
+      "type": "schema",
+      "definition": "Aggregated quality assessment from judge models: unified score, issue summary, pass/fail determination, issues list.",
+      "status": "planned",
+      "domain": "agents",
+      "source": "docs/plans/composable-surface-sprint-plan.md"
+    }
+  ],
+
+  "relationships": [
+    {"source": "automated-qa-pipeline", "target": "ai-arena-debate", "type": "extends", "description": "Extends AI Arena from hypothesis debates to output QA"},
+    {"source": "task-inbox-pattern", "target": "automated-qa-pipeline", "type": "uses", "description": "Task results go through QA pipeline"},
+    {"source": "agent-observability-design", "target": "unified-agent-framework", "type": "monitors", "description": "Provides visibility into agent executions"}
+  ]
+}

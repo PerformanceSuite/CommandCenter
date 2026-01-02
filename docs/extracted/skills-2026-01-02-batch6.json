@@ -1,0 +1,79 @@
+{
+  "extraction_date": "2026-01-02",
+  "batch": 6,
+  "documents_processed": 3,
+
+  "skills": [
+    {
+      "name": "hypothesis-dashboard-pattern",
+      "type": "pattern",
+      "definition": "UI dashboard for AI Arena hypothesis validation: List hypotheses with filters, trigger validation debates via modal, poll for progress, show results. Validation flow: Config → Start → Poll → Complete.",
+      "status": "active",
+      "domain": "frontend",
+      "endpoints": [
+        "GET /api/v1/hypotheses (list with filters)",
+        "POST /api/v1/hypotheses/{id}/validate (trigger)",
+        "GET /api/v1/hypotheses/{id}/validation-status (poll)"
+      ],
+      "ui_components": ["HypothesesPage", "HypothesisDashboard", "HypothesisCard", "StatsBar", "ValidationModal"],
+      "source": "docs/plans/2025-12-28-hypothesis-dashboard-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "research-arena-integration",
+      "type": "pattern",
+      "definition": "Workflow integration: Research task → 'Validate' button → Create linked hypothesis → AI Arena validation → Update research task status. Bidirectional linking between research and hypotheses.",
+      "status": "planned",
+      "domain": "integration",
+      "data_model_changes": ["hypothesis_id on ResearchTask", "validation_status", "validation_summary"],
+      "api_changes": ["POST /api/v1/research-tasks/{id}/create-hypothesis", "PATCH /api/v1/hypotheses/{id}/validation-complete"],
+      "source": "docs/plans/2025-12-30-ai-arena-research-hub-integration.md",
+      "confidence": "high"
+    },
+    {
+      "name": "health-service-discovery",
+      "type": "architecture",
+      "definition": "Service health monitoring: Service model with health config, async health probing (HTTP/TCP/Redis/PostgreSQL), health status transitions (unknown→up→degraded→down), NATS publishing, federation dashboard.",
+      "status": "active",
+      "domain": "infrastructure",
+      "health_methods": ["HTTP (GET endpoint)", "TCP (port check)", "Database (pg_isready/PING)", "Container (exec)"],
+      "status_transitions": ["unknown→up", "up→degraded", "up→down", "degraded→up", "degraded→down", "down→up"],
+      "nats_topics": ["hub.{hub_id}.health.{service}", "hub.{hub_id}.health.summary", "hub.global.health"],
+      "source": "docs/plans/phase-6-health-service-discovery-plan.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "ValidationModal",
+      "type": "component",
+      "definition": "3-state UI modal: Config (rounds, agents) → Progress (polling with progress bar) → Complete (results, score, recommendation).",
+      "status": "active",
+      "domain": "frontend",
+      "source": "docs/plans/2025-12-28-hypothesis-dashboard-design.md"
+    },
+    {
+      "name": "Health Check Worker",
+      "type": "module",
+      "definition": "Async worker that probes all services, stores health history, uses intelligent scheduling (staggered checks), exponential backoff on failures.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/phase-6-health-service-discovery-plan.md"
+    },
+    {
+      "name": "Service Discovery Registry",
+      "type": "module",
+      "definition": "Centralized registry for service registration, metadata, capabilities. Enables federation by tracking services across multiple hubs.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/phase-6-health-service-discovery-plan.md"
+    }
+  ],
+
+  "relationships": [
+    {"source": "hypothesis-dashboard-pattern", "target": "ai-arena-debate", "type": "visualizes", "description": "Dashboard provides UI for AI Arena debates"},
+    {"source": "research-arena-integration", "target": "hypothesis-dashboard-pattern", "type": "extends", "description": "Adds research task → hypothesis workflow"},
+    {"source": "health-service-discovery", "target": "federation-heartbeat-protocol", "type": "complements", "description": "Service health feeds into federation health"}
+  ]
+}

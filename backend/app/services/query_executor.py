@@ -31,6 +31,7 @@ from app.models.graph import (
 from app.schemas.query import (
     Affordance,
     ComposedQuery,
+    ComputedPropertySpec,
     EntitySelector,
     Filter,
     QueryResult,
@@ -40,6 +41,7 @@ from app.schemas.query import (
     TimeRange,
 )
 from app.services.affordance_generator import AffordanceGenerator
+from app.services.computed_properties import ComputedPropertiesService
 from app.services.temporal_resolver import TemporalResolver
 
 # Lazy import for semantic search (optional dependency)
@@ -93,6 +95,7 @@ class QueryExecutor:
         self.db = db
         self.affordance_generator = AffordanceGenerator()
         self.temporal_resolver = TemporalResolver()
+        self.computed_properties = ComputedPropertiesService(db)
         self._semantic_service: Optional[SemanticSearchService] = None
 
     def _get_semantic_service(self, repository_id: int) -> Optional[SemanticSearchService]:
@@ -196,6 +199,14 @@ class QueryExecutor:
         if include_affordances and entities:
             affordances = self.affordance_generator.generate_for_entities(entities, max_entities=10)
 
+        # Compute derived properties if requested (Phase 4, Task 4.3)
+        computed_results: dict[str, Any] = {}
+        if query.computed and entities:
+            computed_results = await self._compute_properties(
+                entities=entities,
+                computed_specs=query.computed,
+            )
+
         elapsed_ms = (time.time() - start_time) * 1000
 
         # Build metadata with temporal information
@@ -217,6 +228,16 @@ class QueryExecutor:
         if semantic_query_used:
             metadata["semantic_query"] = semantic_query_used
             metadata["semantic_results_count"] = len(semantic_entities)
+
+        # Add computed properties metadata (Phase 4, Task 4.3)
+        if computed_results:
+            metadata["computed_properties"] = list(computed_results.keys())
+            # Attach computed values to entities
+            for entity in entities:
+                entity_id = entity.get("id")
+                for prop_name, prop_values in computed_results.items():
+                    if entity_id in prop_values:
+                        entity[f"computed_{prop_name}"] = prop_values[entity_id]
 
         return QueryResult(
             entities=entities,
@@ -854,3 +875,41 @@ class QueryExecutor:
         except Exception as e:
             logger.error(f"Semantic search failed: {e}")
             return {"entities": [], "error": str(e)}
+
+    async def _compute_properties(
+        self,
+        entities: list[dict[str, Any]],
+        computed_specs: list[ComputedPropertySpec],
+    ) -> dict[str, dict[int, Any]]:
+        """Compute derived properties for entities.
+
+        Args:
+            entities: List of entity dictionaries
+            computed_specs: List of computed property specifications
+
+        Returns:
+            Dictionary mapping property names to entity ID -> value mappings
+        """
+        results: dict[str, dict[int, Any]] = {}
+
+        for spec in computed_specs:
+            # Filter entities that match the spec's entity type
+            matching_entities = [e for e in entities if e.get("type") == spec.entity_type]
+
+            if not matching_entities:
+                continue
+
+            try:
+                # Batch compute for all matching entities
+                prop_values = await self.computed_properties.batch_compute(
+                    entities=matching_entities,
+                    property=spec.property,
+                    options=spec.options,
+                )
+                results[spec.property] = prop_values
+
+            except Exception as e:
+                logger.error(f"Failed to compute {spec.property}: {e}")
+                results[spec.property] = {}
+
+        return results

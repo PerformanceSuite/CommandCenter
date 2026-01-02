@@ -291,6 +291,51 @@ class SemanticSearchSpec(BaseModel):
     )
 
 
+# =============================================================================
+# Computed Properties Schema (Phase 4, Task 4.3)
+# =============================================================================
+
+
+class ComputedPropertySpec(BaseModel):
+    """Specification for a computed property on entities.
+
+    Computed properties are derived values calculated at query time,
+    such as counts, aggregations, or traversal results.
+
+    Supported properties:
+    - symbolCount: Count of symbols in a file
+    - allDependencies: Transitive closure of symbol dependencies
+    - projectHealth: Aggregate health score for a project
+
+    Examples:
+        ComputedPropertySpec(property="symbolCount", entity_type="file")
+        ComputedPropertySpec(
+            property="allDependencies",
+            entity_type="symbol",
+            options={"depth": 3}
+        )
+    """
+
+    property: Literal[
+        "symbolCount",
+        "allDependencies",
+        "projectHealth",
+        "dependencyCount",
+        "callerCount",
+    ] = Field(
+        ...,
+        description="Name of the computed property",
+    )
+    entity_type: str = Field(
+        ...,
+        description="Entity type this property applies to",
+    )
+    options: Optional[dict[str, Any]] = Field(
+        None,
+        description="Property-specific options (e.g., depth for traversals)",
+    )
+
+
 class ComposedQuery(BaseModel):
     """A composable query that can express complex graph traversals.
 
@@ -343,6 +388,10 @@ class ComposedQuery(BaseModel):
     semantic: Optional[SemanticSearchSpec] = Field(
         None,
         description="Semantic/RAG search specification (Phase 4, Task 4.2)",
+    )
+    computed: Optional[list[ComputedPropertySpec]] = Field(
+        None,
+        description="Computed properties to calculate for entities (Phase 4, Task 4.3)",
     )
     limit: int = Field(
         100,

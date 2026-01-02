@@ -1,0 +1,124 @@
+{
+  "extraction_date": "2026-01-02",
+  "batch": 7,
+  "documents_processed": 2,
+
+  "skills": [
+    {
+      "name": "multi-agent-assessment",
+      "type": "methodology",
+      "definition": "6-agent parallel analysis (Backend, Frontend, Infrastructure, Testing, Documentation, Synthesis). Each agent assesses their domain, Synthesis agent consolidates into unified report with grades A-F.",
+      "status": "active",
+      "domain": "assessment",
+      "agents": ["Backend Agent", "Frontend Agent", "Infrastructure Agent", "Testing Agent", "Documentation Agent", "Synthesis Agent"],
+      "output_format": {
+        "executive_summary": "Overall grades by area, critical findings, quick wins",
+        "project_status": "Phase completion vs roadmap",
+        "statistics": "Metrics counts (endpoints, tests, services)",
+        "cross_cutting_issues": "Technical debt, security, documentation gaps",
+        "recommendations": "Prioritized (P1 critical, P2 important, P3 nice-to-have)"
+      },
+      "grading_scale": {"A": "90-100%", "B": "80-89%", "C": "70-79%", "D": "60-69%", "F": "<60%"},
+      "source": "docs/audits/2025-12-30-COMPREHENSIVE-HEALTH-REPORT.md",
+      "confidence": "high"
+    },
+    {
+      "name": "architecture-review-pattern",
+      "type": "methodology",
+      "definition": "Systematic architecture review covering: Service boundaries, Data flow, Integration points, Scalability concerns, Security posture, Strengths, Concerns (prioritized), Improvements, Scalability roadmap, Key metrics, Testing gaps, ADRs needed.",
+      "status": "active",
+      "domain": "architecture",
+      "sections": [
+        "Service Boundaries (clear responsibilities, isolation)",
+        "Data Flow (primary paths, event bus, consistency)",
+        "Integration Points (service ↔ service, external APIs)",
+        "Scalability Concerns (SPOF, stateful vs stateless, DB patterns)",
+        "Security Posture (multi-tenant, auth, secrets)",
+        "Strengths (what's working)",
+        "Concerns (prioritized P0/P1/P2/P3)",
+        "Improvements (quick wins, long-term)",
+        "Metrics to Monitor",
+        "Testing Gaps",
+        "ADRs Needed"
+      ],
+      "priority_levels": {
+        "P0": "Critical - Fix immediately",
+        "P1": "High - Fix before production",
+        "P2": "Medium - Optimize",
+        "P3": "Low - Nice to have"
+      },
+      "source": "docs/audits/ARCHITECTURE_REVIEW_2025-12-04.md",
+      "confidence": "high"
+    },
+    {
+      "name": "anti-pattern-catalog",
+      "type": "reference",
+      "definition": "Documented anti-patterns found in audits: Hardcoded project_id defaults (security), N+1 queries (performance), No circuit breaker for external APIs (resilience), Single points of failure (availability).",
+      "status": "active",
+      "domain": "architecture",
+      "anti_patterns": [
+        {"name": "Hardcoded tenant ID", "impact": "Critical - data contamination", "fix": "Remove defaults, require explicit project_id"},
+        {"name": "N+1 queries", "impact": "Medium - slow responses", "fix": "Use joinedload for eager loading"},
+        {"name": "No circuit breaker", "impact": "Medium - cascade failures", "fix": "Add tenacity retry with exponential backoff"},
+        {"name": "Single instance stateful service", "impact": "High - workflow outage", "fix": "Leader election + state persistence"},
+        {"name": "Default connection pool", "impact": "Medium - exhaustion under load", "fix": "Configure explicit pool_size, max_overflow"}
+      ],
+      "source": "docs/audits/ARCHITECTURE_REVIEW_2025-12-04.md",
+      "confidence": "high"
+    },
+    {
+      "name": "production-readiness-checklist",
+      "type": "reference",
+      "definition": "Checklist derived from audits: Multi-tenant isolation, API authentication, DB connection pooling, AlertManager deployed, Backup strategy, Rate limiting, Secret management, Event schema versioning.",
+      "status": "active",
+      "domain": "devops",
+      "critical_items": [
+        "Remove hardcoded project_id defaults",
+        "Implement API authentication",
+        "Deploy AlertManager",
+        "Add database backups"
+      ],
+      "important_items": [
+        "Configure connection pool (pool_size=20, max_overflow=10)",
+        "Add circuit breakers for external APIs",
+        "Enable rate limiting",
+        "Document event schemas"
+      ],
+      "source": "docs/audits/2025-12-30-COMPREHENSIVE-HEALTH-REPORT.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "Health Score",
+      "type": "metric",
+      "definition": "Letter grade (A-F) representing area health: A (90-100%) excellent/production-ready, B (80-89%) good/ready with minor improvements, C (70-79%) adequate/needs attention, D (60-69%) poor/significant work, F (<60%) failing/major overhaul.",
+      "status": "active",
+      "domain": "assessment",
+      "source": "docs/audits/2025-12-30-COMPREHENSIVE-HEALTH-REPORT.md"
+    },
+    {
+      "name": "Quick Win",
+      "type": "concept",
+      "definition": "Low-effort high-impact improvement: 1-2 hours to implement, immediate value. Examples: Archive session docs, add Redis exporter, deploy AlertManager.",
+      "status": "active",
+      "domain": "project-management",
+      "source": "docs/audits/2025-12-30-COMPREHENSIVE-HEALTH-REPORT.md"
+    },
+    {
+      "name": "ADR (Architecture Decision Record)",
+      "type": "artifact",
+      "definition": "Document capturing architecture decision: Context, Decision, Consequences, Status. Examples: Multi-tenant strategy, Event-driven architecture, Dagger SDK choice, Prisma vs SQLAlchemy.",
+      "status": "active",
+      "domain": "architecture",
+      "source": "docs/audits/ARCHITECTURE_REVIEW_2025-12-04.md"
+    }
+  ],
+
+  "relationships": [
+    {"source": "multi-agent-assessment", "target": "parallel-agent-execution", "type": "uses", "description": "Health assessment uses parallel agent execution"},
+    {"source": "architecture-review-pattern", "target": "production-readiness-checklist", "type": "produces", "description": "Reviews generate readiness checklists"},
+    {"source": "anti-pattern-catalog", "target": "architecture-review-pattern", "type": "informs", "description": "Known anti-patterns guide reviews"}
+  ]
+}
