@@ -13,8 +13,16 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.hypothesis import Hypothesis
     from app.models.ingestion_source import IngestionSource
+    from app.models.integration import Integration
+    from app.models.job import Job
+    from app.models.knowledge_entry import KnowledgeEntry
+    from app.models.repository import Repository
+    from app.models.research_task import ResearchTask
+    from app.models.schedule import Schedule
     from app.models.skill import Skill
+    from app.models.technology import Technology
     from app.models.user_project import UserProject
+    from app.models.webhook import GitHubRateLimit, WebhookConfig, WebhookDelivery, WebhookEvent
 
 
 class Project(Base):

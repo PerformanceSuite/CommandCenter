@@ -683,9 +683,11 @@ class QueryExecutor:
             if bucket_value:
                 buckets.append(
                     {
-                        "bucket": bucket_value.isoformat()
-                        if hasattr(bucket_value, "isoformat")
-                        else str(bucket_value),
+                        "bucket": (
+                            bucket_value.isoformat()
+                            if hasattr(bucket_value, "isoformat")
+                            else str(bucket_value)
+                        ),
                         "value": row.value,
                     }
                 )
@@ -777,9 +779,9 @@ class QueryExecutor:
         if entity_type == "symbol":
             serialized.update(
                 {
-                    "kind": entity.kind.value
-                    if hasattr(entity.kind, "value")
-                    else str(entity.kind),
+                    "kind": (
+                        entity.kind.value if hasattr(entity.kind, "value") else str(entity.kind)
+                    ),
                     "file_id": entity.file_id,
                     "range_start": entity.range_start,
                     "range_end": entity.range_end,
@@ -798,12 +800,14 @@ class QueryExecutor:
         elif entity_type == "service":
             serialized.update(
                 {
-                    "service_type": entity.type.value
-                    if hasattr(entity.type, "value")
-                    else str(entity.type),
-                    "status": entity.status.value
-                    if hasattr(entity.status, "value")
-                    else str(entity.status),
+                    "service_type": (
+                        entity.type.value if hasattr(entity.type, "value") else str(entity.type)
+                    ),
+                    "status": (
+                        entity.status.value
+                        if hasattr(entity.status, "value")
+                        else str(entity.status)
+                    ),
                     "endpoint": entity.endpoint,
                 }
             )
@@ -811,24 +815,30 @@ class QueryExecutor:
             serialized.update(
                 {
                     "title": entity.title,
-                    "kind": entity.kind.value
-                    if hasattr(entity.kind, "value")
-                    else str(entity.kind),
-                    "status": entity.status.value
-                    if hasattr(entity.status, "value")
-                    else str(entity.status),
+                    "kind": (
+                        entity.kind.value if hasattr(entity.kind, "value") else str(entity.kind)
+                    ),
+                    "status": (
+                        entity.status.value
+                        if hasattr(entity.status, "value")
+                        else str(entity.status)
+                    ),
                 }
             )
         elif entity_type == "spec":
             serialized.update(
                 {
                     "title": entity.title,
-                    "source": entity.source.value
-                    if hasattr(entity.source, "value")
-                    else str(entity.source),
-                    "status": entity.status.value
-                    if hasattr(entity.status, "value")
-                    else str(entity.status),
+                    "source": (
+                        entity.source.value
+                        if hasattr(entity.source, "value")
+                        else str(entity.source)
+                    ),
+                    "status": (
+                        entity.status.value
+                        if hasattr(entity.status, "value")
+                        else str(entity.status)
+                    ),
                     "priority": entity.priority,
                 }
             )

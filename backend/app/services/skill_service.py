@@ -1,17 +1,19 @@
 """Service for managing skills."""
-import os
-import re
-from pathlib import Path
-from typing import Optional, List
-from datetime import datetime
 
-from sqlalchemy import select, or_, and_
+from datetime import datetime
+from pathlib import Path
+from typing import List, Optional
+
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.skill import Skill, SkillUsage
 from app.schemas.skill import (
-    SkillCreate, SkillUpdate, SkillImportRequest,
-    SkillSearchRequest, SkillUsageCreate
+    SkillCreate,
+    SkillImportRequest,
+    SkillSearchRequest,
+    SkillUpdate,
+    SkillUsageCreate,
 )
 
 
@@ -31,16 +33,12 @@ class SkillService:
 
     async def get_by_id(self, skill_id: int) -> Optional[Skill]:
         """Get a skill by ID."""
-        result = await self.db.execute(
-            select(Skill).where(Skill.id == skill_id)
-        )
+        result = await self.db.execute(select(Skill).where(Skill.id == skill_id))
         return result.scalar_one_or_none()
 
     async def get_by_slug(self, slug: str) -> Optional[Skill]:
         """Get a skill by slug."""
-        result = await self.db.execute(
-            select(Skill).where(Skill.slug == slug)
-        )
+        result = await self.db.execute(select(Skill).where(Skill.slug == slug))
         return result.scalar_one_or_none()
 
     async def list_all(
@@ -48,7 +46,7 @@ class SkillService:
         project_id: Optional[int] = None,
         include_global: bool = True,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Skill]:
         """List skills with optional project filtering."""
         conditions = []
@@ -58,15 +56,13 @@ class SkillService:
                 conditions.append(
                     or_(
                         Skill.project_id == project_id,
-                        and_(Skill.project_id.is_(None), Skill.is_public == True)
+                        and_(Skill.project_id.is_(None), Skill.is_public.is_(True)),
                     )
                 )
             else:
                 conditions.append(Skill.project_id == project_id)
         else:
-            conditions.append(
-                or_(Skill.project_id.is_(None), Skill.is_public == True)
-            )
+            conditions.append(or_(Skill.project_id.is_(None), Skill.is_public.is_(True)))
 
         query = select(Skill).where(*conditions).offset(offset).limit(limit)
         result = await self.db.execute(query)
@@ -96,7 +92,9 @@ class SkillService:
         await self.db.commit()
         return True
 
-    async def search(self, search: SkillSearchRequest, project_id: Optional[int] = None) -> List[Skill]:
+    async def search(
+        self, search: SkillSearchRequest, project_id: Optional[int] = None
+    ) -> List[Skill]:
         """Search skills by various criteria."""
         conditions = []
 
@@ -106,13 +104,13 @@ class SkillService:
                 conditions.append(
                     or_(
                         Skill.project_id == project_id,
-                        and_(Skill.project_id.is_(None), Skill.is_public == True)
+                        and_(Skill.project_id.is_(None), Skill.is_public.is_(True)),
                     )
                 )
             else:
-                conditions.append(Skill.is_public == True)
+                conditions.append(Skill.is_public.is_(True))
         else:
-            conditions.append(Skill.is_public == True)
+            conditions.append(Skill.is_public.is_(True))
 
         # Text search
         if search.query:
@@ -121,7 +119,7 @@ class SkillService:
                 or_(
                     Skill.name.ilike(search_term),
                     Skill.description.ilike(search_term),
-                    Skill.content.ilike(search_term)
+                    Skill.content.ilike(search_term),
                 )
             )
 
@@ -143,7 +141,7 @@ class SkillService:
         self,
         usage_data: SkillUsageCreate,
         project_id: Optional[int] = None,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ) -> SkillUsage:
         """Record a skill usage."""
         skill = await self.get_by_id(usage_data.skill_id)
@@ -157,7 +155,7 @@ class SkillService:
             user_id=user_id,
             session_id=usage_data.session_id,
             outcome=usage_data.outcome,
-            outcome_notes=usage_data.outcome_notes
+            outcome_notes=usage_data.outcome_notes,
         )
         self.db.add(usage)
 
@@ -170,9 +168,7 @@ class SkillService:
         return usage
 
     async def import_from_filesystem(
-        self,
-        import_request: SkillImportRequest,
-        project_id: Optional[int] = None
+        self, import_request: SkillImportRequest, project_id: Optional[int] = None
     ) -> List[Skill]:
         """Import skills from filesystem directory."""
         path = Path(import_request.path).expanduser()
@@ -220,7 +216,7 @@ class SkillService:
                     tags=metadata.get("tags", []),
                     author=metadata.get("author"),
                     project_id=project_id,
-                    is_public=True
+                    is_public=True,
                 )
                 self.db.add(skill)
                 await self.db.commit()

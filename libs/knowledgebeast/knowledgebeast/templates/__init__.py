@@ -468,6 +468,233 @@ Contact support@example.com if you:
                 "metadata": {"category": "billing", "type": "faq", "priority": "high", "tags": ["subscription", "cancel", "refund"]}
             }
         ]
+    },
+
+    "document-intelligence": {
+        "name": "Document Intelligence Project",
+        "description": "Optimized for document classification, concept extraction, and requirement mining",
+        "config": {
+            "embedding_model": "all-mpnet-base-v2",  # Higher quality for semantic understanding
+            "chunk_size": 512,
+            "chunk_overlap": 50,
+        },
+        "sample_docs": [
+            {
+                "content": """Document Classification: Sprint 6 Implementation Plan
+
+Path: docs/plans/sprint-6-document-intelligence.md
+Type: plan
+Subtype: sprint-plan
+Status: active
+Audience: engineering team
+Value Assessment: high
+
+This document outlines the Sprint 6 implementation plan for the Document Intelligence
+feature set. The plan covers three main areas:
+
+1. Document Classification - Automated categorization of documents by type, status,
+   and relevance. Uses multi-label classification to handle documents that span
+   multiple categories.
+
+2. Concept Extraction - Identifies named concepts, products, features, and business
+   entities mentioned in documents. Creates a graph of related concepts for
+   knowledge navigation.
+
+3. Requirement Mining - Extracts explicit and implicit requirements from planning
+   documents, specifications, and design docs. Supports traceability back to
+   source documents.
+
+Recommended Action: keep
+Target Location: docs/plans/active/""",
+                "metadata": {
+                    "entity_type": "document",
+                    "doc_type": "plan",
+                    "subtype": "sprint-plan",
+                    "status": "active",
+                    "audience": "engineering team",
+                    "value_assessment": "high",
+                    "recommended_action": "keep",
+                    "word_count": 142
+                }
+            },
+            {
+                "content": """Concept: KnowledgeBeast
+
+Name: KnowledgeBeast
+Type: product
+Domain: knowledge-management
+Status: active
+
+Definition: KnowledgeBeast is a RAG (Retrieval Augmented Generation) engine that
+provides vector search, semantic caching, and document management capabilities.
+It serves as the knowledge layer for AI-powered applications.
+
+Key Features:
+- Multi-tenant project isolation
+- ChromaDB and PostgreSQL backends
+- Query expansion and semantic caching
+- Document chunking with multiple strategies
+- MCP (Model Context Protocol) integration
+
+Related Entities:
+- CommandCenter (parent product)
+- Graph Service (depends on)
+- Document Intelligence (feature)
+
+Source Quote: "KnowledgeBeast provides the foundational knowledge retrieval layer
+that enables intelligent document search and context augmentation."
+
+Confidence: high""",
+                "metadata": {
+                    "entity_type": "concept",
+                    "concept_type": "product",
+                    "domain": "knowledge-management",
+                    "status": "active",
+                    "confidence": "high",
+                    "related_entities": ["CommandCenter", "Graph Service", "Document Intelligence"]
+                }
+            },
+            {
+                "content": """Concept: Document Intelligence
+
+Name: Document Intelligence
+Type: feature
+Domain: ai-agents
+Status: proposed
+
+Definition: Document Intelligence is a multi-agent system that processes documentation
+to extract structured knowledge. It consists of specialized personas that work together
+in a pipeline:
+
+1. doc-classifier - Categorizes documents by type and recommends actions
+2. doc-concept-extractor - Identifies and defines named concepts
+3. doc-requirement-miner - Extracts requirements with traceability
+4. doc-staleness-detector - Identifies outdated or stale content
+5. doc-relationship-mapper - Maps connections between documents
+
+The extracted knowledge is ingested into the Graph Service for queryable access.
+
+Related Entities:
+- Graph Service (integrates with)
+- KnowledgeBeast (stores in)
+- Pipeline Orchestrator (executes via)
+
+Source Quote: "Document Intelligence transforms unstructured documentation into
+queryable, actionable knowledge graph entities."
+
+Confidence: high""",
+                "metadata": {
+                    "entity_type": "concept",
+                    "concept_type": "feature",
+                    "domain": "ai-agents",
+                    "status": "proposed",
+                    "confidence": "high",
+                    "related_entities": ["Graph Service", "KnowledgeBeast", "Pipeline Orchestrator"]
+                }
+            },
+            {
+                "content": """Requirement: REQ-DI-001
+
+ID: REQ-DI-001
+Type: functional
+Priority: critical
+Status: accepted
+
+Text: The Document Intelligence system MUST process documents through a configurable
+pipeline of specialized AI personas, with each persona producing structured output
+that can be ingested into the Graph Service.
+
+Source Concept: Document Intelligence
+Source Document: docs/plans/sprint-6-document-intelligence.md
+
+Verification: Integration test demonstrating end-to-end document processing through
+all personas with successful Graph Service ingestion.
+
+Source Quote: "Documents flow through the pipeline stages: classification -> concept
+extraction -> requirement mining -> staleness detection -> relationship mapping."
+
+Dependencies:
+- Graph Service entity types defined
+- Pipeline orchestration infrastructure
+- Persona YAML definitions""",
+                "metadata": {
+                    "entity_type": "requirement",
+                    "req_id": "REQ-DI-001",
+                    "req_type": "functional",
+                    "priority": "critical",
+                    "status": "accepted",
+                    "source_concept": "Document Intelligence"
+                }
+            },
+            {
+                "content": """Requirement: REQ-DI-002
+
+ID: REQ-DI-002
+Type: nonFunctional
+Priority: high
+Status: proposed
+
+Text: The Document Intelligence pipeline SHOULD support parallel execution of
+independent stages to minimize processing time. Stages with dependencies must
+execute sequentially while independent stages can run concurrently.
+
+Source Concept: Document Intelligence
+Source Document: docs/plans/sprint-6-document-intelligence.md
+
+Verification: Performance test showing concurrent execution of concept extraction,
+requirement mining, and staleness detection stages.
+
+Source Quote: "Pipeline supports parallel execution (concepts/requirements/staleness
+run together after classification)."
+
+Dependencies:
+- Pipeline executor with parallel support
+- Stage dependency graph""",
+                "metadata": {
+                    "entity_type": "requirement",
+                    "req_id": "REQ-DI-002",
+                    "req_type": "nonFunctional",
+                    "priority": "high",
+                    "status": "proposed",
+                    "source_concept": "Document Intelligence"
+                }
+            },
+            {
+                "content": """Document Classification: Legacy Agent Coordination Files
+
+Path: .agent-coordination/
+Type: archive
+Subtype: legacy-infrastructure
+Status: superseded
+Audience: historical reference
+Value Assessment: low
+
+This directory contains legacy agent coordination files from the October 2025
+multi-agent experiment. The files include:
+- Agent task definitions
+- Status tracking JSON files
+- Shell scripts for worktree management
+- Validation and monitoring scripts
+
+The content has been superseded by the new Pipeline Orchestrator and persona-based
+agent framework introduced in Sprint 6.
+
+Staleness Score: 85
+Last Meaningful Date: 2025-10-15
+
+Recommended Action: archive
+Target Location: docs/archive/legacy-2025/agent-coordination/""",
+                "metadata": {
+                    "entity_type": "document",
+                    "doc_type": "archive",
+                    "subtype": "legacy-infrastructure",
+                    "status": "superseded",
+                    "value_assessment": "low",
+                    "staleness_score": 85,
+                    "recommended_action": "archive"
+                }
+            }
+        ]
     }
 }
 

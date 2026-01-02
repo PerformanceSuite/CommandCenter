@@ -29,7 +29,9 @@ class AgentPersona(Base):
     description: Mapped[str] = mapped_column(Text, nullable=True)
     category: Mapped[str] = mapped_column(String(50), default="custom", nullable=False)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
-    model: Mapped[str] = mapped_column(String(100), default="claude-sonnet-4-20250514", nullable=False)
+    model: Mapped[str] = mapped_column(
+        String(100), default="claude-sonnet-4-20250514", nullable=False
+    )
     temperature: Mapped[float] = mapped_column(Float, default=0.7, nullable=False)
     requires_sandbox: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     tags: Mapped[dict] = mapped_column(JSON, default=list, nullable=False)

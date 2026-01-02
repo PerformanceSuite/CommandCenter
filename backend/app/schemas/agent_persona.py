@@ -12,14 +12,20 @@ class AgentPersonaBase(BaseModel):
     display_name: str = Field(..., min_length=1, max_length=200, description="Human-readable name")
     description: str | None = Field(None, description="Description of the persona")
     category: str = Field(
-        default="custom", max_length=50, description="Category (assessment, coding, verification, custom)"
+        default="custom",
+        max_length=50,
+        description="Category (assessment, coding, verification, custom)",
     )
     system_prompt: str = Field(..., min_length=1, description="System prompt for the agent")
     model: str = Field(
         default="claude-sonnet-4-20250514", max_length=100, description="LLM model identifier"
     )
-    temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Temperature for LLM generation")
-    requires_sandbox: bool = Field(default=False, description="Whether agent requires sandbox execution")
+    temperature: float = Field(
+        default=0.7, ge=0.0, le=2.0, description="Temperature for LLM generation"
+    )
+    requires_sandbox: bool = Field(
+        default=False, description="Whether agent requires sandbox execution"
+    )
     tags: list[str] = Field(default_factory=list, description="Tags for categorization")
     is_active: bool = Field(default=True, description="Whether the persona is active")
 

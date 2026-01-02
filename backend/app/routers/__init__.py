@@ -3,7 +3,6 @@ API routers for FastAPI endpoints
 """
 
 from app.routers import (
-    skills,
     auth,
     batch,
     dashboard,
@@ -12,19 +11,21 @@ from app.routers import (
     repositories,
     research_tasks,
     settings,
+    skills,
     sse,
     technologies,
 )
 
 __all__ = [
     "auth",
-    "repositories",
-    "technologies",
-    "dashboard",
-    "knowledge",
-    "research_tasks",
     "batch",
+    "dashboard",
     "hypotheses",
+    "knowledge",
+    "repositories",
+    "research_tasks",
     "settings",
+    "skills",
     "sse",
+    "technologies",
 ]

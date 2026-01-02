@@ -1,4 +1,5 @@
 """API router for skills."""
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status

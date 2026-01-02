@@ -126,60 +126,87 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     print("Database connections closed")
 
 
-# Create FastAPI application
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-    description="Command Center API for Performia - Research and development management",
-    lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
-)
+def create_app() -> FastAPI:
+    """
+    Create and configure the FastAPI application instance.
 
-# Add correlation ID middleware (must be first to ensure all requests get IDs)
-app.add_middleware(CorrelationIDMiddleware)
+    This factory function initializes the Command Center API with all necessary
+    middleware, routers, and configuration. It sets up:
 
-# Add logging middleware
-app.add_middleware(LoggingMiddleware)
+    - Lifespan management for startup/shutdown events
+    - CORS middleware with security best practices
+    - Rate limiting and security headers
+    - Correlation ID tracking for request tracing
+    - Prometheus metrics instrumentation
+    - All API routers for various features
 
-# Add rate limiting
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    Returns:
+        FastAPI: Configured FastAPI application instance ready to serve requests
 
-# Add security headers middleware
-add_security_headers(app)
+    Example:
+        >>> app = create_app()
+        >>> # Run with: uvicorn app.main:app --reload
+    """
+    # Create FastAPI application
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        description="Command Center API for Performia - Research and development management",
+        lifespan=lifespan,
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+    )
 
-# Configure CORS with security best practices
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,  # Explicit allowlist from environment
-    allow_credentials=settings.cors_allow_credentials,
-    allow_methods=[
-        "GET",
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-        "OPTIONS",
-    ],  # Explicit methods
-    allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
-    max_age=settings.cors_max_age,
-)
+    # Add correlation ID middleware (must be first to ensure all requests get IDs)
+    app.add_middleware(CorrelationIDMiddleware)
 
-# Setup Prometheus metrics
-instrumentator = Instrumentator(
-    should_group_status_codes=True,
-    should_ignore_untemplated=True,
-    should_respect_env_var=True,
-    should_instrument_requests_inprogress=True,
-    excluded_handlers=["/metrics", "/health"],
-    env_var_name="ENABLE_METRICS",
-    inprogress_name="http_requests_inprogress",
-    inprogress_labels=True,
-)
-instrumentator.instrument(app)
-setup_custom_metrics(app)
+    # Add logging middleware
+    app.add_middleware(LoggingMiddleware)
+
+    # Add rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Add security headers middleware
+    add_security_headers(app)
+
+    # Configure CORS with security best practices
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,  # Explicit allowlist from environment
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=[
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS",
+        ],  # Explicit methods
+        allow_headers=["Authorization", "Content-Type", "Accept"],  # Explicit headers
+        max_age=settings.cors_max_age,
+    )
+
+    # Setup Prometheus metrics
+    instrumentator = Instrumentator(
+        should_group_status_codes=True,
+        should_ignore_untemplated=True,
+        should_respect_env_var=True,
+        should_instrument_requests_inprogress=True,
+        excluded_handlers=["/metrics", "/health"],
+        env_var_name="ENABLE_METRICS",
+        inprogress_name="http_requests_inprogress",
+        inprogress_labels=True,
+    )
+    instrumentator.instrument(app)
+    setup_custom_metrics(app)
+
+    return app
+
+
+# Create the application instance
+app = create_app()
 
 
 # Health check endpoints
@@ -377,6 +404,20 @@ async def global_exception_handler(request: Request, exc: Exception):
             "request_id": request_id,  # Include correlation ID in response
         },
     )
+
+
+def format_api_response(data: dict, status: str = "success"):
+    """
+    Format a standardized API response structure.
+
+    Args:
+        data: The response data to include in the formatted response
+        status: The status string, defaults to "success"
+
+    Returns:
+        dict: A formatted response dictionary with status, data, and timestamp
+    """
+    return {"status": status, "data": data, "timestamp": "2024-01-01T00:00:00Z"}
 
 
 if __name__ == "__main__":

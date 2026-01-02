@@ -142,6 +142,96 @@ class LinkType(str, Enum):
     PRODUCES = "produces"
     CONSUMES = "consumes"
     CONTAINS = "contains"
+    # Document Intelligence link types
+    INTEGRATES_WITH = "integratesWith"
+    PROVIDES_TO = "providesTo"
+    REPLACES = "replaces"
+    SIMILAR_TO = "similarTo"
+    SUPERSEDES = "supersedes"
+    EXTRACTS_FROM = "extractsFrom"
+
+
+class DocumentType(str, Enum):
+    """Document classification types"""
+
+    PLAN = "plan"
+    CONCEPT = "concept"
+    GUIDE = "guide"
+    REFERENCE = "reference"
+    REPORT = "report"
+    SESSION = "session"
+    ARCHIVE = "archive"
+
+
+class DocumentStatus(str, Enum):
+    """Document lifecycle status"""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    SUPERSEDED = "superseded"
+    ABANDONED = "abandoned"
+    STALE = "stale"
+
+
+class ConceptType(str, Enum):
+    """Concept classification types"""
+
+    PRODUCT = "product"
+    FEATURE = "feature"
+    MODULE = "module"
+    PROCESS = "process"
+    TECHNOLOGY = "technology"
+    FRAMEWORK = "framework"
+    METHODOLOGY = "methodology"
+    OTHER = "other"
+
+
+class ConceptStatus(str, Enum):
+    """Concept lifecycle status"""
+
+    PROPOSED = "proposed"
+    ACTIVE = "active"
+    IMPLEMENTED = "implemented"
+    DEPRECATED = "deprecated"
+    UNKNOWN = "unknown"
+
+
+class RequirementType(str, Enum):
+    """Requirement classification types"""
+
+    FUNCTIONAL = "functional"
+    NON_FUNCTIONAL = "nonFunctional"
+    CONSTRAINT = "constraint"
+    DEPENDENCY = "dependency"
+    OUTCOME = "outcome"
+
+
+class RequirementPriority(str, Enum):
+    """Requirement priority levels"""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    UNKNOWN = "unknown"
+
+
+class RequirementStatus(str, Enum):
+    """Requirement status"""
+
+    PROPOSED = "proposed"
+    ACCEPTED = "accepted"
+    IMPLEMENTED = "implemented"
+    VERIFIED = "verified"
+    UNKNOWN = "unknown"
+
+
+class ConfidenceLevel(str, Enum):
+    """AI extraction confidence level"""
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 # ============================================================================
@@ -776,3 +866,232 @@ class GraphEvent(Base):
 
     def __repr__(self) -> str:
         return f"<GraphEvent(id={self.id}, subject='{self.subject}')>"
+
+
+# ============================================================================
+# Document Intelligence Entities
+# ============================================================================
+
+
+class GraphDocument(Base):
+    """
+    Document in the knowledge graph with classification metadata.
+
+    Stores document metadata and classification results from the
+    doc-classifier persona. Enables document lifecycle management
+    and querying across the documentation corpus.
+    """
+
+    __tablename__ = "graph_documents"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign key to project for multi-tenant isolation
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Document identification
+    path: Mapped[str] = mapped_column(String(1024), nullable=False, index=True)
+    title: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+
+    # Classification (from doc-classifier)
+    doc_type: Mapped[DocumentType] = mapped_column(
+        SQLEnum(DocumentType), nullable=False, index=True
+    )
+    subtype: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    status: Mapped[DocumentStatus] = mapped_column(
+        SQLEnum(DocumentStatus),
+        default=DocumentStatus.ACTIVE,
+        nullable=False,
+        index=True,
+    )
+    audience: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    value_assessment: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # high, medium, low, none
+
+    # Content metadata
+    word_count: Mapped[int] = mapped_column(Integer, default=0)
+    content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    # Staleness tracking (from doc-staleness-detector)
+    staleness_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 0-100
+    last_meaningful_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Recommendation (from doc-classifier)
+    recommended_action: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
+    )  # keep, update, archive, merge, delete
+    target_location: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+
+    # Additional metadata (JSON for flexibility)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+    last_analyzed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Relationships
+    concepts: Mapped[list["GraphConcept"]] = relationship(
+        "GraphConcept", back_populates="source_document", cascade="all, delete-orphan"
+    )
+    requirements: Mapped[list["GraphRequirement"]] = relationship(
+        "GraphRequirement", back_populates="source_document", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"<GraphDocument(id={self.id}, path='{self.path}', type={self.doc_type})>"
+
+
+class GraphConcept(Base):
+    """
+    Named concept extracted from documents.
+
+    Stores concepts extracted by the doc-concept-extractor persona.
+    Concepts are named ideas, products, features, or business entities
+    that have a distinct identity in the knowledge graph.
+    """
+
+    __tablename__ = "graph_concepts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign keys
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_document_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("graph_documents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Concept identification
+    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    concept_type: Mapped[ConceptType] = mapped_column(
+        SQLEnum(ConceptType), nullable=False, index=True
+    )
+    definition: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Status and domain
+    status: Mapped[ConceptStatus] = mapped_column(
+        SQLEnum(ConceptStatus),
+        default=ConceptStatus.UNKNOWN,
+        nullable=False,
+        index=True,
+    )
+    domain: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    # Extraction metadata
+    source_quote: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    confidence: Mapped[ConfidenceLevel] = mapped_column(
+        SQLEnum(ConfidenceLevel),
+        default=ConfidenceLevel.MEDIUM,
+        nullable=False,
+    )
+
+    # Related entities (JSON array of names for flexibility)
+    related_entities: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
+
+    # Additional metadata
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    source_document: Mapped[Optional["GraphDocument"]] = relationship(
+        "GraphDocument", back_populates="concepts"
+    )
+
+    def __repr__(self) -> str:
+        return f"<GraphConcept(id={self.id}, name='{self.name}', type={self.concept_type})>"
+
+
+class GraphRequirement(Base):
+    """
+    Requirement mined from documents.
+
+    Stores requirements extracted by the doc-requirement-miner persona.
+    Requirements are explicit or implicit statements about what a
+    system MUST, SHOULD, or COULD do.
+    """
+
+    __tablename__ = "graph_requirements"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Foreign keys
+    project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_document_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("graph_documents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Requirement identification
+    req_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)  # REQ-XXX format
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # Classification
+    req_type: Mapped[RequirementType] = mapped_column(
+        SQLEnum(RequirementType), nullable=False, index=True
+    )
+    priority: Mapped[RequirementPriority] = mapped_column(
+        SQLEnum(RequirementPriority),
+        default=RequirementPriority.UNKNOWN,
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[RequirementStatus] = mapped_column(
+        SQLEnum(RequirementStatus),
+        default=RequirementStatus.PROPOSED,
+        nullable=False,
+        index=True,
+    )
+
+    # Traceability
+    source_concept: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )  # Which concept this relates to
+    source_quote: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    verification: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True
+    )  # How to verify this is met
+
+    # Additional metadata
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    source_document: Mapped[Optional["GraphDocument"]] = relationship(
+        "GraphDocument", back_populates="requirements"
+    )
+
+    def __repr__(self) -> str:
+        return f"<GraphRequirement(id={self.id}, req_id='{self.req_id}', type={self.req_type})>"
