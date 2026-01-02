@@ -29,6 +29,11 @@ export { useResearchTasks } from './useResearchTasks';
 export { useTechnologies } from './useTechnologies';
 export { useWebSocket } from './useWebSocket';
 export { useGraphSubscription } from './useGraphSubscription';
+export { useWebSocketSubscription } from './useWebSocketSubscription';
+export type {
+  UseWebSocketSubscriptionOptions,
+  UseWebSocketSubscriptionResult,
+} from './useWebSocketSubscription';
 export type {
   UseGraphSubscriptionOptions,
   UseGraphSubscriptionReturn,
