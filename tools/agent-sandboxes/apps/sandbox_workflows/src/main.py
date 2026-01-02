@@ -19,7 +19,7 @@ load_dotenv(root_dir / ".env")
 # Initialize Typer app
 app = typer.Typer(
     name="obox",
-    help="Orchestrated Sandbox Workflows - Multi-agent experimentation with E2B sandboxes",
+    help="Orchestrated Sandbox Workflows - Run parallel Claude Code agents in isolated E2B cloud sandboxes",
     add_completion=False,
 )
 

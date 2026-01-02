@@ -66,7 +66,7 @@ def sandbox_fork_command(
     log_manager = logs.LogManager(repo_name)
 
     # === VALIDATION ===
-    log_and_print(log_manager, "\n[bold cyan]Sandbox Fork - Multi-Agent Experimentation[/bold cyan]\n", "\n[bold cyan]Sandbox Fork - Multi-Agent Experimentation[/bold cyan]\n")
+    log_and_print(log_manager, "\n[bold cyan]Sandbox Fork - Parallel Agent Execution[/bold cyan]\n", "\n[bold cyan]Sandbox Fork - Parallel Agent Execution[/bold cyan]\n")
 
     # Validate repo URL format
     if not git_utils.validate_git_url(repo_url):

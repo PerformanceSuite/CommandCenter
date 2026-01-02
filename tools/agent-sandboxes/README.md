@@ -18,7 +18,7 @@ Using Agent Sandboxes (E2B) for complete agentic engineering control.
 
 ## Apps
 
-- `sandbox_workflows/` - **obox**: Run parallel agent forks in isolated E2B sandboxes for experimentation
+- `sandbox_workflows/` - **obox**: Run parallel Claude Code agents in isolated E2B cloud sandboxes
 - `sandbox_mcp/` - MCP server wrapping sandbox_cli for LLM integration (works from root)
 - `sandbox_cli/` - Click CLI for E2B sandbox management (init, exec, files, lifecycle)
 - `sandbox_fundamentals/` - E2B SDK learning examples and patterns
@@ -154,7 +154,7 @@ prompt: /wf_plan_build Add buttons to the nav bar that auto scroll to respective
 
 ```
 
-#### Run Parallel Agent Experiments - **obox** - `apps/sandbox_workflows/`
+#### Run Parallel Agents - **obox** - `apps/sandbox_workflows/`
 ```bash
 cp .mcp.json apps/sandbox_agent_working_dir/.mcp.json (after you fill it out with your e2b api key)
 cp .env apps/sandbox_agent_working_dir/.env (after you fill it out with your credentials)

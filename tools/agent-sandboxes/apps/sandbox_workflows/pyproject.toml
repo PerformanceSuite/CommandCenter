@@ -1,7 +1,7 @@
 [project]
 name = "obox"
 version = "0.1.0"
-description = "Orchestrated Sandbox Workflows - Multi-agent experimentation with E2B sandboxes"
+description = "Orchestrated Sandbox Workflows - Run parallel Claude Code agents in isolated E2B cloud sandboxes"
 requires-python = ">=3.12"
 dependencies = [
     "typer>=0.9.0",

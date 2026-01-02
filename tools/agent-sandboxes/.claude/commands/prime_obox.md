@@ -1,6 +1,6 @@
 # Purpose
 
-Quickly prime yourself on the obox (Out Box Agent) command-line tool and sandbox fork workflow system. Learn how to run parallel agent forks in isolated E2B sandboxes for experimentation and testing.
+Quickly prime yourself on the obox (Out Box Agent) command-line tool. Learn how to run parallel Claude Code agents in isolated E2B cloud sandboxes for multi-stream development tasks.
 
 ## Instructions
 
@@ -18,7 +18,7 @@ Quickly prime yourself on the obox (Out Box Agent) command-line tool and sandbox
 
 1. Read `@apps/sandbox_workflows/README.md`
 2. Run `cd apps/sandbox_workflows && uv run obox --help`
-3. Run `cd apps/sandbox_workflows && uv run obox sandbox_fork --help`
+3. Note: The repo URL is a positional argument, NOT a subcommand. Usage: `uv run obox <repo-url> --prompt <prompt> [options]`
 4. Read `@apps/sandbox_workflows/src/prompts/sandbox_fork_agent_system_prompt.md`
 5. Follow the `Report` section to report your understanding
 

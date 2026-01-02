@@ -1,17 +1,16 @@
-# Sandbox Fork - Multi-Agent Git Repository Experimentation
+# Sandbox Fork - Parallel Agent Execution
 
-Run parallel experiments on git repositories using isolated E2B sandboxes and Claude Code agents.
+Run parallel Claude Code agents in isolated E2B cloud sandboxes for multi-stream development tasks.
 
 ## Key Features
 
-- **Parallel Execution**: Run 1-100 forks in parallel threads with independent sandboxes
-- **Model Selection**: Choose between Opus, Sonnet, or Haiku models per experiment
+- **Parallel Execution**: Run 1-100 agents in parallel threads with independent sandboxes
+- **Model Selection**: Choose between Opus, Sonnet, or Haiku models per task
 - **Auto-Branch Generation**: Automatically creates unique branches for each fork
 - **Thread-Safe Logging**: Each fork gets its own detailed log file with all agent activity
 - **Full Observability**: 6 hook types capture every tool use, prompt, result, and error
 - **Path Security**: Hook-based restrictions prevent accidental local filesystem access
-- **GitHub Integration**: Optional GitHub token support for automated push/PR operations
-- **Project-Level Commands**: Agents have access to custom slash commands (`/plan`, `/build`, `/wf_plan_build`)
+- **GitHub Integration**: GitHub token support for automated push/PR operations
 - **Cost Tracking**: Per-fork and total cost tracking with detailed token usage
 - **VSCode Integration**: Auto-opens all log files for real-time monitoring
 
@@ -32,20 +31,30 @@ cp .env.sample .env
 Edit `.env` and add:
 - `ANTHROPIC_API_KEY` - Your Anthropic API key for Claude
 - `E2B_API_KEY` - Your E2B API key for sandbox management
-- `GITHUB_TOKEN` (Optional) - GitHub Personal Access Token for git push/PR operations
+- `GITHUB_TOKEN` - GitHub Personal Access Token for git push/PR operations (use classic PAT with 'repo' scope)
 
 ## Usage
 
-### Basic Fork
+### ⚠️ IMPORTANT: Correct CLI Syntax
 
 ```bash
-uv run obox sandbox-fork https://github.com/user/repo --prompt "Add unit tests to all functions"
+# ✅ CORRECT - repo URL is the first positional argument
+uv run obox <repo_url> --prompt <prompt> [options]
+
+# ❌ WRONG - there is no 'sandbox-fork' subcommand
+uv run obox sandbox-fork <repo_url>  # THIS WILL FAIL
 ```
 
-### Multiple Forks
+### Basic Usage
 
 ```bash
-uv run obox sandbox-fork https://github.com/user/repo \
+uv run obox https://github.com/user/repo --prompt "Add unit tests to all functions"
+```
+
+### Multiple Parallel Agents
+
+```bash
+uv run obox https://github.com/user/repo \
   --prompt "Refactor the codebase to use async/await" \
   --forks 5
 ```
@@ -53,7 +62,7 @@ uv run obox sandbox-fork https://github.com/user/repo \
 ### Specific Branch
 
 ```bash
-uv run obox sandbox-fork https://github.com/user/repo \
+uv run obox https://github.com/user/repo \
   --branch feature/new-api \
   --prompt "Review and document the new API endpoints"
 ```
@@ -61,8 +70,8 @@ uv run obox sandbox-fork https://github.com/user/repo \
 ### Prompt from File
 
 ```bash
-uv run obox sandbox-fork https://github.com/user/repo \
-  --prompt ./prompts/my-experiment.md \
+uv run obox https://github.com/user/repo \
+  --prompt ./prompts/my-task.md \
   --forks 3
 ```
 
@@ -70,12 +79,12 @@ uv run obox sandbox-fork https://github.com/user/repo \
 
 ```bash
 # Use faster Haiku model
-uv run obox sandbox-fork https://github.com/user/repo \
+uv run obox https://github.com/user/repo \
   --prompt "Quick code review" \
   --model haiku
 
 # Use powerful Opus model
-uv run obox sandbox-fork https://github.com/user/repo \
+uv run obox https://github.com/user/repo \
   --prompt "Complex refactoring task" \
   --model opus
 ```
@@ -83,10 +92,20 @@ uv run obox sandbox-fork https://github.com/user/repo \
 ### With Max Turns Limit
 
 ```bash
-uv run obox sandbox-fork https://github.com/user/repo \
+uv run obox https://github.com/user/repo \
   --prompt "Add comprehensive documentation" \
   --max-turns 50
 ```
+
+## CLI Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--prompt` | `-p` | **Required.** Prompt text or path to .md file |
+| `--branch` | `-b` | Git branch to checkout/create |
+| `--forks` | `-f` | Number of parallel agents (default: 1) |
+| `--model` | `-m` | Model: opus, sonnet, haiku (default: sonnet) |
+| `--max-turns` | `-t` | Maximum conversation turns |
 
 ## How It Works
 
@@ -100,37 +119,16 @@ uv run obox sandbox-fork https://github.com/user/repo \
 8. **Monitoring**: Opens all log files in VSCode for real-time progress tracking
 9. **Summary**: Displays execution results table with costs, tokens, status, and log paths
 
-## Available Slash Commands
+## Git Push Authentication
 
-Agents have access to custom slash commands in `../sandbox_agent_working_dir/.claude/commands/`:
+**CRITICAL**: The sandbox is isolated - no SSH keys, no inherited env vars.
 
-- **`/plan <user-prompt>`** - Generate a detailed implementation plan and save to `specs/` directory
-  - Creates comprehensive step-by-step plans with acceptance criteria
-  - Includes relevant files, testing strategy, and validation commands
-  - Useful for complex features that need planning before implementation
-
-- **`/build <path-to-plan>`** - Build implementation from a plan file
-  - Reads plan file from `specs/` directory
-  - Executes step-by-step implementation following the plan
-  - Reports progress and completion status
-
-- **`/wf_plan_build <user-prompt>`** - Complete plan-and-build workflow
-  - Combines `/plan` and `/build` in one command
-  - First generates the plan, then implements it
-  - Best for end-to-end feature development in a single prompt
-
-### Example Usage
-
+For agents to push to GitHub, your task prompt MUST include:
 ```bash
-# Using /plan in a prompt
-uv run obox sandbox-fork https://github.com/user/repo \
-  --prompt "/plan Add user authentication with JWT tokens"
-
-# Using /wf_plan_build for complete workflow
-uv run obox sandbox-fork https://github.com/user/repo \
-  --prompt "/wf_plan_build Add user authentication with JWT tokens" \
-  --forks 3
+git remote set-url origin https://${GITHUB_TOKEN}@github.com/<owner>/<repo>.git
 ```
+
+The GITHUB_TOKEN environment variable is passed to the sandbox automatically if set in your `.env` file.
 
 ## Architecture
 
@@ -149,34 +147,11 @@ Each agent is configured with:
 - **System Prompt**: Dynamically formatted with repo URL, branch, fork number, GitHub token, allowed directories
 - **MCP Server Access**: Full access to E2B sandbox tools via MCP protocol
 - **Allowed Tools**: Whitelisted set of 25+ tools (sandbox + local + utility)
-- **Disallowed Tools**: Blacklisted tools (e.g., NotebookEdit) for security
 - **Permission Mode**: Set to `acceptEdits` for autonomous operation
 - **Max Turns**: Configurable (default: 100 turns)
 - **Model**: Configurable (opus, sonnet, haiku)
 - **Working Directory**: Set to `apps/sandbox_agent_working_dir/`
-- **Setting Sources**: `["project"]` enables project-level slash commands
 - **Environment**: GitHub token passed to agent environment if available
-
-### Execution Flow
-
-1. Main thread creates LogManager and validates inputs
-2. For each fork (1 to N):
-   - Create thread with unique fork number
-   - Generate fork-specific branch name (`branch-{fork_num}`)
-   - Create ForkLogger from LogManager
-   - Create SandboxForkAgent with all configuration
-   - Start thread running `run_fork_in_thread()`
-3. Each thread independently:
-   - Creates new async event loop
-   - Initializes ClaudeSDKClient with options
-   - Loads and formats system prompt
-   - Connects to SDK client
-   - Submits user prompt
-   - Streams messages and logs to fork logger
-   - Extracts cost/token data from ResultMessage
-   - Returns execution result dict
-4. Main thread waits for all threads to complete
-5. Displays results table and opens logs in VSCode
 
 ### Hybrid Tool Access with Hook-Based Security
 
@@ -191,25 +166,9 @@ Agents operate in a **hybrid environment**:
 - ✅ `mcp__e2b-sandbox__get_host` - Get public URL for exposed ports (webservers)
 
 **Local Tools** (Secondary - restricted to allowed directories):
-- ✅ `Read`, `Write`, `Edit` - Local file operations (ONLY in allowed directories: temp/, specs/, ai_docs/, app_docs/)
+- ✅ `Read`, `Write`, `Edit` - Local file operations (ONLY in allowed directories)
 - ✅ `Bash` - Local commands (logged for observability)
 - ✅ `WebFetch`, `WebSearch`, `Task`, `Skill`, `SlashCommand`, `TodoWrite`, `Glob`, `Grep` - Utility tools
-
-**Hook-Based Security & Observability**:
-
-All hooks are registered for maximum visibility and control:
-- **PreToolUse**: Logs and validates before tool execution, blocks paths outside allowed directories
-- **PostToolUse**: Logs tool results and tracks file modifications
-- **UserPromptSubmit**: Logs when prompts are submitted
-- **Stop**: Logs when agent session ends (reason, turns, duration)
-- **SubagentStop**: Logs when subagents (Task tool) complete
-- **PreCompact**: Logs context window compaction events
-
-Security features:
-- Path restrictions enforced at runtime before tool execution
-- Cannot be bypassed - hooks run before every tool call
-- Allowed directories: temp/, specs/, ai_docs/, app_docs/
-- All Bash commands logged for observability
 
 ## Logs
 
@@ -220,30 +179,30 @@ Log files are stored in `../sandbox_agent_working_dir/logs/`:
 
 ## Examples
 
-### Example 1: Add Tests to Multiple Branches
+### Example 1: Single Agent Task
 
 ```bash
-uv run obox sandbox-fork https://github.com/myorg/myrepo \
-  --branch main \
-  --prompt "Add comprehensive unit tests for all utility functions" \
-  --forks 1
+uv run obox https://github.com/myorg/myrepo \
+  --branch feature/auth-tests \
+  --prompt "Add comprehensive unit tests for all auth functions" \
+  --model sonnet
 ```
 
-### Example 2: Parallel Refactoring Experiments
+### Example 2: Parallel Development Streams
 
 ```bash
-uv run obox sandbox-fork https://github.com/myorg/myrepo \
+uv run obox https://github.com/myorg/myrepo \
   --prompt "Refactor the authentication module to use modern async/await patterns" \
+  --branch feature/async-refactor \
   --forks 3
 ```
 
 ### Example 3: Code Review and Documentation
 
 ```bash
-uv run obox sandbox-fork https://github.com/myorg/myrepo \
+uv run obox https://github.com/myorg/myrepo \
   --branch feature/new-api \
-  --prompt "Review the new API implementation, add JSDoc comments, and create usage examples" \
-  --forks 1
+  --prompt "Review the new API implementation, add JSDoc comments, and create usage examples"
 ```
 
 ## Project Structure
@@ -271,32 +230,18 @@ apps/sandbox_workflows/
 └── README.md                   # This file
 ```
 
-## Development
-
-### Running Tests
-
-```bash
-uv run pytest
-```
-
-### Code Formatting
-
-```bash
-uv run black src/
-uv run isort src/
-```
-
-### Type Checking
-
-```bash
-uv run mypy src/
-```
-
 ## Troubleshooting
+
+### "Got unexpected extra argument"
+
+**Wrong**: `uv run obox sandbox-fork https://github.com/...`
+**Right**: `uv run obox https://github.com/... --prompt ...`
+
+There is no `sandbox-fork` subcommand. The repo URL is the first positional argument.
 
 ### "VSCode not found"
 
-If VSCode doesn't open automatically, you can manually open log files from:
+If VSCode doesn't open automatically, manually open log files from:
 ```
 ../sandbox_agent_working_dir/logs/
 ```
@@ -309,14 +254,16 @@ cp .env.sample .env
 # Edit .env with your keys
 ```
 
-### "Path outside allowed directories"
+### "Push failed" / "could not read Username"
 
-If you see this error in logs, the agent tried to use local file tools (Read/Write/Edit) outside the allowed directories (temp/, specs/, ai_docs/, app_docs/). This is expected behavior - the hook blocked the operation for security. The agent should use MCP sandbox tools instead for repository operations.
+1. Verify GITHUB_TOKEN is in your `.env` file
+2. Verify it's a classic PAT (`ghp_...`), NOT an OAuth token (`gho_...`)
+3. Verify your task prompt includes git auth instructions
+
+### "E2B API error"
+
+Check your E2B API key and quota at https://e2b.dev/dashboard
 
 ## License
 
 MIT
-
-## Contributing
-
-Pull requests are welcome! Please ensure all tests pass and code is formatted.
