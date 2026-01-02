@@ -227,8 +227,22 @@ async def test_user(db_session: AsyncSession):
 # Authenticated client fixture
 @pytest.fixture
 async def authenticated_client(async_client: AsyncClient, test_user, db_session: AsyncSession):
-    """Client with authentication headers"""
+    """Client with authentication headers and project access"""
     from app.auth.jwt import create_token_pair
+    from app.models.project import Project
+    from app.models.user_project import UserProject
+
+    # Create a project and assign user to it
+    project = Project(name="Test Project", owner="testowner", description="Project for testing")
+    db_session.add(project)
+    await db_session.commit()
+    await db_session.refresh(project)
+
+    user_project = UserProject(
+        user_id=test_user.id, project_id=project.id, is_default=True, role="member"
+    )
+    db_session.add(user_project)
+    await db_session.commit()
 
     tokens = create_token_pair(test_user.id, test_user.email)
     async_client.headers["Authorization"] = f"Bearer {tokens['access_token']}"

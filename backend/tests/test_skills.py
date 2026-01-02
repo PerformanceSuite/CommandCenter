@@ -4,19 +4,18 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_skill(client: AsyncClient, authenticated_headers):
+async def test_create_skill(authenticated_client: AsyncClient):
     """Can create a skill."""
-    response = await client.post(
+    response = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
         json={
             "slug": "test-skill",
             "name": "Test Skill",
             "description": "A test skill",
             "content": "# Test Skill\n\nThis is a test.",
             "category": "workflow",
-            "tags": ["test"]
-        }
+            "tags": ["test"],
+        },
     )
     assert response.status_code == 201
     data = response.json()
@@ -25,46 +24,34 @@ async def test_create_skill(client: AsyncClient, authenticated_headers):
 
 
 @pytest.mark.asyncio
-async def test_get_skill_by_slug(client: AsyncClient, authenticated_headers):
+async def test_get_skill_by_slug(authenticated_client: AsyncClient):
     """Can get a skill by slug."""
     # First create
-    await client.post(
+    await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "findable-skill",
-            "name": "Findable Skill",
-            "content": "# Content"
-        }
+        json={"slug": "findable-skill", "name": "Findable Skill", "content": "# Content"},
     )
 
     # Then find
-    response = await client.get(
+    response = await authenticated_client.get(
         "/api/v1/skills/by-slug/findable-skill",
-        headers=authenticated_headers
     )
     assert response.status_code == 200
     assert response.json()["slug"] == "findable-skill"
 
 
 @pytest.mark.asyncio
-async def test_list_skills(client: AsyncClient, authenticated_headers):
+async def test_list_skills(authenticated_client: AsyncClient):
     """Can list skills."""
     # Create a skill
-    await client.post(
+    await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "list-test-skill",
-            "name": "List Test Skill",
-            "content": "# Content"
-        }
+        json={"slug": "list-test-skill", "name": "List Test Skill", "content": "# Content"},
     )
 
     # List skills
-    response = await client.get(
+    response = await authenticated_client.get(
         "/api/v1/skills",
-        headers=authenticated_headers
     )
     assert response.status_code == 200
     skills = response.json()
@@ -73,28 +60,18 @@ async def test_list_skills(client: AsyncClient, authenticated_headers):
 
 
 @pytest.mark.asyncio
-async def test_update_skill(client: AsyncClient, authenticated_headers):
+async def test_update_skill(authenticated_client: AsyncClient):
     """Can update a skill."""
     # Create skill
-    create_resp = await client.post(
+    create_resp = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "update-test",
-            "name": "Update Test",
-            "content": "# Original Content"
-        }
+        json={"slug": "update-test", "name": "Update Test", "content": "# Original Content"},
     )
     skill_id = create_resp.json()["id"]
 
     # Update skill
-    response = await client.patch(
-        f"/api/v1/skills/{skill_id}",
-        headers=authenticated_headers,
-        json={
-            "name": "Updated Name",
-            "content": "# Updated Content"
-        }
+    response = await authenticated_client.patch(
+        f"/api/v1/skills/{skill_id}", json={"name": "Updated Name", "content": "# Updated Content"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -103,65 +80,46 @@ async def test_update_skill(client: AsyncClient, authenticated_headers):
 
 
 @pytest.mark.asyncio
-async def test_delete_skill(client: AsyncClient, authenticated_headers):
+async def test_delete_skill(authenticated_client: AsyncClient):
     """Can delete a skill."""
     # Create skill
-    create_resp = await client.post(
+    create_resp = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "delete-test",
-            "name": "Delete Test",
-            "content": "# Content"
-        }
+        json={"slug": "delete-test", "name": "Delete Test", "content": "# Content"},
     )
     skill_id = create_resp.json()["id"]
 
     # Delete skill
-    response = await client.delete(
+    response = await authenticated_client.delete(
         f"/api/v1/skills/{skill_id}",
-        headers=authenticated_headers
     )
     assert response.status_code == 204
 
     # Verify deleted
-    get_resp = await client.get(
+    get_resp = await authenticated_client.get(
         f"/api/v1/skills/{skill_id}",
-        headers=authenticated_headers
     )
     assert get_resp.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_record_usage(client: AsyncClient, authenticated_headers):
+async def test_record_usage(authenticated_client: AsyncClient):
     """Can record skill usage."""
     # Create skill
-    create_resp = await client.post(
-        "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "usage-test",
-            "name": "Usage Test",
-            "content": "# Content"
-        }
+    create_resp = await authenticated_client.post(
+        "/api/v1/skills", json={"slug": "usage-test", "name": "Usage Test", "content": "# Content"}
     )
     skill_id = create_resp.json()["id"]
 
     # Record usage
-    response = await client.post(
-        "/api/v1/skills/usage",
-        headers=authenticated_headers,
-        json={
-            "skill_id": skill_id,
-            "outcome": "success"
-        }
+    response = await authenticated_client.post(
+        "/api/v1/skills/usage", json={"skill_id": skill_id, "outcome": "success"}
     )
     assert response.status_code == 201
 
     # Check count updated
-    skill_resp = await client.get(
+    skill_resp = await authenticated_client.get(
         f"/api/v1/skills/{skill_id}",
-        headers=authenticated_headers
     )
     data = skill_resp.json()
     assert data["usage_count"] == 1
@@ -170,43 +128,31 @@ async def test_record_usage(client: AsyncClient, authenticated_headers):
 
 
 @pytest.mark.asyncio
-async def test_record_multiple_usages(client: AsyncClient, authenticated_headers):
+async def test_record_multiple_usages(authenticated_client: AsyncClient):
     """Effectiveness score updates correctly."""
     # Create skill
-    create_resp = await client.post(
+    create_resp = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "effectiveness-test",
-            "name": "Effectiveness Test",
-            "content": "# Content"
-        }
+        json={"slug": "effectiveness-test", "name": "Effectiveness Test", "content": "# Content"},
     )
     skill_id = create_resp.json()["id"]
 
     # Record 2 successes
-    await client.post(
-        "/api/v1/skills/usage",
-        headers=authenticated_headers,
-        json={"skill_id": skill_id, "outcome": "success"}
+    await authenticated_client.post(
+        "/api/v1/skills/usage", json={"skill_id": skill_id, "outcome": "success"}
     )
-    await client.post(
-        "/api/v1/skills/usage",
-        headers=authenticated_headers,
-        json={"skill_id": skill_id, "outcome": "success"}
+    await authenticated_client.post(
+        "/api/v1/skills/usage", json={"skill_id": skill_id, "outcome": "success"}
     )
 
     # Record 1 failure
-    await client.post(
-        "/api/v1/skills/usage",
-        headers=authenticated_headers,
-        json={"skill_id": skill_id, "outcome": "failure"}
+    await authenticated_client.post(
+        "/api/v1/skills/usage", json={"skill_id": skill_id, "outcome": "failure"}
     )
 
     # Check effectiveness score (2/3 = 0.666...)
-    skill_resp = await client.get(
+    skill_resp = await authenticated_client.get(
         f"/api/v1/skills/{skill_id}",
-        headers=authenticated_headers
     )
     data = skill_resp.json()
     assert data["usage_count"] == 3
@@ -216,36 +162,38 @@ async def test_record_multiple_usages(client: AsyncClient, authenticated_headers
 
 
 @pytest.mark.asyncio
-async def test_search_skills(client: AsyncClient, authenticated_headers):
+async def test_search_skills(authenticated_client: AsyncClient):
     """Can search skills."""
     # Create skills
-    await client.post(
+    await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={"slug": "parallel-agent", "name": "Parallel Agents", "content": "Multi-agent patterns", "category": "workflow"}
+        json={
+            "slug": "parallel-agent",
+            "name": "Parallel Agents",
+            "content": "Multi-agent patterns",
+            "category": "workflow",
+        },
     )
-    await client.post(
+    await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={"slug": "single-agent", "name": "Single Agent", "content": "Simple patterns", "category": "pattern"}
+        json={
+            "slug": "single-agent",
+            "name": "Single Agent",
+            "content": "Simple patterns",
+            "category": "pattern",
+        },
     )
 
     # Search by query
-    response = await client.post(
-        "/api/v1/skills/search",
-        headers=authenticated_headers,
-        json={"query": "parallel"}
-    )
+    response = await authenticated_client.post("/api/v1/skills/search", json={"query": "parallel"})
     assert response.status_code == 200
     results = response.json()
     assert len(results) >= 1
     assert any(s["slug"] == "parallel-agent" for s in results)
 
     # Search by category
-    response = await client.post(
-        "/api/v1/skills/search",
-        headers=authenticated_headers,
-        json={"category": "pattern"}
+    response = await authenticated_client.post(
+        "/api/v1/skills/search", json={"category": "pattern"}
     )
     assert response.status_code == 200
     results = response.json()
@@ -254,95 +202,66 @@ async def test_search_skills(client: AsyncClient, authenticated_headers):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_slug_rejected(client: AsyncClient, authenticated_headers):
+async def test_duplicate_slug_rejected(authenticated_client: AsyncClient):
     """Cannot create skill with duplicate slug."""
     # Create first skill
-    await client.post(
+    await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "duplicate-test",
-            "name": "First Skill",
-            "content": "# Content"
-        }
+        json={"slug": "duplicate-test", "name": "First Skill", "content": "# Content"},
     )
 
     # Try to create duplicate
-    response = await client.post(
+    response = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "duplicate-test",
-            "name": "Second Skill",
-            "content": "# Content"
-        }
+        json={"slug": "duplicate-test", "name": "Second Skill", "content": "# Content"},
     )
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_get_nonexistent_skill(client: AsyncClient, authenticated_headers):
+async def test_get_nonexistent_skill(authenticated_client: AsyncClient):
     """Returns 404 for nonexistent skill."""
-    response = await client.get(
+    response = await authenticated_client.get(
         "/api/v1/skills/99999",
-        headers=authenticated_headers
     )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_search_by_effectiveness(client: AsyncClient, authenticated_headers):
+async def test_search_by_effectiveness(authenticated_client: AsyncClient):
     """Can filter skills by effectiveness score."""
     # Create skill with high effectiveness
-    create_resp = await client.post(
+    create_resp = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "high-effectiveness",
-            "name": "High Effectiveness",
-            "content": "# Content"
-        }
+        json={"slug": "high-effectiveness", "name": "High Effectiveness", "content": "# Content"},
     )
     skill_id = create_resp.json()["id"]
 
     # Record 3 successes
     for _ in range(3):
-        await client.post(
-            "/api/v1/skills/usage",
-            headers=authenticated_headers,
-            json={"skill_id": skill_id, "outcome": "success"}
+        await authenticated_client.post(
+            "/api/v1/skills/usage", json={"skill_id": skill_id, "outcome": "success"}
         )
 
     # Create skill with low effectiveness
-    create_resp2 = await client.post(
+    create_resp2 = await authenticated_client.post(
         "/api/v1/skills",
-        headers=authenticated_headers,
-        json={
-            "slug": "low-effectiveness",
-            "name": "Low Effectiveness",
-            "content": "# Content"
-        }
+        json={"slug": "low-effectiveness", "name": "Low Effectiveness", "content": "# Content"},
     )
     skill_id2 = create_resp2.json()["id"]
 
     # Record 1 success, 2 failures
-    await client.post(
-        "/api/v1/skills/usage",
-        headers=authenticated_headers,
-        json={"skill_id": skill_id2, "outcome": "success"}
+    await authenticated_client.post(
+        "/api/v1/skills/usage", json={"skill_id": skill_id2, "outcome": "success"}
     )
     for _ in range(2):
-        await client.post(
-            "/api/v1/skills/usage",
-            headers=authenticated_headers,
-            json={"skill_id": skill_id2, "outcome": "failure"}
+        await authenticated_client.post(
+            "/api/v1/skills/usage", json={"skill_id": skill_id2, "outcome": "failure"}
         )
 
     # Search for high effectiveness skills (>0.8)
-    response = await client.post(
-        "/api/v1/skills/search",
-        headers=authenticated_headers,
-        json={"min_effectiveness": 0.8}
+    response = await authenticated_client.post(
+        "/api/v1/skills/search", json={"min_effectiveness": 0.8}
     )
     assert response.status_code == 200
     results = response.json()
