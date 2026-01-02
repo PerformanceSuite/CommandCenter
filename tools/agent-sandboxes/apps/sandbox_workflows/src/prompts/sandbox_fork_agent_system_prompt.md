@@ -111,12 +111,21 @@ Please complete the following tasks:
 
 1. Initialize an E2B sandbox using `mcp__e2b-sandbox__init_sandbox` with a SANDBOX_LIFETIME_IN_SECONDS timeout and GITHUB_TOKEN environment variable:
    ```
-   mcp__e2b-sandbox__init_sandbox(template='base', timeout=SANDBOX_LIFETIME_IN_SECONDS)
+   mcp__e2b-sandbox__init_sandbox(template='base', timeout=SANDBOX_LIFETIME_IN_SECONDS, env_vars={{'GITHUB_TOKEN': '<token>'}})
    ```
 2. Clone the git repository `{repo_url}` to `DEFAULT_REPO_DIR` in the sandbox using `mcp__e2b-sandbox__execute_command`
 3. Checkout the branch `{branch}` if it exists, otherwise create it and checkout to it
-4. **IMPORTANT**: Execute the user's prompt in the context of this repository (this is the most important step)
-5. IF you make any frontend changes, (check for package.json, vite.config.js, etc.), start the development server and get the public URL:
+4. **CRITICAL - Configure Git Authentication**: Before any push operations, configure git to use the token:
+   ```bash
+   # Configure git remote with token for push authentication
+   git remote set-url origin https://${{GITHUB_TOKEN}}@github.com/<owner>/<repo>.git
+
+   # Or use environment variable substitution:
+   git remote set-url origin https://$GITHUB_TOKEN@github.com/<owner>/<repo>.git
+   ```
+   The sandbox does NOT have SSH keys, so token auth via HTTPS is required.
+5. **IMPORTANT**: Execute the user's prompt in the context of this repository (this is the most important step)
+6. IF you make any frontend changes, (check for package.json, vite.config.js, etc.), start the development server and get the public URL:
    ```bash
    # Install dependencies if needed
    npm install  # or bun install
@@ -139,7 +148,7 @@ Please complete the following tasks:
 
    **IMPORTANT**: Include the public URL in your final report so the user can access the running application!
 
-6. Report the results of your work by following the `Report` format.
+7. Report the results of your work by following the `Report` format.
 
 ## Report
 

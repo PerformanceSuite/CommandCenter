@@ -33,8 +33,11 @@ class ForkLogger:
         # Generate timestamp for log file name
         timestamp = datetime.now().strftime(LOG_TIMESTAMP_FORMAT)
 
+        # Sanitize branch name for use in filename (replace / with -)
+        safe_branch = branch.replace('/', '-')
+
         # Create log file path using template
-        log_filename = LOG_FILE_TEMPLATE.format(branch=branch, fork_num=fork_num, timestamp=timestamp)
+        log_filename = LOG_FILE_TEMPLATE.format(branch=safe_branch, fork_num=fork_num, timestamp=timestamp)
         self._log_path = LOG_DIR / log_filename
 
         # Initialize thread lock for safe writing
