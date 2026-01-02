@@ -1,16 +1,18 @@
 import { z } from 'zod';
 
 export const InputSchema = z.object({
-  repositoryPath: z.string().describe('Path to repository'),
-  patchType: z
+  target: z.string().default('/workspace').describe('Path to repository'),
+  operation: z
     .enum([
+      'update-deps',
       'dependency-update',
       'security-patch',
       'simple-refactor',
       'config-update',
     ])
-    .describe('Type of patch to apply'),
-  target: z.string().describe('Target file, package, or pattern to patch'),
+    .default('update-deps')
+    .describe('Type of patch operation'),
+  file: z.string().optional().describe('Target file or pattern to patch'),
   changes: z
     .object({
       oldValue: z.string().optional(),
@@ -18,8 +20,9 @@ export const InputSchema = z.object({
       version: z.string().optional(),
       content: z.string().optional(),
     })
+    .optional()
     .describe('Changes to apply'),
-  dryRun: z.boolean().default(false).describe('Preview changes without applying'),
+  dryRun: z.boolean().default(true).describe('Preview changes without applying'),
 });
 
 export const FileChangeSchema = z.object({
