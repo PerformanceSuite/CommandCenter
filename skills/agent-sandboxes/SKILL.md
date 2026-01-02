@@ -7,6 +7,23 @@ description: Run parallel Claude Code agents in isolated E2B cloud sandboxes. Us
 
 Run parallel, isolated Claude Code agents in E2B cloud sandboxes. Each agent has its own context window and can run Ralph loops for persistent tasks.
 
+## Skills Location
+
+**Skills live in the repo at `skills/`** - not at `~/.claude/skills/`.
+
+When an E2B agent clones CommandCenter, skills are available at:
+```
+./skills/
+├── agent-sandboxes/SKILL.md   # This file
+├── autonomy/SKILL.md
+├── context-management/SKILL.md
+├── infrastructure-decisions/SKILL.md
+├── project-health/SKILL.md
+└── repository-hygiene/SKILL.md
+```
+
+Agents should read skills from `./skills/<skill-name>/SKILL.md` relative to repo root.
+
 ## ⚠️ COMMON FAILURE MODES (Read First!)
 
 These are the actual failures encountered. Check each before running:
