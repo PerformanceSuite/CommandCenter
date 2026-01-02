@@ -5,7 +5,6 @@ These schemas adapt the ai_arena hypothesis models for REST API use.
 """
 
 from datetime import datetime
-from typing import Any
 
 from libs.ai_arena.hypothesis.schema import (
     HypothesisCategory,

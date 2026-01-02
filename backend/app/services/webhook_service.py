@@ -80,7 +80,7 @@ class WebhookService:
             select(WebhookConfig).where(
                 and_(
                     WebhookConfig.id == config_id,
-                    WebhookConfig.active == True,
+                    WebhookConfig.active.is_(True),
                 )
             )
         )

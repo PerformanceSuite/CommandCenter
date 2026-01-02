@@ -142,7 +142,7 @@ class KnowledgeBeastService:
 
     async def delete_by_source(self, source: str) -> bool:
         """Delete by source - KB may not support this natively"""
-        logger.warning(f"delete_by_source not fully supported in KB v0.1.0")
+        logger.warning("delete_by_source not fully supported in KB v0.1.0")
         # Would need to rebuild index without the document
         return False
 

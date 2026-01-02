@@ -15,7 +15,10 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.hypothesis import Hypothesis
+    from app.models.project import Project
+    from app.models.repository import Repository
     from app.models.research_finding import ResearchFinding
+    from app.models.technology import Technology
 
 
 class TaskStatus(str, enum.Enum):

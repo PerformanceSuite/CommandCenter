@@ -436,7 +436,7 @@ class CommandCenterResourceProvider(ResourceProvider):
 
     async def _read_active_schedules(self) -> ResourceContent:
         """Read only active (enabled) schedules."""
-        result = await self.db.execute(select(Schedule).where(Schedule.enabled == True))
+        result = await self.db.execute(select(Schedule).where(Schedule.enabled.is_(True)))
         schedules = result.scalars().all()
 
         data = [s.to_dict() for s in schedules]
@@ -535,7 +535,7 @@ class CommandCenterResourceProvider(ResourceProvider):
         repositories_count = (await self.db.execute(select(func.count(Repository.id)))).scalar()
         schedules_count = (await self.db.execute(select(func.count(Schedule.id)))).scalar()
         active_schedules_count = (
-            await self.db.execute(select(func.count(Schedule.id)).where(Schedule.enabled == True))
+            await self.db.execute(select(func.count(Schedule.id)).where(Schedule.enabled.is_(True)))
         ).scalar()
         jobs_count = (await self.db.execute(select(func.count(Job.id)))).scalar()
         active_jobs_count = (

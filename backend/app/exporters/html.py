@@ -297,7 +297,7 @@ class HTMLExporter(BaseExporter):
         try:
             dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
             return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
-        except:
+        except ValueError:
             return dt_str
 
     def _get_styles(self) -> str:
