@@ -35,6 +35,9 @@ This document tracks the sprint breakdown for implementing the **Composable Comm
 | 4 | Real-time Subscriptions | ✅ Complete | Dec 31, 2025 | [Sprint 4 Plan](./2026-01-01-sprint4-realtime-subscriptions.md) |
 | 5 | Advanced Features | 📋 Future | TBD | — |
 | 6 | Document Intelligence | 🔄 In Progress | Jan 2026 | [Doc Intel Agents](./2026-01-01-document-intelligence-agents.md) |
+| 7 | Agent Observability | 📋 Future | Q1 2026 | — |
+| 8 | Automated QA Pipeline | 📋 Future | Q1 2026 | — |
+| 9 | Task Inbox | 📋 Future | Q1 2026 | — |
 
 ---
 
@@ -187,6 +190,148 @@ This document tracks the sprint breakdown for implementing the **Composable Comm
 
 ---
 
+### Sprint 7: Agent Observability 📋
+
+**Goal:** Enable monitoring and intervention for long-running agent tasks
+
+**Source:** [2026 Agentic Shift White Paper](./2026-01-01-agentic-shift-analysis.md) - "If an agent working on a week-long task goes 'off the rails' on day three, managers will need tools to detect that deviation and intervene."
+
+**Planned Deliverables:**
+- [ ] Agent execution dashboard (progress timeline, checkpoints)
+- [ ] Drift detection indicators (output divergence, repeated failures, stuck detection)
+- [ ] Resource burn tracking (tokens consumed, time elapsed, cost accumulation)
+- [ ] Intervention triggers (configurable alerts for stuck/drifting agents)
+- [ ] One-click course correction (pause, redirect, rollback)
+- [ ] Execution replay/audit trail
+
+**Key Entity Types:**
+- `checkpoint` - Agent progress markers
+- `intervention` - Human corrections to agent work
+- `drift_event` - Detected deviations from expected behavior
+
+**NATS Subjects:**
+```
+agent.checkpoint.created  → {execution_id, checkpoint_type, progress_pct}
+agent.drift.detected      → {execution_id, drift_type, severity}
+agent.intervention.needed → {execution_id, reason, suggested_action}
+agent.stuck.detected      → {execution_id, stuck_duration, last_activity}
+```
+
+**Dependencies:**
+- Sprint 4 (real-time subscriptions)
+- Sprint 3 (agent execution tracking)
+
+---
+
+### Sprint 8: Automated QA Pipeline 📋
+
+**Goal:** AI reviews AI - automated quality assurance for agent output
+
+**Source:** [2026 Agentic Shift White Paper](./2026-01-01-agentic-shift-analysis.md) - "The most significant productivity gain in 2026 will shift from 'AI can do the drafts' to 'AI can audit the drafts.'"
+
+**Planned Deliverables:**
+- [ ] Judge model infrastructure (invoke reviewer models on output)
+- [ ] Policy checker (compliance with business rules)
+- [ ] Factuality checker (verify claims against sources)
+- [ ] Completeness checker (did output address all requirements?)
+- [ ] Domain-specific linters (reasoning quality, logical consistency)
+- [ ] QA report aggregation (unified score, issue summary)
+- [ ] Human escalation workflow (only surface issues needing attention)
+
+**Architecture:**
+```
+Agent Output → QA Pipeline → Judge Models → QA Report
+                    │
+                    ├─ PolicyChecker
+                    ├─ FactualityChecker
+                    ├─ CompletenessChecker
+                    └─ DomainLinter
+                            │
+                            ↓
+                    Pass → Auto-approve
+                    Fail → Human review queue
+```
+
+**Synergy with AI Arena:**
+- AI Arena currently debates hypotheses
+- Extend to debate output quality
+- Multi-model consensus on correctness
+
+**Key Entity Types:**
+- `qa_report` - Aggregated quality assessment
+- `qa_issue` - Individual finding from checker
+- `qa_approval` - Human sign-off on reviewed output
+
+**Dependencies:**
+- Sprint 7 (agent observability for integration)
+- AI Arena infrastructure
+
+---
+
+### Sprint 9: Task Inbox 📋
+
+**Goal:** Async task queue where users can submit work and agents pick up/execute
+
+**Source:** [2026 Agentic Shift White Paper](./2026-01-01-agentic-shift-analysis.md) - "Rumors of an Anthropic 'inbox' where a user can simply email tasks to their agent."
+
+**Planned Deliverables:**
+- [ ] Task entity type and schema
+- [ ] Task queue service (priority, SLA tracking)
+- [ ] Email integration (`task@commandcenter.io` → new task)
+- [ ] Slack integration (`/cc-task "description"` → new task)
+- [ ] API endpoint (`POST /api/v1/tasks`)
+- [ ] Task assignment (manual or auto-assign to available agent)
+- [ ] Task lifecycle (pending → assigned → running → review → complete)
+- [ ] VISLZR integration (tasks as queryable graph entities)
+
+**Architecture:**
+```
+┌───────────┐   ┌───────────┐   ┌───────────┐
+│   Email   │   │   Slack   │   │    API    │
+└─────┬─────┘   └─────┬─────┘   └─────┬─────┘
+      │             │             │
+      └─────────────┬─────────────┘
+                    │
+            ┌───────┴───────┐
+            │  Task Queue   │
+            │  (Priority)   │
+            └───────┬───────┘
+                    │
+            ┌───────┴───────┐
+            │ Agent Pool    │
+            │ (Assignment)  │
+            └───────┬───────┘
+                    │
+            ┌───────┴───────┐
+            │  Execution    │
+            │  + QA (S8)    │
+            └───────┬───────┘
+                    │
+            ┌───────┴───────┐
+            │   Result      │
+            │   + Graph     │
+            └───────────────┘
+```
+
+**Key Entity Types:**
+- `task` - Work item in queue
+- `task_assignment` - Agent assigned to task
+- `task_result` - Output from completed task
+
+**NATS Subjects:**
+```
+task.created    → {task_id, priority, description}
+task.assigned   → {task_id, agent_id}
+task.completed  → {task_id, result_summary}
+task.failed     → {task_id, error}
+```
+
+**Dependencies:**
+- Sprint 7 (agent observability)
+- Sprint 8 (QA pipeline for output review)
+
+---
+
 ## Architecture Reference
 
 ```
@@ -236,6 +381,13 @@ Extended through sprints to support full composability:
 | `concept` | Sprint 6 | Extracted business/technical concept |
 | `requirement` | Sprint 6 | Extracted requirement (must/should/could) |
 | `document` | Sprint 6 | Analyzed documentation file |
+| `checkpoint` | Sprint 7 | Agent progress marker |
+| `intervention` | Sprint 7 | Human correction to agent work |
+| `drift_event` | Sprint 7 | Detected deviation from expected behavior |
+| `qa_report` | Sprint 8 | Aggregated quality assessment |
+| `qa_issue` | Sprint 8 | Individual finding from checker |
+| `task` | Sprint 9 | Work item in queue |
+| `task_result` | Sprint 9 | Output from completed task |
 
 ---
 
@@ -286,11 +438,90 @@ graph.invalidated    → {project_id, reason}
 - [ ] Requirements traceable to source documents
 - [ ] Stale document detection automated
 
+**Agent Observability Complete When:**
+- [ ] Long-running agent progress visible in dashboard
+- [ ] Drift detection alerts fire within 30 minutes of deviation
+- [ ] Intervention workflow allows pause/redirect/rollback
+- [ ] Cost tracking accurate within 5%
+
+**Automated QA Complete When:**
+- [ ] Agent output automatically reviewed before human sees it
+- [ ] Policy/factuality/completeness checks run on all outputs
+- [ ] Human review queue only contains flagged items
+- [ ] QA reports visible in VISLZR as graph entities
+
+**Task Inbox Complete When:**
+- [ ] Tasks submittable via API, email, and Slack
+- [ ] Priority queue with SLA tracking operational
+- [ ] Agents auto-assigned based on availability/specialty
+- [ ] Task lifecycle visible in VISLZR
+
+---
+
+## PersonalAgent / Mini-Me Pillar Additions
+
+These items support the PersonalAgent pillar and can be implemented incrementally:
+
+### Proactivity Preferences (Low Effort)
+
+**Goal:** Let users configure how proactively agents interrupt them
+
+**Source:** [2026 Agentic Shift White Paper](./2026-01-01-agentic-shift-analysis.md) - "Proactivity will become a new product battleground, as companies compete to build systems with 'good proactive taste'."
+
+**Deliverables:**
+- [ ] User proactivity profile schema
+- [ ] Interrupt threshold settings (low/medium/high)
+- [ ] Preferred notification channels (slack, email, in-app)
+- [ ] Quiet hours configuration
+- [ ] Domain-specific rules (compliance=immediate, docs=digest)
+
+**Schema:**
+```yaml
+proactivity_profile:
+  interrupt_threshold: high  # low/medium/high
+  preferred_channels: [slack, email]
+  quiet_hours: ["22:00", "07:00"]
+  domains:
+    compliance: immediate
+    documentation: daily_digest
+    code_review: when_blocked
+```
+
+---
+
+### Learning Capture Infrastructure (Low Effort)
+
+**Goal:** Capture patterns for future skill improvement and potential fine-tuning
+
+**Source:** [2026 Agentic Shift White Paper](./2026-01-01-agentic-shift-analysis.md) - Models with continual learning capability becoming available.
+
+**Reality:** Only Anthropic/OpenAI can make models learn. BUT we can build infrastructure to:
+- Track what works → feed back to skills
+- Store correction patterns → inform future prompts
+- Build domain-specific fine-tuning datasets
+
+**Deliverables:**
+- [ ] Correction capture API (`POST /api/v1/corrections`)
+- [ ] Pattern extraction from corrections
+- [ ] Skill update suggestions based on patterns
+- [ ] Fine-tuning dataset export (future use)
+
+**Schema:**
+```python
+class LearningCapture:
+    original_output: str
+    human_correction: str
+    context: dict  # task, domain, agent persona
+    pattern_extracted: Optional[str]
+    skill_update_suggested: Optional[str]
+```
+
 ---
 
 ## References
 
 - [Composable Design Doc](./2025-01-01-composable-commandcenter-design.md) - Full architecture
+- [2026 Agentic Shift Analysis](./2026-01-01-agentic-shift-analysis.md) - Source for Sprints 7-9
 - [Phase 7-8 Blueprint](../../hub-prototype/phase_7_8_graph_service_vislzr_integration_plan_command_center.md) - Original VISLZR plan
 - [Comprehensive Roadmap](./2025-11-03-commandcenter-phases-1-12-comprehensive-roadmap.md) - 12-phase overview
 - [Hub SSE Pattern](../../hub/backend/app/streaming/sse.py) - Reference implementation
