@@ -24,6 +24,8 @@ from app.schemas.graph import (
     GraphLinkResponse,
     GraphSearchRequest,
     GraphTaskResponse,
+    IngestDocumentIntelligenceRequest,
+    IngestDocumentIntelligenceResponse,
     LinkEntitiesRequest,
     ProjectGraphResponse,
     SearchResults,
@@ -590,6 +592,79 @@ async def link_entities(
     )
 
     return GraphLinkResponse.model_validate(link)
+
+
+# ============================================================================
+# Document Intelligence Endpoints (Sprint 6)
+# ============================================================================
+
+
+@router.post(
+    "/document-intelligence/ingest",
+    response_model=IngestDocumentIntelligenceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def ingest_document_intelligence(
+    request: IngestDocumentIntelligenceRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Ingest Document Intelligence pipeline output into the graph.
+
+    Accepts combined output from Document Intelligence personas:
+    - **documents**: Classified documents from doc-classifier
+    - **concepts**: Extracted concepts from doc-concept-extractor
+    - **requirements**: Mined requirements from doc-requirement-miner
+
+    Documents are upserted by path, concepts by name, and requirements by req_id.
+    Links are automatically created between source documents and their
+    extracted concepts/requirements.
+
+    **Example request:**
+    ```json
+    {
+      "documents": [
+        {
+          "path": "docs/plans/sprint-6.md",
+          "title": "Sprint 6 Plan",
+          "doc_type": "plan",
+          "status": "active",
+          "word_count": 1500
+        }
+      ],
+      "concepts": [
+        {
+          "name": "Document Intelligence",
+          "concept_type": "feature",
+          "definition": "Multi-agent system for document analysis",
+          "confidence": "high",
+          "source_document_id": 1
+        }
+      ],
+      "requirements": [
+        {
+          "req_id": "REQ-001",
+          "text": "System MUST process documents through pipeline",
+          "req_type": "functional",
+          "priority": "critical",
+          "source_document_id": 1
+        }
+      ]
+    }
+    ```
+
+    **Response includes:**
+    - Counts of created/updated entities
+    - Number of links created
+    - Any errors encountered (processing continues on error)
+    - Processing time metadata
+    """
+    service = GraphService(db)
+    return await service.ingest_document_intelligence(
+        project_id=current_project_id,
+        request=request,
+    )
 
 
 # ============================================================================
