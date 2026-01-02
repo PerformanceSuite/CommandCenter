@@ -587,7 +587,7 @@ class CreateConceptRequest(BaseModel):
 class CreateRequirementRequest(BaseModel):
     """Request to create a requirement"""
 
-    req_id: str = Field(..., min_length=1, max_length=50, pattern=r"^REQ-\d+$")
+    req_id: str = Field(..., min_length=1, max_length=50, pattern=r"^REQ-[\w-]+$")
     text: str = Field(..., min_length=1)
     req_type: RequirementType
     source_document_id: Optional[int] = None
