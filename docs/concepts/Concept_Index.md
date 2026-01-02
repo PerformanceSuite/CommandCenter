@@ -4,6 +4,9 @@
 
 ## Active Concepts
 
+### Design Principles
+- [Intent-Aware Agents](./IntentAware.md) - Framework for reliable agent intent (crystallization, disambiguation, verification)
+
 ### Wander System (Exploration & Discovery)
 - [Wander](./Wander.md) - Long-running exploratory agent for idea discovery
 - [Wander Technical Spec](./Wander-TechSpec.md) - Database schema, API endpoints, algorithms
@@ -104,6 +107,7 @@ Compounding: Better models → Better signals → Better trades → More revenue
 
 | Document | Status | Last Updated |
 |----------|--------|--------------|
+| IntentAware.md | ✅ Complete | 2026-01-02 |
 | Wander.md | ✅ Complete | 2026-01-02 |
 | Wander-TechSpec.md | ✅ Complete | 2026-01-02 |
 | FractalSecurity.md | 🧪 Experimental | 2026-01-02 |

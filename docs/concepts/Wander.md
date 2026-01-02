@@ -9,6 +9,7 @@
 - [Real-Time Intelligence Engine](./RealTimeIntelligence.md) - Information sources, prediction markets
 - [Fractal Security](./FractalSecurity.md) - Perceptual access control
 - [Veria](./Veria.md) - Economic action on Wander crystals
+- [Intent-Aware Agents](./IntentAware.md) - Design principles for reliable agent intent
 
 ---
 
@@ -43,6 +44,20 @@ Every wander has:
 3. **Memory as metabolism** - Ideas flow through layers, transform, decay, or crystallize
 4. **Decouple useful from wandering** - Usefulness is a post-filter, not exploration criteria
 5. **Rhythm over continuous** - Rest cycles, not constant generation
+
+### Intent-Aware Design
+
+Wander embodies the [Intent-Aware Agent](./IntentAware.md) principles:
+
+| Intent Challenge | Wander Solution |
+|------------------|----------------|
+| **Premature commitment** | Intent crystallizes gradually through resonances, not forced upfront |
+| **Explicit intent interfaces** | Attractor (goal), Fences (constraints), Session config as typed artifacts |
+| **Separate interpretation/execution** | Dwelling (interpret) is distinct from Crystallization (commit) |
+| **Probabilistic goals** | Resonances maintain strength distribution, graduate when validated |
+| **High-stakes verification** | Human checkpoints, manual inject/fence, Fractal encoding for economic actions |
+
+The key insight: **intent is allowed to emerge** through exploration rather than being forced at the start. The attractor provides direction without dictating destination.
 
 ---
 
