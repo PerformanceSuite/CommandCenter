@@ -8,11 +8,11 @@ We're connecting existing components into a coherent system before building new 
 
 ### Active Work
 - [x] Document Intelligence backend (graph entities, ingestion API)
-- [ ] Document Intelligence agent personas (5 YAML files)
+- [x] Document Intelligence agent personas (5 YAML files)
 - [ ] Sprint 4: Real-time Subscriptions (SSE)
 
 ### This Week
-- [ ] Create Document Intelligence agent personas
+- [ ] End-to-end test: Document Intelligence pipeline
 - [ ] Wire KnowledgeBeast → Document Intelligence pipeline
 - [ ] Sprint 4 Task 1: SSE endpoint for graph events
 
