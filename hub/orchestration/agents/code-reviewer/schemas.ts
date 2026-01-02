@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const InputSchema = z.object({
-  repositoryPath: z.string(),
-  reviewType: z.enum(['quality', 'security', 'performance', 'all']).default('all'),
+  target: z.string().default('/workspace').describe('Path to repository to review'),
+  type: z.enum(['quality', 'security', 'performance', 'all']).default('all'),
   filePattern: z.string().optional(),
 });
 

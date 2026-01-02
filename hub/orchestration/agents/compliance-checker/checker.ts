@@ -9,36 +9,34 @@ export class ComplianceChecker {
     const rulesApplied: string[] = [];
     let checkedFiles = 0;
 
-    // Determine which rules to apply
-    const rules = input.rules.includes('all')
+    // Determine which rules to apply based on scope
+    const rules = input.scope === 'all'
       ? ['licenses', 'security-headers', 'secrets']
-      : input.rules;
+      : [input.scope];
 
     for (const rule of rules) {
-      if (rule !== 'all') {
-        rulesApplied.push(rule);
-      }
+      rulesApplied.push(rule);
     }
 
     // Check licenses
-    if (rules.includes('licenses') || rules.includes('all')) {
-      const licenseViolations = await this.checkLicenses(input.repositoryPath);
+    if (rules.includes('licenses')) {
+      const licenseViolations = await this.checkLicenses(input.target);
       violations.push(...licenseViolations);
       checkedFiles += 1; // package.json or similar
     }
 
     // Check security headers (in config files)
-    if (rules.includes('security-headers') || rules.includes('all')) {
-      const headerViolations = await this.checkSecurityHeaders(input.repositoryPath);
+    if (rules.includes('security-headers')) {
+      const headerViolations = await this.checkSecurityHeaders(input.target);
       violations.push(...headerViolations);
       checkedFiles += headerViolations.length;
     }
 
     // Check for secrets (environment variables in code)
-    if (rules.includes('secrets') || rules.includes('all')) {
-      const secretViolations = await this.checkSecrets(input.repositoryPath);
+    if (rules.includes('secrets')) {
+      const secretViolations = await this.checkSecrets(input.target);
       violations.push(...secretViolations);
-      checkedFiles += this.countCodeFiles(input.repositoryPath);
+      checkedFiles += this.countCodeFiles(input.target);
     }
 
     const summary = this.generateSummary(violations, input.strictMode);

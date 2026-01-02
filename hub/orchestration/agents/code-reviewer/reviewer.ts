@@ -6,7 +6,7 @@ export class CodeReviewer {
   async review(input: Input): Promise<Output> {
     const startTime = Date.now();
     const issues: Issue[] = [];
-    const files = this.getCodeFiles(input.repositoryPath, input.filePattern);
+    const files = this.getCodeFiles(input.target, input.filePattern);
 
     let totalLines = 0;
     let totalComplexity = 0;
@@ -23,17 +23,17 @@ export class CodeReviewer {
       if (complexity > maxComplexity) maxComplexity = complexity;
 
       // Quality checks
-      if (input.reviewType === 'quality' || input.reviewType === 'all') {
+      if (input.type === 'quality' || input.type === 'all') {
         issues.push(...this.checkQuality(file, lines, complexity));
       }
 
       // Security checks
-      if (input.reviewType === 'security' || input.reviewType === 'all') {
+      if (input.type === 'security' || input.type === 'all') {
         issues.push(...this.checkSecurity(file, lines));
       }
 
       // Performance checks
-      if (input.reviewType === 'performance' || input.reviewType === 'all') {
+      if (input.type === 'performance' || input.type === 'all') {
         issues.push(...this.checkPerformance(file, lines));
       }
     }
@@ -52,8 +52,17 @@ export class CodeReviewer {
       totalLines,
     };
 
+    // Limit issues to avoid JSON overflow in stdout capture (8KB buffer limit)
+    const limitedIssues = issues.slice(0, 20).map(issue => ({
+      type: issue.type,
+      severity: issue.severity,
+      file: issue.file.replace(/^\/workspace\//, '').slice(0, 50),
+      line: issue.line,
+      description: issue.description.slice(0, 100),
+    }));
+
     return {
-      issues,
+      issues: limitedIssues,
       summary,
       metrics,
       reviewDurationMs: Date.now() - startTime,

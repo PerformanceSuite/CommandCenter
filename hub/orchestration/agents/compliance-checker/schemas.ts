@@ -1,11 +1,8 @@
 import { z } from 'zod';
 
 export const InputSchema = z.object({
-  repositoryPath: z.string().describe('Path to repository to check'),
-  rules: z
-    .array(z.enum(['licenses', 'security-headers', 'secrets', 'all']))
-    .default(['all'])
-    .describe('Compliance rules to check'),
+  target: z.string().default('/workspace').describe('Path to repository to check'),
+  scope: z.enum(['licenses', 'security-headers', 'secrets', 'all']).default('all').describe('Compliance scope to check'),
   strictMode: z.boolean().default(false).describe('Fail on any violation'),
 });
 
