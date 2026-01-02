@@ -214,22 +214,119 @@ The Loop embodies [Intent-Aware](./IntentAware.md) principles:
 
 ---
 
-## Implementation Priorities
+## Implementation Phases
 
-### Phase 1: Connect What Exists
-- [ ] Wander can query Skills for exploration strategies
-- [ ] AI Arena results feed Prompt Improver
-- [ ] Crystals are indexed in KnowledgeBeast
+The Loop is built incrementally. Each phase closes more of the cycle.
 
-### Phase 2: Close the Loop
-- [ ] Prompt Improver rewrites Wander prompts based on Crystal quality
-- [ ] Skill files can be updated by agents mid-session
-- [ ] Model routing informed by Arena benchmarks
+### Phase 1: Connect What Exists (Current)
 
-### Phase 3: Accelerate
-- [ ] Multiple Wander sessions running in parallel
-- [ ] Continuous Arena testing in background
-- [ ] Automatic skill evolution without human trigger
+**Goal**: Wire existing components so knowledge flows between them.
+
+| Task | Status | Effect |
+|------|--------|--------|
+| Wander can query KnowledgeBeast | 📋 Planned | Discovery uses all stored knowledge |
+| AI Arena results stored in KnowledgeBeast | 📋 Planned | Validation feeds back to knowledge |
+| Crystals indexed for retrieval | 📋 Planned | Insights are findable |
+| Skills indexed in KnowledgeBeast | 📋 Planned | Skills are discoverable by agents |
+
+**Tracks**:
+- Wander Phases 0-1 (Foundation, KB integration)
+- VISLZR Sprint 3-4 (Agent parity, ecosystem queries)
+
+### Phase 2: Close the Loop (Q1-Q2 2026)
+
+**Goal**: Outputs from one phase automatically feed the next.
+
+| Task | Status | Effect |
+|------|--------|--------|
+| Prompt Improver uses Crystal quality signals | 📋 Planned | Better prompts from exploration results |
+| Skills updated by agents mid-session | 📋 Planned | Skills compound without human trigger |
+| Model routing informed by Arena benchmarks | 📋 Planned | Best model for each task, automatically |
+| Wander dwelling prompts auto-refined | 📋 Planned | Exploration improves itself |
+
+**Tracks**:
+- Wander Phases 2-5 (Adjacency, Loop, Resonance, Constraints)
+- Agent Infrastructure (Long-running agents)
+
+### Phase 3: Accelerate (Q2-Q3 2026)
+
+**Goal**: The Loop runs continuously, in parallel, without human initiation.
+
+| Task | Status | Effect |
+|------|--------|--------|
+| Multiple Wander sessions in parallel | 📋 Planned | Exploration scales horizontally |
+| Continuous Arena testing in background | 📋 Planned | Always know which models work best |
+| Automatic skill evolution | 📋 Planned | Skills improve overnight |
+| Real-time intelligence integration | 📋 Planned | External signals feed discovery |
+
+**Tracks**:
+- Wander Phases 6-7 (VISLZR integration, Persistence)
+- Real-Time Intelligence Engine (Polymarket, HackerNews, arXiv)
+
+### Phase 4: Economic Action (Q3-Q4 2026)
+
+**Goal**: The Loop can take real-world action on validated insights.
+
+| Task | Status | Effect |
+|------|--------|--------|
+| Veria trading on Crystals | 📋 Planned | Insights generate revenue |
+| Fractal Security for authorization | 📋 Planned | Safe autonomous execution |
+| Human approval workflows | 📋 Planned | Oversight on high-stakes actions |
+| Revenue feeds back to compute budget | 📋 Planned | System funds its own improvement |
+
+**Tracks**:
+- Wander Phase 8 (Fractal Security)
+- Veria Integration (Prediction markets)
+
+### Phase 5: Train the Substrate (2026-2027)
+
+**Goal**: The Loop improves the models it runs on, not just prompts and skills.
+
+| Task | Status | Effect |
+|------|--------|--------|
+| Fine-tuning on validated patterns | 📋 Future | Models learn from Crystals |
+| Custom training pipeline (nanochat-inspired) | 📋 Future | Domain-specific models |
+| Hybrid routing (API + custom) | 📋 Future | Best of both worlds |
+| Self-trained specialists | 📋 Future | Loop trains its own sub-LLMs |
+
+**Reference**: [Custom Model Training Roadmap](../plans/2026-01-01-custom-model-training-roadmap.md)
+
+**The endgame**: A system that uses itself to train better versions of itself.
+
+---
+
+## Current Status
+
+```
+Phase 1: Connect What Exists     [▓▓░░░░░░░░] 20%
+Phase 2: Close the Loop          [░░░░░░░░░░] 0%
+Phase 3: Accelerate              [░░░░░░░░░░] 0%
+Phase 4: Economic Action         [░░░░░░░░░░] 0%
+Phase 5: Train the Substrate     [░░░░░░░░░░] 0%
+```
+
+**Active Work**:
+- Wander design complete, Phase 0 (Mind Map UI) ready to implement
+- VISLZR Sprint 3 in progress
+- Agent infrastructure (E2B sandboxes) validated
+
+---
+
+## Implementation Priority
+
+### This Week
+- [ ] Wander Phase 0: Mind map visualization
+- [ ] Wire KnowledgeBeast → Wander query functions
+
+### This Month
+- [ ] Wander Phases 1-2: Foundation + Adjacency
+- [ ] AI Arena results → KnowledgeBeast storage
+- [ ] VISLZR Sprint 3 complete
+
+### This Quarter
+- [ ] Wander Phases 3-5: Core loop complete
+- [ ] Prompt Improver uses Crystal signals
+- [ ] First closed loop: exploration → insight → better exploration
 
 ---
 
