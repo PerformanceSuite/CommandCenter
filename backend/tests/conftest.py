@@ -98,6 +98,25 @@ async def client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]
     yield async_client
 
 
+# Unauthenticated API client with /api/v1 prefix for testing auth-required endpoints
+@pytest.fixture(scope="function")
+async def unauthenticated_api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Unauthenticated async client with /api/v1 prefix for testing auth requirements"""
+    from httpx import ASGITransport
+
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test/api/v1"
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
 # API client with /api/v1 prefix for integration tests (authenticated)
 @pytest.fixture(scope="function")
 async def api_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:

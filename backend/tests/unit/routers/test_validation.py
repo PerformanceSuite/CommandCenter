@@ -1,26 +1,22 @@
 """Unit tests for router validation and middleware."""
 import pytest
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
 
-from app.main import app
 from app.models.technology import TechnologyDomain, TechnologyStatus
 
 
 @pytest.mark.unit
+@pytest.mark.asyncio
 class TestRequestValidation:
     """Test request validation for API endpoints"""
 
-    @pytest.mark.asyncio(enabled=False)
-    def test_request_validation_rejects_invalid_input(self, client):
+    async def test_request_validation_rejects_invalid_input(self, client):
         """Request validation rejects invalid input."""
         # Invalid request: empty title
-        response = client.post(
+        response = await client.post(
             "/api/v1/technologies",
             json={
                 "title": "",
-                "domain": TechnologyDomain.BACKEND.value,
+                "domain": TechnologyDomain.AI_ML.value,
             },
         )
 
@@ -31,16 +27,15 @@ class TestRequestValidation:
         error_detail = response.json()["detail"]
         assert any("title" in str(err.get("loc", [])) for err in error_detail)
 
-    @pytest.mark.asyncio(enabled=False)
-    def test_response_serialization_format(self, client):
+    async def test_response_serialization_format(self, client):
         """Responses are properly serialized."""
         # Create valid technology
-        response = client.post(
+        response = await client.post(
             "/api/v1/technologies",
             json={
                 "title": "Python",
-                "domain": TechnologyDomain.BACKEND.value,
-                "status": TechnologyStatus.ADOPT.value,
+                "domain": TechnologyDomain.AI_ML.value,
+                "status": TechnologyStatus.RESEARCH.value,
                 "description": "A high-level programming language",
             },
         )
@@ -52,15 +47,14 @@ class TestRequestValidation:
         # Verify response structure
         assert "id" in data
         assert data["title"] == "Python"
-        assert data["domain"] == TechnologyDomain.BACKEND.value
-        assert data["status"] == TechnologyStatus.ADOPT.value
+        assert data["domain"] == TechnologyDomain.AI_ML.value
+        assert data["status"] == TechnologyStatus.RESEARCH.value
         assert isinstance(data["id"], int)
 
-    @pytest.mark.asyncio(enabled=False)
-    def test_error_response_formatting(self, client):
+    async def test_error_response_formatting(self, client):
         """Error responses follow standard format."""
         # Trigger 404 error by requesting non-existent technology
-        response = client.get("/api/v1/technologies/99999")
+        response = await client.get("/api/v1/technologies/99999")
 
         assert response.status_code == 404
         error = response.json()
