@@ -1,0 +1,186 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-skill-extractor",
+  "documents_processed": 3,
+  "batch": 3,
+
+  "skills": [
+    {
+      "name": "unified-agent-framework",
+      "type": "architecture",
+      "definition": "Single AgentExecutor handles all parallel agent work across environments (local, sandbox). Synthesis is pluggable (Chairman, Voting, Summary). Compute backends are swappable via ComputeGateway.",
+      "status": "active",
+      "domain": "agents",
+      "components": [
+        "AgentExecutor (unified entry point)",
+        "UnifiedAgent (base agent abstraction)",
+        "LocalExecutor (in-process via LLMGateway)",
+        "SandboxExecutor (isolated E2B containers)",
+        "ComputeGateway (backend abstraction like LLMGateway)",
+        "SynthesisStrategy (pluggable: Chairman, Voting, Summary)"
+      ],
+      "execution_environments": ["local", "sandbox", "docker (future)", "modal (future)"],
+      "synthesis_modes": ["chairman (authoritative LLM judgment)", "voting (count-based)", "summary (LLM summary)", "none (raw results)"],
+      "key_insight": "Execution environment is configuration, not a separate system",
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "compute-gateway-pattern",
+      "type": "pattern",
+      "definition": "Abstract compute backends like LLMGateway abstracts LLM providers. create_environment, execute, execute_agent, terminate methods. Currently E2B, future Docker/Modal.",
+      "status": "active",
+      "domain": "infrastructure",
+      "methods": [
+        "create_environment(config) → Environment",
+        "execute(env, command) → ExecutionResult",
+        "execute_agent(env, prompt, model) → ExecutionResult",
+        "terminate(env) → void"
+      ],
+      "backends": {
+        "e2b": "E2B Cloud Sandboxes",
+        "docker": "Local Docker (future)",
+        "modal": "Modal.com (future)"
+      },
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "synthesis-strategies",
+      "type": "pattern",
+      "definition": "Pluggable strategies for combining multi-agent results: VotingSynthesis (fast, no LLM), SummarySynthesis (LLM-based summary), ChairmanSynthesis (authoritative judgment).",
+      "status": "active",
+      "domain": "agents",
+      "strategies": {
+        "voting": "Count-based consensus, no additional LLM calls",
+        "summary": "LLM summarizes all agent outputs",
+        "chairman": "Chairman agent reviews all responses, produces authoritative verdict with key_insights, dissenting_views, recommendation"
+      },
+      "output_schema": ["final_answer", "confidence", "consensus_level", "summary", "key_insights", "dissenting_views", "recommendation", "follow_up_questions"],
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "document-intelligence-pipeline",
+      "type": "methodology",
+      "definition": "Five-agent pipeline for document analysis: Concept Extractor → Requirement Miner → Relationship Mapper → Staleness Detector → Classifier. Results stored in Graph-Service and KnowledgeBeast.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "agents": [
+        "doc-concept-extractor: Extract named concepts (products, features, technologies)",
+        "doc-requirement-miner: Extract requirements (must/should/could statements)",
+        "doc-relationship-mapper: Map entity relationships (integrates_with, depends_on, contains)",
+        "doc-staleness-detector: Identify outdated content",
+        "doc-classifier: Determine doc type/status/action (plan, concept, guide, report, session)"
+      ],
+      "output_types": ["concepts", "requirements", "relationships", "staleness_indicators", "classifications"],
+      "storage": ["Graph-Service (entities)", "KnowledgeBeast (searchable)", "VISLZR (visualizable)"],
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md",
+      "confidence": "high"
+    },
+    {
+      "name": "concept-extraction-schema",
+      "type": "schema",
+      "definition": "Standard schema for extracted concepts: name, type (product/feature/module/process/technology/framework/methodology), definition, status, domain, related_entities, source_quote, confidence.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "concept_types": ["product", "feature", "module", "process", "technology", "framework", "methodology", "other"],
+      "concept_status": ["proposed", "active", "implemented", "deprecated", "unknown"],
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md",
+      "confidence": "high"
+    },
+    {
+      "name": "requirement-mining-schema",
+      "type": "schema",
+      "definition": "Standard schema for mined requirements: id (REQ-XXX), text (normalized), type (functional/non-functional/constraint/dependency/outcome), priority, source_concept, source_quote, verification, status.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "requirement_types": ["functional", "non-functional", "constraint", "dependency", "outcome"],
+      "priority_levels": ["critical", "high", "medium", "low", "unknown"],
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md",
+      "confidence": "high"
+    },
+    {
+      "name": "document-classification-taxonomy",
+      "type": "taxonomy",
+      "definition": "Taxonomy for document classification: types (plan, concept, guide, reference, report, session, archive), statuses (active, completed, superseded, abandoned, stale), actions (keep, update, archive, merge, extract_and_archive, delete).",
+      "status": "active",
+      "domain": "document-intelligence",
+      "doc_types": ["plan", "concept", "guide", "reference", "report", "session", "archive"],
+      "doc_statuses": ["active", "completed", "superseded", "abandoned", "stale"],
+      "doc_actions": ["keep", "update", "archive", "merge", "extract_and_archive", "delete"],
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "AgentExecutor",
+      "type": "module",
+      "definition": "Unified entry point for running agents. Handles parallel execution, environment selection (local/sandbox), and synthesis strategy selection.",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": ["UnifiedAgent", "LocalExecutor", "SandboxExecutor", "ComputeGateway", "SynthesisStrategy"],
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "ComputeGateway",
+      "type": "module",
+      "definition": "Unified interface for compute backends. Like LLMGateway abstracts LLM providers, ComputeGateway abstracts execution environments (E2B, Docker, Modal).",
+      "status": "active",
+      "domain": "infrastructure",
+      "related_entities": ["AgentExecutor", "E2B", "SandboxExecutor"],
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "UnifiedAgent",
+      "type": "schema",
+      "definition": "Base agent abstraction that works in any execution environment. Provides get_system_prompt(), get_task_prompt(), execute_local(), get_sandbox_prompt() methods.",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": ["AgentExecutor", "AgentResult"],
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "SynthesisResult",
+      "type": "schema",
+      "definition": "Result of synthesizing multiple agent outputs: final_answer, confidence, consensus_level, summary, key_insights, dissenting_views, total_cost_usd, agent_results.",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": ["AgentExecutor", "SynthesisStrategy"],
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Document Intelligence",
+      "type": "feature",
+      "definition": "CommandCenter's ability to analyze any document corpus and extract structured knowledge (concepts, requirements, relationships, classifications) using specialized agent personas.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "related_entities": ["Graph-Service", "KnowledgeBeast", "VISLZR"],
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md",
+      "confidence": "high"
+    }
+  ],
+
+  "relationships": [
+    {"source": "AgentExecutor", "target": "ComputeGateway", "type": "uses", "description": "AgentExecutor uses ComputeGateway for sandbox execution"},
+    {"source": "AgentExecutor", "target": "LLMGateway", "type": "uses", "description": "AgentExecutor uses LLMGateway for local execution"},
+    {"source": "unified-agent-framework", "target": "ai-arena-debate", "type": "unifies", "description": "Framework consolidates AI Arena implementation"},
+    {"source": "unified-agent-framework", "target": "parallel-agent-execution", "type": "unifies", "description": "Framework consolidates sandbox fork implementation"},
+    {"source": "document-intelligence-pipeline", "target": "Graph-Service", "type": "stores_to", "description": "Extracted entities stored in Graph-Service"},
+    {"source": "document-intelligence-pipeline", "target": "KnowledgeBeast", "type": "indexes_to", "description": "Content indexed in KnowledgeBeast for search"},
+    {"source": "document-intelligence-pipeline", "target": "VISLZR", "type": "visualizes_via", "description": "Relationships queryable via VISLZR"}
+  ],
+
+  "summary": {
+    "new_skills": 7,
+    "new_concepts": 5,
+    "new_relationships": 7,
+    "domains": ["agents", "infrastructure", "document-intelligence"]
+  }
+}

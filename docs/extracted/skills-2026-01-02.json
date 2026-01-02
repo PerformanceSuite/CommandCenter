@@ -1,0 +1,154 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-skill-extractor",
+  "documents_processed": 3,
+
+  "skills": [
+    {
+      "name": "bootstrap-development",
+      "type": "methodology",
+      "definition": "Build minimum infrastructure so coding agents can build the rest. Create just enough (Prompt Improver, Persona Store, Agent Executor, CLI Runner) that agents can construct remaining features through PRs.",
+      "status": "active",
+      "domain": "development",
+      "trigger_phrases": ["bootstrap", "self-build", "agents build the rest", "minimum viable agent infrastructure"],
+      "steps": [
+        "Build Prompt Improver (analyze/improve prompts)",
+        "Build Persona Store (YAML-based agent definitions)",
+        "Build Agent Executor (E2B sandbox runner)",
+        "Build CLI Runner (trigger workflows)",
+        "Test by having agents build remaining features"
+      ],
+      "success_criteria": "Can run a command that spawns coding agents to build features, and they produce working PRs",
+      "source": "docs/plans/2025-12-31-bootstrap-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "verification-workflow",
+      "type": "methodology",
+      "definition": "Arena-style dialectic verification: Assess (parallel domain experts) → Challenge (adversarial scrutiny) → Arbitrate (synthesize verdict) → Learn (update KB and skills with methodology improvements)",
+      "status": "active",
+      "domain": "verification",
+      "trigger_phrases": ["verify claims", "challenge assessment", "dialectic", "assess challenge arbitrate"],
+      "steps": [
+        "ASSESS: Run parallel domain expert agents to evaluate",
+        "CHALLENGE: Adversarial agent demands methodology, finds contradictions, verifies independently",
+        "ARBITRATE: Synthesize surviving facts vs refuted claims",
+        "LEARN: Store verified facts in KB, update skills with methodology improvements"
+      ],
+      "outputs": ["verified_facts", "refuted_claims", "methodology_improvements"],
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md",
+      "confidence": "high"
+    },
+    {
+      "name": "prompt-improvement",
+      "type": "methodology",
+      "definition": "Analyze agent prompts for conflicts, ambiguity, missing output formats, and structure issues. Score and suggest improvements.",
+      "status": "active",
+      "domain": "prompt-engineering",
+      "trigger_phrases": ["improve prompt", "analyze prompt", "prompt conflicts", "prompt quality"],
+      "issue_types": ["conflict", "ambiguity", "missing_output", "missing_constraints", "verbosity", "structure", "scope"],
+      "scores": ["clarity", "structure", "completeness", "overall"],
+      "quick_checks": ["has_role_definition", "has_output_format", "has_constraints", "word_count", "potential_conflicts"],
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md",
+      "confidence": "high"
+    },
+    {
+      "name": "agent-persona-management",
+      "type": "pattern",
+      "definition": "Store reusable agent definitions as YAML files with system_prompt, model, temperature, requires_sandbox, and tags. Categories: assessment, verification, synthesis, research, coding, custom.",
+      "status": "active",
+      "domain": "agents",
+      "built_in_personas": [
+        "backend-assessor",
+        "frontend-assessor",
+        "challenger",
+        "arbiter",
+        "backend-coder",
+        "frontend-coder",
+        "reviewer"
+      ],
+      "persona_fields": ["name", "display_name", "description", "category", "system_prompt", "suggested_model", "temperature", "requires_sandbox", "preferred_languages", "tool_permissions", "tags"],
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md",
+      "confidence": "high"
+    },
+    {
+      "name": "e2b-sandbox-integration",
+      "type": "pattern",
+      "definition": "Expose E2B sandbox operations through REST API: create, execute, pause/resume, logs, file operations. Integrate with workflows for hypothesis testing.",
+      "status": "active",
+      "domain": "infrastructure",
+      "api_endpoints": [
+        "POST /api/v1/sandboxes",
+        "GET /api/v1/sandboxes",
+        "POST /api/v1/sandboxes/{id}/exec",
+        "GET /api/v1/sandboxes/{id}/logs",
+        "POST /api/v1/sandboxes/fork"
+      ],
+      "phases": [
+        "Phase 1: Backend API Layer",
+        "Phase 2: Workflow Orchestration",
+        "Phase 3: Log & Output Aggregation",
+        "Phase 4: Frontend UI",
+        "Phase 5: Monitoring Integration"
+      ],
+      "source": "docs/plans/2025-12-31-e2b-full-integration.md",
+      "confidence": "high"
+    },
+    {
+      "name": "parallel-agent-execution",
+      "type": "pattern",
+      "definition": "Run multiple Claude Code agents in parallel using E2B sandboxes. Each agent gets isolated context, unique branch, dedicated log file. Use for multi-stream development, comprehensive audits, or trying different approaches simultaneously.",
+      "status": "active",
+      "domain": "agents",
+      "tool": "obox",
+      "cli_syntax": "uv run obox <repo_url> --prompt <prompt> --forks <n> --model <opus|sonnet|haiku>",
+      "key_features": [
+        "Isolated E2B sandboxes per agent",
+        "Parallel thread execution",
+        "Auto-branch generation (branch-1, branch-2, etc.)",
+        "Thread-safe logging",
+        "Cost tracking per fork"
+      ],
+      "common_failures": [
+        "CLI syntax: repo URL is positional, not subcommand",
+        "Branch names with / break logging",
+        "System prompt template escaping (double braces)",
+        "Git push needs token + remote URL config"
+      ],
+      "source": "~/.claude/skills/agent-sandboxes/SKILL.md",
+      "confidence": "high"
+    },
+    {
+      "name": "ralph-loop-autonomy",
+      "type": "pattern",
+      "definition": "Long-running autonomous agent workflows using stop hooks. Loop continues until completion_promise is met or max_iterations reached. Use for TDD, task lists, large refactoring.",
+      "status": "active",
+      "domain": "agents",
+      "required_parameters": ["max_iterations", "completion_promise"],
+      "usage": "/ralph loop 'task description' --max-iterations 20 --completion-promise 'All tests pass'",
+      "patterns": [
+        "TDD: Code → Test → Fix → Repeat until green",
+        "Task list: Work through todo.md, mark items complete",
+        "Refactoring: Iterate until tests pass"
+      ],
+      "source": "~/.claude/skills/autonomy/SKILL.md",
+      "confidence": "high"
+    }
+  ],
+
+  "relationships": [
+    {"source": "bootstrap-development", "target": "agent-persona-management", "type": "requires", "description": "Bootstrap creates persona store"},
+    {"source": "bootstrap-development", "target": "parallel-agent-execution", "type": "enables", "description": "Bootstrap enables agents to build features"},
+    {"source": "verification-workflow", "target": "agent-persona-management", "type": "uses", "description": "Verification uses personas for assessors, challenger, arbiter"},
+    {"source": "verification-workflow", "target": "prompt-improvement", "type": "feeds", "description": "Verification learnings can improve prompts"},
+    {"source": "parallel-agent-execution", "target": "e2b-sandbox-integration", "type": "uses", "description": "obox uses E2B sandboxes"},
+    {"source": "ralph-loop-autonomy", "target": "parallel-agent-execution", "type": "complements", "description": "Ralph for sequential persistence, sandboxes for parallel isolation"}
+  ],
+
+  "summary": {
+    "skills_extracted": 7,
+    "methodologies": 3,
+    "patterns": 4,
+    "domains": ["development", "verification", "prompt-engineering", "agents", "infrastructure"]
+  }
+}

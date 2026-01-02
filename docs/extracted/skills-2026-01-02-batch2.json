@@ -1,0 +1,226 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-skill-extractor",
+  "documents_processed": 8,
+  "batch": 2,
+
+  "skills": [
+    {
+      "name": "composable-query-layer",
+      "type": "architecture",
+      "definition": "Three modes of intent expression: Natural Language Query (agents/power users), Structured Navigation (humans, click-to-zoom), Saved Recipes/Dashboards. URL encodes query state.",
+      "status": "active",
+      "domain": "infrastructure",
+      "components": [
+        "Intent Parser (NLP/structured → ComposedQuery)",
+        "Query Optimizer (batch, cache, fetch strategy)",
+        "Data Fetcher (Graph-Service + NATS enrichment)",
+        "Presentation Composer (select primitives, assemble layout)"
+      ],
+      "query_result_structure": ["entities", "relationships", "affordances", "summary", "clarifications"],
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "primitive-library",
+      "type": "architecture",
+      "definition": "Taxonomy of UI primitives: Atomic (Icon, Badge, Text), Entity (ProjectNode, ServiceNode), Relationship (edges with styles), Container (GraphCanvas, EntityList), Composite (DependencyExplorer, HealthDashboard).",
+      "status": "active",
+      "domain": "frontend",
+      "layers": [
+        "Layer 1: Atomic (Icon, Badge, Text, Button)",
+        "Layer 2: Entity (ProjectNode, FileNode, SymbolNode)",
+        "Layer 3: Relationship (edges with styles by type)",
+        "Layer 4: Container (GraphCanvas, EntityList, Dashboard)",
+        "Layer 5: Composite (DependencyExplorer, HealthDashboard)"
+      ],
+      "composition_rules": "Few entities + relationships → Graph. Many entities → List. Single entity → Detail. Mixed → Dashboard.",
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "ai-arena-debate",
+      "type": "methodology",
+      "definition": "Multi-model AI debate system for hypothesis validation. Claude, Gemini, GPT debate in structured rounds until consensus or deadlock.",
+      "status": "active",
+      "domain": "research",
+      "agents": ["Analyst (Claude)", "Researcher (Gemini)", "Strategist (GPT)", "Critic (Claude)"],
+      "consensus_levels": ["strong (all agree, high confidence)", "weak (majority agrees)", "deadlock (no consensus)"],
+      "phases": [
+        "Phase 1: LiteLLM Integration",
+        "Phase 2: Agent Framework",
+        "Phase 3: Debate Protocol",
+        "Phase 4: Hypothesis Validation",
+        "Phase 5: UI Integration"
+      ],
+      "success_metrics": {
+        "debate_completion_rate": ">95%",
+        "average_consensus_rate": ">70%",
+        "cost_per_hypothesis": "<$2.00"
+      },
+      "source": "docs/plans/2025-12-29-ai-arena-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "agentic-tool-hierarchy",
+      "type": "methodology",
+      "definition": "Compositional hierarchy for Claude Code tools: Slash Commands (primitives) → Sub-agents (parallelization) → MCP Servers (external integrations) → Skills (lifecycle managers). Each level can orchestrate lower levels.",
+      "status": "active",
+      "domain": "agents",
+      "hierarchy": [
+        "Level 0: Prompts (fundamental unit)",
+        "Level 1: Slash Commands (manual, one-off tasks)",
+        "Level 2: Sub-agents (parallel execution, isolated context)",
+        "Level 3: MCP Servers (external integrations)",
+        "Level 4: Skills (autonomous lifecycle management)"
+      ],
+      "key_rules": [
+        "Start with Slash Command, escalate only when needed",
+        "Sub-agents for parallelization and context isolation ONLY",
+        "MCP Servers for external integrations ONLY",
+        "Skills manage problem lifecycles, not single tasks",
+        "Skills can orchestrate all lower levels"
+      ],
+      "anti_patterns": [
+        "Graduating single task to Skill (wrong: Skill for 'create work tree'; right: Skill for 'manage work trees')",
+        "Using MCP to orchestrate Skills (inverted hierarchy)"
+      ],
+      "source": "docs/Ideas/Best_Practices_Ideas",
+      "confidence": "high"
+    },
+    {
+      "name": "custom-model-training",
+      "type": "roadmap",
+      "definition": "Progression from API+RAG → Fine-tuning → Custom Training → Hybrid Intelligence. Nanochat-style $100-1000 custom models for domain-specific understanding.",
+      "status": "planned",
+      "domain": "ml",
+      "model_stack": {
+        "routing_layer": "Decides model based on sensitivity, domain specificity, capability required",
+        "frontier": "Claude/GPT for general tasks",
+        "domain": "Fine-tuned or custom for company-specific concepts",
+        "secure": "Custom private for sensitive/regulated data"
+      },
+      "phases": [
+        "Phase 1: API + RAG (current)",
+        "Phase 2: Fine-tuning Layer (Q2 2026)",
+        "Phase 3: Custom Training Pipeline (Q3 2026)",
+        "Phase 4: Hybrid Intelligence (Q4 2026)"
+      ],
+      "value_proposition": "AI that UNDERSTANDS your business, not just retrieves info about it",
+      "source": "docs/plans/2026-01-01-custom-model-training-roadmap.md",
+      "confidence": "medium"
+    },
+    {
+      "name": "graph-service-federation",
+      "type": "pattern",
+      "definition": "Cross-project queries with unified data spine. Project becomes zoom level, not container. Federation merges data with deduplication and conflict resolution.",
+      "status": "active",
+      "domain": "infrastructure",
+      "enhancements_needed": [
+        "Cross-project links table + federation queries",
+        "Real-time subscriptions (WebSocket/SSE/NATS)",
+        "Temporal queries (asOf, changes over range)",
+        "Semantic search (vector embeddings)",
+        "Computed properties (symbolCount, projectHealth)",
+        "Action execution layer"
+      ],
+      "nats_subjects": [
+        "graph.entity.created.{project_id}.{entity_type}",
+        "graph.entity.updated.{project_id}.{entity_type}.{entity_id}",
+        "graph.health.changed.{project_id}.{service_id}"
+      ],
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "VISLZR",
+      "type": "product",
+      "definition": "Composable Operating Surface - the unified interface for CommandCenter where the project boundary becomes a zoom level, not a container. Users and agents interact with single surface that composes any view.",
+      "status": "active",
+      "domain": "infrastructure",
+      "related_entities": ["CommandCenter", "Graph-Service", "KnowledgeBeast"],
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "ComposedQuery",
+      "type": "schema",
+      "definition": "Parse result structure for intent resolution: entities (what to fetch), filters, relationships, presentation hints, timeRange.",
+      "status": "active",
+      "domain": "infrastructure",
+      "related_entities": ["VISLZR", "Graph-Service"],
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Affordance",
+      "type": "schema",
+      "definition": "Actions agents can take: trigger_audit, create_task, open_in_editor, drill_down. Part of QueryResult returned to agents.",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": ["VISLZR", "Graph-Service"],
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md",
+      "confidence": "high"
+    },
+    {
+      "name": "LLMGateway",
+      "type": "module",
+      "definition": "Unified interface for multiple LLM providers (Claude, Gemini, GPT) with cost tracking and observability via LiteLLM.",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": ["AI Arena", "CommandCenter"],
+      "source": "docs/plans/2025-12-29-ai-arena-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "AI Arena",
+      "type": "product",
+      "definition": "Multi-model AI debate system for strategic research and hypothesis validation. Uses LLMGateway to orchestrate Claude, Gemini, GPT debates.",
+      "status": "active",
+      "domain": "research",
+      "related_entities": ["LLMGateway", "HypothesisValidator", "KnowledgeBeast"],
+      "source": "docs/plans/2025-12-29-ai-arena-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "HypothesisValidator",
+      "type": "module",
+      "definition": "Hypothesis-specific debate workflow integrated with Task system. Stores evidence in KnowledgeBeast, publishes progress via NATS.",
+      "status": "active",
+      "domain": "research",
+      "related_entities": ["AI Arena", "KnowledgeBeast", "Task"],
+      "source": "docs/plans/2025-12-29-ai-arena-implementation.md",
+      "confidence": "high"
+    },
+    {
+      "name": "nanochat-style training",
+      "type": "technology",
+      "definition": "Custom LLM training at $100-1000 cost following Karpathy's nanochat approach: tokenization → pretraining → midtraining → SFT → evaluation.",
+      "status": "planned",
+      "domain": "ml",
+      "related_entities": ["CommandCenter", "KnowledgeBeast"],
+      "source": "docs/plans/2026-01-01-custom-model-training-roadmap.md",
+      "confidence": "medium"
+    }
+  ],
+
+  "relationships": [
+    {"source": "VISLZR", "target": "Graph-Service", "type": "queries", "description": "VISLZR queries Graph-Service for entity and relationship data"},
+    {"source": "VISLZR", "target": "primitive-library", "type": "uses", "description": "VISLZR composes primitives to render views"},
+    {"source": "composable-query-layer", "target": "VISLZR", "type": "enables", "description": "Query layer powers VISLZR intent resolution"},
+    {"source": "AI Arena", "target": "LLMGateway", "type": "uses", "description": "AI Arena uses LLMGateway for multi-model debates"},
+    {"source": "HypothesisValidator", "target": "AI Arena", "type": "orchestrates", "description": "HypothesisValidator orchestrates AI Arena debates"},
+    {"source": "agentic-tool-hierarchy", "target": "bootstrap-development", "type": "informs", "description": "Hierarchy informs what level bootstrap components target"},
+    {"source": "custom-model-training", "target": "KnowledgeBeast", "type": "enhances", "description": "Custom models complement RAG with intrinsic understanding"}
+  ],
+
+  "summary": {
+    "new_skills": 6,
+    "new_concepts": 7,
+    "new_relationships": 7,
+    "domains": ["infrastructure", "frontend", "research", "agents", "ml"]
+  }
+}

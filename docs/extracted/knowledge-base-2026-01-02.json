@@ -1,0 +1,323 @@
+{
+  "extraction_date": "2026-01-02",
+  "version": "1.0",
+  "total_documents_processed": 14,
+  "extraction_status": "in_progress",
+  "remaining_documents": "~77",
+
+  "skills": [
+    {
+      "name": "bootstrap-development",
+      "type": "methodology",
+      "definition": "Build minimum infrastructure so coding agents can build the rest. Create just enough (Prompt Improver, Persona Store, Agent Executor, CLI Runner) that agents can construct remaining features through PRs.",
+      "status": "active",
+      "domain": "development",
+      "source": "docs/plans/2025-12-31-bootstrap-implementation.md"
+    },
+    {
+      "name": "verification-workflow",
+      "type": "methodology",
+      "definition": "Arena-style dialectic verification: Assess (parallel domain experts) → Challenge (adversarial scrutiny) → Arbitrate (synthesize verdict) → Learn (update KB and skills with methodology improvements)",
+      "status": "active",
+      "domain": "verification",
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md"
+    },
+    {
+      "name": "prompt-improvement",
+      "type": "methodology",
+      "definition": "Analyze agent prompts for conflicts, ambiguity, missing output formats, and structure issues. Score and suggest improvements.",
+      "status": "active",
+      "domain": "prompt-engineering",
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md"
+    },
+    {
+      "name": "agent-persona-management",
+      "type": "pattern",
+      "definition": "Store reusable agent definitions as YAML files with system_prompt, model, temperature, requires_sandbox, and tags. Categories: assessment, verification, synthesis, research, coding, custom.",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/plans/2025-12-31-verification-workflows-agent-management.md"
+    },
+    {
+      "name": "e2b-sandbox-integration",
+      "type": "pattern",
+      "definition": "Expose E2B sandbox operations through REST API: create, execute, pause/resume, logs, file operations. Integrate with workflows for hypothesis testing.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-12-31-e2b-full-integration.md"
+    },
+    {
+      "name": "parallel-agent-execution",
+      "type": "pattern",
+      "definition": "Run multiple Claude Code agents in parallel using E2B sandboxes. Each agent gets isolated context, unique branch, dedicated log file.",
+      "status": "active",
+      "domain": "agents",
+      "source": "~/.claude/skills/agent-sandboxes/SKILL.md"
+    },
+    {
+      "name": "ralph-loop-autonomy",
+      "type": "pattern",
+      "definition": "Long-running autonomous agent workflows using stop hooks. Loop continues until completion_promise is met or max_iterations reached.",
+      "status": "active",
+      "domain": "agents",
+      "source": "~/.claude/skills/autonomy/SKILL.md"
+    },
+    {
+      "name": "composable-query-layer",
+      "type": "architecture",
+      "definition": "Three modes of intent expression: Natural Language Query (agents/power users), Structured Navigation (humans, click-to-zoom), Saved Recipes/Dashboards. URL encodes query state.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md"
+    },
+    {
+      "name": "primitive-library",
+      "type": "architecture",
+      "definition": "Taxonomy of UI primitives: Atomic (Icon, Badge, Text), Entity (ProjectNode, ServiceNode), Relationship (edges with styles), Container (GraphCanvas, EntityList), Composite (DependencyExplorer, HealthDashboard).",
+      "status": "active",
+      "domain": "frontend",
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md"
+    },
+    {
+      "name": "ai-arena-debate",
+      "type": "methodology",
+      "definition": "Multi-model AI debate system for hypothesis validation. Claude, Gemini, GPT debate in structured rounds until consensus or deadlock.",
+      "status": "active",
+      "domain": "research",
+      "source": "docs/plans/2025-12-29-ai-arena-implementation.md"
+    },
+    {
+      "name": "agentic-tool-hierarchy",
+      "type": "methodology",
+      "definition": "Compositional hierarchy for Claude Code tools: Slash Commands (primitives) → Sub-agents (parallelization) → MCP Servers (external integrations) → Skills (lifecycle managers).",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/Ideas/Best_Practices_Ideas"
+    },
+    {
+      "name": "custom-model-training",
+      "type": "roadmap",
+      "definition": "Progression from API+RAG → Fine-tuning → Custom Training → Hybrid Intelligence. Nanochat-style $100-1000 custom models for domain-specific understanding.",
+      "status": "planned",
+      "domain": "ml",
+      "source": "docs/plans/2026-01-01-custom-model-training-roadmap.md"
+    },
+    {
+      "name": "graph-service-federation",
+      "type": "pattern",
+      "definition": "Cross-project queries with unified data spine. Project becomes zoom level, not container. Federation merges data with deduplication and conflict resolution.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-01-01-composable-commandcenter-design.md"
+    },
+    {
+      "name": "unified-agent-framework",
+      "type": "architecture",
+      "definition": "Single AgentExecutor handles all parallel agent work across environments (local, sandbox). Synthesis is pluggable (Chairman, Voting, Summary). Compute backends are swappable via ComputeGateway.",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md"
+    },
+    {
+      "name": "compute-gateway-pattern",
+      "type": "pattern",
+      "definition": "Abstract compute backends like LLMGateway abstracts LLM providers. create_environment, execute, execute_agent, terminate methods.",
+      "status": "active",
+      "domain": "infrastructure",
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md"
+    },
+    {
+      "name": "synthesis-strategies",
+      "type": "pattern",
+      "definition": "Pluggable strategies for combining multi-agent results: VotingSynthesis (fast, no LLM), SummarySynthesis (LLM-based summary), ChairmanSynthesis (authoritative judgment).",
+      "status": "active",
+      "domain": "agents",
+      "source": "docs/plans/2025-12-31-unified-agent-framework.md"
+    },
+    {
+      "name": "document-intelligence-pipeline",
+      "type": "methodology",
+      "definition": "Five-agent pipeline for document analysis: Concept Extractor → Requirement Miner → Relationship Mapper → Staleness Detector → Classifier.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md"
+    },
+    {
+      "name": "concept-extraction-schema",
+      "type": "schema",
+      "definition": "Standard schema for extracted concepts: name, type, definition, status, domain, related_entities, source_quote, confidence.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md"
+    },
+    {
+      "name": "requirement-mining-schema",
+      "type": "schema",
+      "definition": "Standard schema for mined requirements: id (REQ-XXX), text, type, priority, source_concept, source_quote, verification, status.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md"
+    },
+    {
+      "name": "document-classification-taxonomy",
+      "type": "taxonomy",
+      "definition": "Taxonomy for document classification: types (plan, concept, guide, reference, report, session, archive), statuses, actions.",
+      "status": "active",
+      "domain": "document-intelligence",
+      "source": "docs/plans/2026-01-01-document-intelligence-agents.md"
+    }
+  ],
+
+  "concepts": [
+    {
+      "name": "CommandCenter",
+      "type": "product",
+      "definition": "AI Operating System for Knowledge Work - unified hub for multiple business projects providing centralized monitoring and orchestration",
+      "status": "active",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "Veria",
+      "type": "product",
+      "definition": "AI-Native Compliance and Distribution Platform for tokenized real-world assets",
+      "status": "active",
+      "domain": "compliance"
+    },
+    {
+      "name": "MRKTZR",
+      "type": "product",
+      "definition": "AI Marketing and Partnership Intelligence platform",
+      "status": "active",
+      "domain": "marketing"
+    },
+    {
+      "name": "ROLLIZR",
+      "type": "product",
+      "definition": "Industry Rollup & Consolidation Intelligence platform",
+      "status": "active",
+      "domain": "finance"
+    },
+    {
+      "name": "Fractlzr",
+      "type": "product",
+      "definition": "Fractal-Based Secure Encoding (experimental)",
+      "status": "experimental",
+      "domain": "security"
+    },
+    {
+      "name": "Performia",
+      "type": "product",
+      "definition": "AV Platform for experiential storytelling",
+      "status": "active",
+      "domain": "creative"
+    },
+    {
+      "name": "VISLZR",
+      "type": "product",
+      "definition": "Composable Operating Surface - unified query interface for CommandCenter",
+      "status": "active",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "Graph-Service",
+      "type": "module",
+      "definition": "Entity and relationship storage with graph queries",
+      "status": "active",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "KnowledgeBeast",
+      "type": "module",
+      "definition": "Vector search and knowledge storage",
+      "status": "active",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "LLMGateway",
+      "type": "module",
+      "definition": "Unified interface for multiple LLM providers with cost tracking",
+      "status": "active",
+      "domain": "agents"
+    },
+    {
+      "name": "AgentExecutor",
+      "type": "module",
+      "definition": "Unified entry point for running agents across environments",
+      "status": "active",
+      "domain": "agents"
+    },
+    {
+      "name": "ComputeGateway",
+      "type": "module",
+      "definition": "Unified interface for compute backends (E2B, Docker, Modal)",
+      "status": "active",
+      "domain": "infrastructure"
+    },
+    {
+      "name": "AI Arena",
+      "type": "feature",
+      "definition": "Multi-model AI debate system for hypothesis validation",
+      "status": "active",
+      "domain": "research"
+    },
+    {
+      "name": "Document Intelligence",
+      "type": "feature",
+      "definition": "Extract structured knowledge from document corpora",
+      "status": "active",
+      "domain": "document-intelligence"
+    }
+  ],
+
+  "modules": [
+    {"name": "TrustLayer", "parent": "Veria", "domain": "compliance"},
+    {"name": "Compliance Engine", "parent": "Veria", "domain": "compliance"},
+    {"name": "Asset Tokenizer", "parent": "Veria", "domain": "finance"},
+    {"name": "Distribution APIs", "parent": "Veria", "domain": "distribution"},
+    {"name": "AuditGraph", "parent": "Veria", "domain": "compliance"},
+    {"name": "Campaign Mesh", "parent": "MRKTZR", "domain": "marketing"},
+    {"name": "MarketGraph", "parent": "MRKTZR", "domain": "marketing"},
+    {"name": "Interactive Outreach Engine", "parent": "MRKTZR", "domain": "marketing"},
+    {"name": "Partnership Streamliner", "parent": "MRKTZR", "domain": "partnerships"},
+    {"name": "Compliance Bridge", "parent": "MRKTZR", "domain": "compliance"},
+    {"name": "Fragmentation Indexer", "parent": "ROLLIZR", "domain": "finance"},
+    {"name": "Opportunity Scanner", "parent": "ROLLIZR", "domain": "finance"},
+    {"name": "Synergy Engine", "parent": "ROLLIZR", "domain": "finance"},
+    {"name": "Integration Validator", "parent": "ROLLIZR", "domain": "finance"},
+    {"name": "Smart Deal Composer", "parent": "ROLLIZR", "domain": "finance"},
+    {"name": "Fractal Generator", "parent": "Fractlzr", "domain": "security"},
+    {"name": "AI Decoder", "parent": "Fractlzr", "domain": "security"}
+  ],
+
+  "domains": [
+    "infrastructure",
+    "agents",
+    "research",
+    "document-intelligence",
+    "compliance",
+    "marketing",
+    "finance",
+    "security",
+    "creative",
+    "frontend",
+    "development",
+    "verification",
+    "prompt-engineering",
+    "ml"
+  ],
+
+  "summary": {
+    "total_skills": 20,
+    "skill_types": {
+      "methodology": 6,
+      "pattern": 7,
+      "architecture": 3,
+      "schema": 2,
+      "taxonomy": 1,
+      "roadmap": 1
+    },
+    "total_concepts": 14,
+    "total_modules": 17,
+    "total_domains": 14
+  }
+}

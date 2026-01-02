@@ -1,0 +1,258 @@
+{
+  "extraction_date": "2026-01-02",
+  "extractor": "doc-concept-extractor",
+  "documents_processed": 4,
+
+  "concepts": [
+    {
+      "name": "Veria",
+      "type": "product",
+      "definition": "AI-Native Compliance and Distribution Platform that automates trust and compliance for tokenized real-world assets (Treasuries, MMFs)",
+      "status": "active",
+      "domain": "compliance",
+      "related_entities": ["MRKTZR", "ROLLIZR", "CommandCenter", "Performia", "Fractlzr", "TrustLayer", "Compliance Engine", "Asset Tokenizer", "AuditGraph"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "TrustLayer",
+      "type": "module",
+      "definition": "AI-driven KYC/AML and regulatory validation component within Veria",
+      "status": "proposed",
+      "domain": "compliance",
+      "related_entities": ["Veria"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Compliance Engine",
+      "type": "module",
+      "definition": "Dynamic rule synthesis across jurisdictions",
+      "status": "proposed",
+      "domain": "compliance",
+      "related_entities": ["Veria"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Asset Tokenizer",
+      "type": "module",
+      "definition": "Converts financial instruments into programmable tokens",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["Veria"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Distribution APIs",
+      "type": "module",
+      "definition": "Integration layer for broker-dealers, CPAs, and MRKTZR campaigns",
+      "status": "proposed",
+      "domain": "distribution",
+      "related_entities": ["Veria", "MRKTZR"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "AuditGraph",
+      "type": "module",
+      "definition": "Immutable compliance ledger for verification and attestation",
+      "status": "proposed",
+      "domain": "compliance",
+      "related_entities": ["Veria"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "MRKTZR",
+      "type": "product",
+      "definition": "AI Marketing and Partnership Intelligence platform that transforms outreach and business development into an intelligent, autonomous system",
+      "status": "active",
+      "domain": "marketing",
+      "related_entities": ["Veria", "ROLLIZR", "Performia", "CommandCenter", "Fractlzr", "Campaign Mesh", "MarketGraph", "Partnership Streamliner"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Campaign Mesh",
+      "type": "module",
+      "definition": "Autonomous agents that execute cross-channel marketing campaigns (email, social, content, PR)",
+      "status": "proposed",
+      "domain": "marketing",
+      "related_entities": ["MRKTZR"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "MarketGraph",
+      "type": "module",
+      "definition": "Continuously maps industry relationships, product overlaps, and engagement signals",
+      "status": "proposed",
+      "domain": "marketing",
+      "related_entities": ["MRKTZR", "ROLLIZR"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Interactive Outreach Engine",
+      "type": "module",
+      "definition": "Generates contextual PRs or Issues in partner repos creating direct, value-first contact in developer ecosystems",
+      "status": "proposed",
+      "domain": "marketing",
+      "related_entities": ["MRKTZR"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Partnership Streamliner",
+      "type": "module",
+      "definition": "AI framework to evaluate and design partnerships - compares objectives, scores synergy, generates partnership blueprints",
+      "status": "proposed",
+      "domain": "partnerships",
+      "related_entities": ["MRKTZR", "Veria"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Compliance Bridge",
+      "type": "module",
+      "definition": "Ensures all messaging and contracts align with Veria's regulatory and trust frameworks",
+      "status": "proposed",
+      "domain": "compliance",
+      "related_entities": ["MRKTZR", "Veria"],
+      "source": "docs/concepts/MRKTZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "ROLLIZR",
+      "type": "product",
+      "definition": "Industry Rollup & Consolidation Intelligence platform that identifies fragmented industries and uncovers high-value consolidation opportunities",
+      "status": "active",
+      "domain": "finance",
+      "related_entities": ["Veria", "MRKTZR", "Performia", "CommandCenter", "Fragmentation Indexer", "Synergy Engine"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Fragmentation Indexer",
+      "type": "module",
+      "definition": "Quantifies how fragmented a given industry is using AI analysis of ownership data, market share, and operational metrics",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["ROLLIZR"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Opportunity Scanner",
+      "type": "module",
+      "definition": "Detects ideal acquisition or partnership targets using MarketGraph data",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["ROLLIZR", "MarketGraph", "MRKTZR"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Synergy Engine",
+      "type": "module",
+      "definition": "Analyzes overlap in technology stacks, supply chains, and customer bases to generate a Consolidation Synergy Score",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["ROLLIZR"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Integration Validator",
+      "type": "module",
+      "definition": "Simulates system interoperability (accounting, ERP, CRM) to predict post-merger integration ease",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["ROLLIZR"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Smart Deal Composer",
+      "type": "module",
+      "definition": "Generates AI-assisted M&A or partnership structures with integrated compliance and smart contract support",
+      "status": "proposed",
+      "domain": "finance",
+      "related_entities": ["ROLLIZR", "Veria"],
+      "source": "docs/concepts/ROLLIZR.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Fractlzr",
+      "type": "product",
+      "definition": "Fractal-Based Secure Encoding - embeds secure information within fractal images using fractal geometry as cryptographic and steganographic medium",
+      "status": "experimental",
+      "domain": "security",
+      "related_entities": ["Veria", "MRKTZR", "Performia"],
+      "source": "docs/concepts/Fractlzr.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Fractal Generator",
+      "type": "module",
+      "definition": "Creates multi-layer fractal patterns capable of encoding metadata",
+      "status": "experimental",
+      "domain": "security",
+      "related_entities": ["Fractlzr"],
+      "source": "docs/concepts/Fractlzr.md",
+      "confidence": "high"
+    },
+    {
+      "name": "AI Decoder",
+      "type": "module",
+      "definition": "Reconstructs meaning or data from visual inputs encoded in fractals",
+      "status": "experimental",
+      "domain": "security",
+      "related_entities": ["Fractlzr"],
+      "source": "docs/concepts/Fractlzr.md",
+      "confidence": "high"
+    },
+    {
+      "name": "CommandCenter",
+      "type": "product",
+      "definition": "AI Operating System for Knowledge Work - unified hub for multiple business projects providing centralized monitoring and orchestration",
+      "status": "active",
+      "domain": "infrastructure",
+      "related_entities": ["Veria", "MRKTZR", "ROLLIZR", "Performia", "Fractlzr", "VISLZR", "Graph-Service"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "high"
+    },
+    {
+      "name": "Performia",
+      "type": "product",
+      "definition": "AV Platform used for experiential storytelling, education, and creative content layer",
+      "status": "active",
+      "domain": "creative",
+      "related_entities": ["Veria", "MRKTZR", "ROLLIZR", "Fractlzr"],
+      "source": "docs/concepts/Veria.md",
+      "confidence": "medium"
+    }
+  ],
+
+  "relationships": [
+    {"source": "Veria", "target": "MRKTZR", "type": "integrates_with", "description": "MRKTZR handles marketing and distribution for Veria"},
+    {"source": "Veria", "target": "ROLLIZR", "type": "integrates_with", "description": "ROLLIZR identifies acquisitions in regulated verticals"},
+    {"source": "Veria", "target": "CommandCenter", "type": "managed_by", "description": "CommandCenter provides centralized monitoring"},
+    {"source": "Veria", "target": "Performia", "type": "integrates_with", "description": "Performia provides creative content layer"},
+    {"source": "MRKTZR", "target": "ROLLIZR", "type": "feeds_data_to", "description": "MRKTZR feeds leads and engagement analytics"},
+    {"source": "ROLLIZR", "target": "MarketGraph", "type": "uses", "description": "ROLLIZR uses MarketGraph data for opportunity detection"},
+    {"source": "TrustLayer", "target": "Veria", "type": "module_of", "description": "TrustLayer is a module within Veria"},
+    {"source": "Campaign Mesh", "target": "MRKTZR", "type": "module_of", "description": "Campaign Mesh is a module within MRKTZR"},
+    {"source": "Fragmentation Indexer", "target": "ROLLIZR", "type": "module_of", "description": "Fragmentation Indexer is a module within ROLLIZR"},
+    {"source": "Fractlzr", "target": "Veria", "type": "provides_to", "description": "Fractlzr adds visual compliance watermarks"}
+  ],
+
+  "summary": {
+    "products": 5,
+    "modules": 18,
+    "relationships": 10,
+    "domains": ["compliance", "marketing", "finance", "security", "infrastructure", "creative", "distribution", "partnerships"]
+  }
+}
