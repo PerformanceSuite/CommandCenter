@@ -638,6 +638,77 @@ class GraphLink(Base):
 
 
 # ============================================================================
+# Cross-Project Federation
+# ============================================================================
+
+
+class CrossProjectLink(Base):
+    """
+    Explicit cross-project relationship for federation queries.
+
+    This table enables ecosystem-wide queries across multiple projects:
+    - "Find all services with degraded health across the ecosystem"
+    - "Show dependencies between project A and project B"
+    - "List all shared libraries used across projects"
+
+    Architecture Decision:
+    - Dedicated table separate from GraphLink for cleaner separation
+    - Different indexes optimized for ecosystem-wide queries
+    - Explicit source/target project_id fields (not nullable)
+
+    Entity Types:
+    - "graph_repos", "graph_files", "graph_symbols", "graph_services",
+      "graph_spec_items", "graph_tasks", etc.
+
+    Relationship Types:
+    - "depends_on", "imports", "calls", "extends", "implements",
+      "shares_library", "consumes_api", "produces_event", etc.
+    """
+
+    __tablename__ = "cross_project_links"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Source project and entity
+    source_project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    source_entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    source_entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Target project and entity
+    target_project_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    target_entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    target_entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # Relationship metadata
+    relationship_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+
+    # Timestamps
+    discovered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<CrossProjectLink(id={self.id}, "
+            f"{self.source_entity_type}:{self.source_entity_id}@{self.source_project_id} "
+            f"--[{self.relationship_type}]--> "
+            f"{self.target_entity_type}:{self.target_entity_id}@{self.target_project_id})>"
+        )
+
+
+# ============================================================================
 # Audits & Compliance
 # ============================================================================
 

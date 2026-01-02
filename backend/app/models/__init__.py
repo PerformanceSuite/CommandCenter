@@ -2,6 +2,11 @@
 SQLAlchemy models for Command Center
 """
 
+from app.models.agent_execution import AgentExecution
+
+# Settings models
+from app.models.agent_persona import AgentPersona
+
 # Intelligence Integration Models
 from app.models.debate import ConsensusLevel, Debate, DebateStatus, DebateVerdict
 from app.models.evidence import Evidence, EvidenceSourceType, EvidenceStance
@@ -10,6 +15,7 @@ from app.models.evidence import Evidence, EvidenceSourceType, EvidenceStance
 from app.models.graph import (
     AuditKind,
     AuditStatus,
+    CrossProjectLink,
     DependencyType,
     GraphAudit,
     GraphDependency,
@@ -47,10 +53,6 @@ from app.models.repository import Repository
 from app.models.research_finding import FindingType, ResearchFinding
 from app.models.research_task import ResearchTask, TaskStatus
 from app.models.schedule import Schedule, ScheduleFrequency
-
-# Settings models
-from app.models.agent_persona import AgentPersona
-from app.models.agent_execution import AgentExecution
 from app.models.settings import AgentConfig, Provider
 from app.models.technology import (
     Technology,
@@ -118,6 +120,7 @@ __all__ = [
     "GraphLink",
     "GraphAudit",
     "GraphEvent",
+    "CrossProjectLink",
     "SymbolKind",
     "DependencyType",
     "ServiceType",
