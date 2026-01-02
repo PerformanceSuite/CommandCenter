@@ -1,18 +1,23 @@
 """API router for skills."""
 from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
-from app.auth.project_context import get_current_project_id
 from app.auth.dependencies import get_current_user
+from app.auth.project_context import get_current_project_id, get_optional_project_id
+from app.database import get_db
 from app.models.user import User
-from app.services.skill_service import SkillService
 from app.schemas.skill import (
-    SkillCreate, SkillUpdate, SkillResponse,
-    SkillUsageCreate, SkillUsageResponse,
-    SkillImportRequest, SkillSearchRequest
+    SkillCreate,
+    SkillImportRequest,
+    SkillResponse,
+    SkillSearchRequest,
+    SkillUpdate,
+    SkillUsageCreate,
+    SkillUsageResponse,
 )
+from app.services.skill_service import SkillService
 
 router = APIRouter(prefix="/skills", tags=["skills"])
 
@@ -27,22 +32,16 @@ async def list_skills(
     limit: int = 100,
     offset: int = 0,
     project_id: Optional[int] = Depends(get_current_project_id),
-    service: SkillService = Depends(get_skill_service)
+    service: SkillService = Depends(get_skill_service),
 ):
     """List all available skills."""
     return await service.list_all(
-        project_id=project_id,
-        include_global=include_global,
-        limit=limit,
-        offset=offset
+        project_id=project_id, include_global=include_global, limit=limit, offset=offset
     )
 
 
 @router.get("/{skill_id}", response_model=SkillResponse)
-async def get_skill(
-    skill_id: int,
-    service: SkillService = Depends(get_skill_service)
-):
+async def get_skill(skill_id: int, service: SkillService = Depends(get_skill_service)):
     """Get a skill by ID."""
     skill = await service.get_by_id(skill_id)
     if not skill:
@@ -51,10 +50,7 @@ async def get_skill(
 
 
 @router.get("/by-slug/{slug}", response_model=SkillResponse)
-async def get_skill_by_slug(
-    slug: str,
-    service: SkillService = Depends(get_skill_service)
-):
+async def get_skill_by_slug(slug: str, service: SkillService = Depends(get_skill_service)):
     """Get a skill by slug."""
     skill = await service.get_by_slug(slug)
     if not skill:
@@ -65,8 +61,8 @@ async def get_skill_by_slug(
 @router.post("", response_model=SkillResponse, status_code=status.HTTP_201_CREATED)
 async def create_skill(
     skill_data: SkillCreate,
-    project_id: Optional[int] = Depends(get_current_project_id),
-    service: SkillService = Depends(get_skill_service)
+    project_id: Optional[int] = Depends(get_optional_project_id),
+    service: SkillService = Depends(get_skill_service),
 ):
     """Create a new skill."""
     # Check for duplicate slug
@@ -74,7 +70,7 @@ async def create_skill(
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Skill with slug '{skill_data.slug}' already exists"
+            detail=f"Skill with slug '{skill_data.slug}' already exists",
         )
 
     if skill_data.project_id is None:
@@ -85,9 +81,7 @@ async def create_skill(
 
 @router.patch("/{skill_id}", response_model=SkillResponse)
 async def update_skill(
-    skill_id: int,
-    skill_data: SkillUpdate,
-    service: SkillService = Depends(get_skill_service)
+    skill_id: int, skill_data: SkillUpdate, service: SkillService = Depends(get_skill_service)
 ):
     """Update a skill."""
     skill = await service.update(skill_id, skill_data)
@@ -97,10 +91,7 @@ async def update_skill(
 
 
 @router.delete("/{skill_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_skill(
-    skill_id: int,
-    service: SkillService = Depends(get_skill_service)
-):
+async def delete_skill(skill_id: int, service: SkillService = Depends(get_skill_service)):
     """Delete a skill."""
     deleted = await service.delete(skill_id)
     if not deleted:
@@ -111,7 +102,7 @@ async def delete_skill(
 async def search_skills(
     search: SkillSearchRequest,
     project_id: Optional[int] = Depends(get_current_project_id),
-    service: SkillService = Depends(get_skill_service)
+    service: SkillService = Depends(get_skill_service),
 ):
     """Search skills."""
     return await service.search(search, project_id=project_id)
@@ -120,8 +111,8 @@ async def search_skills(
 @router.post("/import", response_model=List[SkillResponse])
 async def import_skills(
     import_request: SkillImportRequest,
-    project_id: Optional[int] = Depends(get_current_project_id),
-    service: SkillService = Depends(get_skill_service)
+    project_id: Optional[int] = Depends(get_optional_project_id),
+    service: SkillService = Depends(get_skill_service),
 ):
     """Import skills from filesystem."""
     try:
@@ -135,14 +126,10 @@ async def record_skill_usage(
     usage_data: SkillUsageCreate,
     project_id: Optional[int] = Depends(get_current_project_id),
     user: User = Depends(get_current_user),
-    service: SkillService = Depends(get_skill_service)
+    service: SkillService = Depends(get_skill_service),
 ):
     """Record a skill usage for effectiveness tracking."""
     try:
-        return await service.record_usage(
-            usage_data,
-            project_id=project_id,
-            user_id=user.id
-        )
+        return await service.record_usage(usage_data, project_id=project_id, user_id=user.id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

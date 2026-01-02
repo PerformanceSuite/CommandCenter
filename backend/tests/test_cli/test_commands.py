@@ -112,7 +112,7 @@ def test_config_list(runner, temp_config):
 
         assert result.exit_code == 0
         assert "api.url" in result.output
-        assert "auth.token" in result.output
+        assert "output.format" in result.output
 
 
 def test_config_path(runner, temp_config):

@@ -12,6 +12,7 @@ from .executor import AgentExecutor, ExecutionResult
 from .persona_store import Persona, PersonaStore
 from .prompt_improver import PromptAnalysis, PromptImprover
 from .sandbox import AgentSandbox, SandboxResult
+from .skill_retriever import RetrievedSkill, SkillRetriever, format_skills_for_prompt
 
 __all__ = [
     "PromptImprover",
@@ -22,4 +23,7 @@ __all__ = [
     "ExecutionResult",
     "AgentSandbox",
     "SandboxResult",
+    "SkillRetriever",
+    "RetrievedSkill",
+    "format_skills_for_prompt",
 ]

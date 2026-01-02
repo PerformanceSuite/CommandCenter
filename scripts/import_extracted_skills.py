@@ -20,10 +20,11 @@ async def import_skills():
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Check API health
         try:
-            health = await client.get(f"{API_BASE}/health")
+            health = await client.get("http://localhost:8000/health")
             if health.status_code != 200:
                 print(f"API not healthy: {health.status_code}")
                 return
+            print("API is healthy")
         except Exception as e:
             print(f"Cannot connect to API: {e}")
             print("Make sure backend is running: docker compose up -d")

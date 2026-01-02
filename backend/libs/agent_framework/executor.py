@@ -14,6 +14,7 @@ import structlog
 
 from .persona_store import Persona, PersonaStore
 from .sandbox import AgentSandbox, SandboxResult
+from .skill_retriever import SkillRetriever, format_skills_for_prompt
 
 logger = structlog.get_logger(__name__)
 
@@ -56,6 +57,8 @@ class AgentExecutor:
         repo_url: str,
         branch: str = "main",
         persona_store: Optional[PersonaStore] = None,
+        skill_retriever: Optional[SkillRetriever] = None,
+        enable_skills: bool = True,
     ):
         """
         Initialize executor for a repository.
@@ -64,10 +67,14 @@ class AgentExecutor:
             repo_url: Git repository URL
             branch: Default branch to work on
             persona_store: Persona store instance (defaults to standard store)
+            skill_retriever: Skill retriever instance (defaults to standard retriever)
+            enable_skills: Whether to fetch and include relevant skills in prompts
         """
         self.repo_url = repo_url
         self.branch = branch
         self.personas = persona_store or PersonaStore()
+        self.skill_retriever = skill_retriever or SkillRetriever()
+        self.enable_skills = enable_skills
 
     async def run(
         self,
@@ -103,8 +110,26 @@ class AgentExecutor:
             create_pr=create_pr,
         )
 
-        # Build full prompt
-        full_prompt = self._build_prompt(p, task)
+        # Fetch relevant skills and build full prompt
+        skills_section = ""
+        if self.enable_skills:
+            try:
+                skills = await self.skill_retriever.find_relevant(
+                    task=task,
+                    categories=self._persona_to_skill_categories(p.category),
+                    limit=3,
+                )
+                skills_section = format_skills_for_prompt(skills)
+                logger.info(
+                    "skills_loaded_for_agent",
+                    persona=persona,
+                    skill_count=len(skills),
+                    skills=[s.slug for s in skills],
+                )
+            except Exception as e:
+                logger.warning("skill_retrieval_failed", error=str(e))
+
+        full_prompt = self._build_prompt(p, task, skills_section)
 
         # Create sandbox and run
         sandbox = AgentSandbox(
@@ -209,13 +234,17 @@ class AgentExecutor:
 
         return processed
 
-    def _build_prompt(self, persona: Persona, task: str) -> str:
-        """Build the full prompt from persona and task."""
-        return f"""{persona.system_prompt}
+    def _build_prompt(self, persona: Persona, task: str, skills_section: str = "") -> str:
+        """Build the full prompt from persona, task, and relevant skills."""
+        parts = [persona.system_prompt, "\n---\n"]
 
----
+        # Include skills if available
+        if skills_section:
+            parts.append(skills_section)
+            parts.append("\n---\n")
 
-## Current Task
+        parts.append(
+            f"""## Current Task
 
 {task}
 
@@ -227,6 +256,20 @@ Remember to:
 3. Run tests before committing
 4. Use clear commit messages
 """
+        )
+
+        return "\n".join(parts)
+
+    def _persona_to_skill_categories(self, persona_category: str) -> list[str]:
+        """Map persona category to relevant skill categories."""
+        mapping = {
+            "coding": ["pattern", "architecture"],
+            "assessment": ["methodology", "reference"],
+            "verification": ["methodology", "pattern"],
+            "synthesis": ["methodology"],
+            "custom": ["pattern", "methodology"],
+        }
+        return mapping.get(persona_category, ["pattern"])
 
     def _extract_model_name(self, model: str) -> str:
         """Extract short model name from full model string."""
