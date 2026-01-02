@@ -77,6 +77,30 @@ async def execute_composed_query(
     - `direction`: inbound, outbound, or both
     - `depth`: Traversal depth (1-10)
 
+    **Time Range Filtering (Phase 4):**
+    Use `time_range` for temporal queries:
+    - Absolute: `{"start": "2025-01-01T00:00:00Z", "end": "2025-12-31T23:59:59Z"}`
+    - Relative: `{"relative": "last 7 days"}`
+    - Field selection: `{"relative": "yesterday", "field": "updated_at"}`
+
+    Supported relative expressions:
+    - `last N days/hours/weeks/months`
+    - `yesterday`, `today`
+    - `this week`, `last week`
+    - `this month`, `last month`
+    - `this quarter`, `last quarter`
+
+    **Temporal Aggregations:**
+    Get counts per time bucket with temporal aggregations:
+    ```json
+    {
+      "aggregations": [{
+        "type": "count",
+        "temporal": {"bucket": "day", "metric": "count"}
+      }]
+    }
+    ```
+
     **Agent Parity (Phase 3):**
     Set `include_affordances=true` to get available actions for each entity.
     Affordances enable agents to take the same actions available in the UI.
@@ -87,6 +111,7 @@ async def execute_composed_query(
       "entities": [{"type": "symbol", "scope": "project:1"}],
       "filters": [{"field": "name", "operator": "contains", "value": "auth"}],
       "relationships": [{"type": "dependency", "direction": "outbound", "depth": 2}],
+      "time_range": {"relative": "last 30 days"},
       "limit": 50
     }
     ```

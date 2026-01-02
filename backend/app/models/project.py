@@ -13,8 +13,8 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.hypothesis import Hypothesis
     from app.models.ingestion_source import IngestionSource
-    from app.models.user_project import UserProject
     from app.models.skill import Skill
+    from app.models.user_project import UserProject
 
 
 class Project(Base):
@@ -92,11 +92,12 @@ class Project(Base):
 
     # User-Project associations
     user_projects: Mapped[list["UserProject"]] = relationship(
-n    # Skills
+        "UserProject", back_populates="project", cascade="all, delete-orphan"
+    )
+
+    # Skills
     skills: Mapped[list["Skill"]] = relationship(
         "Skill", back_populates="project", cascade="all, delete-orphan"
-    )
-        "UserProject", back_populates="project", cascade="all, delete-orphan"
     )
 
     # Unique constraint: owner + name must be unique

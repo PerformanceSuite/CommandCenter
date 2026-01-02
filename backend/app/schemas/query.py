@@ -142,14 +142,62 @@ class Filter(BaseModel):
     value: Any = Field(..., description="Value to compare against")
 
 
+class RelativeTimeRange(BaseModel):
+    """Relative time expression that resolves to absolute datetime range.
+
+    Supports natural language time expressions:
+    - "last N days/hours/weeks/months"
+    - "yesterday", "today", "tomorrow"
+    - "this week", "last week", "this month", "last month"
+    - "this quarter", "last quarter"
+
+    Examples:
+        RelativeTimeRange(expression="last 7 days")
+        RelativeTimeRange(expression="yesterday")
+        RelativeTimeRange(expression="this month")
+    """
+
+    expression: str = Field(
+        ...,
+        description="Relative time expression (e.g., 'last 7 days', 'this week')",
+    )
+
+
+class TemporalAggregation(BaseModel):
+    """Temporal bucketing for time-based aggregations.
+
+    Groups results into time buckets for trend analysis.
+
+    Examples:
+        TemporalAggregation(bucket="day", metric="count")
+        TemporalAggregation(bucket="week", metric="sum", field="lines")
+    """
+
+    bucket: Literal["hour", "day", "week", "month", "quarter", "year"] = Field(
+        ...,
+        description="Time bucket granularity",
+    )
+    metric: Literal["count", "sum", "avg", "min", "max"] = Field(
+        "count",
+        description="Aggregation metric",
+    )
+    field: Optional[str] = Field(
+        None,
+        description="Field to aggregate (required for sum, avg, min, max)",
+    )
+
+
 class TimeRange(BaseModel):
     """Time range for temporal filtering.
 
-    Both bounds are optional, allowing open-ended ranges.
+    Supports both absolute datetime ranges and relative expressions.
+    Can optionally specify which timestamp field to filter on.
 
     Examples:
         TimeRange(start=datetime(2024, 1, 1))
         TimeRange(start=datetime(2024, 1, 1), end=datetime(2024, 12, 31))
+        TimeRange(relative="last 7 days")
+        TimeRange(relative="yesterday", field="updated_at")
     """
 
     start: Optional[datetime] = Field(
@@ -160,6 +208,14 @@ class TimeRange(BaseModel):
         None,
         description="End of time range (inclusive)",
     )
+    relative: Optional[str] = Field(
+        None,
+        description="Relative time expression (e.g., 'last 7 days', 'yesterday')",
+    )
+    field: Optional[Literal["created_at", "updated_at", "last_indexed_at"]] = Field(
+        None,
+        description="Timestamp field to filter on (auto-detected if not specified)",
+    )
 
 
 class Aggregation(BaseModel):
@@ -168,6 +224,7 @@ class Aggregation(BaseModel):
     Examples:
         Aggregation(type="count", group_by=["type"])
         Aggregation(type="sum", field="lines", group_by=["language"])
+        Aggregation(type="count", temporal=TemporalAggregation(bucket="day"))
     """
 
     type: Literal["count", "sum", "avg", "min", "max", "group"] = Field(
@@ -181,6 +238,10 @@ class Aggregation(BaseModel):
     group_by: Optional[list[str]] = Field(
         None,
         description="Fields to group by",
+    )
+    temporal: Optional[TemporalAggregation] = Field(
+        None,
+        description="Temporal bucketing for time-based aggregations",
     )
 
 
