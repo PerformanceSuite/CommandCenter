@@ -379,6 +379,20 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+def format_api_response(data: dict, status: str = "success"):
+    """
+    Format a standardized API response structure.
+
+    Args:
+        data: The response data to include in the formatted response
+        status: The status string, defaults to "success"
+
+    Returns:
+        dict: A formatted response dictionary with status, data, and timestamp
+    """
+    return {"status": status, "data": data, "timestamp": "2024-01-01T00:00:00Z"}
+
+
 if __name__ == "__main__":
     import uvicorn
 
