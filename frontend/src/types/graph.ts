@@ -153,6 +153,16 @@ export interface GraphCanvasProps {
   loading?: boolean;
   /** Height of the canvas (default: 600px) */
   height?: number | string;
+  /** Enable real-time WebSocket updates */
+  enableRealTime?: boolean;
+  /** Project ID for real-time subscriptions */
+  projectId?: string;
+  /** Callback when a node is updated via WebSocket */
+  onNodeUpdate?: (nodeId: string, data: unknown) => void;
+  /** Callback when a node is created via WebSocket */
+  onNodeCreate?: (data: unknown) => void;
+  /** Callback when a node is deleted via WebSocket */
+  onNodeDelete?: (nodeId: string) => void;
 }
 
 // ============================================================================

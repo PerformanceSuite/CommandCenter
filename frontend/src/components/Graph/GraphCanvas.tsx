@@ -39,6 +39,18 @@ import {
 } from '../../types/graph';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { GraphNodeTooltip } from './GraphNodeTooltip';
+import { useWebSocketSubscription } from '../../hooks';
+
+// ============================================================================
+// Real-Time Update Types
+// ============================================================================
+
+interface EntityUpdateMessage {
+  entity_id: string;
+  entity_type: string;
+  change_type: 'created' | 'updated' | 'deleted';
+  data?: unknown;
+}
 
 // ============================================================================
 // Layout Configuration
@@ -185,7 +197,27 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   className = '',
   loading = false,
   height = 600,
+  enableRealTime = false,
+  projectId,
+  onNodeUpdate,
+  onNodeCreate,
+  onNodeDelete,
 }) => {
+  // Real-time WebSocket subscription
+  const { isConnected } = useWebSocketSubscription<EntityUpdateMessage>({
+    topic: enableRealTime && projectId ? `entity:updated:${projectId}` : '',
+    enabled: enableRealTime && !!projectId,
+    onMessage: (message) => {
+      if (message.change_type === 'updated') {
+        onNodeUpdate?.(message.entity_id, message.data);
+      } else if (message.change_type === 'created') {
+        onNodeCreate?.(message.data);
+      } else if (message.change_type === 'deleted') {
+        onNodeDelete?.(message.entity_id);
+      }
+    },
+  });
+
   // Transform and layout nodes/edges
   const { layoutedNodes, layoutedEdges } = useMemo(() => {
     const rfNodes = transformToReactFlowNodes(inputNodes);
@@ -335,6 +367,36 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           node={hoveredNode}
           position={tooltipPosition}
         />
+      )}
+
+      {/* Real-time connection indicator */}
+      {enableRealTime && (
+        <div
+          className="realtime-indicator"
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 12,
+            color: isConnected ? '#22c55e' : '#ef4444',
+            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+            padding: '4px 8px',
+            borderRadius: 6,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: isConnected ? '#22c55e' : '#ef4444',
+            }}
+          />
+          {isConnected ? 'Live' : 'Connecting...'}
+        </div>
       )}
 
       {/* Legend */}
