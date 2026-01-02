@@ -12,9 +12,17 @@ from pydantic import BaseModel, Field
 from app.models.graph import (
     AuditKind,
     AuditStatus,
+    ConceptStatus,
+    ConceptType,
+    ConfidenceLevel,
     DependencyType,
+    DocumentStatus,
+    DocumentType,
     HealthStatus,
     LinkType,
+    RequirementPriority,
+    RequirementStatus,
+    RequirementType,
     ServiceType,
     SpecItemSource,
     SpecItemStatus,
@@ -172,7 +180,9 @@ class GraphSearchRequest(BaseModel):
     """Request for graph search"""
 
     query: str = Field(..., min_length=1)
-    scope: List[Literal["symbols", "files", "tasks", "personas", "executions"]] = Field(default=["symbols", "files", "tasks"])
+    scope: List[Literal["symbols", "files", "tasks", "personas", "executions"]] = Field(
+        default=["symbols", "files", "tasks"]
+    )
 
 
 # ============================================================================
@@ -455,3 +465,194 @@ class FederationQueryResponse(BaseModel):
         default_factory=dict,
         description="Query metadata (projects involved, etc.)",
     )
+
+
+# ============================================================================
+# Document Intelligence Schemas
+# ============================================================================
+
+
+class GraphDocumentResponse(BaseModel):
+    """Document response"""
+
+    id: int
+    project_id: int
+    path: str
+    title: Optional[str]
+    doc_type: DocumentType
+    subtype: Optional[str]
+    status: DocumentStatus
+    audience: Optional[str]
+    value_assessment: Optional[str]
+    word_count: int
+    content_hash: Optional[str]
+    staleness_score: Optional[int]
+    last_meaningful_date: Optional[datetime]
+    recommended_action: Optional[str]
+    target_location: Optional[str]
+    metadata: Optional[dict]
+    created_at: datetime
+    updated_at: datetime
+    last_analyzed_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class GraphConceptResponse(BaseModel):
+    """Concept response"""
+
+    id: int
+    project_id: int
+    source_document_id: Optional[int]
+    name: str
+    concept_type: ConceptType
+    definition: Optional[str]
+    status: ConceptStatus
+    domain: Optional[str]
+    source_quote: Optional[str]
+    confidence: ConfidenceLevel
+    related_entities: Optional[List[str]]
+    metadata: Optional[dict]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GraphRequirementResponse(BaseModel):
+    """Requirement response"""
+
+    id: int
+    project_id: int
+    source_document_id: Optional[int]
+    req_id: str
+    text: str
+    req_type: RequirementType
+    priority: RequirementPriority
+    status: RequirementStatus
+    source_concept: Optional[str]
+    source_quote: Optional[str]
+    verification: Optional[str]
+    metadata: Optional[dict]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Document Intelligence Request Models
+# ============================================================================
+
+
+class CreateDocumentRequest(BaseModel):
+    """Request to create/upsert a document"""
+
+    path: str = Field(..., min_length=1, max_length=1024)
+    title: Optional[str] = Field(None, max_length=512)
+    doc_type: DocumentType
+    subtype: Optional[str] = Field(None, max_length=100)
+    status: DocumentStatus = DocumentStatus.ACTIVE
+    audience: Optional[str] = Field(None, max_length=255)
+    value_assessment: Optional[Literal["high", "medium", "low", "none"]] = None
+    word_count: int = 0
+    content_hash: Optional[str] = None
+    staleness_score: Optional[int] = Field(None, ge=0, le=100)
+    last_meaningful_date: Optional[datetime] = None
+    recommended_action: Optional[
+        Literal["keep", "update", "archive", "merge", "extract_and_archive", "delete"]
+    ] = None
+    target_location: Optional[str] = None
+    metadata: Optional[dict] = None
+
+
+class CreateConceptRequest(BaseModel):
+    """Request to create a concept"""
+
+    name: str = Field(..., min_length=1, max_length=255)
+    concept_type: ConceptType
+    source_document_id: Optional[int] = None
+    definition: Optional[str] = None
+    status: ConceptStatus = ConceptStatus.UNKNOWN
+    domain: Optional[str] = Field(None, max_length=100)
+    source_quote: Optional[str] = None
+    confidence: ConfidenceLevel = ConfidenceLevel.MEDIUM
+    related_entities: Optional[List[str]] = None
+    metadata: Optional[dict] = None
+
+
+class CreateRequirementRequest(BaseModel):
+    """Request to create a requirement"""
+
+    req_id: str = Field(..., min_length=1, max_length=50, pattern=r"^REQ-\d+$")
+    text: str = Field(..., min_length=1)
+    req_type: RequirementType
+    source_document_id: Optional[int] = None
+    priority: RequirementPriority = RequirementPriority.UNKNOWN
+    status: RequirementStatus = RequirementStatus.PROPOSED
+    source_concept: Optional[str] = Field(None, max_length=255)
+    source_quote: Optional[str] = None
+    verification: Optional[str] = None
+    metadata: Optional[dict] = None
+
+
+class DocumentFilters(BaseModel):
+    """Filters for document queries"""
+
+    doc_types: Optional[List[DocumentType]] = Field(None, description="Filter by document types")
+    statuses: Optional[List[DocumentStatus]] = Field(None, description="Filter by status")
+    min_staleness: Optional[int] = Field(None, ge=0, le=100, description="Minimum staleness score")
+    max_staleness: Optional[int] = Field(None, ge=0, le=100, description="Maximum staleness score")
+    recommended_actions: Optional[List[str]] = Field(
+        None, description="Filter by recommended action"
+    )
+
+
+class ConceptFilters(BaseModel):
+    """Filters for concept queries"""
+
+    concept_types: Optional[List[ConceptType]] = Field(None, description="Filter by concept types")
+    statuses: Optional[List[ConceptStatus]] = Field(None, description="Filter by status")
+    domains: Optional[List[str]] = Field(None, description="Filter by domain")
+    min_confidence: Optional[ConfidenceLevel] = Field(None, description="Minimum confidence level")
+
+
+class RequirementFilters(BaseModel):
+    """Filters for requirement queries"""
+
+    req_types: Optional[List[RequirementType]] = Field(
+        None, description="Filter by requirement types"
+    )
+    priorities: Optional[List[RequirementPriority]] = Field(None, description="Filter by priority")
+    statuses: Optional[List[RequirementStatus]] = Field(None, description="Filter by status")
+    source_concept: Optional[str] = Field(None, description="Filter by source concept name")
+
+
+# ============================================================================
+# Document Intelligence Batch Operations
+# ============================================================================
+
+
+class BatchIngestConceptsRequest(BaseModel):
+    """Request to batch ingest concepts from doc-concept-extractor output"""
+
+    source_document_id: Optional[int] = Field(None, description="Source document ID if known")
+    concepts: List[CreateConceptRequest] = Field(..., min_length=1)
+
+
+class BatchIngestRequirementsRequest(BaseModel):
+    """Request to batch ingest requirements from doc-requirement-miner output"""
+
+    source_document_id: Optional[int] = Field(None, description="Source document ID if known")
+    requirements: List[CreateRequirementRequest] = Field(..., min_length=1)
+
+
+class BatchIngestResponse(BaseModel):
+    """Response for batch ingest operations"""
+
+    created: int = Field(..., description="Number of entities created")
+    updated: int = Field(..., description="Number of entities updated")
+    errors: List[str] = Field(default_factory=list, description="Any errors encountered")

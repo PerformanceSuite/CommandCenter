@@ -6,10 +6,19 @@ This module provides:
 - PersonaStore: Manage agent persona definitions
 - AgentExecutor: Execute agents in various environments
 - AgentSandbox: Run agents in E2B sandboxes
+- PipelineExecutor: Orchestrate multi-stage agent pipelines
 """
 
 from .executor import AgentExecutor, ExecutionResult
 from .persona_store import Persona, PersonaStore
+from .pipeline import (
+    Pipeline,
+    PipelineExecutor,
+    PipelineResult,
+    PipelineStage,
+    PipelineStore,
+    StageResult,
+)
 from .prompt_improver import PromptAnalysis, PromptImprover
 from .sandbox import AgentSandbox, SandboxResult
 from .skill_retriever import RetrievedSkill, SkillRetriever, format_skills_for_prompt
@@ -26,4 +35,11 @@ __all__ = [
     "SkillRetriever",
     "RetrievedSkill",
     "format_skills_for_prompt",
+    # Pipeline orchestration
+    "PipelineStore",
+    "Pipeline",
+    "PipelineStage",
+    "PipelineExecutor",
+    "PipelineResult",
+    "StageResult",
 ]
