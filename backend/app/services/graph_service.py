@@ -15,6 +15,7 @@ from app.models.agent_execution import AgentExecution
 from app.models.graph import (
     AuditKind,
     AuditStatus,
+    CrossProjectLink,
     GraphAudit,
     GraphDependency,
     GraphFile,
@@ -1022,6 +1023,74 @@ class GraphService:
             )
 
         return link
+
+    async def query_ecosystem_links(
+        self,
+        entity_types: Optional[List[str]] = None,
+        relationship_types: Optional[List[str]] = None,
+        source_project_ids: Optional[List[int]] = None,
+        target_project_ids: Optional[List[int]] = None,
+        limit: int = 1000,
+    ) -> List[CrossProjectLink]:
+        """Query cross-project links across the ecosystem.
+
+        This method queries the CrossProjectLink table for ecosystem-wide
+        federation queries, enabling discovery of relationships between
+        projects such as shared dependencies, API consumers, and service
+        integrations.
+
+        Args:
+            entity_types: Filter by source or target entity type
+                (e.g., ["symbol", "service", "file"])
+            relationship_types: Filter by relationship type
+                (e.g., ["calls", "imports", "depends_on"])
+            source_project_ids: Filter by source project IDs
+            target_project_ids: Filter by target project IDs
+            limit: Maximum number of results (default: 1000)
+
+        Returns:
+            List of CrossProjectLink objects matching the filters
+
+        Example:
+            # Find all symbol-to-symbol calls/imports across projects
+            links = await graph_service.query_ecosystem_links(
+                entity_types=["symbol"],
+                relationship_types=["calls", "imports"]
+            )
+
+            # Find all outgoing links from project 1
+            links = await graph_service.query_ecosystem_links(
+                source_project_ids=[1]
+            )
+        """
+        query = select(CrossProjectLink)
+
+        # Filter by entity types (match source OR target)
+        if entity_types:
+            query = query.filter(
+                or_(
+                    CrossProjectLink.source_entity_type.in_(entity_types),
+                    CrossProjectLink.target_entity_type.in_(entity_types),
+                )
+            )
+
+        # Filter by relationship types
+        if relationship_types:
+            query = query.filter(CrossProjectLink.relationship_type.in_(relationship_types))
+
+        # Filter by source project IDs
+        if source_project_ids:
+            query = query.filter(CrossProjectLink.source_project_id.in_(source_project_ids))
+
+        # Filter by target project IDs
+        if target_project_ids:
+            query = query.filter(CrossProjectLink.target_project_id.in_(target_project_ids))
+
+        # Apply limit
+        query = query.limit(limit)
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
 
     # ========================================================================
     # Mutation Operations
