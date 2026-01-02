@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Test orchestration for all CommandCenter components
 # Includes dedicated test databases and service dependencies
 
@@ -38,10 +36,10 @@ services:
       context: .
       dockerfile: ./backend/Dockerfile.test
     volumes:
-      - ./backend:/app
-      - backend-test-results:/app/test-results
+      - ./backend:/app:ro
+      - test-output:/output
     environment:
-      DATABASE_URL: postgresql://test:test@postgres-test:5432/commandcenter_test
+      DATABASE_URL: postgresql+asyncpg://test:test@postgres-test:5432/commandcenter_test
       REDIS_URL: redis://redis-test:6379
       SECRET_KEY: test-secret-key-for-testing-only
       TESTING: "true"
@@ -51,17 +49,7 @@ services:
         condition: service_healthy
       redis-test:
         condition: service_healthy
-    command: >
-      sh -c "
-        echo 'Waiting for database...' &&
-        sleep 2 &&
-        pytest -v
-        --cov=app
-        --cov-report=xml:/app/coverage/coverage.xml
-        --cov-report=html:/app/coverage/htmlcov
-        --cov-report=term-missing
-        --junitxml=/app/test-results/junit.xml
-      "
+    command: ["sh", "-c", "echo 'Waiting for database...' && sleep 2 && COVERAGE_FILE=/output/.coverage pytest -v --cov=app --cov-report=xml:/output/coverage.xml --cov-report=html:/output/htmlcov --cov-report=term-missing --junitxml=/output/junit.xml"]
 
   # Frontend tests
   test-frontend:
@@ -82,22 +70,14 @@ services:
       context: ./hub/backend
       dockerfile: Dockerfile.test
     volumes:
-      - ./hub/backend:/app
-      - hub-backend-test-results:/app/test-results
+      - ./hub/backend:/app:ro
+      - hub-test-output:/output
       - /var/run/docker.sock:/var/run/docker.sock  # For Dagger tests
     environment:
       DATABASE_URL: sqlite+aiosqlite:///./test.db
       TESTING: "true"
       PYTHONPATH: /app
-    command: >
-      sh -c "
-        pytest -v
-        --cov=app
-        --cov-report=xml:/app/coverage/coverage.xml
-        --cov-report=html:/app/coverage/htmlcov
-        --cov-report=term-missing
-        --junitxml=/app/test-results/junit.xml
-      "
+    command: ["sh", "-c", "COVERAGE_FILE=/output/.coverage pytest -v --cov=app --cov-report=xml:/output/coverage.xml --cov-report=html:/output/htmlcov --cov-report=term-missing --junitxml=/output/junit.xml"]
 
   # Hub frontend tests
   test-hub-frontend:
@@ -114,5 +94,5 @@ services:
 
 volumes:
   postgres-test-data:
-  backend-test-results:
-  hub-backend-test-results:
+  test-output:
+  hub-test-output:
