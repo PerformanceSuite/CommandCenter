@@ -151,7 +151,7 @@ class TestRepositoriesAPI:
         """Test syncing repository with GitHub"""
         repo = await create_test_repository(db_session)
 
-        # Mock GitHub service
+        # Mock GitHub async service - patch where it's used (in the service module)
         mock_sync_info = {
             "synced": True,
             "full_name": "testowner/testrepo",
@@ -166,9 +166,11 @@ class TestRepositoriesAPI:
             "language": "Python",
         }
 
-        mock_github_service = mocker.patch("app.routers.repositories.GitHubService")
-        mock_instance = mock_github_service.return_value
+        mock_github_service = mocker.patch("app.services.repository_service.GitHubAsyncService")
+        mock_instance = mocker.AsyncMock()
         mock_instance.sync_repository = mocker.AsyncMock(return_value=mock_sync_info)
+        mock_github_service.return_value.__aenter__ = mocker.AsyncMock(return_value=mock_instance)
+        mock_github_service.return_value.__aexit__ = mocker.AsyncMock(return_value=None)
 
         sync_request = {"force": False}
         response = await api_client.post(f"/repositories/{repo.id}/sync", json=sync_request)
@@ -191,10 +193,12 @@ class TestRepositoriesAPI:
         """Test sync repository with GitHub error"""
         repo = await create_test_repository(db_session)
 
-        # Mock GitHub service to raise error
-        mock_github_service = mocker.patch("app.routers.repositories.GitHubService")
-        mock_instance = mock_github_service.return_value
+        # Mock GitHub async service to raise error - patch where it's used
+        mock_github_service = mocker.patch("app.services.repository_service.GitHubAsyncService")
+        mock_instance = mocker.AsyncMock()
         mock_instance.sync_repository = mocker.AsyncMock(side_effect=Exception("GitHub API error"))
+        mock_github_service.return_value.__aenter__ = mocker.AsyncMock(return_value=mock_instance)
+        mock_github_service.return_value.__aexit__ = mocker.AsyncMock(return_value=None)
 
         sync_request = {"force": False}
         response = await api_client.post(f"/repositories/{repo.id}/sync", json=sync_request)

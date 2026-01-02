@@ -125,12 +125,8 @@ class RepositoryService:
             )
 
         # Create repository
-        repository = await self.repo.create(
-            **repository_data.model_dump(), full_name=full_name, project_id=project_id
-        )
-
-        await self.db.commit()
-        await self.db.refresh(repository)
+        obj_in = {**repository_data.model_dump(), "full_name": full_name, "project_id": project_id}
+        repository = await self.repo.create(self.db, obj_in=obj_in)
 
         return repository
 
@@ -154,10 +150,7 @@ class RepositoryService:
 
         # Update fields
         update_data = repository_data.model_dump(exclude_unset=True)
-        repository = await self.repo.update(repository, **update_data)
-
-        await self.db.commit()
-        await self.db.refresh(repository)
+        repository = await self.repo.update(self.db, db_obj=repository, obj_in=update_data)
 
         return repository
 
@@ -171,9 +164,9 @@ class RepositoryService:
         Raises:
             HTTPException: If repository not found
         """
-        repository = await self.get_repository(repository_id)
-        await self.repo.delete(repository)
-        await self.db.commit()
+        # Verify repository exists (raises 404 if not found)
+        await self.get_repository(repository_id)
+        await self.repo.remove(self.db, id=repository_id)
 
     async def sync_repository(self, repository_id: int, force: bool = False) -> Dict[str, Any]:
         """
@@ -214,9 +207,9 @@ class RepositoryService:
                     "description": sync_info.get("description"),
                 }
 
-                repository = await self.repo.update(repository, **update_fields)
-                await self.db.commit()
-                await self.db.refresh(repository)
+                repository = await self.repo.update(
+                    self.db, db_obj=repository, obj_in=update_fields
+                )
 
                 return {
                     "repository_id": repository.id,
@@ -271,25 +264,23 @@ class RepositoryService:
                 repo_info = await github_service.get_repository_info(owner, name)
 
                 # Create repository
-                repository = await self.repo.create(
-                    owner=repo_info["owner"],
-                    name=repo_info["name"],
-                    full_name=repo_info["full_name"],
-                    description=repo_info.get("description"),
-                    url=repo_info.get("url"),
-                    clone_url=repo_info.get("clone_url"),
-                    default_branch=repo_info.get("default_branch", "main"),
-                    is_private=repo_info.get("is_private", False),
-                    stars=repo_info.get("stars", 0),
-                    forks=repo_info.get("forks", 0),
-                    language=repo_info.get("language"),
-                    github_id=repo_info.get("github_id"),
-                    access_token=access_token,
-                    project_id=project_id,
-                )
-
-                await self.db.commit()
-                await self.db.refresh(repository)
+                obj_in = {
+                    "owner": repo_info["owner"],
+                    "name": repo_info["name"],
+                    "full_name": repo_info["full_name"],
+                    "description": repo_info.get("description"),
+                    "url": repo_info.get("url"),
+                    "clone_url": repo_info.get("clone_url"),
+                    "default_branch": repo_info.get("default_branch", "main"),
+                    "is_private": repo_info.get("is_private", False),
+                    "stars": repo_info.get("stars", 0),
+                    "forks": repo_info.get("forks", 0),
+                    "language": repo_info.get("language"),
+                    "github_id": repo_info.get("github_id"),
+                    "access_token": access_token,
+                    "project_id": project_id,
+                }
+                repository = await self.repo.create(self.db, obj_in=obj_in)
 
                 return repository
 

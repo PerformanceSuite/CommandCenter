@@ -49,6 +49,7 @@ class TechnologyService:
         """
         # Use consolidated list_with_filters method (Rec 2.3: eliminates redundant queries)
         return await self.repo.list_with_filters(
+            self.db,
             skip=skip,
             limit=limit,
             search_term=search,
@@ -69,7 +70,7 @@ class TechnologyService:
         Raises:
             HTTPException: If technology not found
         """
-        technology = await self.repo.get_by_id(technology_id)
+        technology = await self.repo.get(self.db, technology_id)
 
         if not technology:
             raise HTTPException(
@@ -89,7 +90,7 @@ class TechnologyService:
         Returns:
             Technology or None if not found
         """
-        return await self.repo.get_by_title(title)
+        return await self.repo.get_by_title(self.db, title)
 
     async def create_technology(
         self, technology_data: TechnologyCreate, project_id: int
@@ -117,7 +118,7 @@ class TechnologyService:
             raise ValueError("project_id is required and must be a positive integer")
 
         # Check if technology with same title exists
-        existing = await self.repo.get_by_title(technology_data.title)
+        existing = await self.repo.get_by_title(self.db, technology_data.title)
 
         if existing:
             raise HTTPException(
@@ -128,10 +129,7 @@ class TechnologyService:
         # Create technology with project_id
         tech_data = technology_data.model_dump()
         tech_data["project_id"] = project_id
-        technology = await self.repo.create(**tech_data)
-
-        await self.db.commit()
-        await self.db.refresh(technology)
+        technology = await self.repo.create(self.db, obj_in=tech_data)
 
         return technology
 
@@ -152,7 +150,7 @@ class TechnologyService:
             HTTPException: If technology not found or title conflict
         """
         # Fetch technology once
-        technology = await self.repo.get_by_id(technology_id)
+        technology = await self.repo.get(self.db, technology_id)
         if not technology:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -161,20 +159,16 @@ class TechnologyService:
 
         # Check if title is being changed and new title already exists
         if technology_data.title and technology_data.title != technology.title:
-            existing = await self.repo.get_by_title(technology_data.title)
+            existing = await self.repo.get_by_title(self.db, technology_data.title)
             if existing:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"Technology '{technology_data.title}' already exists",
                 )
 
-        # Update fields directly on the fetched object (single query)
+        # Update fields directly using repository method
         update_data = technology_data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(technology, key, value)
-
-        await self.db.commit()
-        await self.db.refresh(technology)
+        technology = await self.repo.update(self.db, db_obj=technology, obj_in=update_data)
 
         return technology
 
@@ -188,9 +182,9 @@ class TechnologyService:
         Raises:
             HTTPException: If technology not found
         """
-        technology = await self.get_technology(technology_id)
-        await self.repo.delete(technology)
-        await self.db.commit()
+        # Verify technology exists (raises 404 if not found)
+        await self.get_technology(technology_id)
+        await self.repo.remove(self.db, id=technology_id)
 
     async def update_status(self, technology_id: int, new_status: TechnologyStatus) -> Technology:
         """
@@ -207,10 +201,9 @@ class TechnologyService:
             HTTPException: If technology not found
         """
         technology = await self.get_technology(technology_id)
-        technology = await self.repo.update(technology, status=new_status)
-
-        await self.db.commit()
-        await self.db.refresh(technology)
+        technology = await self.repo.update(
+            self.db, db_obj=technology, obj_in={"status": new_status}
+        )
 
         return technology
 
@@ -235,10 +228,9 @@ class TechnologyService:
             )
 
         technology = await self.get_technology(technology_id)
-        technology = await self.repo.update(technology, priority=new_priority)
-
-        await self.db.commit()
-        await self.db.refresh(technology)
+        technology = await self.repo.update(
+            self.db, db_obj=technology, obj_in={"priority": new_priority}
+        )
 
         return technology
 
@@ -263,10 +255,9 @@ class TechnologyService:
             )
 
         technology = await self.get_technology(technology_id)
-        technology = await self.repo.update(technology, relevance_score=new_score)
-
-        await self.db.commit()
-        await self.db.refresh(technology)
+        technology = await self.repo.update(
+            self.db, db_obj=technology, obj_in={"relevance_score": new_score}
+        )
 
         return technology
 
@@ -283,7 +274,7 @@ class TechnologyService:
         Returns:
             List of high priority technologies
         """
-        return await self.repo.get_high_priority(min_priority, limit)
+        return await self.repo.get_high_priority(self.db, min_priority, limit)
 
     async def get_statistics(self) -> Dict[str, Any]:
         """
@@ -334,5 +325,5 @@ class TechnologyService:
             Tuple of (list of technologies, total count)
         """
         return await self.repo.search(
-            search_term=query, domain=domain, status=status, skip=skip, limit=limit
+            self.db, search_term=query, domain=domain, status=status, skip=skip, limit=limit
         )

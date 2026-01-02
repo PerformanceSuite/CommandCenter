@@ -29,8 +29,8 @@ class RepositoryRepository(BaseRepository[Repository]):
         Returns:
             Repository or None if not found
         """
-        owner, name = full_name.split("/")
-        return await self.get_by_owner_and_name(db, owner=owner, name=name)
+        result = await db.execute(select(Repository).where(Repository.full_name == full_name))
+        return result.scalar_one_or_none()
 
     async def get_by_owner_and_name(
         self, db: AsyncSession, owner: str, name: str
