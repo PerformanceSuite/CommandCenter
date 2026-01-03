@@ -76,10 +76,21 @@ class RAGService:
 
     async def initialize(self) -> None:
         """
-        Initialize backend (creates schema if needed)
-
-        This should be called before first use. It creates the necessary
-        database tables and indexes if they don't exist.
+        Initialize backend and create database schema if needed
+        
+        This method must be called before first use. It performs the following operations:
+        - Creates the collection table if it doesn't exist
+        - Creates pgvector extension if not already present
+        - Sets up vector similarity search indexes
+        - Initializes connection pool
+        
+        This operation is idempotent and safe to call multiple times.
+        
+        Returns:
+            None
+            
+        Note:
+            This method sets the internal _initialized flag to prevent redundant initialization.
         """
         if not self._initialized:
             await self.backend.initialize()
@@ -87,8 +98,8 @@ class RAGService:
             logger.info(f"Initialized backend for collection '{self.collection_name}'")
 
     async def query(
-        self, question: str, category: Optional[str] = None, k: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, question: str, category: Optional = None, k: int = 5
+    ) -> List[Dict]:
         """
         Query the knowledge base using hybrid search (vector + keyword)
 
@@ -138,7 +149,7 @@ class RAGService:
         ]
 
     async def add_document(
-        self, content: str, metadata: Dict[str, Any], chunk_size: int = 1000
+        self, content: str, metadata: Dict, chunk_size: int = 1000
     ) -> int:
         """
         Add a document to the knowledge base
@@ -174,8 +185,8 @@ class RAGService:
 
         # Prepare IDs and metadata for each chunk
         source = metadata.get("source", "unknown")
-        ids = [f"{source}_{i}" for i in range(len(chunks))]
-        metadatas = [metadata.copy() for _ in chunks]
+        ids = [f"{source}_{self.repository_id}_{i}" for i in range(len(chunks))]
+        metadatas = [metadata for _ in chunks]
 
         # Add to backend
         await self.backend.add_documents(
@@ -197,7 +208,7 @@ class RAGService:
             source: Source file path (e.g., "docs/readme.md")
 
         Returns:
-            True if any documents were deleted
+            True if any documents were deleted, False otherwise
         """
         if not self._initialized:
             await self.initialize()
@@ -217,12 +228,22 @@ class RAGService:
     async def get_categories(self) -> List[str]:
         """
         Get list of all categories in the knowledge base
+        
+        Retrieves all unique category values from document metadata across the entire
+        knowledge base collection.
 
-        Note: This is a simplified implementation that queries all documents.
-        For large knowledge bases, consider maintaining a separate categories index.
+        Note:
+            This is a simplified implementation. For large knowledge bases with millions
+            of documents, consider maintaining a separate categories index or cache.
 
         Returns:
-            Sorted list of unique category names
+            Sorted list of unique category names. Returns empty list if categories
+            cannot be extracted from the current backend implementation.
+            
+        Example:
+            >>> categories = await rag_service.get_categories()
+            >>> print(categories)
+            ['api', 'docs', 'guides', 'tutorials']
         """
         if not self._initialized:
             await self.initialize()
@@ -238,17 +259,24 @@ class RAGService:
 
     async def get_statistics(self) -> Dict[str, Any]:
         """
-        Get knowledge base statistics
+        Get knowledge base statistics and metadata
+        
+        Retrieves comprehensive statistics about the current knowledge base collection,
+        including document counts, embedding configuration, and backend information.
 
         Returns:
-            Dictionary with statistics:
-            {
-                "total_chunks": 1234,
-                "categories": {},  # Would need custom query
-                "embedding_model": "all-MiniLM-L6-v2",
-                "backend": "postgres",
-                "collection_name": "commandcenter_1"
-            }
+            Dictionary with statistics containing:
+            - total_chunks (int): Total number of document chunks stored
+            - categories (dict): Category breakdown (empty dict in current implementation)
+            - embedding_model (str): Name of the sentence transformer model used
+            - backend (str): Backend type ("postgres")
+            - collection_name (str): Full collection name with repository ID
+            - embedding_dimension (int): Dimensionality of vector embeddings
+            
+        Example:
+            >>> stats = await rag_service.get_statistics()
+            >>> print(f"Total chunks: {stats['total_chunks']}")
+            Total chunks: 1234
         """
         if not self._initialized:
             await self.initialize()
@@ -264,11 +292,22 @@ class RAGService:
             "embedding_dimension": settings.EMBEDDING_DIMENSION,
         }
 
-    async def close(self):
+    async def close(self) -> None:
         """
         Close backend connection and cleanup resources
-
-        Should be called when shutting down the service.
+        
+        Gracefully shuts down the RAG service by closing the database connection pool
+        and cleaning up any held resources. This method should be called when shutting
+        down the application or when the service is no longer needed.
+        
+        This operation is idempotent and safe to call multiple times.
+        
+        Returns:
+            None
+            
+        Example:
+            >>> await rag_service.close()
+            >>> # Service is now closed and cannot be used until reinitialized
         """
         if self._initialized:
             await self.backend.close()
