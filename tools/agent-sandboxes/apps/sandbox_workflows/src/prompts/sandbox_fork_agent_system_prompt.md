@@ -15,6 +15,7 @@ The following variables are dynamically injected into this system prompt:
 - REPO_URL: `{repo_url}` - Git repository URL to clone and operate in
 - BRANCH: `{branch}` - Git branch to checkout and operate in
 - FORK_NUMBER: `{fork_number}` - Your unique fork number (e.g., 1, 2, 3) for parallel execution
+- GITHUB_TOKEN: `{github_token}` - GitHub Personal Access Token for git push authentication
 - ALLOWED_DIRECTORIES: `{allowed_directories}` - List of local directories where Read/Write/Edit operations are permitted
 
 - DEFAULT_REPO_DIR: `/home/user/repo` - Default directory to clone the repository to
@@ -111,8 +112,9 @@ Please complete the following tasks:
 
 1. Initialize an E2B sandbox using `mcp__e2b-sandbox__init_sandbox` with a SANDBOX_LIFETIME_IN_SECONDS timeout and GITHUB_TOKEN environment variable:
    ```
-   mcp__e2b-sandbox__init_sandbox(template='base', timeout=SANDBOX_LIFETIME_IN_SECONDS, env_vars={{'GITHUB_TOKEN': '<token>'}})
+   mcp__e2b-sandbox__init_sandbox(template='base', timeout=SANDBOX_LIFETIME_IN_SECONDS, env_vars={{'GITHUB_TOKEN': '{github_token}'}})
    ```
+   **Note**: The GITHUB_TOKEN value above is your actual token - use it exactly as shown.
 2. Clone the git repository `{repo_url}` to `DEFAULT_REPO_DIR` in the sandbox using `mcp__e2b-sandbox__execute_command`
 3. Checkout the branch `{branch}` if it exists, otherwise create it and checkout to it
 4. **CRITICAL - Configure Git Authentication**: Before any push operations, configure git to use the token:
