@@ -1,0 +1,48 @@
+id: wander-001
+type: implementation
+title: "Create Wander TypeScript types and interfaces"
+priority: 1
+depends_on: []
+
+context:
+  plan_file: "docs/plans/2026-01-02-wander-mindmap-implementation.md"
+  repo: "https://github.com/PerformanceSuite/CommandCenter"
+  branch: "feature/wander-types"
+
+skills_required:
+  - frontend-design
+
+agent_config:
+  model: sonnet
+  max_turns: 50
+  max_cost_usd: 3.00
+
+instructions: |
+  Create the TypeScript type definitions for the Wander Mind Map component.
+
+  ## Target File
+  hub/frontend/src/components/WanderMindMap/types.ts
+
+  ## Requirements
+  1. Define domain colors mapping
+  2. Define node data types: LocusData, CrystalData, FractalData
+  3. Define edge data types: WanderEdgeData
+  4. Define session types: WanderSession
+  5. Define event types from NATS
+  6. Define context menu action types
+  7. Add utility functions for color handling
+
+  ## Reference
+  See the SPEC: types.ts section in the plan file for complete implementation.
+
+  ## Deliverable
+  - types.ts file with all definitions
+  - Commit and push to feature/wander-types
+  - Create PR
+
+on_completion:
+  create_pr: true
+  update_skill: null
+  trigger_next:
+    - wander-002
+    - wander-003

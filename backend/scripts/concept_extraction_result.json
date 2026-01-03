@@ -1,0 +1,287 @@
+{
+  "concepts": [
+    {
+      "name": "The Loop",
+      "type": "framework",
+      "definition": "A self-improving intelligence substrate where discoveries feed improvements, which enable better discoveries, following a DISCOVER \u2192 VALIDATE \u2192 IMPROVE cycle",
+      "status": "active",
+      "domain": "architecture",
+      "related_entities": [
+        "CommandCenter",
+        "Wander",
+        "AI Arena",
+        "Prompt Improver",
+        "Skills",
+        "Research Hub"
+      ],
+      "source_quote": "CommandCenter is not a collection of tools. It is The Loop - a self-improving intelligence substrate where discoveries feed improvements, which enable better discoveries.",
+      "confidence": "high"
+    },
+    {
+      "name": "CommandCenter",
+      "type": "product",
+      "definition": "An implementation of The Loop - a self-improving intelligence substrate with multiple components working in a unified cycle",
+      "status": "active",
+      "domain": "platform",
+      "related_entities": [
+        "The Loop",
+        "Wander",
+        "AI Arena",
+        "Prompt Improver",
+        "Skills",
+        "Research Hub"
+      ],
+      "source_quote": "CommandCenter is not a collection of tools. It is The Loop - a self-improving intelligence substrate",
+      "confidence": "high"
+    },
+    {
+      "name": "Wander",
+      "type": "module",
+      "definition": "Discovery engine that explores idea space, finds unexpected connections, and uses dwelling prompts to explore",
+      "status": "active",
+      "domain": "discovery",
+      "related_entities": [
+        "The Loop",
+        "KnowledgeBeast",
+        "Crystals",
+        "Research Hub"
+      ],
+      "source_quote": "Wander: Explores idea space, finds unexpected connections",
+      "confidence": "high"
+    },
+    {
+      "name": "AI Arena",
+      "type": "module",
+      "definition": "Testing component that compares models, approaches, and finds what works through benchmarking",
+      "status": "active",
+      "domain": "validation",
+      "related_entities": [
+        "The Loop",
+        "Wander",
+        "KnowledgeBeast"
+      ],
+      "source_quote": "AI Arena: Tests models, compares approaches, finds what works",
+      "confidence": "high"
+    },
+    {
+      "name": "Prompt Improver",
+      "type": "module",
+      "definition": "Component that makes prompts better based on learnings from The Loop, using Crystal quality signals",
+      "status": "active",
+      "domain": "improvement",
+      "related_entities": [
+        "The Loop",
+        "Crystals",
+        "Wander"
+      ],
+      "source_quote": "Prompt Improver: Makes prompts better based on learnings",
+      "confidence": "high"
+    },
+    {
+      "name": "Skills",
+      "type": "module",
+      "definition": "Rewritable capabilities that are improved by agents using discoveries, can be updated mid-session and compound without human intervention",
+      "status": "active",
+      "domain": "capability",
+      "related_entities": [
+        "The Loop",
+        "KnowledgeBeast",
+        "Agent Personas"
+      ],
+      "source_quote": "Skills: Rewritten by agents using discoveries",
+      "confidence": "high"
+    },
+    {
+      "name": "Research Hub",
+      "type": "module",
+      "definition": "Component that tracks research tasks and surfaces what needs exploration in the discovery phase",
+      "status": "active",
+      "domain": "research",
+      "related_entities": [
+        "The Loop",
+        "Wander"
+      ],
+      "source_quote": "Research Hub: Tracks research tasks, surfaces what needs exploration",
+      "confidence": "high"
+    },
+    {
+      "name": "KnowledgeBeast",
+      "type": "module",
+      "definition": "Knowledge storage and retrieval system that stores and retrieves knowledge for exploration, indexes Crystals and Skills",
+      "status": "active",
+      "domain": "knowledge",
+      "related_entities": [
+        "The Loop",
+        "Wander",
+        "Crystals",
+        "Skills",
+        "AI Arena"
+      ],
+      "source_quote": "KnowledgeBeast: Stores and retrieves knowledge for exploration",
+      "confidence": "high"
+    },
+    {
+      "name": "Crystals",
+      "type": "feature",
+      "definition": "Insights that survive scrutiny from Wander exploration, used as quality signals for Prompt Improver",
+      "status": "active",
+      "domain": "knowledge",
+      "related_entities": [
+        "Wander",
+        "Prompt Improver",
+        "KnowledgeBeast"
+      ],
+      "source_quote": "Crystals: Insights that survive scrutiny (from Wander)",
+      "confidence": "high"
+    },
+    {
+      "name": "Research Workbench",
+      "type": "product",
+      "definition": "Human interface to The Loop providing views into Wander Mind Map, AI Arena Compare, Skills Editor, Research Hub, Tech Radar, and Prompt Improver",
+      "status": "active",
+      "domain": "interface",
+      "related_entities": [
+        "The Loop",
+        "Wander",
+        "AI Arena",
+        "Skills",
+        "Research Hub",
+        "Technology Radar",
+        "Prompt Improver"
+      ],
+      "source_quote": "Human Interface: Research Workbench... All views into the same underlying Loop",
+      "confidence": "high"
+    },
+    {
+      "name": "RLM REPL",
+      "type": "technology",
+      "definition": "Agent interface to The Loop providing programmatic access to knowledge, exploration, testing, improvement, and skills",
+      "status": "active",
+      "domain": "interface",
+      "related_entities": [
+        "The Loop",
+        "KnowledgeBeast",
+        "Wander",
+        "AIArena",
+        "PromptImprover",
+        "SkillStore",
+        "MCP"
+      ],
+      "source_quote": "Agent Interface: RLM REPL + MCP... Agents access the same substrate through code",
+      "confidence": "high"
+    },
+    {
+      "name": "Technology Radar",
+      "type": "module",
+      "definition": "Component that monitors external landscape for signals in the discovery phase",
+      "status": "active",
+      "domain": "intelligence",
+      "related_entities": [
+        "The Loop",
+        "Real-Time Intelligence"
+      ],
+      "source_quote": "Technology Radar: Monitors external landscape for signals",
+      "confidence": "high"
+    },
+    {
+      "name": "Real-Time Intelligence",
+      "type": "module",
+      "definition": "System that ingests data from Polymarket, HackerNews, arXiv, SEC to feed discovery phase",
+      "status": "proposed",
+      "domain": "intelligence",
+      "related_entities": [
+        "The Loop",
+        "Technology Radar",
+        "Polymarket",
+        "HackerNews",
+        "arXiv",
+        "SEC"
+      ],
+      "source_quote": "Real-Time Intelligence: Ingests Polymarket, HackerNews, arXiv, SEC",
+      "confidence": "high"
+    },
+    {
+      "name": "Veria",
+      "type": "product",
+      "definition": "Market validation component that uses prediction markets as truth signals, can take trading action on validated insights",
+      "status": "active",
+      "domain": "validation",
+      "related_entities": [
+        "The Loop",
+        "Crystals",
+        "Fractal Security"
+      ],
+      "source_quote": "Veria: Market validation (prediction markets as truth signal)",
+      "confidence": "high"
+    },
+    {
+      "name": "Fractal Security",
+      "type": "framework",
+      "definition": "Trust layer that provides secure execution of Loop outputs and authorization for autonomous actions",
+      "status": "proposed",
+      "domain": "security",
+      "related_entities": [
+        "The Loop",
+        "Veria"
+      ],
+      "source_quote": "Fractal Security for authorization... Safe autonomous execution",
+      "confidence": "high"
+    },
+    {
+      "name": "VISLZR",
+      "type": "module",
+      "definition": "Component mentioned in implementation phases, appears to be related to agent parity and ecosystem queries",
+      "status": "active",
+      "domain": "visualization",
+      "related_entities": [
+        "The Loop",
+        "Wander"
+      ],
+      "source_quote": "VISLZR Sprint 3-4 (Agent parity, ecosystem queries)",
+      "confidence": "medium"
+    },
+    {
+      "name": "Agent Personas",
+      "type": "feature",
+      "definition": "Agent configurations that are refined based on what works in The Loop improvement phase",
+      "status": "active",
+      "domain": "agents",
+      "related_entities": [
+        "The Loop",
+        "Skills"
+      ],
+      "source_quote": "Agent Personas: Refined based on what works",
+      "confidence": "high"
+    },
+    {
+      "name": "RLM Pattern",
+      "type": "methodology",
+      "definition": "Implementation pattern for how agents interact with memory, uses sub-LLMs for chunk analysis",
+      "status": "active",
+      "domain": "architecture",
+      "related_entities": [
+        "The Loop",
+        "sub-LLMs"
+      ],
+      "source_quote": "RLM pattern uses sub-LLMs for chunk analysis",
+      "confidence": "high"
+    },
+    {
+      "name": "Intent-Aware",
+      "type": "methodology",
+      "definition": "Design principle embodied by The Loop where discovery allows intent to emerge rather than being forced upfront",
+      "status": "active",
+      "domain": "design",
+      "related_entities": [
+        "The Loop"
+      ],
+      "source_quote": "The Loop embodies Intent-Aware principles: Discovery allows intent to emerge (not forced upfront)",
+      "confidence": "high"
+    }
+  ],
+  "meta": {
+    "document_path": "/Users/danielconnolly/Projects/CommandCenter/docs/archive/legacy-2026-01-02/concepts-old/TheLoop.md",
+    "concepts_found": 19,
+    "extraction_notes": "Document describes a comprehensive self-improving intelligence architecture with multiple interconnected components. Most concepts are well-defined with clear relationships. Implementation is in early phases with detailed roadmap provided."
+  }
+}

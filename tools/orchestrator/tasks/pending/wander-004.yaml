@@ -1,0 +1,81 @@
+id: wander-004
+type: implementation
+title: "Create main WanderMindMap component and controls"
+priority: 3
+depends_on:
+  - wander-002
+  - wander-003
+
+context:
+  plan_file: "docs/plans/2026-01-02-wander-mindmap-implementation.md"
+  repo: "https://github.com/PerformanceSuite/CommandCenter"
+  branch: "feature/wander-main"
+
+skills_required:
+  - frontend-design
+
+agent_config:
+  model: sonnet
+  max_turns: 80
+  max_cost_usd: 8.00
+
+instructions: |
+  Create the main WanderMindMap component and supporting UI.
+
+  ## Target Files
+  - hub/frontend/src/components/WanderMindMap/WanderMindMap.tsx
+  - hub/frontend/src/components/WanderMindMap/controls/WanderControls.tsx
+  - hub/frontend/src/components/WanderMindMap/controls/NodeContextMenu.tsx
+  - hub/frontend/src/components/WanderMindMap/panels/NodeDetailPanel.tsx
+  - hub/frontend/src/components/WanderMindMap/index.ts
+  - hub/frontend/src/pages/WanderPage.tsx
+
+  ## Requirements
+
+  ### WanderMindMap.tsx (Main Component)
+  - Register custom node and edge types
+  - Handle step events (add nodes, update current)
+  - Handle crystal events (transform nodes)
+  - Context menu on right-click
+  - Node selection and detail panel
+  - Mock data for development
+  - ReactFlowProvider wrapper
+
+  ### WanderControls.tsx
+  - Play/Pause/Stop buttons
+  - Step count display
+  - Status indicator (active/paused/completed)
+  - Zoom controls
+  - Settings button
+
+  ### NodeContextMenu.tsx
+  - Actions: go-deeper, fence-out, anchor, inject, view-details, force-crystallize
+  - Action availability based on node type
+  - Icon and description for each action
+
+  ### NodeDetailPanel.tsx
+  - Side panel showing node details
+  - Different layouts for Locus/Crystal/Fractal
+  - Progress bars for metrics
+  - Action buttons
+
+  ### WanderPage.tsx
+  - Page wrapper with header
+  - Session info display
+  - Budget indicator
+  - Session selector and new session buttons
+
+  ## Reference
+  See all SPEC sections in the plan file for complete implementations.
+
+  ## Deliverable
+  - All components implemented and working
+  - Mock data renders correctly
+  - Controls functional
+  - Commit and push
+  - Create PR
+
+on_completion:
+  create_pr: true
+  update_skill: wander-patterns
+  trigger_next: []

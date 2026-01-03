@@ -86,17 +86,13 @@ def upgrade() -> None:
         """
         )
 
-        # Add new values to linktype enum
-        op.execute(
-            """
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'integratesWith';
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'providesTo';
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'replaces';
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'similarTo';
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'supersedes';
-            ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'extractsFrom';
-        """
-        )
+        # Add new values to linktype enum (each must be separate for asyncpg)
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'integratesWith'")
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'providesTo'")
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'replaces'")
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'similarTo'")
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'supersedes'")
+        op.execute("ALTER TYPE linktype ADD VALUE IF NOT EXISTS 'extractsFrom'")
 
     # Create graph_documents table
     # Use String for enum columns to support both SQLite and PostgreSQL

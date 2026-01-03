@@ -1,0 +1,64 @@
+id: wander-002
+type: implementation
+title: "Create custom ReactFlow nodes for Wander"
+priority: 2
+depends_on:
+  - wander-001
+
+context:
+  plan_file: "docs/plans/2026-01-02-wander-mindmap-implementation.md"
+  repo: "https://github.com/PerformanceSuite/CommandCenter"
+  branch: "feature/wander-nodes"
+
+skills_required:
+  - frontend-design
+
+agent_config:
+  model: sonnet
+  max_turns: 60
+  max_cost_usd: 5.00
+
+instructions: |
+  Create the custom ReactFlow node components for Wander Mind Map.
+
+  ## Target Files
+  - hub/frontend/src/components/WanderMindMap/nodes/LocusNode.tsx
+  - hub/frontend/src/components/WanderMindMap/nodes/CrystalNode.tsx
+  - hub/frontend/src/components/WanderMindMap/nodes/FractalNode.tsx
+  - hub/frontend/src/components/WanderMindMap/nodes/index.ts
+
+  ## Requirements
+
+  ### LocusNode (standard exploration node)
+  - Size based on interestingness (20-50px)
+  - Color from domain
+  - Pulse animation for current node
+  - Visit count badge
+  - Hover tooltip with concept and domains
+
+  ### CrystalNode (hardened insight)
+  - Diamond shape (rotated square)
+  - Glow effect based on confidence
+  - Actionability indicator badge
+  - Insight preview on hover
+
+  ### FractalNode (security-encoded)
+  - Square with security-colored border (gold/silver/red)
+  - Lock icon overlay for non-decodable
+  - Click to decode interaction
+
+  ## Reference
+  See SPEC sections for each node in the plan file.
+
+  ## Deliverable
+  - All node components implemented
+  - Using Tailwind classes
+  - Proper TypeScript typing
+  - Commit and push
+  - Create PR
+
+on_completion:
+  create_pr: true
+  update_skill: wander-patterns
+  trigger_next:
+    - wander-004

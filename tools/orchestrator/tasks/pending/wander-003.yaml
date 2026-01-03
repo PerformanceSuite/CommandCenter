@@ -1,0 +1,57 @@
+id: wander-003
+type: implementation
+title: "Create custom ReactFlow edges for Wander"
+priority: 2
+depends_on:
+  - wander-001
+
+context:
+  plan_file: "docs/plans/2026-01-02-wander-mindmap-implementation.md"
+  repo: "https://github.com/PerformanceSuite/CommandCenter"
+  branch: "feature/wander-edges"
+
+skills_required:
+  - frontend-design
+
+agent_config:
+  model: sonnet
+  max_turns: 40
+  max_cost_usd: 3.00
+
+instructions: |
+  Create the custom ReactFlow edge component for Wander Mind Map.
+
+  ## Target Files
+  - hub/frontend/src/components/WanderMindMap/edges/WanderEdge.tsx
+  - hub/frontend/src/components/WanderMindMap/edges/index.ts
+
+  ## Requirements
+
+  ### WanderEdge
+  - Support edge types: path, adjacency, bridge, resonance
+  - Different styles per type (stroke width, dash pattern, color)
+  - Opacity based on strength
+  - Animation for active edges (flow animation)
+  - Bridge label indicator
+  - Resonance pulse indicator
+
+  ## Edge Styles
+  - path: solid, 2px, slate-500
+  - adjacency: dashed 5,5, 1px, slate-600
+  - bridge: solid, 3px, purple-500 with "BRIDGE" label
+  - resonance: dashed 10,5, 2px, amber-500 with pulse
+
+  ## Reference
+  See SPEC: WanderEdge.tsx in the plan file.
+
+  ## Deliverable
+  - Edge component implemented
+  - CSS animation for flowAnimation
+  - Commit and push
+  - Create PR
+
+on_completion:
+  create_pr: true
+  update_skill: null
+  trigger_next:
+    - wander-004
