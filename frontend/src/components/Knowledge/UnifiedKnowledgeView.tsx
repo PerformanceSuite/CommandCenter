@@ -14,6 +14,7 @@ import {
   Upload,
   ClipboardList,
   CheckSquare,
+  Clock,
 } from 'lucide-react';
 import { useDocuments } from '../../hooks/useDocuments';
 import {
@@ -68,6 +69,14 @@ const priorityColors: Record<string, string> = {
   low: 'bg-gray-500/20 text-gray-400',
   unknown: 'bg-gray-500/20 text-gray-400',
 };
+
+// Staleness indicator helper
+function getStalenessInfo(score: number | null): { label: string; color: string; icon: boolean } {
+  if (score === null) return { label: '', color: '', icon: false };
+  if (score >= 0.7) return { label: 'Stale', color: 'text-red-400', icon: true };
+  if (score >= 0.4) return { label: 'Aging', color: 'text-yellow-400', icon: true };
+  return { label: 'Fresh', color: 'text-green-400', icon: false };
+}
 
 // Upload Document Modal
 interface UploadModalProps {
@@ -545,14 +554,24 @@ export function UnifiedKnowledgeView() {
                       <div className="flex items-start gap-2">
                         <FileText className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium truncate">
-                            {doc.title || doc.path.split('/').pop()}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-white text-sm font-medium truncate flex-1">
+                              {doc.title || doc.path.split('/').pop()}
+                            </p>
+                            {getStalenessInfo(doc.staleness_score).icon && (
+                              <Clock className={`w-3.5 h-3.5 flex-shrink-0 ${getStalenessInfo(doc.staleness_score).color}`} />
+                            )}
+                          </div>
                           <p className="text-gray-500 text-xs truncate">{doc.path}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`px-1.5 py-0.5 rounded text-xs ${docTypeColors[doc.doc_type]}`}>
                               {doc.doc_type}
                             </span>
+                            {doc.staleness_score !== null && doc.staleness_score >= 0.4 && (
+                              <span className={`text-xs ${getStalenessInfo(doc.staleness_score).color}`}>
+                                {getStalenessInfo(doc.staleness_score).label}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -588,7 +607,28 @@ export function UnifiedKnowledgeView() {
                             {selectedDocument.document.word_count.toLocaleString()} words
                           </span>
                         )}
+                        {selectedDocument.document.staleness_score !== null && (
+                          <span className={`flex items-center gap-1 text-sm ${getStalenessInfo(selectedDocument.document.staleness_score).color}`}>
+                            <Clock className="w-3.5 h-3.5" />
+                            {getStalenessInfo(selectedDocument.document.staleness_score).label}
+                            {selectedDocument.document.staleness_score >= 0.4 && (
+                              <span className="text-gray-500">
+                                ({Math.round(selectedDocument.document.staleness_score * 100)}%)
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </div>
+                      {selectedDocument.document.last_meaningful_date && (
+                        <p className="text-gray-500 text-xs mt-2">
+                          Last meaningful update: {new Date(selectedDocument.document.last_meaningful_date).toLocaleDateString()}
+                        </p>
+                      )}
+                      {selectedDocument.document.recommended_action && (
+                        <p className="text-yellow-400/80 text-xs mt-1">
+                          ⚡ {selectedDocument.document.recommended_action}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => {
