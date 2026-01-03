@@ -133,19 +133,24 @@ def create_app() -> FastAPI:
     This factory function initializes the Command Center API with all necessary
     middleware, routers, and configuration. It sets up:
 
-    - Lifespan management for startup/shutdown events
-    - CORS middleware with security best practices
-    - Rate limiting and security headers
-    - Correlation ID tracking for request tracing
-    - Prometheus metrics instrumentation
-    - All API routers for various features
+    - Lifespan management for startup/shutdown events (database, Redis, NATS, MCP)
+    - CORS middleware with security best practices configured via environment variables
+    - Rate limiting and security headers for API protection
+    - Correlation ID tracking for distributed request tracing
+    - Prometheus metrics instrumentation for observability
+    - All API routers for various features (auth, projects, research, webhooks, etc.)
+
+    The application configuration is loaded from environment variables and the
+    app.config.settings module, which provides centralized configuration management.
 
     Returns:
-        FastAPI: Configured FastAPI application instance ready to serve requests
+        FastAPI: Configured FastAPI application instance ready to serve requests.
+            The app includes OpenAPI documentation at /docs and /redoc endpoints.
 
     Example:
         >>> app = create_app()
         >>> # Run with: uvicorn app.main:app --reload
+        >>> # Or in production: uvicorn app.main:app --host 0.0.0.0 --port 8000
     """
     # Create FastAPI application
     app = FastAPI(
@@ -288,7 +293,7 @@ app.include_router(batch.router)  # Batch operations API for bulk analysis/impor
 app.include_router(schedules.router)  # Schedule management for recurring tasks
 app.include_router(skills.router, prefix=settings.api_v1_prefix)  # Skills management
 app.include_router(export.router)  # Export API for analysis results (SARIF, HTML, CSV, Excel)
-app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledge base
+app.include_router(webhooks_ingestion.router)  # Webhook ingestion for knowledgebase
 app.include_router(ingestion_sources.router)  # Ingestion sources management API
 app.include_router(graph.router)  # Phase 7: Graph Service - Code knowledge graph
 app.include_router(actions.router)  # Phase 3: Agent action execution
