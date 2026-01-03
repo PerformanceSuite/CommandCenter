@@ -1,7 +1,7 @@
 [project]
 name = "commandcenter-auto-coder"
 version = "0.1.0"
-description = "Autonomous coding module for CommandCenter - wraps Auto-Claude agents for The Loop"
+description = "Composable autonomous coding skills for CommandCenter"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

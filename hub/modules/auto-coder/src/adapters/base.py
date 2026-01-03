@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-import sys
 
-# Add auto-claude-core to path
-AUTO_CLAUDE_PATH = Path(__file__).parents[4] / "integrations" / "auto-claude-core"
-sys.path.insert(0, str(AUTO_CLAUDE_PATH))
+from ..bridges.path_config import ensure_auto_claude_configured, get_auto_claude_path
+
+# Configure auto-claude imports safely (with validation)
+ensure_auto_claude_configured()
 
 
 @dataclass
@@ -40,7 +40,7 @@ class BaseAdapter(ABC):
     """Base class for Loop phase adapters."""
 
     def __init__(self):
-        self.auto_claude_path = AUTO_CLAUDE_PATH
+        self.auto_claude_path = get_auto_claude_path()
 
     @abstractmethod
     async def execute(self, context: LoopContext, **kwargs) -> LoopContext:
@@ -58,9 +58,10 @@ class BaseAdapter(ABC):
         if prompt_path.exists():
             return prompt_path.read_text()
 
-        # Fall back to Auto-Claude prompts
-        auto_prompt = self.auto_claude_path / "prompts" / f"{prompt_name}.md"
-        if auto_prompt.exists():
-            return auto_prompt.read_text()
+        # Fall back to Auto-Claude prompts if available
+        if self.auto_claude_path:
+            auto_prompt = self.auto_claude_path / "prompts" / f"{prompt_name}.md"
+            if auto_prompt.exists():
+                return auto_prompt.read_text()
 
         raise FileNotFoundError(f"Prompt not found: {prompt_name}")
