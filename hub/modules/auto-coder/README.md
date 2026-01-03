@@ -1,111 +1,90 @@
 # AutoCoder Module
 
-**Autonomous Coding through The Loop**
+**Composable Autonomous Coding for CommandCenter**
 
-AutoCoder wraps Auto-Claude's multi-agent coding framework for CommandCenter, enabling autonomous software development that participates in The Loop.
+AutoCoder provides coding capabilities as composable skills that agents can discover, call, and chain together.
 
-## Overview
+## Design Principles
 
-```
-DISCOVER -> VALIDATE -> IMPROVE -> DISCOVER...
-    |          |          |
- Gatherer   Critic    Planner
- Researcher   QA      Coder
-                      Fixer
-```
+1. **Everything is a building block** - Each skill is independently usable
+2. **Agents are primary consumers** - MCP tools first, human UI second
+3. **Intent crystallizes over time** - Start with one skill, add more as needed
+4. **Discovery over configuration** - Skills API exposes all capabilities
+5. **The Loop is optional** - Use full orchestration OR pick individual skills
 
 ## Quick Start
 
-```bash
-# From hub/modules/auto-coder/
-uv sync
+```python
+from auto_coder.skills import list_skills, get_skill
 
-# Create a coding task
-uv run auto-coder create "Add user authentication to the API"
+# Discover available skills
+skills = list_skills(category="discover")
+print([s.id for s in skills])  # ['gather_requirements', 'research_approach']
 
-# Check status
-uv run auto-coder status <task-id>
+# Use a skill directly
+skill = get_skill("gather_requirements")()
+result = await skill.execute(GatherRequirementsInput(
+    task_description="Add user authentication",
+    project_dir="."
+))
 
-# Approve and merge
-uv run auto-coder approve <task-id>
+print(result.requirements)
+print(result.suggested_next_skills)  # ['research_approach', 'write_spec']
 ```
 
-## API
+## For Agents (MCP Tools)
 
-```bash
-# Create task
-curl -X POST http://localhost:8000/api/auto-coder/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"description": "Add rate limiting", "complexity": "standard"}'
-
-# Check status
-curl http://localhost:8000/api/auto-coder/tasks/<task-id>
 ```
+Agent: What coding tools are available?
+→ Lists auto_coder_* tools
+
+Agent: Use auto_coder_gather_requirements with {
+    "task_description": "Fix the login bug",
+    "project_dir": "."
+}
+← Returns structured requirements + suggested next skills
+
+Agent: Use auto_coder_code_subtask with {
+    "subtask": "Fix null check in auth.py",
+    "project_dir": "."
+}
+← Returns implementation result
+```
+
+## Skill Categories
+
+| Phase | Skills |
+|-------|--------|
+| **DISCOVER** | gather_requirements, research_approach |
+| **VALIDATE** | critique_spec, review_qa |
+| **IMPROVE** | write_spec, plan_implementation, code_subtask, fix_issues |
 
 ## Architecture
 
-### The Loop Adapters
-
-| Adapter | Phase | Auto-Claude Agents |
-|---------|-------|-------------------|
-| `DiscoverAdapter` | DISCOVER | gatherer, researcher |
-| `ValidateAdapter` | VALIDATE | critic, qa_reviewer |
-| `ImproveAdapter` | IMPROVE | writer, planner, coder, qa_fixer |
-
-### Integration Points
-
-- **E2B Sandboxes**: Uses `tools/agent-sandboxes/` for isolated execution
-- **KnowledgeBeast**: Fetches context for coding tasks
-- **Graphiti Memory**: Cross-session insights from Auto-Claude
-
-## Configuration
-
-```bash
-# Required
-ANTHROPIC_API_KEY=your-key
-E2B_API_KEY=your-key
-
-# Optional
-GRAPHITI_ENABLED=true
-AUTO_CODER_MODEL=claude-sonnet-4-5-20250929
+```
+┌─────────────────────────────────────────────┐
+│            MCP Tool Layer                   │
+│  auto_coder_* tools (one per skill)         │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│           Skills Registry                   │
+│  list_skills(), get_skill(), schemas        │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│              Bridges                        │
+│  auto_claude.py (agent logic)               │
+│  sandbox.py (E2B isolation)                 │
+└─────────────────────────────────────────────┘
 ```
 
-## Dogfooding
+## Integration Points
 
-Use AutoCoder to improve CommandCenter itself:
-
-```bash
-uv run auto-coder create "Implement VISLZR Sprint 3 mind map nodes" \
-  --project /Users/danielconnolly/Projects/CommandCenter \
-  --complexity complex \
-  --parallel 3
-```
-
-## Dependencies
-
-- `integrations/auto-claude-core/` - Auto-Claude agent intelligence
-- `tools/agent-sandboxes/` - E2B sandbox infrastructure
-- `backend/` - CommandCenter API integration
-
-## Module Structure
-
-```
-hub/modules/auto-coder/
-├── pyproject.toml          # Package configuration
-├── README.md               # This file
-├── src/
-│   ├── adapters/           # Loop phase adapters
-│   │   ├── base.py         # BaseAdapter, LoopContext
-│   │   ├── discover.py     # DISCOVER phase
-│   │   ├── validate.py     # VALIDATE phase
-│   │   └── improve.py      # IMPROVE phase
-│   ├── orchestrator/       # Task orchestration
-│   │   └── task_manager.py # The Loop orchestration
-│   ├── api/                # REST API (TODO)
-│   └── cli/                # CLI commands (TODO)
-├── prompts/                # CommandCenter-adapted prompts
-└── tests/                  # Test suite
-```
+- **Auto-Claude Core**: `integrations/auto-claude-core/`
+- **E2B Sandboxes**: `tools/agent-sandboxes/`
+- **KnowledgeBeast**: Context for coding tasks
+- **Skills API**: Registered for discovery
 
 ---
 
