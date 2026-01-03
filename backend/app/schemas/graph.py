@@ -810,3 +810,98 @@ class RejectionResponse(BaseModel):
     """Response for rejection (deletion) operations."""
 
     deleted: int = Field(..., description="Number of items deleted")
+
+
+# ============================================================================
+# Document CRUD Schemas
+# ============================================================================
+
+
+class DocumentListResponse(BaseModel):
+    """Paginated document list response."""
+
+    items: List[GraphDocumentResponse]
+    total: int = Field(..., description="Total number of documents matching filters")
+    has_more: bool = Field(..., description="Whether there are more items beyond limit")
+
+
+class DocumentWithEntitiesResponse(BaseModel):
+    """Document with its extracted concepts and requirements."""
+
+    document: GraphDocumentResponse
+    concepts: List[GraphConceptResponse] = Field(default_factory=list)
+    requirements: List[GraphRequirementResponse] = Field(default_factory=list)
+    pending_concept_count: int = Field(0, description="Count of concepts pending review")
+    pending_requirement_count: int = Field(0, description="Count of requirements pending review")
+
+
+class UpdateDocumentRequest(BaseModel):
+    """Request to update document fields (all optional for partial update)."""
+
+    title: Optional[str] = Field(None, max_length=512)
+    doc_type: Optional[DocumentType] = None
+    subtype: Optional[str] = Field(None, max_length=100)
+    status: Optional[DocumentStatus] = None
+    audience: Optional[str] = Field(None, max_length=255)
+    value_assessment: Optional[str] = None
+    recommended_action: Optional[str] = None
+    target_location: Optional[str] = Field(None, max_length=1024)
+    metadata: Optional[dict] = None
+
+
+class DocumentDeleteResponse(BaseModel):
+    """Response for document deletion."""
+
+    deleted: bool = Field(..., description="Whether document was deleted")
+    cascaded_concepts: int = Field(0, description="Number of concepts deleted (if cascade)")
+    cascaded_requirements: int = Field(0, description="Number of requirements deleted (if cascade)")
+
+
+# ============================================================================
+# Simple Entity Creation Schemas
+# ============================================================================
+
+
+class CreateSimpleConceptRequest(BaseModel):
+    """Simplified request for manual concept creation."""
+
+    name: str = Field(..., min_length=1, max_length=255, description="Concept name")
+    concept_type: ConceptType = Field(..., description="Type of concept")
+    definition: Optional[str] = Field(None, description="Optional definition")
+    source_document_id: Optional[int] = Field(None, description="Optional source document")
+
+
+class CreateSimpleRequirementRequest(BaseModel):
+    """Simplified request for manual requirement creation."""
+
+    text: str = Field(..., min_length=1, description="Requirement text")
+    req_type: RequirementType = Field(..., description="Type of requirement")
+    priority: RequirementPriority = Field(RequirementPriority.MEDIUM, description="Priority level")
+    source_document_id: Optional[int] = Field(None, description="Optional source document")
+
+
+class UpdateConceptRequest(BaseModel):
+    """Request to update concept fields (all optional for partial update)."""
+
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    concept_type: Optional[ConceptType] = None
+    definition: Optional[str] = None
+    status: Optional[ConceptStatus] = None
+    domain: Optional[str] = Field(None, max_length=100)
+    source_quote: Optional[str] = None
+    confidence: Optional[ConfidenceLevel] = None
+    related_entities: Optional[List[str]] = None
+    metadata: Optional[dict] = None
+
+
+class UpdateRequirementRequest(BaseModel):
+    """Request to update requirement fields (all optional for partial update)."""
+
+    text: Optional[str] = Field(None, min_length=1)
+    req_type: Optional[RequirementType] = None
+    priority: Optional[RequirementPriority] = None
+    status: Optional[RequirementStatus] = None
+    source_concept: Optional[str] = Field(None, max_length=255)
+    source_quote: Optional[str] = None
+    verification: Optional[str] = None
+    metadata: Optional[dict] = None

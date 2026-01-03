@@ -4,11 +4,10 @@ import {
   LayoutDashboard,
   Radar,
   BookOpen,
-  Database,
+  FolderOpen,
   Settings,
   Terminal,
   Network,
-  ClipboardCheck,
 } from 'lucide-react';
 
 interface NavItem {
@@ -21,8 +20,7 @@ const navItems: NavItem[] = [
   { to: '/', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
   { to: '/radar', icon: <Radar size={20} />, label: 'Tech Radar' },
   { to: '/research', icon: <BookOpen size={20} />, label: 'Research Hub' },
-  { to: '/knowledge', icon: <Database size={20} />, label: 'Knowledge Base' },
-  { to: '/review', icon: <ClipboardCheck size={20} />, label: 'Review Queue' },
+  { to: '/knowledge', icon: <FolderOpen size={20} />, label: 'Knowledge' },
   { to: '/graph', icon: <Network size={20} />, label: 'Graph Demo' },
   { to: '/settings', icon: <Settings size={20} />, label: 'Settings' },
 ];

@@ -8,7 +8,7 @@ import logging
 from typing import List, Literal, Optional, Sequence
 from uuid import uuid4
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_execution import AgentExecution
@@ -16,7 +16,10 @@ from app.models.graph import (
     AuditKind,
     AuditStatus,
     ConceptStatus,
+    ConfidenceLevel,
     CrossProjectLink,
+    DocumentStatus,
+    DocumentType,
     GraphAudit,
     GraphConcept,
     GraphDependency,
@@ -45,8 +48,13 @@ from app.schemas.graph import (
     CreateConceptRequest,
     CreateDocumentRequest,
     CreateRequirementRequest,
+    CreateSimpleConceptRequest,
+    CreateSimpleRequirementRequest,
     CrossProjectLinkResponse,
     DependencyGraph,
+    DocumentDeleteResponse,
+    DocumentListResponse,
+    DocumentWithEntitiesResponse,
     FederationQueryRequest,
     FederationQueryResponse,
     GhostNode,
@@ -62,6 +70,9 @@ from app.schemas.graph import (
     ReviewQueueRequirementsResponse,
     SearchResults,
     SpecFilters,
+    UpdateConceptRequest,
+    UpdateDocumentRequest,
+    UpdateRequirementRequest,
 )
 from app.schemas.graph_events import (
     AuditRequestedEvent,
@@ -2323,3 +2334,453 @@ Verification: {req.verification or 'Not specified'}
         except Exception as e:
             logger.error(f"Failed to index requirements to KnowledgeBeast: {e}")
             return 0
+
+    # ========================================================================
+    # Document CRUD Operations
+    # ========================================================================
+
+    async def list_documents(
+        self,
+        project_id: int,
+        limit: int = 50,
+        offset: int = 0,
+        doc_types: Optional[List[DocumentType]] = None,
+        statuses: Optional[List[DocumentStatus]] = None,
+        search: Optional[str] = None,
+    ) -> "DocumentListResponse":
+        """
+        List documents with optional filters.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            limit: Maximum items to return
+            offset: Number of items to skip
+            doc_types: Filter by document types
+            statuses: Filter by document statuses
+            search: Search term for path/title
+
+        Returns:
+            DocumentListResponse with items, total count, and has_more flag
+        """
+        from app.schemas.graph import DocumentListResponse, GraphDocumentResponse
+
+        # Build base query
+        query = select(GraphDocument).filter(GraphDocument.project_id == project_id)
+
+        # Apply filters
+        if doc_types:
+            query = query.filter(GraphDocument.doc_type.in_(doc_types))
+        if statuses:
+            query = query.filter(GraphDocument.status.in_(statuses))
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.filter(
+                or_(
+                    GraphDocument.path.ilike(search_pattern),
+                    GraphDocument.title.ilike(search_pattern),
+                )
+            )
+
+        # Get total count
+        count_result = await self.db.execute(select(func.count()).select_from(query.subquery()))
+        total = count_result.scalar() or 0
+
+        # Apply pagination and ordering
+        query = (
+            query.order_by(GraphDocument.updated_at.desc())
+            .offset(offset)
+            .limit(limit + 1)  # Fetch one extra to check has_more
+        )
+
+        result = await self.db.execute(query)
+        documents = list(result.scalars().all())
+
+        # Check has_more
+        has_more = len(documents) > limit
+        if has_more:
+            documents = documents[:limit]
+
+        return DocumentListResponse(
+            items=[GraphDocumentResponse.model_validate(doc) for doc in documents],
+            total=total,
+            has_more=has_more,
+        )
+
+    async def get_document_with_entities(
+        self,
+        project_id: int,
+        document_id: int,
+    ) -> Optional["DocumentWithEntitiesResponse"]:
+        """
+        Get a document with its extracted concepts and requirements.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            document_id: Document ID
+
+        Returns:
+            DocumentWithEntitiesResponse or None if not found
+        """
+        from app.schemas.graph import (
+            DocumentWithEntitiesResponse,
+            GraphConceptResponse,
+            GraphDocumentResponse,
+            GraphRequirementResponse,
+        )
+
+        # Get document
+        doc_result = await self.db.execute(
+            select(GraphDocument).filter(
+                and_(
+                    GraphDocument.project_id == project_id,
+                    GraphDocument.id == document_id,
+                )
+            )
+        )
+        document = doc_result.scalar_one_or_none()
+        if not document:
+            return None
+
+        # Get concepts for this document
+        concepts_result = await self.db.execute(
+            select(GraphConcept)
+            .filter(
+                and_(
+                    GraphConcept.project_id == project_id,
+                    GraphConcept.source_document_id == document_id,
+                )
+            )
+            .order_by(GraphConcept.created_at.desc())
+        )
+        concepts = list(concepts_result.scalars().all())
+
+        # Get requirements for this document
+        requirements_result = await self.db.execute(
+            select(GraphRequirement)
+            .filter(
+                and_(
+                    GraphRequirement.project_id == project_id,
+                    GraphRequirement.source_document_id == document_id,
+                )
+            )
+            .order_by(GraphRequirement.created_at.desc())
+        )
+        requirements = list(requirements_result.scalars().all())
+
+        # Count pending items
+        pending_concepts = sum(1 for c in concepts if c.status == ConceptStatus.UNKNOWN)
+        pending_requirements = sum(
+            1 for r in requirements if r.status == RequirementStatus.PROPOSED
+        )
+
+        return DocumentWithEntitiesResponse(
+            document=GraphDocumentResponse.model_validate(document),
+            concepts=[GraphConceptResponse.model_validate(c) for c in concepts],
+            requirements=[GraphRequirementResponse.model_validate(r) for r in requirements],
+            pending_concept_count=pending_concepts,
+            pending_requirement_count=pending_requirements,
+        )
+
+    async def create_single_document(
+        self,
+        project_id: int,
+        request: "CreateDocumentRequest",
+    ) -> GraphDocument:
+        """
+        Create a single document.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Document creation request
+
+        Returns:
+            Created document
+        """
+        document = GraphDocument(
+            project_id=project_id,
+            path=request.path,
+            title=request.title,
+            doc_type=request.doc_type,
+            subtype=request.subtype,
+            status=request.status or DocumentStatus.ACTIVE,
+            audience=request.audience,
+            value_assessment=request.value_assessment,
+            word_count=request.word_count or 0,
+            staleness_score=request.staleness_score,
+            last_meaningful_date=request.last_meaningful_date,
+            recommended_action=request.recommended_action,
+            target_location=request.target_location,
+            metadata=request.metadata,
+        )
+        self.db.add(document)
+        await self.db.commit()
+        await self.db.refresh(document)
+
+        logger.info(f"Created document {document.id} (project={project_id}, path={request.path})")
+        return document
+
+    async def update_document(
+        self,
+        project_id: int,
+        document_id: int,
+        request: "UpdateDocumentRequest",
+    ) -> Optional[GraphDocument]:
+        """
+        Update a document.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            document_id: Document ID
+            request: Update request with partial fields
+
+        Returns:
+            Updated document or None if not found
+        """
+        result = await self.db.execute(
+            select(GraphDocument).filter(
+                and_(
+                    GraphDocument.project_id == project_id,
+                    GraphDocument.id == document_id,
+                )
+            )
+        )
+        document = result.scalar_one_or_none()
+        if not document:
+            return None
+
+        # Update only provided fields
+        update_data = request.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(document, field, value)
+
+        await self.db.commit()
+        await self.db.refresh(document)
+
+        logger.info(f"Updated document {document_id} (project={project_id})")
+        return document
+
+    async def delete_document(
+        self,
+        project_id: int,
+        document_id: int,
+        cascade: bool = False,
+    ) -> "DocumentDeleteResponse":
+        """
+        Delete a document and optionally cascade to concepts/requirements.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            document_id: Document ID
+            cascade: Whether to delete linked concepts/requirements
+
+        Returns:
+            DocumentDeleteResponse with deletion counts
+        """
+        from app.schemas.graph import DocumentDeleteResponse
+
+        result = await self.db.execute(
+            select(GraphDocument).filter(
+                and_(
+                    GraphDocument.project_id == project_id,
+                    GraphDocument.id == document_id,
+                )
+            )
+        )
+        document = result.scalar_one_or_none()
+        if not document:
+            return DocumentDeleteResponse(deleted=False)
+
+        cascaded_concepts = 0
+        cascaded_requirements = 0
+
+        if cascade:
+            # Delete linked concepts
+            concepts_result = await self.db.execute(
+                select(GraphConcept).filter(
+                    and_(
+                        GraphConcept.project_id == project_id,
+                        GraphConcept.source_document_id == document_id,
+                    )
+                )
+            )
+            concepts = list(concepts_result.scalars().all())
+            for concept in concepts:
+                await self.db.delete(concept)
+            cascaded_concepts = len(concepts)
+
+            # Delete linked requirements
+            requirements_result = await self.db.execute(
+                select(GraphRequirement).filter(
+                    and_(
+                        GraphRequirement.project_id == project_id,
+                        GraphRequirement.source_document_id == document_id,
+                    )
+                )
+            )
+            requirements = list(requirements_result.scalars().all())
+            for req in requirements:
+                await self.db.delete(req)
+            cascaded_requirements = len(requirements)
+
+        await self.db.delete(document)
+        await self.db.commit()
+
+        logger.info(
+            f"Deleted document {document_id} (project={project_id}, "
+            f"cascade={cascade}, concepts={cascaded_concepts}, requirements={cascaded_requirements})"
+        )
+
+        return DocumentDeleteResponse(
+            deleted=True,
+            cascaded_concepts=cascaded_concepts,
+            cascaded_requirements=cascaded_requirements,
+        )
+
+    # ========================================================================
+    # Simple Entity Creation
+    # ========================================================================
+
+    async def create_simple_concept(
+        self,
+        project_id: int,
+        request: "CreateSimpleConceptRequest",
+    ) -> GraphConcept:
+        """
+        Create a concept with minimal fields.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Simple concept creation request
+
+        Returns:
+            Created concept
+        """
+        concept = GraphConcept(
+            project_id=project_id,
+            source_document_id=request.source_document_id,
+            name=request.name,
+            concept_type=request.concept_type,
+            definition=request.definition,
+            status=ConceptStatus.ACTIVE,  # Manual creation = active
+            confidence=ConfidenceLevel.HIGH,  # Manual = high confidence
+        )
+        self.db.add(concept)
+        await self.db.commit()
+        await self.db.refresh(concept)
+
+        logger.info(f"Created concept {concept.id} (project={project_id}, name={request.name})")
+        return concept
+
+    async def update_concept(
+        self,
+        project_id: int,
+        concept_id: int,
+        request: "UpdateConceptRequest",
+    ) -> Optional[GraphConcept]:
+        """
+        Update a concept.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            concept_id: Concept ID
+            request: Update request with partial fields
+
+        Returns:
+            Updated concept or None if not found
+        """
+        result = await self.db.execute(
+            select(GraphConcept).filter(
+                and_(
+                    GraphConcept.project_id == project_id,
+                    GraphConcept.id == concept_id,
+                )
+            )
+        )
+        concept = result.scalar_one_or_none()
+        if not concept:
+            return None
+
+        # Update only provided fields
+        update_data = request.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(concept, field, value)
+
+        await self.db.commit()
+        await self.db.refresh(concept)
+
+        logger.info(f"Updated concept {concept_id} (project={project_id})")
+        return concept
+
+    async def create_simple_requirement(
+        self,
+        project_id: int,
+        request: "CreateSimpleRequirementRequest",
+    ) -> GraphRequirement:
+        """
+        Create a requirement with minimal fields.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            request: Simple requirement creation request
+
+        Returns:
+            Created requirement
+        """
+        # Generate unique req_id
+        req_id = f"REQ-{uuid4().hex[:8].upper()}"
+
+        requirement = GraphRequirement(
+            project_id=project_id,
+            source_document_id=request.source_document_id,
+            req_id=req_id,
+            text=request.text,
+            req_type=request.req_type,
+            priority=request.priority,
+            status=RequirementStatus.ACCEPTED,  # Manual creation = accepted
+        )
+        self.db.add(requirement)
+        await self.db.commit()
+        await self.db.refresh(requirement)
+
+        logger.info(f"Created requirement {requirement.id} (project={project_id}, req_id={req_id})")
+        return requirement
+
+    async def update_requirement(
+        self,
+        project_id: int,
+        requirement_id: int,
+        request: "UpdateRequirementRequest",
+    ) -> Optional[GraphRequirement]:
+        """
+        Update a requirement.
+
+        Args:
+            project_id: Project ID for multi-tenant isolation
+            requirement_id: Requirement ID
+            request: Update request with partial fields
+
+        Returns:
+            Updated requirement or None if not found
+        """
+        result = await self.db.execute(
+            select(GraphRequirement).filter(
+                and_(
+                    GraphRequirement.project_id == project_id,
+                    GraphRequirement.id == requirement_id,
+                )
+            )
+        )
+        requirement = result.scalar_one_or_none()
+        if not requirement:
+            return None
+
+        # Update only provided fields
+        update_data = request.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(requirement, field, value)
+
+        await self.db.commit()
+        await self.db.refresh(requirement)
+
+        logger.info(f"Updated requirement {requirement_id} (project={project_id})")
+        return requirement

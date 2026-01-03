@@ -12,20 +12,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.project_context import get_current_project_id
 from app.database import get_db
-from app.models.graph import ConceptStatus, RequirementStatus
+from app.models.graph import ConceptStatus, DocumentStatus, DocumentType, RequirementStatus
 from app.schemas.graph import (
     ApprovalResponse,
     ApproveConceptsRequest,
     ApproveRequirementsRequest,
+    CreateDocumentRequest,
+    CreateSimpleConceptRequest,
+    CreateSimpleRequirementRequest,
     CreateTaskRequest,
     CrossProjectLinkResponse,
     DependencyGraph,
+    DocumentDeleteResponse,
+    DocumentListResponse,
+    DocumentWithEntitiesResponse,
     FederationQueryRequest,
     FederationQueryResponse,
     GhostNode,
     GraphAuditResponse,
+    GraphConceptResponse,
+    GraphDocumentResponse,
     GraphFilters,
     GraphLinkResponse,
+    GraphRequirementResponse,
     GraphSearchRequest,
     GraphTaskResponse,
     IngestDocumentIntelligenceRequest,
@@ -39,6 +48,9 @@ from app.schemas.graph import (
     SearchResults,
     SpecFilters,
     TriggerAuditRequest,
+    UpdateConceptRequest,
+    UpdateDocumentRequest,
+    UpdateRequirementRequest,
 )
 from app.schemas.query import ComposedQuery, QueryResult
 from app.services.graph_service import GraphService
@@ -888,6 +900,341 @@ async def reject_requirements(
         project_id=current_project_id,
         ids=request.ids,
     )
+
+
+# ============================================================================
+# Document CRUD
+# ============================================================================
+
+
+@router.get(
+    "/documents",
+    response_model=DocumentListResponse,
+)
+async def list_documents(
+    limit: int = Query(50, ge=1, le=200, description="Maximum items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    doc_types: Optional[str] = Query(None, description="Comma-separated document types to filter"),
+    statuses: Optional[str] = Query(None, description="Comma-separated statuses to filter"),
+    search: Optional[str] = Query(None, description="Search term for path/title"),
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    List documents with optional filters.
+
+    **Query Parameters:**
+    - `limit`: Maximum items to return (1-200, default: 50)
+    - `offset`: Number of items to skip (default: 0)
+    - `doc_types`: Comma-separated document types (plan, concept, guide, etc.)
+    - `statuses`: Comma-separated statuses (active, completed, superseded, etc.)
+    - `search`: Search term for path or title
+
+    **Response includes:**
+    - `items`: List of documents
+    - `total`: Total count matching filters
+    - `has_more`: Whether there are more items
+    """
+    # Parse filters
+    type_list = None
+    if doc_types:
+        try:
+            type_list = [DocumentType(t.strip()) for t in doc_types.split(",")]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid document type: {e}",
+            )
+
+    status_list = None
+    if statuses:
+        try:
+            status_list = [DocumentStatus(s.strip()) for s in statuses.split(",")]
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid status: {e}",
+            )
+
+    service = GraphService(db)
+    return await service.list_documents(
+        project_id=current_project_id,
+        limit=limit,
+        offset=offset,
+        doc_types=type_list,
+        statuses=status_list,
+        search=search,
+    )
+
+
+@router.get(
+    "/documents/{document_id}",
+    response_model=DocumentWithEntitiesResponse,
+)
+async def get_document(
+    document_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Get a document with its extracted concepts and requirements.
+
+    **Path Parameters:**
+    - `document_id`: Document ID
+
+    **Response includes:**
+    - `document`: Full document details
+    - `concepts`: List of concepts extracted from this document
+    - `requirements`: List of requirements extracted from this document
+    - `pending_concept_count`: Count of concepts pending review
+    - `pending_requirement_count`: Count of requirements pending review
+    """
+    service = GraphService(db)
+    result = await service.get_document_with_entities(
+        project_id=current_project_id,
+        document_id=document_id,
+    )
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document {document_id} not found",
+        )
+    return result
+
+
+@router.post(
+    "/documents",
+    response_model=GraphDocumentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_document(
+    request: CreateDocumentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Create a new document.
+
+    **Request Body:**
+    - `path`: Document path (required)
+    - `title`: Document title (optional)
+    - `doc_type`: Document type (required)
+    - Other optional fields for metadata
+
+    **Response:**
+    - Created document details
+    """
+    service = GraphService(db)
+    document = await service.create_single_document(
+        project_id=current_project_id,
+        request=request,
+    )
+    return GraphDocumentResponse.model_validate(document)
+
+
+@router.put(
+    "/documents/{document_id}",
+    response_model=GraphDocumentResponse,
+)
+async def update_document(
+    document_id: int,
+    request: UpdateDocumentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Update a document.
+
+    **Path Parameters:**
+    - `document_id`: Document ID
+
+    **Request Body:**
+    - Any document fields to update (all optional)
+
+    **Response:**
+    - Updated document details
+    """
+    service = GraphService(db)
+    document = await service.update_document(
+        project_id=current_project_id,
+        document_id=document_id,
+        request=request,
+    )
+    if not document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document {document_id} not found",
+        )
+    return GraphDocumentResponse.model_validate(document)
+
+
+@router.delete(
+    "/documents/{document_id}",
+    response_model=DocumentDeleteResponse,
+)
+async def delete_document(
+    document_id: int,
+    cascade: bool = Query(False, description="Also delete linked concepts/requirements"),
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Delete a document.
+
+    **Path Parameters:**
+    - `document_id`: Document ID
+
+    **Query Parameters:**
+    - `cascade`: If true, also delete linked concepts and requirements
+
+    **Response:**
+    - `deleted`: Whether document was deleted
+    - `cascaded_concepts`: Number of concepts deleted (if cascade)
+    - `cascaded_requirements`: Number of requirements deleted (if cascade)
+    """
+    service = GraphService(db)
+    return await service.delete_document(
+        project_id=current_project_id,
+        document_id=document_id,
+        cascade=cascade,
+    )
+
+
+# ============================================================================
+# Simple Entity Creation
+# ============================================================================
+
+
+@router.post(
+    "/concepts",
+    response_model=GraphConceptResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_concept(
+    request: CreateSimpleConceptRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Create a concept manually.
+
+    **Request Body:**
+    - `name`: Concept name (required)
+    - `concept_type`: Type (product, feature, module, etc.) (required)
+    - `definition`: Optional definition text
+    - `source_document_id`: Optional source document
+
+    **Response:**
+    - Created concept details
+    """
+    service = GraphService(db)
+    concept = await service.create_simple_concept(
+        project_id=current_project_id,
+        request=request,
+    )
+    return GraphConceptResponse.model_validate(concept)
+
+
+@router.put(
+    "/concepts/{concept_id}",
+    response_model=GraphConceptResponse,
+)
+async def update_concept(
+    concept_id: int,
+    request: UpdateConceptRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Update a concept.
+
+    **Path Parameters:**
+    - `concept_id`: Concept ID
+
+    **Request Body:**
+    - Any concept fields to update (all optional)
+
+    **Response:**
+    - Updated concept details
+    """
+    service = GraphService(db)
+    concept = await service.update_concept(
+        project_id=current_project_id,
+        concept_id=concept_id,
+        request=request,
+    )
+    if not concept:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Concept {concept_id} not found",
+        )
+    return GraphConceptResponse.model_validate(concept)
+
+
+@router.post(
+    "/requirements",
+    response_model=GraphRequirementResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_requirement(
+    request: CreateSimpleRequirementRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Create a requirement manually.
+
+    **Request Body:**
+    - `text`: Requirement text (required)
+    - `req_type`: Type (functional, nonFunctional, etc.) (required)
+    - `priority`: Priority level (default: medium)
+    - `source_document_id`: Optional source document
+
+    **Response:**
+    - Created requirement details (with auto-generated req_id)
+    """
+    service = GraphService(db)
+    requirement = await service.create_simple_requirement(
+        project_id=current_project_id,
+        request=request,
+    )
+    return GraphRequirementResponse.model_validate(requirement)
+
+
+@router.put(
+    "/requirements/{requirement_id}",
+    response_model=GraphRequirementResponse,
+)
+async def update_requirement(
+    requirement_id: int,
+    request: UpdateRequirementRequest,
+    db: AsyncSession = Depends(get_db),
+    current_project_id: int = Depends(get_current_project_id),
+):
+    """
+    Update a requirement.
+
+    **Path Parameters:**
+    - `requirement_id`: Requirement ID
+
+    **Request Body:**
+    - Any requirement fields to update (all optional)
+
+    **Response:**
+    - Updated requirement details
+    """
+    service = GraphService(db)
+    requirement = await service.update_requirement(
+        project_id=current_project_id,
+        requirement_id=requirement_id,
+        request=request,
+    )
+    if not requirement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Requirement {requirement_id} not found",
+        )
+    return GraphRequirementResponse.model_validate(requirement)
 
 
 # ============================================================================

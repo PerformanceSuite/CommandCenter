@@ -8,10 +8,24 @@ import type {
   ApprovalResponse,
   ApproveConceptsRequest,
   ApproveRequirementsRequest,
+  Concept,
   RejectionResponse,
+  Requirement,
   ReviewQueueConceptsResponse,
   ReviewQueueRequirementsResponse,
 } from '../types/review';
+import type {
+  CreateDocumentRequest,
+  CreateSimpleConceptRequest,
+  CreateSimpleRequirementRequest,
+  Document,
+  DocumentDeleteResponse,
+  DocumentListResponse,
+  DocumentWithEntities,
+  UpdateConceptRequest,
+  UpdateDocumentRequest,
+  UpdateRequirementRequest,
+} from '../types/documents';
 
 // Use relative URL so it works with any port configuration
 // Nginx will proxy /api requests to the backend container
@@ -246,6 +260,63 @@ class ApiClient {
     const response = await this.client.delete<RejectionResponse>('/api/v1/graph/requirements/reject', {
       data: { ids },
     });
+    return response.data;
+  }
+
+  // Document CRUD
+  async getDocuments(params?: {
+    limit?: number;
+    offset?: number;
+    doc_types?: string;
+    statuses?: string;
+    search?: string;
+  }): Promise<DocumentListResponse> {
+    const response = await this.client.get<DocumentListResponse>('/api/v1/graph/documents', {
+      params,
+    });
+    return response.data;
+  }
+
+  async getDocument(id: number): Promise<DocumentWithEntities> {
+    const response = await this.client.get<DocumentWithEntities>(`/api/v1/graph/documents/${id}`);
+    return response.data;
+  }
+
+  async createDocument(data: CreateDocumentRequest): Promise<Document> {
+    const response = await this.client.post<Document>('/api/v1/graph/documents', data);
+    return response.data;
+  }
+
+  async updateDocument(id: number, data: UpdateDocumentRequest): Promise<Document> {
+    const response = await this.client.put<Document>(`/api/v1/graph/documents/${id}`, data);
+    return response.data;
+  }
+
+  async deleteDocument(id: number, cascade?: boolean): Promise<DocumentDeleteResponse> {
+    const response = await this.client.delete<DocumentDeleteResponse>(`/api/v1/graph/documents/${id}`, {
+      params: { cascade },
+    });
+    return response.data;
+  }
+
+  // Simple Entity Creation
+  async createSimpleConcept(data: CreateSimpleConceptRequest): Promise<Concept> {
+    const response = await this.client.post<Concept>('/api/v1/graph/concepts', data);
+    return response.data;
+  }
+
+  async updateConcept(id: number, data: UpdateConceptRequest): Promise<Concept> {
+    const response = await this.client.put<Concept>(`/api/v1/graph/concepts/${id}`, data);
+    return response.data;
+  }
+
+  async createSimpleRequirement(data: CreateSimpleRequirementRequest): Promise<Requirement> {
+    const response = await this.client.post<Requirement>('/api/v1/graph/requirements', data);
+    return response.data;
+  }
+
+  async updateRequirement(id: number, data: UpdateRequirementRequest): Promise<Requirement> {
+    const response = await this.client.put<Requirement>(`/api/v1/graph/requirements/${id}`, data);
     return response.data;
   }
 
