@@ -22,6 +22,8 @@ import type {
   DocumentDeleteResponse,
   DocumentListResponse,
   DocumentWithEntities,
+  IngestDocumentIntelligenceRequest,
+  IngestDocumentIntelligenceResponse,
   UpdateConceptRequest,
   UpdateDocumentRequest,
   UpdateRequirementRequest,
@@ -317,6 +319,15 @@ class ApiClient {
 
   async updateRequirement(id: number, data: UpdateRequirementRequest): Promise<Requirement> {
     const response = await this.client.put<Requirement>(`/api/v1/graph/requirements/${id}`, data);
+    return response.data;
+  }
+
+  // Document Intelligence Ingestion
+  async ingestDocumentIntelligence(data: IngestDocumentIntelligenceRequest): Promise<IngestDocumentIntelligenceResponse> {
+    const response = await this.client.post<IngestDocumentIntelligenceResponse>(
+      '/api/v1/graph/document-intelligence/ingest',
+      data
+    );
     return response.data;
   }
 

@@ -180,6 +180,53 @@ export interface DocumentFilters {
 }
 
 // ============================================================================
+// Ingest Types
+// ============================================================================
+
+export interface IngestDocumentRequest {
+  path: string;
+  title?: string;
+  doc_type: DocumentType;
+  content?: string;
+}
+
+export interface IngestDocumentIntelligenceRequest {
+  documents: CreateDocumentRequest[];
+  concepts?: Array<{
+    name: string;
+    concept_type: ConceptType;
+    definition?: string;
+    source_document_path?: string;
+    domain?: string;
+    source_quote?: string;
+    confidence?: ConfidenceLevel;
+    related_entities?: string[];
+  }>;
+  requirements?: Array<{
+    req_id: string;
+    text: string;
+    req_type: RequirementType;
+    priority?: RequirementPriority;
+    source_document_path?: string;
+    source_concept?: string;
+    source_quote?: string;
+    verification?: string;
+  }>;
+}
+
+export interface IngestDocumentIntelligenceResponse {
+  documents_created: number;
+  documents_updated: number;
+  concepts_created: number;
+  concepts_updated: number;
+  requirements_created: number;
+  requirements_updated: number;
+  links_created: number;
+  errors: string[];
+  metadata: Record<string, unknown>;
+}
+
+// ============================================================================
 // UI Helper Types
 // ============================================================================
 
@@ -189,3 +236,5 @@ export interface EntitySelection {
   concepts: Set<number>;
   requirements: Set<number>;
 }
+
+export type ViewTab = 'documents' | 'review';

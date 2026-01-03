@@ -12,6 +12,8 @@ import type {
   UpdateRequirementRequest,
   DocumentType,
   DocumentStatus,
+  IngestDocumentIntelligenceRequest,
+  IngestDocumentIntelligenceResponse,
 } from '../types/documents';
 import type {
   Concept,
@@ -24,6 +26,8 @@ import type {
 
 const DOCUMENTS_QUERY_KEY = ['documents'];
 const DOCUMENT_QUERY_KEY = ['document'];
+const REVIEW_CONCEPTS_KEY = ['review', 'concepts'];
+const REVIEW_REQUIREMENTS_KEY = ['review', 'requirements'];
 
 export interface UseDocumentsOptions {
   limit?: number;
@@ -55,6 +59,18 @@ export interface UseDocumentsResult {
   isUpdatingDocument: boolean;
   isDeletingDocument: boolean;
 
+  // Document Intelligence Ingestion
+  ingestDocuments: (data: IngestDocumentIntelligenceRequest) => Promise<IngestDocumentIntelligenceResponse>;
+  isIngesting: boolean;
+
+  // Review Queue (global pending items)
+  pendingConcepts: Concept[];
+  totalPendingConcepts: number;
+  pendingConceptsLoading: boolean;
+  pendingRequirements: Requirement[];
+  totalPendingRequirements: number;
+  pendingRequirementsLoading: boolean;
+
   // Concept mutations
   createConcept: (data: CreateSimpleConceptRequest) => Promise<Concept>;
   updateConcept: (id: number, data: UpdateConceptRequest) => Promise<Concept>;
@@ -74,6 +90,7 @@ export interface UseDocumentsResult {
   // Refetch
   refetchDocuments: () => void;
   refetchSelectedDocument: () => void;
+  refetchReviewQueue: () => void;
 }
 
 export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsResult {
@@ -114,6 +131,22 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
     enabled: selectedDocumentId !== null,
   });
 
+  // Fetch pending concepts for review queue
+  const pendingConceptsQuery = useQuery({
+    queryKey: REVIEW_CONCEPTS_KEY,
+    queryFn: async () => {
+      return api.getConceptsForReview({ limit: 100, statuses: 'unknown' });
+    },
+  });
+
+  // Fetch pending requirements for review queue
+  const pendingRequirementsQuery = useQuery({
+    queryKey: REVIEW_REQUIREMENTS_KEY,
+    queryFn: async () => {
+      return api.getRequirementsForReview({ limit: 100, statuses: 'proposed' });
+    },
+  });
+
   // Select document function
   const selectDocument = (id: number | null) => {
     queryClient.setQueryData(['selectedDocumentId'], id);
@@ -148,6 +181,17 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
     },
   });
 
+  // Ingest mutation
+  const ingestMutation = useMutation({
+    mutationFn: (data: IngestDocumentIntelligenceRequest) =>
+      api.ingestDocumentIntelligence(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DOCUMENTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: REVIEW_CONCEPTS_KEY });
+      queryClient.invalidateQueries({ queryKey: REVIEW_REQUIREMENTS_KEY });
+    },
+  });
+
   // Concept mutations
   const createConceptMutation = useMutation({
     mutationFn: (data: CreateSimpleConceptRequest) => api.createSimpleConcept(data),
@@ -176,6 +220,7 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
         index_to_kb: indexToKb ?? true,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: REVIEW_CONCEPTS_KEY });
       if (selectedDocumentId) {
         queryClient.invalidateQueries({ queryKey: [...DOCUMENT_QUERY_KEY, selectedDocumentId] });
       }
@@ -185,6 +230,7 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
   const rejectConceptsMutation = useMutation({
     mutationFn: (ids: number[]) => api.rejectConcepts(ids),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: REVIEW_CONCEPTS_KEY });
       if (selectedDocumentId) {
         queryClient.invalidateQueries({ queryKey: [...DOCUMENT_QUERY_KEY, selectedDocumentId] });
       }
@@ -219,6 +265,7 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
         index_to_kb: indexToKb ?? true,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: REVIEW_REQUIREMENTS_KEY });
       if (selectedDocumentId) {
         queryClient.invalidateQueries({ queryKey: [...DOCUMENT_QUERY_KEY, selectedDocumentId] });
       }
@@ -228,6 +275,7 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
   const rejectRequirementsMutation = useMutation({
     mutationFn: (ids: number[]) => api.rejectRequirements(ids),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: REVIEW_REQUIREMENTS_KEY });
       if (selectedDocumentId) {
         queryClient.invalidateQueries({ queryKey: [...DOCUMENT_QUERY_KEY, selectedDocumentId] });
       }
@@ -245,6 +293,10 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
 
   const deleteDocument = async (id: number, cascade?: boolean) => {
     return deleteDocumentMutation.mutateAsync({ id, cascade });
+  };
+
+  const ingestDocuments = async (data: IngestDocumentIntelligenceRequest) => {
+    return ingestMutation.mutateAsync(data);
   };
 
   const createConcept = async (data: CreateSimpleConceptRequest) => {
@@ -301,6 +353,18 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
     isUpdatingDocument: updateDocumentMutation.isPending,
     isDeletingDocument: deleteDocumentMutation.isPending,
 
+    // Document Intelligence Ingestion
+    ingestDocuments,
+    isIngesting: ingestMutation.isPending,
+
+    // Review Queue (global pending items)
+    pendingConcepts: pendingConceptsQuery.data?.items ?? [],
+    totalPendingConcepts: pendingConceptsQuery.data?.total_pending ?? 0,
+    pendingConceptsLoading: pendingConceptsQuery.isLoading,
+    pendingRequirements: pendingRequirementsQuery.data?.items ?? [],
+    totalPendingRequirements: pendingRequirementsQuery.data?.total_pending ?? 0,
+    pendingRequirementsLoading: pendingRequirementsQuery.isLoading,
+
     // Concept mutations
     createConcept,
     updateConcept,
@@ -320,5 +384,9 @@ export function useDocuments(options: UseDocumentsOptions = {}): UseDocumentsRes
     // Refetch
     refetchDocuments: () => documentsQuery.refetch(),
     refetchSelectedDocument: () => selectedDocumentQuery.refetch(),
+    refetchReviewQueue: () => {
+      pendingConceptsQuery.refetch();
+      pendingRequirementsQuery.refetch();
+    },
   };
 }
