@@ -15,7 +15,50 @@ Get an accurate snapshot of where a project is NOW before making decisions.
 - Before creating project-specific skills
 - After long gaps in development
 
+## Architecture Patterns to Recognize
+
+Adapt assessment commands based on detected project structure:
+
+| Pattern | Characteristics | Command Adaptations |
+|---------|-----------------|---------------------|
+| **Service/Repository** | Services in `app/services/`, tests in `tests/` | Check both locations for test coverage |
+| **Domain-Driven** | Services grouped by domain | Audit each domain separately |
+| **Microservices** | Each service has its own directory with tests | Iterate per-service |
+| **Monorepo** | Multiple packages in `libs/` or `packages/` | Exclude vendored code from metrics |
+
+**Detection:**
+```bash
+# Check for vendored/monorepo patterns
+ls libs/ packages/ 2>/dev/null && echo "Monorepo detected"
+
+# Check for service layer
+ls backend/app/services/ src/services/ 2>/dev/null && echo "Service layer detected"
+
+# Check for domain grouping
+ls backend/app/domains/ src/domains/ 2>/dev/null && echo "Domain-driven detected"
+```
+
 ## Assessment Phases
+
+### Phase 0: Quick Triage (5 minutes)
+
+Before deep analysis, get a quick health score to determine if full assessment is needed:
+
+```bash
+# Quick health check
+echo "=== QUICK HEALTH CHECK ==="
+echo "Source files: $(find . -name '*.py' -o -name '*.ts' | grep -v node_modules | grep -v venv | wc -l)"
+echo "Tests: $(find . -name 'test_*.py' -o -name '*.test.ts' | wc -l)"
+echo "Last commit: $(git log -1 --format='%cr')"
+echo "Branches: $(git branch -a | wc -l)"
+echo "Worktrees: $(git worktree list | wc -l)"
+echo "Docs: $(find docs/ -name '*.md' 2>/dev/null | wc -l)"
+echo "Stale docs (60d): $(find docs/ -name '*.md' -mtime +60 2>/dev/null | wc -l)"
+```
+
+**Triage Decision:**
+- If all metrics look good → Skip to Phase 5 (light report)
+- If any red flags → Continue with full audit
 
 ### Phase 1: Code Reality
 
@@ -35,6 +78,39 @@ git log --oneline -20
 # Branch status
 git branch -a
 git worktree list
+```
+
+#### Service Architecture Analysis
+
+Identify duplicates, large files, and service dependencies:
+
+```bash
+# Find potential duplicate services (optimized/enhanced/simple/async variants)
+ls backend/app/services/ 2>/dev/null | grep -E "(_optimized|_enhanced|_simple|_v2|_async)" || echo "No duplicates detected"
+
+# Find large files that may need refactoring (>500 lines)
+find . -name "*.py" -not -path "*/venv/*" -exec wc -l {} + 2>/dev/null | sort -rn | head -10
+
+# Check import patterns (service dependencies)
+grep -r "from.*services" backend/app/services/ 2>/dev/null | cut -d: -f2 | sort | uniq -c | sort -rn | head -10
+```
+
+#### Test Coverage Patterns
+
+Projects organize tests differently. Check all common patterns:
+
+```bash
+# Pattern 1: Co-located tests
+find backend/app/services -name "test_*.py" 2>/dev/null | wc -l
+
+# Pattern 2: Separate test directory
+find backend/tests -path "*services*" -name "test_*.py" 2>/dev/null | wc -l
+
+# Pattern 3: Mirror structure
+find tests/unit/services -name "test_*.py" 2>/dev/null | wc -l
+
+# Pattern 4: Tests directory at project root
+find tests/ -name "test_*.py" 2>/dev/null | wc -l
 ```
 
 **Document:**
@@ -93,8 +169,17 @@ git worktree list
 
 **Stale Branches:**
 ```bash
+# Show branches with last commit date
 git branch -a --sort=-committerdate | head -20
-# Identify branches with no recent activity
+
+# Identify branches with last activity date
+git for-each-ref --sort=-committerdate refs/remotes/ \
+  --format='%(committerdate:short) %(refname:short)' | head -30
+
+# Find branches with no activity in 60+ days
+git for-each-ref --sort=committerdate refs/remotes/ \
+  --format='%(committerdate:short) %(refname:short)' | \
+  awk -v date=$(date -d '60 days ago' +%Y-%m-%d 2>/dev/null || date -v-60d +%Y-%m-%d) '$1 < date'
 ```
 
 **Stale Documentation:**
@@ -124,9 +209,9 @@ Generate a summary document.
 - **Documentation**: X current, Y stale, Z to archive
 
 ## Vision Status
-- **Original Goal**: 
-- **Current Reality**: 
-- **Gap Analysis**: 
+- **Original Goal**:
+- **Current Reality**:
+- **Gap Analysis**:
 
 ## Cleanup Required
 - [ ] Archive N stale docs
@@ -1483,7 +1568,7 @@ for branch in $(git branch --format='%(refname:short)' | grep -v main); do
   if [ -n "$last_commit" ]; then
     now=$(date +%s)
     days=$(( ($now - $last_commit) / 86400 ))
-    
+
     if [ $days -gt 60 ]; then
       last_commit_msg=$(git log -1 --format='%s' "$branch")
       echo "  $branch ($days days ago)"
@@ -1542,7 +1627,7 @@ for worktree in $WORKTREES; do
   if [ "$worktree" = "$MAIN_WORKTREE" ]; then
     continue
   fi
-  
+
   # Check if directory exists
   if [ ! -d "$worktree" ]; then
     echo "⚠️  Worktree missing: $worktree"
@@ -1550,18 +1635,18 @@ for worktree in $WORKTREES; do
     git worktree prune
     continue
   fi
-  
+
   # Check last modification
   if [ -d "$worktree" ]; then
     last_modified=$(stat -c %Y "$worktree" 2>/dev/null || stat -f %m "$worktree" 2>/dev/null)
     if [ -n "$last_modified" ]; then
       now=$(date +%s)
       days=$(( ($now - $last_modified) / 86400 ))
-      
+
       if [ $days -gt 30 ]; then
         echo "🗑️  Stale worktree detected: $worktree"
         echo "   Last modified: $days days ago"
-        
+
         # Check for uncommitted changes
         cd "$worktree"
         if [ -n "$(git status --porcelain)" ]; then
@@ -1572,7 +1657,7 @@ for worktree in $WORKTREES; do
           echo "   To remove: git worktree remove $worktree"
         fi
         cd - > /dev/null
-        
+
         STALE_COUNT=$((STALE_COUNT + 1))
         echo ""
       fi

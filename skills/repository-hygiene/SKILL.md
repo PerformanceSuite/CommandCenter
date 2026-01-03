@@ -51,6 +51,10 @@ Keep repositories professional and organized. Every file has a proper home.
 | Documentation | `docs/` | `docs/API_GUIDE.md` |
 | SQL migrations | `migrations/` or `db/migrations/` | `migrations/001-add-users.sql` |
 | Temporary files | `/tmp/` or delete after use | `/tmp/debug-output.log` |
+| Archive files | `archives/` or `releases/` | `archives/prototype-v1.zip` |
+| Debug output | `docs/temp/` or delete | `docs/temp/debug-output.txt` |
+| Stale documentation | `docs/archived/` with timestamp | `docs/archived/NOTES-2025-12-27.md` |
+| Session notes | `docs/sessions/` | `docs/sessions/2025-12-15-summary.md` |
 
 **Real-world examples:**
 
@@ -188,3 +192,96 @@ ls -1 *.md | grep -vE '^(README|CLAUDE|LICENSE|CONTRIBUTING|SECURITY)\.md$'
 ```
 
 If any of these commands return results, you have violations to fix!
+
+## Handling Duplicate Files
+
+When moving files to proper locations, you may find duplicates:
+
+**Check for conflicts first:**
+```bash
+# Before moving, check if destination exists
+ls -la docs/MYFILE.md 2>/dev/null
+diff MYFILE.md docs/MYFILE.md 2>/dev/null
+```
+
+**Resolution strategies:**
+- **Identical files**: Delete the root copy
+- **Different content**:
+  - If root is newer → replace docs version
+  - If docs is canonical → delete root version
+  - If both valuable → merge or archive one with timestamp
+
+**Example:**
+```bash
+# Found AGENTS.md in both root and docs/
+diff AGENTS.md docs/AGENTS.md
+
+# If docs version is canonical:
+rm AGENTS.md
+
+# If root is newer but docs is canonical location:
+mv docs/AGENTS.md docs/archived/AGENTS-old.md
+mv AGENTS.md docs/AGENTS.md
+```
+
+## Cleaning Already-Committed Files
+
+If temporary files are already in git history:
+
+1. **Move, don't delete** (preserves history for debugging)
+2. **Use descriptive paths** with timestamps if historical value exists
+3. **Add .gitignore patterns** to prevent recurrence
+
+```bash
+# Move committed temporary file
+git mv debug-output.txt docs/temp/debug-output-2025-12-15.txt
+
+# Move committed archive
+git mv prototype.zip archives/prototype-v1.zip
+
+# Archive stale documentation with timestamp
+git mv NOTES.md docs/archived/NOTES-2025-12-27.md
+```
+
+## Prevention: .gitignore Patterns
+
+After cleanup, update `.gitignore` to prevent violations:
+
+```gitignore
+# Root-level temporary files
+/*.txt          # Debug/output files should be in docs/temp/
+/*.zip          # Archives should be in archives/
+/*.tar.gz       # Archives should be in archives/
+session-*.md    # Session notes should be in docs/sessions/
+NOTES.md        # Personal notes should be in docs/
+STATUS_LOG.md   # Status logs should be in docs/
+```
+
+**Test your patterns:**
+```bash
+# Create a test file and verify it's ignored
+touch test-debug.txt
+git status  # Should not show test-debug.txt
+rm test-debug.txt
+```
+
+## Verification Commands (Graceful)
+
+Updated commands that handle no-match cases gracefully:
+
+```bash
+# Check for test/utility scripts in root (no error on empty)
+ls -1 | grep -E '^(test-|fix-|session-|apply-)' || echo "✓ No script violations"
+
+# Check for SQL files in root
+ls -1 *.sql 2>/dev/null || echo "✓ No SQL files in root"
+
+# Check for extra markdown files
+ls -1 *.md 2>/dev/null | grep -vE '^(README|CLAUDE|LICENSE|CONTRIBUTING|SECURITY)\.md$' || echo "✓ No extra markdown files"
+
+# Check for archive files in root
+ls -1 *.zip *.tar.gz 2>/dev/null || echo "✓ No archive files in root"
+
+# Check for debug/temp text files
+ls -1 *.txt 2>/dev/null || echo "✓ No text files in root"
+```

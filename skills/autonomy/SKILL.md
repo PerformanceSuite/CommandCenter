@@ -24,6 +24,26 @@ LLMs are non-deterministic. Autonomous loops use **deterministic controls** (sto
 - Exploratory conversations
 - Tasks without clear completion criteria
 
+### Ralph vs Manual Autonomy Decision Tree
+
+```
+Task has automated verification (tests, linters, type checkers)?
+├── YES → Use Ralph Loop (automated verification is key strength)
+│         └── Expected iterations > 10?
+│             ├── YES → Use Ralph Loop
+│             └── NO → Consider Manual Autonomy (simpler setup)
+└── NO → Use Manual Autonomy (subjective work requires human judgment)
+
+Working in standard Claude Code environment?
+├── YES → Ralph Loop available
+└── NO (sandbox agent, CI/CD) → Use Manual Autonomy
+
+Task scope:
+├── Single file, <10 steps → Manual Autonomy
+├── Multiple files, 10+ iterations → Ralph Loop
+└── Complex multi-phase → Ralph Loop with checkpoints
+```
+
 ## Ralph Wiggum Loop
 
 Ralph is the official Anthropic plugin for persistent loops.
@@ -490,7 +510,7 @@ Iteration 7: 10/10 tests passing ✓
 Task: Fix database connection pooling
 
 $ pytest tests/test_db.py
-E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) 
+E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError)
 E   FATAL: too many connections for role "app_user"
 
 ---
@@ -499,7 +519,7 @@ E   FATAL: too many connections for role "app_user"
 [attempting different approach...]
 
 $ pytest tests/test_db.py
-E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) 
+E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError)
 E   FATAL: too many connections for role "app_user"
 
 ---
@@ -508,7 +528,7 @@ E   FATAL: too many connections for role "app_user"
 [attempting yet another approach...]
 
 $ pytest tests/test_db.py
-E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) 
+E   sqlalchemy.exc.OperationalError: (psycopg2.OperationalError)
 E   FATAL: too many connections for role "app_user"
 \`\`\`
 
@@ -738,6 +758,121 @@ docker-compose up -d postgres redis
 **Always verify external services are running before starting the loop.**
 
 ---
+
+## Autonomy Without Ralph Loop
+
+Not every multi-step task needs Ralph's stop hooks. Use manual autonomy when:
+- Task has <10 discrete steps
+- No automated verification available (docstrings, design docs, subjective work)
+- Working in restricted environments (sandbox agents, CI/CD)
+- Quick iteration without loop overhead is preferred
+
+### Manual Autonomy Pattern
+
+1. **Create explicit task list** (TodoWrite or markdown)
+2. **Work through tasks sequentially**
+3. **Verify each step** (git diff, manual review, spot checks)
+4. **Mark complete only when verified**
+5. **Document what worked/failed**
+
+### Example: Documentation Enhancement
+
+```markdown
+## Task: Enhance docstrings in src/services/
+
+1. [ ] List all functions needing docstrings
+2. [ ] Enhance one function at a time
+3. [ ] Check with `git diff` after each
+4. [ ] Verify docstring quality (completeness, clarity, examples)
+5. [ ] Move to next function
+6. [ ] Commit when batch complete
+```
+
+**Execution:**
+```bash
+# Step 1: Find functions without docstrings
+grep -l "def " src/services/*.py | xargs grep -L '"""'
+
+# Step 3: Verify changes
+git diff src/services/auth_service.py
+
+# Step 6: Commit
+git add src/services/ && git commit -m "docs: enhance service docstrings"
+```
+
+### Quality Standards for Documentation Work
+
+Since documentation has no automated verification, use this checklist:
+
+**Docstring Quality Checklist:**
+- [ ] Function purpose clearly stated (first line)
+- [ ] All parameters documented with types
+- [ ] Return value documented with type
+- [ ] Exceptions/errors listed (if applicable)
+- [ ] Usage example provided (for complex functions)
+- [ ] Edge cases or gotchas noted
+
+**Example - Before:**
+```python
+def get_user(id):
+    return db.find(id)
+```
+
+**Example - After:**
+```python
+def get_user(user_id: int) -> Optional[User]:
+    """Retrieve a user by their unique identifier.
+
+    Args:
+        user_id: The unique identifier for the user.
+
+    Returns:
+        The User object if found, None otherwise.
+
+    Raises:
+        DatabaseConnectionError: If database is unreachable.
+
+    Example:
+        >>> user = get_user(123)
+        >>> print(user.name)
+        'John Doe'
+    """
+    return db.find(user_id)
+```
+
+## Agent-Specific Guidance
+
+When executing as a sandbox agent (not interactive session):
+
+### State Tracking
+- Use **TodoWrite** for state tracking instead of Ralph's stop hooks
+- Create todo items for each discrete step
+- Mark items complete immediately after finishing
+
+### Checkpointing
+- **Commit after logical checkpoints**, not just at end
+- Use descriptive commit messages documenting progress
+- Include iteration count in commits if applicable
+
+### Logging
+- Include verbose logging in commit messages
+- Document decision points in audit/feedback files
+- Create skill feedback documents for learning loop
+
+### Example: Agent Task Execution
+
+```python
+# Mental model for agent autonomy:
+1. TodoWrite: Create task breakdown
+2. For each task:
+   a. Mark as in_progress
+   b. Execute task
+   c. Verify with git diff or test
+   d. Mark as completed
+   e. Commit if checkpoint reached
+3. Create feedback document with learnings
+4. Final commit with summary
+```
 
 ## Integration with Other Skills
 

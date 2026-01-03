@@ -465,7 +465,159 @@ Next: Dagger integration
 Details: See .claude/logs/sessions/2025-10-26_203915.md
 \`\`\`
 
-### Strategy 6: Conversation Pruning (Aggressive, -30-40%)
+### Strategy 6: Codebase Survey (For Multi-File Reviews)
+
+**When**: Reviewing multiple files to identify patterns (e.g., router audit, service review)
+
+**Problem**: Reading every file fully exhausts context before completing the review.
+
+**Actions**:
+1. Get inventory: `ls -la`, `wc -l *`, `grep -c "pattern" *`
+2. Sample strategically: Read 20-30% of files fully, grep-sample remainder
+3. Identify patterns: Common imports, naming conventions, structures
+4. Deep-dive selectively: Full read only for unique/critical files
+5. Document as you go: Write summaries incrementally
+
+**Token Savings**: 40-60% for large multi-file reviews
+
+**Example - Reviewing 29 Router Files:**
+```bash
+# Step 1: Get inventory
+ls backend/app/routers/*.py | wc -l  # 29 files
+wc -l backend/app/routers/*.py | sort -rn | head -5  # Find largest
+
+# Step 2: Sample endpoints without full reads
+grep -h "^@router\." backend/app/routers/*.py | wc -l  # 200+ endpoints
+
+# Step 3: Full read key files only (20-30%)
+# Read: auth.py, projects.py, graph.py, batch.py (critical)
+# Grep-sample: remaining 25 files
+
+# Step 4: Cross-file pattern detection
+grep -r "from.*services" backend/app/routers/ | cut -d: -f2 | sort | uniq -c
+
+# Result: 60k tokens used vs 140k estimated (57% savings)
+```
+
+### Strategy 7: Strategic Deep-Dive Criteria
+
+**When**: Deciding whether to read a file fully or grep-sample it.
+
+**Full Read If:**
+- Core functionality or critical path
+- Complex business logic
+- Security-sensitive (auth, payments)
+- File you need to modify
+- Unique patterns not seen in other files
+
+**Grep-Sample If:**
+- Similar to other files already read
+- Boilerplate or standard CRUD
+- Large file (>500 lines) for quick overview
+- Pattern already understood from other examples
+
+**Rule of Thumb**: Read 20-30% of files fully, sample 70-80%
+
+**Example Decision Tree:**
+```
+File: backend/app/routers/users.py (400 lines)
+├── Is it critical path? → Read auth.py, projects.py
+├── Does it follow patterns from files already read? → Grep-sample
+├── Am I modifying it? → Full read
+└── Is it boilerplate CRUD? → Grep endpoints only
+```
+
+### Strategy 8: Diminishing Returns Guidance
+
+**When**: Deciding when to stop exploring and start summarizing
+
+**Stopping Criteria for Large Reviews:**
+- **Pattern clarity**: Can you describe the architecture confidently?
+- **Coverage**: Have you examined 20-30% of code deeply?
+- **Uniqueness**: Are new files showing new patterns or repeating existing?
+- **Time**: After 30 min exploration, evaluate if additional reads add value
+
+**Signs You Have Enough:**
+- You can predict file contents before reading
+- Same patterns appearing across multiple files
+- No new concepts in last 3-5 files examined
+- Confident you understand the architecture
+
+**Signs You Need More:**
+- Can't explain how pieces connect
+- New patterns still emerging
+- Critical files not yet examined
+- Uncertainty about key functionality
+
+### Strategy 9: Output Efficiency (Documentation Writing)
+
+**When**: Creating large reports, summaries, or documentation
+
+**Actions**:
+- Write directly to files (not in chat) for long documents
+- Use tables and lists (more compact than prose)
+- Reference line numbers instead of code quotes
+- Group related items to reduce repetition
+
+**Before/After Example**:
+```
+Before: Full code quotes in response
+┌─────────────────────────────────────────────┐
+│ Here's the authentication implementation:   │
+│                                             │
+│ ```python                                   │
+│ def login(email: str, password: str):       │
+│     user = get_user_by_email(email)         │
+│     if not user:                            │
+│         raise HTTPException(404)            │
+│     if not verify_password(password, ...):  │
+│         raise HTTPException(401)            │
+│     return create_token(user)               │
+│ ```                                         │
+│                                             │
+│ Token usage: 2,400 tokens                   │
+└─────────────────────────────────────────────┘
+
+After: Line references
+┌─────────────────────────────────────────────┐
+│ Authentication implementation:              │
+│ - Login: auth.py:45-67 (validates, tokens) │
+│ - Refresh: auth.py:70-85 (JWT rotation)    │
+│ - Logout: auth.py:88-95 (client-side)      │
+│                                             │
+│ Token usage: 350 tokens                     │
+└─────────────────────────────────────────────┘
+
+Savings: 2,050 tokens (85% reduction per reference)
+```
+
+### Strategy 10: Cross-File Analysis Commands
+
+**When**: Finding patterns across multiple files without reading each fully
+
+```bash
+# Count endpoints per router file
+for file in backend/app/routers/*.py; do
+  echo "$(basename $file): $(grep -c '^@router\.' $file 2>/dev/null || echo 0)"
+done
+
+# List all unique HTTP methods used
+grep -h '^@router\.' backend/app/routers/*.py | \
+  sed 's/@router\.\([^(]*\).*/\1/' | sort -u
+
+# Find common imports across services
+grep -h "^from" backend/app/services/*.py | sort | uniq -c | sort -rn | head -10
+
+# Detect file size distribution
+find backend/app/routers -name "*.py" -exec wc -l {} + | sort -rn | head -10
+
+# Check for patterns indicating complexity
+grep -c "async def" backend/app/routers/*.py | sort -t: -k2 -rn | head -5
+```
+
+**Token Savings**: These commands give you architectural understanding at ~100-500 tokens vs 10-50k tokens for reading all files.
+
+### Strategy 11: Conversation Pruning (Aggressive, -30-40%)
 
 **When**: Critical threshold (60%+)
 
@@ -558,7 +710,7 @@ Agent response:
 "🟠 Context at 59% (118k/200k)
 
 Task complete! Recommend:
-1. Commit all work ✅ 
+1. Commit all work ✅
 2. Update memory ✅
 3. Start fresh session for next major feature
 
@@ -568,7 +720,7 @@ Type /end to close this session cleanly."
 
 Session Summary:
 Duration: 1 hour 25 minutes
-Work completed: 
+Work completed:
   - Updated 12 files
   - Added 3 new features
   - Ran test suite 5 times
@@ -578,7 +730,7 @@ Context management:
   - Started: 8.2k tokens (4%)
   - Ended: 118.4k tokens (59%)
   - Peak optimization: Saved ~35k tokens through strategies
-  - Without optimization: Would have hit 153k tokens (76%) 
+  - Without optimization: Would have hit 153k tokens (76%)
     → Emergency compaction required
   - With optimization: Completed full session comfortably
 
@@ -796,7 +948,11 @@ mcp__github__get_pull_request_status(...)
 | Output Filtering | Per command | 3-8k tokens | 60-90% per command |
 | Output Summarization | Per task | 5-10k tokens | 10-15% overall |
 | Memory Pruning | Mid-session | 8-15k tokens | 4-7% budget |
-| **Combined Effect** | **Full session** | **~50k tokens** | **Doubles session capacity** |
+| Codebase Survey | Multi-file reviews | 30-80k tokens | 40-60% per review |
+| Strategic Deep-Dive | Per decision | 5-30k tokens | 50-80% avoided |
+| Output Efficiency | Documentation | 10-30k tokens | 50-85% per doc |
+| Cross-File Analysis | Architecture | 10-50k tokens | 90%+ avoided |
+| **Combined Effect** | **Full session** | **~50-100k tokens** | **2-3x session capacity** |
 
 **Example Math**:
 - Without optimization: 180k tokens after 90 minutes → Emergency compaction
