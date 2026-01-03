@@ -2,24 +2,24 @@
 
 ## Current Phase: Connect What Exists
 
-**Status**: 35% complete
+**Status**: 45% complete
 
 We're connecting existing components into a coherent system before building new features.
 
 ### Active Work
 - [x] Document Intelligence backend (graph entities, ingestion API)
 - [x] Document Intelligence agent personas (5 YAML files)
-- [ ] Sprint 4: Real-time Subscriptions (SSE)
+- [x] Sprint 4: Real-time Subscriptions (SSE)
 
 ### This Week
 - [ ] End-to-end test: Document Intelligence pipeline
 - [ ] Wire KnowledgeBeast → Document Intelligence pipeline
-- [ ] Sprint 4 Task 1: SSE endpoint for graph events
+- [ ] VISLZR Sprint 3: Agent parity
 
 ### This Month
-- [ ] Complete Sprint 4: Real-time graph subscriptions
 - [ ] VISLZR Sprint 3: Agent parity
 - [ ] Voice input prototype
+- [ ] Phase 3 skill improvements (5 PRs pending)
 
 ### This Quarter
 - [ ] Wander crystallization
@@ -78,6 +78,11 @@ We're connecting existing components into a coherent system before building new 
 
 ## Recently Completed
 
+- ✅ **Sprint 4: Real-time Subscriptions** (Jan 3, 2026)
+  - SSE endpoint: `backend/app/routers/sse.py`
+  - Subscription manager: `backend/app/services/subscription_manager.py`
+  - Frontend hooks: `useGraphSubscription`, `useRealtimeGraph`
+  - UI integration with live connection status
 - ✅ **Document Intelligence Pipeline** (Jan 2, 2026)
   - Graph entity types: `GraphDocument`, `GraphConcept`, `GraphRequirement`
   - Ingestion API: `POST /api/v1/graph/document-intelligence/ingest`
