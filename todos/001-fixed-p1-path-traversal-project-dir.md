@@ -1,6 +1,6 @@
 # Path Traversal via project_dir Parameter
 
-## Status: pending
+## Status: fixed
 ## Priority: P1 (Critical - Security)
 ## Issue ID: 001
 ## Tags: security, code-review, auto-coder
@@ -71,9 +71,9 @@ Validate paths in the bridge layer before passing to external components.
 
 ## Acceptance Criteria
 
-- [ ] project_dir is validated against allowed base directories
-- [ ] Path traversal attempts raise ValidationError
-- [ ] Resolved paths are used for file operations
+- [x] project_dir is validated against allowed base directories
+- [x] Path traversal attempts raise ValidationError
+- [x] Resolved paths are used for file operations
 - [ ] Tests cover path traversal attack vectors
 
 ## Work Log
@@ -81,6 +81,7 @@ Validate paths in the bridge layer before passing to external components.
 | Date | Action | Learnings |
 |------|--------|-----------|
 | 2026-01-03 | Identified via security-sentinel review | Path validation critical for skills accepting directory paths |
+| 2026-01-03 | Fixed: Added validators.py with validate_project_dir, applied to GatherRequirementsInput and CodeSubtaskInput via Pydantic field_validator | Centralized validator allows reuse across all skills |
 
 ## Resources
 

@@ -1,11 +1,5 @@
 """Bridge to Auto-Claude core components."""
-import sys
-from pathlib import Path
-
-# Add auto-claude-core to path
-AUTO_CLAUDE_PATH = Path(__file__).parents[4] / "integrations" / "auto-claude-core"
-if AUTO_CLAUDE_PATH.exists():
-    sys.path.insert(0, str(AUTO_CLAUDE_PATH))
+from .path_config import ensure_auto_claude_configured, get_auto_claude_path
 
 
 class AutoClaudeBridge:
@@ -17,7 +11,7 @@ class AutoClaudeBridge:
     """
 
     def __init__(self):
-        self.auto_claude_available = AUTO_CLAUDE_PATH.exists()
+        self.auto_claude_available = ensure_auto_claude_configured()
 
     async def gather_requirements(self, task_description: str, project_dir: str) -> dict:
         """Gather requirements using Auto-Claude's gatherer."""

@@ -1,6 +1,7 @@
 """DISCOVER skill: Gather and structure requirements."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from .base import Skill, SkillMetadata, register_skill
+from .validators import validate_project_dir
 
 
 class GatherRequirementsInput(BaseModel):
@@ -8,6 +9,12 @@ class GatherRequirementsInput(BaseModel):
     task_description: str = Field(..., description="Natural language task description")
     project_dir: str = Field(default=".", description="Project directory path")
     context: dict | None = Field(default=None, description="Optional context from previous skills")
+
+    @field_validator('project_dir')
+    @classmethod
+    def check_project_dir(cls, v: str) -> str:
+        """Validate project_dir is within allowed boundaries."""
+        return validate_project_dir(v)
 
 
 class GatherRequirementsOutput(BaseModel):

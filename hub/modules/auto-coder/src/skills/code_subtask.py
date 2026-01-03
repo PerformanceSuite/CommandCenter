@@ -1,6 +1,7 @@
 """IMPROVE skill: Implement a single coding subtask."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from .base import Skill, SkillMetadata, register_skill
+from .validators import validate_project_dir
 
 
 class CodeSubtaskInput(BaseModel):
@@ -10,6 +11,12 @@ class CodeSubtaskInput(BaseModel):
     spec: dict | None = Field(default=None, description="Spec context if available")
     plan: dict | None = Field(default=None, description="Implementation plan if available")
     sandbox_id: str | None = Field(default=None, description="E2B sandbox ID for isolated execution")
+
+    @field_validator('project_dir')
+    @classmethod
+    def check_project_dir(cls, v: str) -> str:
+        """Validate project_dir is within allowed boundaries."""
+        return validate_project_dir(v)
 
 
 class CodeSubtaskOutput(BaseModel):
