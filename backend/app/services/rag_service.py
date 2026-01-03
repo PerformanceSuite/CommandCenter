@@ -77,18 +77,18 @@ class RAGService:
     async def initialize(self) -> None:
         """
         Initialize backend and create database schema if needed
-        
+
         This method must be called before first use. It performs the following operations:
         - Creates the collection table if it doesn't exist
         - Creates pgvector extension if not already present
         - Sets up vector similarity search indexes
         - Initializes connection pool
-        
+
         This operation is idempotent and safe to call multiple times.
-        
+
         Returns:
             None
-            
+
         Note:
             This method sets the internal _initialized flag to prevent redundant initialization.
         """
@@ -97,9 +97,7 @@ class RAGService:
             self._initialized = True
             logger.info(f"Initialized backend for collection '{self.collection_name}'")
 
-    async def query(
-        self, question: str, category: Optional = None, k: int = 5
-    ) -> List[Dict]:
+    async def query(self, question: str, category: Optional[str] = None, k: int = 5) -> List[Dict]:
         """
         Query the knowledge base using hybrid search (vector + keyword)
 
@@ -148,9 +146,7 @@ class RAGService:
             for doc_id, score, metadata, document in results
         ]
 
-    async def add_document(
-        self, content: str, metadata: Dict, chunk_size: int = 1000
-    ) -> int:
+    async def add_document(self, content: str, metadata: Dict, chunk_size: int = 1000) -> int:
         """
         Add a document to the knowledge base
 
@@ -228,7 +224,7 @@ class RAGService:
     async def get_categories(self) -> List[str]:
         """
         Get list of all categories in the knowledge base
-        
+
         Retrieves all unique category values from document metadata across the entire
         knowledge base collection.
 
@@ -239,7 +235,7 @@ class RAGService:
         Returns:
             Sorted list of unique category names. Returns empty list if categories
             cannot be extracted from the current backend implementation.
-            
+
         Example:
             >>> categories = await rag_service.get_categories()
             >>> print(categories)
@@ -260,7 +256,7 @@ class RAGService:
     async def get_statistics(self) -> Dict[str, Any]:
         """
         Get knowledge base statistics and metadata
-        
+
         Retrieves comprehensive statistics about the current knowledge base collection,
         including document counts, embedding configuration, and backend information.
 
@@ -272,7 +268,7 @@ class RAGService:
             - backend (str): Backend type ("postgres")
             - collection_name (str): Full collection name with repository ID
             - embedding_dimension (int): Dimensionality of vector embeddings
-            
+
         Example:
             >>> stats = await rag_service.get_statistics()
             >>> print(f"Total chunks: {stats['total_chunks']}")
@@ -295,16 +291,16 @@ class RAGService:
     async def close(self) -> None:
         """
         Close backend connection and cleanup resources
-        
+
         Gracefully shuts down the RAG service by closing the database connection pool
         and cleaning up any held resources. This method should be called when shutting
         down the application or when the service is no longer needed.
-        
+
         This operation is idempotent and safe to call multiple times.
-        
+
         Returns:
             None
-            
+
         Example:
             >>> await rag_service.close()
             >>> # Service is now closed and cannot be used until reinitialized

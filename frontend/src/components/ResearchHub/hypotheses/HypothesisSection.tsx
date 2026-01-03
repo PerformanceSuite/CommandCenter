@@ -46,13 +46,9 @@ export function HypothesisSection({ taskId, onHypothesisValidated }: HypothesisS
 
   // Create new hypothesis
   const handleCreate = async (data: HypothesisCreate) => {
-    try {
-      await intelligenceApi.createUnderTask(taskId, data);
-      setShowCreateForm(false);
-      fetchHypotheses();
-    } catch (err) {
-      throw err; // Let the form handle the error
-    }
+    await intelligenceApi.createUnderTask(taskId, data);
+    setShowCreateForm(false);
+    fetchHypotheses();
   };
 
   // Start validation
