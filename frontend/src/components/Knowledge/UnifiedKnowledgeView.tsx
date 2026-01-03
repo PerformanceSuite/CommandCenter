@@ -88,14 +88,12 @@ interface UploadModalProps {
 function UploadModal({ onClose, onSubmit, isLoading }: UploadModalProps) {
   const [path, setPath] = useState('');
   const [title, setTitle] = useState('');
-  const [docType, setDocType] = useState<DocumentType>(DocumentType.CONCEPT);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       path,
       title: title || undefined,
-      doc_type: docType,
       status: DocumentStatus.ACTIVE,
     });
   };
@@ -125,22 +123,7 @@ function UploadModal({ onClose, onSubmit, isLoading }: UploadModalProps) {
               placeholder="Document title (optional)"
               className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Type *</label>
-            <select
-              value={docType}
-              onChange={(e) => setDocType(e.target.value as DocumentType)}
-              className="w-full bg-gray-700 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="plan">Plan</option>
-              <option value="concept">Concept</option>
-              <option value="guide">Guide</option>
-              <option value="reference">Reference</option>
-              <option value="report">Report</option>
-              <option value="session">Session</option>
-              <option value="archive">Archive</option>
-            </select>
+            <p className="text-gray-500 text-xs mt-1">Type will be detected automatically</p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button

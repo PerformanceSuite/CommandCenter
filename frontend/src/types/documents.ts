@@ -107,7 +107,7 @@ export interface DocumentDeleteResponse {
 export interface CreateDocumentRequest {
   path: string;
   title?: string;
-  doc_type: DocumentType;
+  doc_type?: DocumentType;
   subtype?: string;
   status?: DocumentStatus;
   audience?: string;
