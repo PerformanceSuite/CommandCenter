@@ -553,7 +553,7 @@ class CreateDocumentRequest(BaseModel):
 
     path: str = Field(..., min_length=1, max_length=1024)
     title: Optional[str] = Field(None, max_length=512)
-    doc_type: DocumentType
+    doc_type: DocumentType = DocumentType.REFERENCE  # Default until AI extraction classifies
     subtype: Optional[str] = Field(None, max_length=100)
     status: DocumentStatus = DocumentStatus.ACTIVE
     audience: Optional[str] = Field(None, max_length=255)
