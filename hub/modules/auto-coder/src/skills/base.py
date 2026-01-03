@@ -41,12 +41,12 @@ class Skill(ABC, Generic[T_Input, T_Output]):
         pass
 
     @abstractmethod
-    async def execute(self, input: T_Input, context: dict | None = None) -> T_Output:
+    async def execute(self, skill_input: T_Input, context: dict | None = None) -> T_Output:
         """
         Execute the skill.
 
         Args:
-            input: Validated input data
+            skill_input: Validated input data
             context: Optional context from previous skills (loose coupling)
 
         Returns:

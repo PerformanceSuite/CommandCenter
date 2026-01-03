@@ -1,5 +1,8 @@
 """Bridge to Auto-Claude core components."""
+import logging
 from .path_config import ensure_auto_claude_configured, get_auto_claude_path
+
+logger = logging.getLogger(__name__)
 
 
 class AutoClaudeBridge:
@@ -20,8 +23,8 @@ class AutoClaudeBridge:
                 from spec_agents.gatherer import SpecGatherer
                 gatherer = SpecGatherer(project_dir=project_dir)
                 return await gatherer.gather(task_description)
-            except ImportError:
-                pass
+            except ImportError as e:
+                logger.debug("Auto-Claude SpecGatherer not available: %s", e)
 
         # Fallback: basic extraction
         return {
@@ -44,8 +47,8 @@ class AutoClaudeBridge:
                 from agents.coder import CoderAgent
                 coder = CoderAgent(project_dir=project_dir)
                 return await coder.implement_subtask(subtask, spec=spec, plan=plan)
-            except ImportError:
-                pass
+            except ImportError as e:
+                logger.debug("Auto-Claude CoderAgent not available: %s", e)
 
         # Fallback: return placeholder
         return {

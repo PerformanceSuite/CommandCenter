@@ -73,7 +73,7 @@ class GatherRequirementsSkill(Skill[GatherRequirementsInput, GatherRequirementsO
 
     async def execute(
         self,
-        input: GatherRequirementsInput,
+        skill_input: GatherRequirementsInput,
         context: dict | None = None
     ) -> GatherRequirementsOutput:
         """Execute requirements gathering."""
@@ -83,8 +83,8 @@ class GatherRequirementsSkill(Skill[GatherRequirementsInput, GatherRequirementsO
 
         bridge = AutoClaudeBridge()
         result = await bridge.gather_requirements(
-            task_description=input.task_description,
-            project_dir=input.project_dir,
+            task_description=skill_input.task_description,
+            project_dir=skill_input.project_dir,
         )
 
         return GatherRequirementsOutput(**result)

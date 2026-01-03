@@ -71,7 +71,7 @@ class CodeSubtaskSkill(Skill[CodeSubtaskInput, CodeSubtaskOutput]):
 
     async def execute(
         self,
-        input: CodeSubtaskInput,
+        skill_input: CodeSubtaskInput,
         context: dict | None = None
     ) -> CodeSubtaskOutput:
         """Execute subtask implementation."""
@@ -79,20 +79,20 @@ class CodeSubtaskSkill(Skill[CodeSubtaskInput, CodeSubtaskOutput]):
         from ..bridges.sandbox import SandboxBridge
 
         # Use sandbox if provided
-        if input.sandbox_id:
+        if skill_input.sandbox_id:
             sandbox = SandboxBridge()
             result = await sandbox.run_coder(
-                sandbox_id=input.sandbox_id,
-                subtask=input.subtask,
+                sandbox_id=skill_input.sandbox_id,
+                subtask=skill_input.subtask,
                 context=context,
             )
         else:
             bridge = AutoClaudeBridge()
             result = await bridge.code_subtask(
-                subtask=input.subtask,
-                project_dir=input.project_dir,
-                spec=input.spec,
-                plan=input.plan,
+                subtask=skill_input.subtask,
+                project_dir=skill_input.project_dir,
+                spec=skill_input.spec,
+                plan=skill_input.plan,
             )
 
         return CodeSubtaskOutput(**result)

@@ -14,9 +14,7 @@ class SandboxBridge:
 
     async def create_sandbox(self, repo_url: str, branch: str) -> str:
         """Create an E2B sandbox for isolated execution."""
-        # Bridge to existing obox infrastructure
-        # Returns sandbox_id
-        pass
+        raise NotImplementedError("E2B sandbox integration not yet implemented")
 
     async def run_coder(
         self,
@@ -25,13 +23,12 @@ class SandboxBridge:
         context: dict | None = None,
     ) -> dict:
         """Run coder agent in sandbox."""
-        # Execute in E2B sandbox
-        pass
+        raise NotImplementedError("E2B sandbox integration not yet implemented")
 
     async def get_files(self, sandbox_id: str, path: str = "/") -> list[str]:
         """Get files from sandbox."""
-        pass
+        raise NotImplementedError("E2B sandbox integration not yet implemented")
 
     async def destroy_sandbox(self, sandbox_id: str) -> bool:
         """Destroy a sandbox."""
-        pass
+        raise NotImplementedError("E2B sandbox integration not yet implemented")
