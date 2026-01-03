@@ -86,3 +86,10 @@ tools/agent-sandboxes/apps/*/.venv/
 tools/agent-sandboxes/apps/*/.env
 tools/agent-sandboxes/**/__pycache__/
 tools/agent-sandboxes/**/node_modules/
+
+# Temporary debug/output files (should be in docs/temp/ if needed)
+/*.txt
+*.zip
+session-*.md
+NOTES.md
+STATUS_LOG.md
